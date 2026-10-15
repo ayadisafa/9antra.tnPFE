@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}My account · 9antra{% endblock %}
+{% block page_title %}My account{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div>
+    <h2>My account</h2>
+    <p>{{ "You are the admin: you see and change everything." if me.role == "admin" else "You are signed in as a professor: you see your own classes." }}</p>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <section class="ui-card">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-person"></i>Who you are</div></div></div>
+      <form method="post" action="/account/details">
+        <div class="ui-field mb-3"><label for="acc-name">Name</label><input class="form-control" id="acc-name" name="name" value="{{ me.name }}" required></div>
+        <div class="ui-field mb-3">
+          <label for="acc-email">Email address</label>
+          <input class="form-control" id="acc-email" value="{{ me.email }}" disabled>
+          <div class="ui-hint">You sign in with this address.{% if me.role != "admin" %} Ask the admin to change it.{% endif %}</div>
+        </div>
+        <button class="ui-btn">Save my name</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-lg-7">
+    <section class="ui-card">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-lock"></i>Change my password</div></div></div>
+      <form method="post" action="/account/password" autocomplete="off">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="acc-current">Current password</label><input class="form-control" id="acc-current" name="current" type="password" required autocomplete="current-password"></div>
+          <div class="col-md-6 ui-field"><label for="acc-new">New password</label><input class="form-control" id="acc-new" name="password" type="password" minlength="{{ min_password }}" required autocomplete="new-password"><div class="ui-hint">At least {{ min_password }} characters.</div></div>
+          <div class="col-md-6 ui-field"><label for="acc-confirm">The same again</label><input class="form-control" id="acc-confirm" name="confirmation" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
+        </div>
+        <button class="ui-btn primary mt-3">Change my password</button>
+      </form>
+    </section>
+  </div>
+
+  <div class="col-12">
+    <section class="ui-card">
+      <div class="ui-card-head">
+        <div>
+          <div class="ui-card-title"><i class="bi bi-laptop"></i>Where you are signed in</div>
+          <div class="ui-card-sub">You can be signed in on several browsers and devices at the same time. Each one comes back to the page it had open last.</div>
+        </div>
+        {% if sessions | length > 1 %}
+        <form method="post" action="/account/sessions/end" data-confirm="Sign out of every other browser? This one stays signed in.">
+          <button class="ui-btn sm danger"><i class="bi bi-box-arrow-right"></i>Sign out everywhere else</button>
+        </form>
+        {% endif %}
+      </div>
+      {% for item in sessions %}
+      <div class="d-flex align-items-center gap-3 py-2" style="border-top:{{ '0' if loop.first else '1px solid var(--border-color)' }};">
+        <span class="ui-stat-ico {{ 't-mint' if item.is_this_one else '' }}"><i class="bi {{ 'bi-phone' if 'Android' in item.device or 'iPhone' in item.device else 'bi-laptop' }}"></i></span>
+        <div class="flex-grow-1">
+          <div style="font-weight:700; font-size:.9rem;">{{ item.device }} {% if item.is_this_one %}<span class="ui-chip ok ms-1">This browser</span>{% endif %}</div>
+          <div class="ui-card-sub">Signed in {{ item.since.strftime('%d %b at %H:%M') if item.since else '' }} · last used {{ item.last_seen.strftime('%d %b at %H:%M') if item.last_seen else 'just now' }} (UTC)</div>
+        </div>
+        {% if not item.is_this_one %}
+        <form method="post" action="/account/sessions/end"><input type="hidden" name="key" value="{{ item.key }}"><button class="ui-btn sm">Sign out there</button></form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

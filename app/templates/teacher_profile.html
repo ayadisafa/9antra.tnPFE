@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}My profile · 9antra{% endblock %}
+{% block page_title %}My profile{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .tp-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; }
+  .tp-band { height:84px; background:linear-gradient(120deg, var(--ink-2), var(--primary-berry)); }
+  .tp-head { padding:0 22px 18px; margin-top:-38px; display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; position:relative; z-index:1; }
+  .tp-head .ui-avatar { border:5px solid #fff; box-shadow:0 10px 22px -12px rgba(36,26,56,.5); }
+  .tp-name { font-weight:800; font-size:1.3rem; color:var(--ink-text); line-height:1.2; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="row g-3">
+  <div class="col-lg-5">
+    <section class="tp-card">
+      <div class="tp-band"></div>
+      <div class="tp-head">
+        {{ ui.avatar(professor.name, 78) }}
+        <div class="pb-1">
+          <div class="tp-name">{{ professor.name }}</div>
+          <div class="ui-card-sub">Professor · {{ class_count }} class{{ 'es' if class_count != 1 }}</div>
+        </div>
+      </div>
+      <div class="px-4 pb-4">
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {% for specialty in specialties %}<span class="ui-chip brand">{{ specialty }}</span>{% else %}<span class="ui-chip muted">No specialty set</span>{% endfor %}
+        </div>
+        <div class="ui-card-sub"><i class="bi bi-envelope me-2"></i>{{ professor.email or current_user.email }}</div>
+        <div class="ui-card-sub mt-1"><i class="bi bi-telephone me-2"></i>{{ professor.phone or "No phone yet" }}</div>
+        {% if absences %}
+        <div class="ui-card-sub mt-3"><i class="bi bi-calendar-x me-2"></i>Absences planned: {% for absence in absences %}{{ absence.absence_date.strftime('%d %b') }}{{ ', ' if not loop.last }}{% endfor %}</div>
+        {% endif %}
+      </div>
+    </section>
+  </div>
+
+  <div class="col-lg-7">
+    <section class="ui-card">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-pencil"></i>Change my details</div><div class="ui-card-sub">Candidates see your name in the emails about their class.</div></div></div>
+      <form method="post" action="/teacher/profile">
+        <div class="row g-3">
+          <div class="col-md-7 ui-field"><label for="tp-name">Name</label><input class="form-control" id="tp-name" name="name" value="{{ professor.name }}" required></div>
+          <div class="col-md-5 ui-field"><label for="tp-phone">Phone</label><input class="form-control" id="tp-phone" name="phone" value="{{ professor.phone or '' }}"></div>
+          <div class="col-12 ui-field"><label for="tp-specialties">What I teach</label><input class="form-control" id="tp-specialties" name="specialties" value="{{ specialties | join(', ') }}" placeholder="DevOps, Python"><div class="ui-hint">Separated by commas.</div></div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button class="ui-btn primary">Save</button>
+          <a class="ui-btn" href="/account"><i class="bi bi-lock"></i>Change my password</a>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

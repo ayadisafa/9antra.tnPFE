@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}My classes · 9antra{% endblock %}
+{% block page_title %}My classes{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .tc-grid { display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .tc-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; margin-bottom:14px; }
+  .tc-top { padding:16px 18px; display:flex; gap:14px; align-items:center; background:var(--soft); border-bottom:3px solid var(--tone); flex-wrap:wrap; }
+  .tc-symbol { width:56px; height:56px; border-radius:17px; background:#fff; display:grid; place-items:center; font-size:1.7rem; flex:none; box-shadow:0 8px 18px -10px var(--tone); }
+  .tc-name { font-weight:800; font-size:1.08rem; color:var(--ink-text); line-height:1.2; }
+  .tc-sub { font-size:.78rem; color:#5b5670; font-weight:600; margin-top:2px; }
+  .tc-facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(130px, 1fr)); gap:10px; padding:14px 18px 0; }
+  .tc-fact { background:#faf8fd; border-radius:12px; padding:9px 11px; }
+  .tc-fact-label { font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#9b95b0; }
+  .tc-fact-value { font-weight:700; font-size:.86rem; color:var(--ink-text); margin-top:1px; }
+  .tc-actions { display:flex; gap:8px; flex-wrap:wrap; padding:14px 18px 16px; }
+  .tc-big { flex:1 1 180px; display:flex; gap:12px; align-items:center; padding:12px 14px; border-radius:14px; border:1.5px solid var(--border-color); text-decoration:none; color:inherit; transition:border-color .15s ease, transform .15s ease; }
+  .tc-big:hover { border-color:var(--tone); transform:translateY(-1px); color:inherit; }
+  .tc-big i { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:var(--soft); color:var(--tone); font-size:1.1rem; flex:none; }
+  .tc-big b { display:block; font-size:.88rem; color:var(--ink-text); }
+  .tc-big span { font-size:.74rem; color:var(--muted); }
+  .tc-row { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; }
+  .tc-row:first-child { border-top:0; padding-top:2px; }
+  .tc-day { width:46px; flex:none; text-align:center; border-radius:13px; background:#f4f1f9; color:#5b5670; padding:6px 0; line-height:1.1; }
+  .tc-day b { display:block; font-size:1.02rem; font-weight:800; }
+  .tc-day span { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .tc-day.is-today { background:var(--primary-berry); color:#fff; }
+  @media (max-width: 1099px) { .tc-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div>
+    <h2>Hello {{ professor.name.split()[0] }}</h2>
+    <p>Your classes. For each one you add the week's course and mark who was there.</p>
+  </div>
+  <div class="ui-actions"><a class="ui-btn" href="/teacher/profile"><i class="bi bi-person-badge"></i>My profile</a></div>
+</div>
+
+<div class="ui-stats mb-3">
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-collection-play-fill"></i></div><div><div class="ui-stat-num">{{ totals.classes }}</div><div class="ui-stat-label">Class{{ 'es' if totals.classes != 1 }} to teach</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people-fill"></i></div><div><div class="ui-stat-num">{{ totals.candidates }}</div><div class="ui-stat-label">Candidate{{ 's' if totals.candidates != 1 }}</div></div></div>
+  <div class="ui-stat {{ 't-gold' if totals.today else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-calendar-check"></i></div><div><div class="ui-stat-num">{{ totals.today }}</div><div class="ui-stat-label">Session{{ 's' if totals.today != 1 }} today</div></div></div>
+</div>
+
+<div class="tc-grid">
+  <div>
+    {% for card in cards %}
+    {% set cls = card.class %}
+    {% set info = card.summary %}
+    <article class="tc-card" style="--tone:{{ card.look.colour }}; --soft:{{ card.look.soft }};">
+      <div class="tc-top">
+        <div class="tc-symbol" aria-hidden="true">{{ card.look.symbol }}</div>
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="tc-name">{{ cls.name }}</div>
+          <div class="tc-sub">{{ cls.program.name if cls.program else '' }}</div>
+        </div>
+        {% if info.status == 'ongoing' %}<span class="ui-chip brand">Week {{ info.current_week }} of {{ info.total_weeks }}</span>
+        {% elif info.status == 'completed' %}<span class="ui-chip muted">Completed</span>
+        {% else %}<span class="ui-chip info">{{ ('Starts ' ~ info.countdown) if info.countdown else 'Not scheduled yet' }}</span>{% endif %}
+      </div>
+      <div class="tc-facts">
+        <div class="tc-fact"><div class="tc-fact-label">When</div><div class="tc-fact-value">{{ info.schedule_label }}</div></div>
+        <div class="tc-fact"><div class="tc-fact-label">Where</div><div class="tc-fact-value">{{ cls.room or 'Not set' }}</div></div>
+        <div class="tc-fact"><div class="tc-fact-label">Candidates</div><div class="tc-fact-value">{{ info.enrolled }} of {{ info.capacity }}</div></div>
+        <div class="tc-fact"><div class="tc-fact-label">Attendance</div><div class="tc-fact-value">{{ (card.presence.rate ~ '%') if card.presence.rate is not none else 'Not marked yet' }}</div></div>
+      </div>
+      <div class="tc-actions">
+        <a class="tc-big" href="/classes/{{ cls.id }}/course">
+          <i class="bi bi-folder2-open"></i>
+          <div><b>Course</b><span>{{ card.course.files }} file{{ 's' if card.course.files != 1 }} · {{ card.course.ready }} question{{ 's' if card.course.ready != 1 }} ready</span></div>
+        </a>
+        <a class="tc-big" href="/classes/{{ cls.id }}/attendance">
+          <i class="bi bi-person-check"></i>
+          <div><b>Presence</b><span>{{ card.presence.sessions_marked }} session{{ 's' if card.presence.sessions_marked != 1 }} marked</span></div>
+        </a>
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-mortarboard"></i><strong>No class yet</strong>When the admin gives you a class, it appears here.</div>
+    {% endfor %}
+  </div>
+
+  <div>
+    <section class="ui-card">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-event"></i>Your next sessions</div><div class="ui-card-sub">The two weeks to come.</div></div></div>
+      {% for item in coming %}
+      <a class="tc-row" href="/classes/{{ item.class.id }}/attendance?session={{ item.session.id }}">
+        <div class="tc-day {{ 'is-today' if item.is_today }}"><b>{{ item.session.session_date.strftime('%d') }}</b><span>{{ 'Today' if item.is_today else item.session.session_date.strftime('%a') }}</span></div>
+        <div class="flex-grow-1" style="min-width:0;">
+          <div style="font-weight:700; font-size:.86rem; color:var(--ink-text);">{{ item.look.symbol }} {{ item.session.topic }}</div>
+          <div style="font-size:.75rem; color:var(--muted);">{% if item.session.start_time %}{{ item.session.start_time.strftime('%H:%M') }}{% if item.session.end_time %}–{{ item.session.end_time.strftime('%H:%M') }}{% endif %} · {% endif %}{{ item.class.name }} · week {{ item.session.week_number }}</div>
+        </div>
+      </a>
+      {% else %}
+      <div class="ui-empty py-3"><i class="bi bi-calendar-x"></i>No session in the next two weeks.</div>
+      {% endfor %}
+    </section>
+  </div>
+</div>
+{% endblock %}

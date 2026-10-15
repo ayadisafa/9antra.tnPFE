@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+
+{% block title %}System · 9antra{% endblock %}
+{% block page_title %}System{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .sy-state { border-radius:24px; padding:20px 22px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:26px; border:1px solid var(--border-color); }
+  .sy-state.ok { background:linear-gradient(115deg, #fff 0%, var(--mint-subtle) 100%); }
+  .sy-state.bad { background:linear-gradient(115deg, #fff 0%, #fff1f2 100%); border-color:#fecdd3; }
+  .sy-state-ico { width:56px; height:56px; border-radius:18px; display:grid; place-items:center; font-size:1.6rem; flex:none; background:#fff; }
+  .sy-state.ok .sy-state-ico { color:var(--mint); } .sy-state.bad .sy-state-ico { color:#be123c; }
+  .sy-state h3 { font-size:1.2rem; font-weight:800; margin:0; color:var(--ink-text); }
+  .sy-state p { margin:3px 0 0; font-size:.86rem; color:#5b5670; }
+  .sy-since { margin-left:auto; font-size:.76rem; font-weight:700; color:var(--muted); text-align:right; }
+  .sy-live { display:inline-flex; align-items:center; gap:6px; }
+  .sy-live i { width:8px; height:8px; border-radius:50%; background:var(--mint); display:block; animation:syBlink 1.6s ease-in-out infinite; }
+  @keyframes syBlink { 50% { opacity:.25; } }
+
+  .sy-h { font-weight:800; font-size:1.12rem; color:var(--ink-text); margin:0 0 3px; display:flex; align-items:center; gap:9px; }
+  .sy-h i { color:var(--primary-berry); }
+  .sy-sub { font-size:.84rem; color:var(--muted); margin:0 0 14px; max-width:720px; }
+
+  /* What it does by itself. */
+  .sy-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px; margin-bottom:30px; }
+  .sy-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:16px 18px; display:flex; flex-direction:column; gap:10px; transition:box-shadow .18s ease, transform .18s ease; }
+  .sy-card:hover { box-shadow:var(--shadow-soft); transform:translateY(-2px); }
+  .sy-card.is-problem { border-color:#fecdd3; }
+  .sy-top { display:flex; gap:12px; align-items:center; }
+  .sy-ico { width:46px; height:46px; border-radius:15px; display:grid; place-items:center; font-size:1.2rem; flex:none; background:var(--tone-soft, #f4f1f9); color:var(--tone, #6b6680); position:relative; }
+  .sy-card.is-working .sy-ico::after { content:""; position:absolute; inset:-4px; border-radius:19px; border:2px solid var(--tone, #6b6680); border-right-color:transparent; animation:uiSpin 1s linear infinite; }
+  .sy-name { font-weight:800; font-size:.96rem; color:var(--ink-text); line-height:1.2; }
+  .sy-every { font-size:.72rem; font-weight:700; color:var(--muted); margin-top:1px; }
+  .sy-top .ui-chip { margin-left:auto; flex:none; }
+  .sy-what { font-size:.82rem; color:#5b5670; line-height:1.5; }
+  .sy-fact { font-size:.8rem; font-weight:700; color:var(--ink-text); background:#faf8fd; border-radius:12px; padding:8px 11px; line-height:1.4; }
+  .sy-problem { font-size:.78rem; color:#9f1239; background:#fff1f2; border-radius:12px; padding:8px 11px; overflow-wrap:anywhere; }
+  .sy-times { display:flex; flex-wrap:wrap; gap:4px 14px; font-size:.74rem; color:var(--muted); font-weight:600; }
+  .sy-times b { color:#4d4863; }
+  .sy-foot { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; padding-top:2px; }
+  .sy-foot form { margin:0; }
+
+  /* What it is connected to. */
+  .sy-links { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:10px; margin-bottom:30px; }
+  .sy-link { background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:13px 15px; display:flex; gap:12px; align-items:flex-start; }
+  .sy-link-ico { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:1.05rem; flex:none; }
+  .sy-link.on .sy-link-ico { background:var(--mint-subtle); color:var(--mint); }
+  .sy-link.partial .sy-link-ico { background:#f4f1f9; color:#6b6680; }
+  .sy-link.off .sy-link-ico { background:#fff1f2; color:#be123c; }
+  .sy-link-name { font-weight:800; font-size:.88rem; color:var(--ink-text); display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .sy-link-text { font-size:.78rem; color:#5b5670; margin-top:3px; line-height:1.45; overflow-wrap:anywhere; }
+
+  /* On the phone. */
+  .sy-safe { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(0, 1fr); gap:16px; margin-bottom:30px; }
+  .sy-safe-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px 20px; min-width:0; }
+  .sy-safe-top { display:flex; gap:14px; align-items:center; margin-bottom:12px; }
+  .sy-shield { width:54px; height:54px; flex:none; border-radius:18px; display:grid; place-items:center; font-size:1.5rem; background:var(--mint-subtle, #e9f9ef); color:var(--mint, #16a34a); animation:sy-breathe 4s ease-in-out infinite; }
+  .sy-shield.warn { background:var(--gold-subtle, #fff7e6); color:var(--accent-gold-dark, #b45309); }
+  @keyframes sy-breathe { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.06); } }
+  .sy-safe-top b { display:block; font-size:.98rem; color:var(--ink-text); } .sy-safe-top span { font-size:.8rem; color:var(--muted); }
+  .sy-copy { display:flex; justify-content:space-between; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--border-color); font-size:.82rem; }
+  .sy-copy span { color:var(--muted); font-size:.76rem; }
+  .sy-safe-list { margin:10px 0 0; padding-left:18px; font-size:.81rem; color:#4a445e; line-height:1.5; } .sy-safe-list li + li { margin-top:5px; }
+  .sy-safe-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:14px 0 6px; }
+  @media (max-width: 900px) { .sy-safe { grid-template-columns:minmax(0, 1fr); } }
+  @media (prefers-reduced-motion: reduce) { .sy-shield { animation:none; } }
+  .sy-phone { background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:22px; display:grid; grid-template-columns:150px minmax(0, 1fr); gap:24px; align-items:center; margin-bottom:30px; }
+  .sy-phone svg { width:150px; display:block; }
+  .sy-phone .bob { animation:syBob 4.5s ease-in-out infinite; }
+  @keyframes syBob { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+  .sy-steps { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
+  .sy-step { display:flex; gap:12px; align-items:flex-start; }
+  .sy-step-no { width:30px; height:30px; border-radius:50%; background:var(--berry-subtle); color:var(--primary-berry); font-weight:800; font-size:.84rem; display:grid; place-items:center; flex:none; }
+  .sy-step b { display:block; font-size:.9rem; color:var(--ink-text); }
+  .sy-step span { font-size:.82rem; color:#5b5670; line-height:1.5; }
+  .sy-address { display:inline-block; font-family:Consolas, "SF Mono", Menlo, monospace; font-size:.9rem; font-weight:700; background:var(--berry-subtle); color:var(--primary-berry); border-radius:10px; padding:4px 10px; margin-top:4px; user-select:all; overflow-wrap:anywhere; }
+  .sy-file { font-family:Consolas, "SF Mono", Menlo, monospace; font-size:.84em; background:#f4f1f9; border-radius:6px; padding:1px 6px; color:#3b2a63; }
+
+  /* Lately. */
+  .sy-news { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:6px 18px; }
+  .sy-new { display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; }
+  .sy-new:first-child { border-top:0; }
+  .sy-new-dot { width:9px; height:9px; border-radius:50%; background:#d5cde6; margin-top:6px; flex:none; }
+  .sy-new.is-new .sy-new-dot { background:var(--primary-berry); }
+  .sy-new b { display:block; font-size:.85rem; color:var(--ink-text); }
+  .sy-new span { font-size:.78rem; color:#5b5670; line-height:1.45; }
+  .sy-new time { margin-left:auto; font-size:.72rem; color:var(--muted); font-weight:600; white-space:nowrap; flex:none; }
+  a.sy-new:hover b { color:var(--primary-berry); }
+
+  @media (max-width: 640px) { .sy-phone { grid-template-columns:1fr; } .sy-phone svg { width:110px; margin:0 auto; } .sy-since { margin-left:0; text-align:left; width:100%; } }
+  @media (prefers-reduced-motion: reduce) { .sy-live i, .sy-phone .bob, .sy-card.is-working .sy-ico::after { animation:none; } .sy-card { transition:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div id="system-live">
+  <!-- ============ In one line ============ -->
+  <div class="sy-state {{ summary.tone }}">
+    <div class="sy-state-ico"><i class="bi {{ summary.icon }}"></i></div>
+    <div style="min-width:0;">
+      <h3>{{ summary.title }}</h3>
+      <p>{{ summary.text }}</p>
+    </div>
+    <div class="sy-since">
+      <span class="sy-live"><i></i>This page follows by itself</span><br>
+      Running since {{ started_at.strftime('%d %b, %H:%M') }}
+    </div>
+  </div>
+
+  <!-- ============ What it does by itself ============ -->
+  <h2 class="sy-h"><i class="bi bi-activity"></i>What it does by itself</h2>
+  <p class="sy-sub">Each card is one piece of work that runs without you: what it does, when it last ran, when it runs again, and where you change its rule.</p>
+  <div class="sy-grid">
+    {% for item in work %}
+    <article class="sy-card tone-{{ item.tone }} is-{{ item.state }}" id="work-{{ item.key }}">
+      <div class="sy-top">
+        <span class="sy-ico"><i class="bi {{ item.icon }}"></i></span>
+        <div style="min-width:0;">
+          <div class="sy-name">{{ item.name }}</div>
+          <div class="sy-every">{{ item.every | capitalize }}</div>
+        </div>
+        {% if item.state == 'ok' %}<span class="ui-chip ok"><span class="ui-dot"></span>{{ item.label }}</span>
+        {% elif item.state == 'working' %}<span class="ui-chip info"><span class="ui-spin" style="width:10px;height:10px;"></span>{{ item.label }}</span>
+        {% elif item.state == 'problem' %}<span class="ui-chip bad"><i class="bi bi-exclamation-triangle-fill"></i>{{ item.label }}</span>
+        {% else %}<span class="ui-chip muted">{{ item.label }}</span>{% endif %}
+      </div>
+      <div class="sy-what">{{ item.what }}</div>
+      {% if item.fact %}<div class="sy-fact">{{ item.fact }}</div>{% endif %}
+      {% if item.problem %}<div class="sy-problem"><strong>What went wrong:</strong> {{ item.problem }}</div>{% endif %}
+      <div class="sy-times">
+        <span>Last time: <b>{{ item.last or 'not yet since it started' }}</b></span>
+        {% if item.next %}<span>Next: <b>{{ item.next }}</b></span>{% endif %}
+      </div>
+      <div class="sy-foot">
+        {% if item.run %}<form method="post" action="/system/run/{{ item.key }}"><button class="ui-btn soft sm" {{ 'disabled' if item.state == 'working' }}><i class="bi bi-play-fill"></i>Run now</button></form>{% endif %}
+        <a class="ui-btn sm" href="{{ item.change }}"><i class="bi bi-sliders"></i>Change its rule</a>
+        <a class="ui-btn ghost sm" href="{{ item.see }}">{{ item.see_label }}<i class="bi bi-arrow-right"></i></a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <!-- ============ What it is connected to ============ -->
+  <h2 class="sy-h"><i class="bi bi-plug-fill"></i>What it is connected to</h2>
+  <p class="sy-sub">Green is connected. Grey works without it, with less. Red stops something.</p>
+  <div class="sy-links">
+    {% for item in connections %}
+    <div class="sy-link {{ item.state }}">
+      <span class="sy-link-ico"><i class="bi {{ item.icon }}"></i></span>
+      <div style="min-width:0; flex:1;">
+        <div class="sy-link-name">{{ item.name }}
+          {% if item.state == 'on' %}<span class="ui-chip ok">Connected</span>
+          {% elif item.state == 'off' %}<span class="ui-chip bad">Not working</span>
+          {% else %}<span class="ui-chip muted">Not complete</span>{% endif %}
+        </div>
+        <div class="sy-link-text">{{ item.text }}</div>
+        <a class="ui-link d-inline-block mt-1" href="{{ item.change }}">{{ item.change_label }}</a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- ============ Your data ============ -->
+<h2 class="sy-h" id="safety"><i class="bi bi-shield-lock-fill"></i>Your data is protected</h2>
+<p class="sy-sub">Everything is copied once a day while you work, each copy is checked, and two weeks of them are kept. A copy on another disk is what saves the data if this computer is lost.</p>
+<div class="sy-safe">
+  <section class="sy-safe-box">
+    <div class="sy-safe-top">
+      <span class="sy-shield {{ '' if safety.state == 'ok' else 'warn' }}"><i class="bi {{ 'bi-shield-check' if safety.state == 'ok' else 'bi-shield-exclamation' }}"></i></span>
+      <div style="min-width:0; flex:1;">
+        {% if safety.last %}<b>Last copy: {{ safety.last.made.strftime('%d %b, %H:%M') }}</b><span>{{ human_size(safety.last.size) }} · {{ safety.count }} cop{{ 'ies' if safety.count != 1 else 'y' }} kept · the database weighs {{ human_size(safety.database.size) }}</span>
+        {% elif safety.handled %}<b>No copy yet</b><span>The first one is made a few minutes after the application starts.</span>
+        {% else %}<b>Copies are made by the database itself</b><span>The data is in {{ safety.database.kind }}, not in a file.</span>{% endif %}
+      </div>
+      {% if safety.handled %}<form method="post" action="/system/run/backup" class="m-0"><button class="ui-btn sm"><i class="bi bi-plus-lg"></i>Copy now</button></form>{% endif %}
+    </div>
+    {% for copy in safety.copies %}
+    <div class="sy-copy"><div>{{ copy.made.strftime('%A %d %b, %H:%M') }} <span>· {{ human_size(copy.size) }}</span></div><a class="ui-link" href="/system/backups/{{ copy.name }}"><i class="bi bi-download"></i> Download</a></div>
+    {% endfor %}
+    <div class="sy-safe-label">To bring a copy back</div>
+    <ol class="sy-safe-list"><li>Stop the application.</li><li>Open the copy (a zip) and put its <b>app.db</b> and its <b>data</b> folder in the application's folder, in place of the present ones.</li><li>Start the application again.</li></ol>
+  </section>
+  <section class="sy-safe-box">
+    <div class="sy-safe-label" style="margin-top:0;">A second place for the copies</div>
+    {% if safety.second %}
+    <div class="mb-2" style="font-size:.84rem;"><span class="ui-chip {{ 'ok' if safety.second_state == 'ok' else 'warn' }}">{{ 'Up to date' if safety.second_state == 'ok' else 'Behind: is the disk connected?' }}</span> <span style="overflow-wrap:anywhere;">{{ safety.second }}</span></div>
+    {% else %}
+    <div class="mb-2" style="font-size:.84rem; color:#7a4a00;"><i class="bi bi-exclamation-triangle"></i> Today every copy is on the same disk as the application ({{ safety.folder }}).</div>
+    {% endif %}
+    <form method="post" action="/system/backup-folder" class="d-flex gap-2 flex-wrap">
+      <input class="form-control form-control-sm" name="folder" value="{{ safety.second or '' }}" placeholder="E:\9antra-backups" aria-label="Second folder for the copies" style="flex:1; min-width:200px; border-radius:10px;">
+      <button class="ui-btn primary sm">Save</button>
+    </form>
+    <div class="sy-link-text mt-2">Another disk, a USB key that stays plugged in, or a folder that a service like OneDrive or Google Drive sends online. Leave it empty to keep one folder only.</div>
+    <div class="sy-safe-label">Who can get in</div>
+    <ul class="sy-safe-list">
+      <li>{{ accounts.people }} account{{ 's' if accounts.people != 1 }} can sign in, {{ accounts.sessions }} device{{ 's' if accounts.sessions != 1 }} signed in now. <a class="ui-link" href="/account">Your account and devices</a></li>
+      <li>Passwords are never kept: only a scrambled form that cannot be turned back. After several wrong tries, signing in is paused.</li>
+      <li>A candidate only ever gets personal links (level check, session, opinion); they open nothing else.</li>
+      <li>The mailbox password and the Firebase key stay on this computer and are never put in the copies.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ============ On your phone ============ -->
+<h2 class="sy-h" id="phone"><i class="bi bi-phone-fill"></i>On your phone</h2>
+<p class="sy-sub">The same application, laid out for a small screen: a bar at the bottom for the pages you use most, and the bell at the top.</p>
+<div class="sy-phone">
+  <svg viewBox="0 0 150 250" role="img" aria-hidden="true">
+    <ellipse cx="75" cy="236" rx="52" ry="8" fill="#ebe5f3"/>
+    <g class="bob">
+      <rect x="24" y="8" width="102" height="212" rx="20" fill="#2b1d49"/>
+      <rect x="31" y="16" width="88" height="196" rx="14" fill="#f6f3fb"/>
+      <rect x="39" y="26" width="72" height="34" rx="9" fill="#a42c67"/>
+      <rect x="46" y="35" width="34" height="5" rx="2.5" fill="#fff" opacity=".9"/><rect x="46" y="45" width="22" height="4" rx="2" fill="#fff" opacity=".6"/>
+      <circle cx="101" cy="43" r="7" fill="#fff" opacity=".25"/><circle cx="104" cy="38" r="3.5" fill="#f5b301"/>
+      <rect x="39" y="68" width="33" height="33" rx="9" fill="#fff"/><rect x="78" y="68" width="33" height="33" rx="9" fill="#fff"/>
+      <rect x="39" y="107" width="33" height="33" rx="9" fill="#fff"/><rect x="78" y="107" width="33" height="33" rx="9" fill="#fff"/>
+      <circle cx="55.5" cy="81" r="7" fill="#eef3ff"/><circle cx="94.5" cy="81" r="7" fill="#fef3c7"/><circle cx="55.5" cy="120" r="7" fill="#e9f9ef"/><circle cx="94.5" cy="120" r="7" fill="#fdf2f7"/>
+      <rect x="39" y="148" width="72" height="26" rx="9" fill="#fff"/><rect x="47" y="157" width="40" height="4" rx="2" fill="#ddd7ea"/><rect x="47" y="165" width="26" height="3" rx="1.5" fill="#ebe5f3"/>
+      <rect x="31" y="184" width="88" height="28" rx="0" fill="#fff"/><rect x="31" y="198" width="88" height="14" rx="14" fill="#fff"/>
+      <circle cx="47" cy="197" r="4.5" fill="#a42c67"/><circle cx="66" cy="197" r="4.5" fill="#ddd7ea"/><circle cx="85" cy="197" r="4.5" fill="#ddd7ea"/><circle cx="104" cy="197" r="4.5" fill="#ddd7ea"/>
+    </g>
+  </svg>
+  <ol class="sy-steps">
+    <li class="sy-step">
+      <span class="sy-step-no">1</span>
+      <div>
+        {% if phone.public %}
+        <b>Open this address on your phone, from anywhere</b>
+        <span>It is the address set in Settings.</span><br><span class="sy-address">{{ phone.public }}</span>
+        {% elif phone.address and phone.open %}
+        <b>Open this address on your phone, on the same Wi-Fi as this computer</b>
+        <span>The application answers on your network.</span><br><span class="sy-address">{{ phone.address }}</span>
+        {% elif phone.address %}
+        <b>Let your Wi-Fi reach the application</b>
+        <span>Today it only answers on this computer. Close the window where it runs, then double-click <span class="sy-file">start_for_phone.bat</span> in the application's folder (say yes if Windows asks to allow it on private networks). Your phone, on the same Wi-Fi, then opens:</span><br><span class="sy-address">{{ phone.address }}</span>
+        {% else %}
+        <b>Connect this computer to your Wi-Fi</b>
+        <span>It is not on a network right now, so a phone cannot reach it.</span>
+        {% endif %}
+      </div>
+    </li>
+    <li class="sy-step">
+      <span class="sy-step-no">2</span>
+      <div><b>Keep it on your home screen</b><span>In your phone's browser menu choose “Add to Home screen”: the application gets its own icon and opens like an app.</span></div>
+    </li>
+    <li class="sy-step">
+      <span class="sy-step-no">3</span>
+      <div><b>Notifications</b><span>The bell and its counter are live while the application is open on your phone, and a notification takes you to the exact place to look. To be warned when it is closed, the application needs a public address that starts with https{% if not phone.public %}: until then, your phone has to be on this Wi-Fi with the page open{% endif %}.</span></div>
+    </li>
+  </ol>
+</div>
+
+<!-- ============ Lately ============ -->
+<h2 class="sy-h"><i class="bi bi-clock-history"></i>Lately</h2>
+<p class="sy-sub">The last things it told you. Each one opens the place it is about.</p>
+<div class="sy-news" id="system-news">
+  {% for notif in recent %}
+  <a class="sy-new {{ 'is-new' if not notif.is_read }}" href="{{ notif.action_url or ('/candidate/' ~ notif.candidate_id if notif.candidate_id else '#') }}" data-spot="{{ notif.category }}">
+    <span class="sy-new-dot"></span>
+    <div style="min-width:0;"><b>{{ notif.title }}</b><span>{{ notif.message }}</span></div>
+    <time>{{ notif.created_at.strftime('%d %b %H:%M') if notif.created_at else '' }}</time>
+  </a>
+{% if notif.fix %}
+<div class="notif-fix" data-fix-for="{{ notif.id }}">
+  {% if notif.fix.method == "post" %}
+  <form method="post" action="{{ notif.fix.url }}" data-notif="{{ notif.id }}"{% if notif.fix.confirm %} data-confirm="{{ notif.fix.confirm }}"{% endif %}>
+    {% for field_name, field_value in notif.fix.fields.items() %}<input type="hidden" name="{{ field_name }}" value="{{ field_value }}">{% endfor %}
+    <button class="notif-fix-btn" type="submit"><i class="bi bi-lightning-charge-fill"></i>{{ notif.fix.label }}</button>
+  </form>
+  {% else %}<a class="notif-fix-btn" href="{{ notif.fix.url }}"><i class="bi bi-lightning-charge-fill"></i>{{ notif.fix.label }}</a>{% endif %}
+  <span>solves it from here</span>
+</div>
+{% endif %}
+  {% else %}
+  <div class="ui-empty my-2" style="border:0;"><i class="bi bi-bell-slash"></i><strong>Nothing yet</strong>What the application does will be listed here.</div>
+  {% endfor %}
+</div>
+
+<script>
+// The state of the work and of the connections is read again every 20 seconds.
+(() => {
+  const live = document.getElementById("system-live");
+  let busy = false;
+  window.setInterval(async () => {
+    if (busy || document.hidden) return;
+    busy = true;
+    try {
+      const response = await fetch("/system", { headers: { "X-Requested-With": "fetch" } });
+      if (response.ok) {
+        const fresh = new DOMParser().parseFromString(await response.text(), "text/html").getElementById("system-live");
+        if (fresh) live.innerHTML = fresh.innerHTML;
+      }
+    } catch (error) {}
+    busy = false;
+  }, 20000);
+})();
+</script>
+{% endblock %}

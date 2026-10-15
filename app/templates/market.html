@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}What the market asks · 9antra{% endblock %}
+{% block page_title %}What the market asks{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .mk-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:12px; }
+  .mk-back:hover { color:var(--primary-berry); }
+  .mk-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(340px, 1fr)); gap:16px; margin-bottom:30px; }
+  .mk-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px; display:flex; flex-direction:column; gap:12px; transition:box-shadow .18s ease, transform .18s ease; }
+  .mk-card:hover { box-shadow:var(--shadow-soft); transform:translateY(-2px); }
+  .mk-top { display:flex; gap:12px; align-items:center; }
+  .mk-name { font-weight:800; font-size:.96rem; color:var(--ink-text); text-decoration:none; line-height:1.25; }
+  .mk-name:hover { color:var(--primary-berry); }
+  .mk-sub { font-size:.74rem; color:var(--muted); margin-top:1px; }
+  .mk-ring { --pct:0; --ring:var(--muted); width:64px; height:64px; border-radius:50%; flex:none; margin-left:auto; display:grid; place-items:center; background:conic-gradient(var(--ring) calc(var(--pct) * 1%), #ebe5f3 0); }
+  .mk-ring div { width:48px; height:48px; border-radius:50%; background:#fff; display:grid; place-items:center; font-weight:800; font-size:.92rem; color:var(--ink-text); }
+  .mk-ring.good { --ring:var(--mint); } .mk-ring.mid { --ring:var(--accent-gold-dark); } .mk-ring.low { --ring:#e11d48; }
+  .mk-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin-bottom:5px; }
+  .mk-chips { display:flex; flex-wrap:wrap; gap:5px; }
+  .mk-chips .ui-chip { white-space:normal; text-align:left; }
+  .mk-h { font-weight:800; font-size:1.12rem; color:var(--ink-text); margin:0 0 3px; display:flex; align-items:center; gap:9px; }
+  .mk-h i { color:var(--primary-berry); }
+  .mk-p { font-size:.84rem; color:var(--muted); margin:0 0 14px; max-width:760px; }
+  .mk-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; margin-bottom:30px; }
+  .mk-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px 20px; min-width:0; }
+  .mk-box textarea { width:100%; border:1.5px solid var(--border-color); border-radius:14px; padding:11px 13px; font:inherit; font-size:.86rem; min-height:130px; resize:vertical; }
+  .mk-box textarea:focus, .mk-box input.form-control:focus { outline:none; border-color:var(--primary-berry); box-shadow:none; }
+  .mk-offer { display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--border-color); min-width:0; }
+  .mk-offer:first-of-type { border-top:0; }
+  .mk-offer b { display:block; font-size:.84rem; color:var(--ink-text); overflow-wrap:anywhere; } .mk-offer span { font-size:.74rem; color:var(--muted); }
+  .mk-offer a.title { text-decoration:none; color:inherit; } .mk-offer a.title:hover b { color:var(--primary-berry); }
+  .mk-offer form { margin:0 0 0 auto; flex:none; }
+  .mk-note { border-radius:14px; padding:11px 14px; font-size:.82rem; line-height:1.5; background:var(--sky-subtle); color:#1e3a8a; margin-top:12px; }
+  .mk-trends { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:6px 20px; margin-bottom:30px; }
+  .mk-trend { display:grid; grid-template-columns:minmax(150px, 1.1fr) minmax(90px, .9fr) minmax(0, 3fr); gap:14px; align-items:center; padding:13px 0; border-top:1px solid var(--border-color); }
+  .mk-trend:first-child { border-top:0; }
+  .mk-trend b { display:block; font-size:.9rem; color:var(--ink-text); } .mk-trend small { font-size:.74rem; color:var(--muted); }
+  .mk-bar { height:9px; border-radius:99px; background:#ebe5f3; overflow:hidden; } .mk-bar span { display:block; height:100%; border-radius:99px; background:var(--primary-berry); }
+  .mk-trend.is-new .mk-bar span { background:var(--accent-gold-dark); }
+  .mk-trend p { margin:5px 0 0; font-size:.78rem; color:#4a445e; line-height:1.45; }
+  @media (max-width: 900px) { .mk-two { grid-template-columns:minmax(0, 1fr); } .mk-trend { grid-template-columns:minmax(0, 1fr); gap:7px; } }
+  @media (max-width: 575px) { .mk-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<a href="/programs/all" class="mk-back"><i class="bi bi-arrow-left"></i>All programs</a>
+
+<div class="ui-head">
+  <div>
+    <h2>What employers ask, program by program</h2>
+    <p>Real job offers are read once a day, the skills each one names are counted, and each program is compared with them: what it already covers, what is missing, and what to add. Every figure is a count, shown with the number of offers behind it.</p>
+  </div>
+  <div class="ui-actions">
+    <a class="ui-btn" href="#paste"><i class="bi bi-clipboard-plus"></i>Paste an offer</a>
+    <form method="post" action="/programs/market/read" class="m-0">
+      <button class="ui-btn primary" {{ 'disabled' if not can_read }} title="{{ 'Reads four public job boards' if can_read else 'Read less than six hours ago' }}"><i class="bi bi-cloud-download"></i>Read the job market now</button>
+    </form>
+  </div>
+</div>
+
+<div class="ui-stats mb-3">
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-briefcase-fill"></i></div><div><div class="ui-stat-num">{{ total }}</div><div class="ui-stat-label">Offers read</div></div></div>
+  {% for source, count in sources.items() %}
+  <div class="ui-stat {{ 't-sky' if source == 'Public job boards' else 't-gold' if source == 'Pasted by you' else 't-mint' }}"><div class="ui-stat-ico"><i class="bi {{ 'bi-globe2' if source == 'Public job boards' else 'bi-clipboard-check' if source == 'Pasted by you' else 'bi-building' }}"></i></div><div><div class="ui-stat-num">{{ count }}</div><div class="ui-stat-label">{{ 'From public job boards' if source == 'Public job boards' else source if source == 'Pasted by you' else 'From 9antra.tn' }}</div></div></div>
+  {% endfor %}
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-clock-history"></i></div><div><div class="ui-stat-num" style="font-size:.95rem;">{{ last_read_local.strftime('%d %b, %H:%M') if last_read_local else 'Never' }}</div><div class="ui-stat-label">Job boards last read</div></div></div>
+</div>
+
+{% if trends %}
+<h3 class="mk-h" id="trends"><i class="bi bi-fire"></i>What the trade asks most</h3>
+<p class="mk-p">Every field by the number of offers read, whether you teach it or not. A field in gold has no program here: it is an idea for the catalogue.</p>
+<div class="mk-trends">
+  {% for trend in trends %}
+  <div class="mk-trend {{ '' if trend.taught else 'is-new' }}">
+    <div><b>{{ trend.name }}</b><small>{{ trend.offers }} offer{{ 's' if trend.offers != 1 }} · {{ trend.pct }}% of those read</small></div>
+    <div><div class="mk-bar" title="{{ trend.pct }}% of the offers read"><span style="width:{{ [trend.pct * 2, 100] | min }}%;"></span></div><small>{{ 'You teach it' if trend.taught else 'No program yet' }}</small></div>
+    <div style="min-width:0;">
+      <div class="mk-chips">{% for item in trend.skills %}<span class="ui-chip {{ 'muted' if trend.taught else 'warn' }}">{{ item.label }} · {{ item.pct }}%</span>{% endfor %}</div>
+      <p>{{ trend.advice }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<h3 class="mk-h"><i class="bi bi-journal-check"></i>Your programs against the offers</h3>
+<p class="mk-p">Open a program to see what to teach for each missing skill.</p>
+<div class="mk-grid">
+  {% for row in programs %}
+  <article class="mk-card" id="market-{{ row.program.id }}">
+    <div class="mk-top">
+      {{ ui.program_icon(row.icon, 46) }}
+      <div style="min-width:0;">
+        <a class="mk-name" href="/programs/{{ row.program.id }}#market">{{ row.program.name }}</a>
+        <div class="mk-sub">{% if row.offers %}{{ row.offers }} offer{{ 's' if row.offers != 1 }} in {{ row.field }}{% if not row.enough %} · too few to be sure{% endif %}{% elif row.field %}No offer of {{ row.field }} read yet{% else %}Field not recognised{% endif %}</div>
+      </div>
+      {% if row.fit is not none %}
+      <div class="mk-ring {{ 'good' if row.fit >= 70 else 'mid' if row.fit >= 45 else 'low' }}" style="--pct:{{ row.fit }};" title="Of what the offers ask, {{ row.fit }}% is already in the program"><div>{{ row.fit }}%</div></div>
+      {% endif %}
+    </div>
+    {% if row.add %}
+    <div><div class="mk-label">To add</div><div class="mk-chips">{% for item in row.add %}<span class="ui-chip warn" title="{{ item.count }} of {{ row.offers }} offers">{{ item.label }} · {{ item.pct }}%</span>{% endfor %}</div></div>
+    {% endif %}
+    {% if row.strengths %}
+    <div><div class="mk-label">Already taught and asked</div><div class="mk-chips">{% for item in row.strengths %}<span class="ui-chip ok">{{ item.label }} · {{ item.pct }}%</span>{% endfor %}</div></div>
+    {% endif %}
+    {% if not row.offers %}<div class="mk-sub">{{ row.advice[0] if row.advice }}</div>{% endif %}
+    <div class="d-flex gap-2 flex-wrap" style="margin-top:auto;">
+      <a class="ui-btn sm" href="/programs/{{ row.program.id }}#market"><i class="bi bi-eye"></i>The detail</a>
+      {% if row.search %}<a class="ui-btn ghost sm" href="{{ row.search.linkedin }}" target="_blank" rel="noopener noreferrer" title="Opens LinkedIn's own job search in your browser"><i class="bi bi-linkedin"></i>Search LinkedIn</a>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+</div>
+
+<div class="mk-two">
+  <section class="mk-box" id="paste">
+    <h3 class="mk-h"><i class="bi bi-clipboard-plus"></i>Add an offer from LinkedIn</h3>
+    <p class="mk-p">No program is allowed to read LinkedIn by itself. Open an offer there, copy its text, and paste it here: it is counted with the others at once.</p>
+    <form method="post" action="/programs/market/paste">
+      <input class="form-control mb-2" name="title" maxlength="200" placeholder="Title of the job (optional: the first line is taken)" aria-label="Title of the job" style="border-radius:12px; font-size:.86rem;">
+      <textarea name="text" required placeholder="Paste the offer here: what the job is and what it asks for." aria-label="Text of the offer"></textarea>
+      <button class="ui-btn primary mt-2"><i class="bi bi-plus-lg"></i>Add this offer</button>
+    </form>
+    {% if pasted %}
+    <div class="mk-label mt-3">Offers you pasted</div>
+    {% for row in pasted %}
+    <div class="mk-offer">
+      <div style="min-width:0;"><b>{{ row.title }}</b><span>{{ row.text[:110] }}…</span></div>
+      <form method="post" action="/programs/market/offers/{{ row.id }}/delete" data-confirm="Remove this offer from the analysis?"><button class="ui-btn ghost sm icon danger" aria-label="Remove this offer"><i class="bi bi-trash3"></i></button></form>
+    </div>
+    {% endfor %}
+    {% endif %}
+  </section>
+
+  <section class="mk-box">
+    <h3 class="mk-h"><i class="bi bi-briefcase"></i>The offers behind the figures</h3>
+    <p class="mk-p">The latest ones. {% if unsorted %}{{ unsorted }} name no field of the trade and count for nothing.{% endif %}</p>
+    {% for offer in latest %}
+    <div class="mk-offer">
+      <div style="min-width:0;">
+        {% if offer.url %}<a class="title" href="{{ offer.url }}" target="_blank" rel="noopener noreferrer"><b>{{ offer.title }}</b></a>{% else %}<b>{{ offer.title }}</b>{% endif %}
+        <span>{{ offer.company }}{% if offer.company and offer.location %} · {% endif %}{{ offer.location }}{% if offer.company or offer.location %} · {% endif %}{{ offer.source }}</span>
+      </div>
+    </div>
+    {% else %}
+    <div class="ui-empty" style="border:0;"><i class="bi bi-briefcase"></i><strong>No offer yet</strong>Read the job market, or paste an offer.</div>
+    {% endfor %}
+    <div class="mk-note">Offers come from four public job boards (Remotive, Arbeitnow, Jobicy and Himalayas) and from what you paste. 9antra's own internship offers are not counted: they are not the market. Paste offers from Tunisia to bring the figures closer to your candidates' market.</div>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,157 @@
+{# Small animated pictures that say what a part of the application does.
+   Colours follow the design's colour; motion stops for people who ask for less of it. #}
+{% macro scene(name) -%}
+<svg class="art" viewBox="0 0 200 140" role="img" aria-hidden="true" focusable="false">
+  <ellipse class="c-soft" cx="100" cy="76" rx="94" ry="58"/>
+  {% if name == "dashboard" %}
+  <rect class="c-white c-edge" x="40" y="24" width="120" height="90" rx="14"/>
+  <rect class="c-mute" x="54" y="36" width="48" height="6" rx="3"/>
+  <rect class="c-gold a-grow" x="58" y="64" width="18" height="38" rx="5"/>
+  <rect class="c-brand a-grow d1" x="84" y="50" width="18" height="52" rx="5"/>
+  <rect class="c-sky a-grow d2" x="110" y="72" width="18" height="30" rx="5"/>
+  <circle class="c-mint a-pulse" cx="142" cy="42" r="7"/>
+  <g class="a-float"><circle class="c-brand" cx="164" cy="30" r="14"/><path class="s-white" d="M158 30l4 4 8-9"/></g>
+  {% elif name == "candidates" %}
+  <g class="a-float"><rect class="c-white c-edge" x="24" y="40" width="46" height="66" rx="12"/><circle class="c-gold" cx="47" cy="60" r="10"/><rect class="c-mute" x="34" y="78" width="26" height="5" rx="2.5"/><rect class="c-mute" x="38" y="89" width="18" height="5" rx="2.5"/></g>
+  <g class="a-slide"><rect class="c-white c-edge" x="77" y="30" width="46" height="66" rx="12"/><circle class="c-brand" cx="100" cy="50" r="10"/><rect class="c-mute" x="87" y="68" width="26" height="5" rx="2.5"/><rect class="c-mute" x="91" y="79" width="18" height="5" rx="2.5"/></g>
+  <g class="a-float2"><rect class="c-white c-edge" x="130" y="40" width="46" height="66" rx="12"/><circle class="c-sky" cx="153" cy="60" r="10"/><rect class="c-mute" x="140" y="78" width="26" height="5" rx="2.5"/><rect class="c-mute" x="144" y="89" width="18" height="5" rx="2.5"/></g>
+  <g class="a-pop d1"><circle class="c-mint" cx="122" cy="32" r="11"/><path class="s-white" d="M116 32l4 4 8-9"/></g>
+  {% elif name == "classes" %}
+  <rect class="c-ink" x="48" y="20" width="104" height="52" rx="10"/>
+  <path class="s-white a-draw" style="--len:90" d="M62 54c10-22 20 12 30-6s18-8 30-12"/>
+  <circle class="c-gold a-pulse" cx="134" cy="36" r="5"/>
+  {% for index in range(10) %}
+  <circle class="c-mute" cx="{{ 58 + (index % 5) * 21 }}" cy="{{ 92 + (index // 5) * 22 }}" r="8"/>
+  {% if index < 7 %}<circle class="c-brand a-seat" style="animation-delay:{{ index * 0.35 }}s" cx="{{ 58 + (index % 5) * 21 }}" cy="{{ 92 + (index // 5) * 22 }}" r="8"/>{% endif %}
+  {% endfor %}
+  {% elif name == "programs" %}
+  <g class="a-float"><rect class="c-brand" x="50" y="50" width="24" height="62" rx="5"/><rect class="c-white" x="56" y="60" width="12" height="4" rx="2" opacity=".7"/>
+  <rect class="c-gold" x="78" y="36" width="24" height="76" rx="5"/><rect class="c-white" x="84" y="46" width="12" height="4" rx="2" opacity=".7"/>
+  <rect class="c-sky" x="106" y="58" width="24" height="54" rx="5"/><rect class="c-white" x="112" y="68" width="12" height="4" rx="2" opacity=".7"/></g>
+  <rect class="c-ink" x="40" y="112" width="100" height="6" rx="3"/>
+  <g class="a-pop"><circle class="c-mint" cx="156" cy="48" r="14"/><path class="s-white" d="M149 48l5 5 9-10"/></g>
+  <path class="c-gold a-pulse" d="M158 84l3 8 8 3-8 3-3 8-3-8-8-3 8-3z"/>
+  {% elif name == "course" %}
+  <g class="a-float"><rect class="c-white c-edge" x="24" y="36" width="52" height="68" rx="10"/><rect class="c-mute" x="34" y="50" width="32" height="5" rx="2.5"/><rect class="c-mute" x="34" y="62" width="26" height="5" rx="2.5"/><rect class="c-mute" x="34" y="74" width="30" height="5" rx="2.5"/><rect class="c-brand" x="34" y="88" width="18" height="7" rx="3.5"/></g>
+  <path class="s-brand a-draw" style="--len:40" d="M86 70h32"/><path class="s-brand" d="M112 62l8 8-8 8"/>
+  <g class="a-pop"><circle class="c-brand" cx="152" cy="62" r="26"/><text class="t-white" x="152" y="73" font-size="30" font-weight="800" text-anchor="middle">?</text></g>
+  <g class="a-pop d2"><circle class="c-gold" cx="176" cy="100" r="11"/><circle class="c-ink" cx="172" cy="98" r="1.6"/><circle class="c-ink" cx="180" cy="98" r="1.6"/><path class="s-ink-thin" d="M171 103c3 3 7 3 10 0"/></g>
+  {% elif name == "inbox" %}
+  <g class="a-float"><rect class="c-white c-edge" x="48" y="50" width="104" height="64" rx="12"/><path class="s-brand" d="M54 58l46 32 46-32"/></g>
+  <g class="a-slide"><rect class="c-gold" x="22" y="22" width="36" height="24" rx="6"/><path class="s-white" d="M27 27l13 9 13-9"/></g>
+  <g class="a-pop d2"><circle class="c-mint" cx="158" cy="42" r="13"/><path class="s-white" d="M151 42l5 5 9-10"/></g>
+  {% elif name == "payments" %}
+  <g class="a-float"><circle class="c-gold" cx="66" cy="76" r="32"/><circle class="s-white" cx="66" cy="76" r="23"/><text class="t-white" x="66" y="84" font-size="20" font-weight="800" text-anchor="middle">DT</text></g>
+  <g class="a-float2"><rect class="c-white c-edge" x="114" y="44" width="56" height="60" rx="12"/><rect class="c-brand" x="114" y="44" width="56" height="18" rx="9"/><text class="t-ink" x="142" y="94" font-size="26" font-weight="800" text-anchor="middle">3</text></g>
+  <g class="a-pulse"><circle class="c-brand" cx="106" cy="34" r="11"/><text class="t-white" x="106" y="39" font-size="13" font-weight="800" text-anchor="middle">1</text></g>
+  {% elif name == "website" %}
+  <g class="a-float"><circle class="c-sky" cx="52" cy="72" r="30"/><ellipse class="s-white" cx="52" cy="72" rx="12" ry="30"/><path class="s-white" d="M22 72h60M27 56h50M27 88h50"/></g>
+  <path class="s-brand a-draw" style="--len:36" d="M92 62h30"/><path class="s-brand" d="M117 55l7 7-7 7"/>
+  <path class="s-gold a-draw d2" style="--len:36" d="M122 86H92"/><path class="s-gold" d="M97 79l-7 7 7 7"/>
+  <g class="a-float2"><path class="c-ink" d="M132 50v46c0 6 10 10 22 10s22-4 22-10V50z"/><ellipse class="c-brand" cx="154" cy="50" rx="22" ry="9"/><path class="s-white" opacity=".45" d="M132 66c0 6 10 10 22 10s22-4 22-10M132 82c0 6 10 10 22 10s22-4 22-10"/></g>
+  {% elif name == "presence" %}
+  <rect class="c-white c-edge" x="48" y="20" width="104" height="100" rx="14"/>
+  <circle class="c-mintsoft" cx="68" cy="44" r="10"/><path class="s-mint a-draw" style="--len:20" d="M63 44l4 4 7-8"/><rect class="c-mute" x="88" y="40" width="48" height="7" rx="3.5"/>
+  <circle class="c-mintsoft" cx="68" cy="70" r="10"/><path class="s-mint a-draw d1" style="--len:20" d="M63 70l4 4 7-8"/><rect class="c-mute" x="88" y="66" width="38" height="7" rx="3.5"/>
+  <circle class="c-redsoft" cx="68" cy="96" r="10"/><path class="s-red a-draw d2" style="--len:26" d="M64 92l8 8M72 92l-8 8"/><rect class="c-mute" x="88" y="92" width="44" height="7" rx="3.5"/>
+  {% elif name == "settings" %}
+  <rect class="c-white c-edge" x="38" y="28" width="124" height="88" rx="14"/>
+  <rect class="c-mute" x="54" y="50" width="92" height="6" rx="3"/><circle class="c-brand a-knob" cx="84" cy="53" r="10"/>
+  <rect class="c-mute" x="54" y="72" width="92" height="6" rx="3"/><circle class="c-gold a-knob2" cx="118" cy="75" r="10"/>
+  <rect class="c-mute" x="54" y="94" width="92" height="6" rx="3"/><circle class="c-sky a-knob" style="animation-delay:-1.2s" cx="100" cy="97" r="10"/>
+  {% elif name == "quiz" %}
+  <rect class="c-white c-edge" x="44" y="18" width="112" height="106" rx="14"/>
+  <rect class="c-mute" x="58" y="32" width="72" height="7" rx="3.5"/>
+  <rect class="c-softer" x="58" y="50" width="84" height="16" rx="8"/><rect class="c-softer" x="58" y="72" width="84" height="16" rx="8"/><rect class="c-softer" x="58" y="94" width="84" height="16" rx="8"/>
+  <g class="a-pop"><rect class="c-brand" x="58" y="72" width="84" height="16" rx="8"/><path class="s-white" d="M126 80l4 4 7-8"/></g>
+  {% elif name == "feelings" %}
+  <g class="a-float"><circle class="c-redsoft" cx="52" cy="50" r="19"/><circle class="c-ink" cx="46" cy="46" r="2"/><circle class="c-ink" cx="58" cy="46" r="2"/><path class="s-ink-thin" d="M45 59c4-4 10-4 14 0"/></g>
+  <g class="a-float2"><circle class="c-goldsoft" cx="100" cy="42" r="19"/><circle class="c-ink" cx="94" cy="38" r="2"/><circle class="c-ink" cx="106" cy="38" r="2"/><path class="s-ink-thin" d="M93 49h14"/></g>
+  <g class="a-float"><circle class="c-mintsoft" cx="148" cy="50" r="19"/><circle class="c-ink" cx="142" cy="46" r="2"/><circle class="c-ink" cx="154" cy="46" r="2"/><path class="s-ink-thin" d="M141 54c4 5 10 5 14 0"/></g>
+  <path class="s-brand a-draw" style="--len:170" d="M30 112c22-26 36 8 58-10s36-20 78-18"/>
+  <circle class="c-brand a-pulse" cx="166" cy="84" r="5"/>
+  {% elif name == "whatsapp" %}
+  <g class="a-float"><path class="c-wa" d="M100 28c-27 0-48 20-48 45 0 9 3 17 8 24l-6 21 23-6c7 4 15 6 23 6 27 0 48-20 48-45s-21-45-48-45z"/><path class="s-white" d="M82 62c0 16 14 30 30 30"/><circle class="c-white" cx="82" cy="60" r="5"/><circle class="c-white" cx="114" cy="92" r="5"/></g>
+  <g class="a-pop d1"><circle class="c-brand" cx="156" cy="40" r="12"/><text class="t-white" x="156" y="45" font-size="13" font-weight="800" text-anchor="middle">1</text></g>
+  {% elif name == "sessions" %}
+  <g class="a-float"><rect class="c-white c-edge" x="34" y="30" width="86" height="84" rx="14"/><rect class="c-brand" x="34" y="30" width="86" height="24" rx="12"/><rect class="c-brand" x="34" y="44" width="86" height="10"/>
+  <circle class="c-white" cx="56" cy="30" r="4"/><circle class="c-white" cx="98" cy="30" r="4"/>
+  <text class="t-ink a-pop" x="77" y="96" font-size="30" font-weight="800" text-anchor="middle">15</text></g>
+  <g class="a-float2"><circle class="c-white c-edge" cx="146" cy="82" r="30"/><circle class="c-goldsoft" cx="146" cy="82" r="24"/>
+  <path class="s-ink-thin" d="M146 82v-15"/><path class="s-brand a-spin" style="transform-origin:146px 82px" d="M146 82l12 6"/><circle class="c-ink" cx="146" cy="82" r="3"/></g>
+  <g class="a-pop d2"><circle class="c-mint" cx="160" cy="36" r="11"/><path class="s-white" d="M154 36l4 4 8-9"/></g>
+  {% elif name == "news" %}
+  <g class="a-float"><circle class="c-sky" cx="70" cy="74" r="34"/><g class="a-spin-slow" style="transform-origin:70px 74px"><ellipse class="s-white" cx="70" cy="74" rx="14" ry="34"/></g><path class="s-white" d="M36 74h68M41 56h58M41 92h58"/></g>
+  <g class="a-pop"><rect class="c-white c-edge" x="118" y="26" width="58" height="22" rx="11"/><circle class="c-brand" cx="130" cy="37" r="5"/><rect class="c-mute" x="140" y="34" width="28" height="6" rx="3"/></g>
+  <g class="a-pop d1"><rect class="c-white c-edge" x="124" y="62" width="58" height="22" rx="11"/><circle class="c-gold" cx="136" cy="73" r="5"/><rect class="c-mute" x="146" y="70" width="28" height="6" rx="3"/></g>
+  <g class="a-pop d2"><rect class="c-white c-edge" x="118" y="98" width="58" height="22" rx="11"/><circle class="c-mint" cx="130" cy="109" r="5"/><rect class="c-mute" x="140" y="106" width="28" height="6" rx="3"/></g>
+  <path class="c-gold a-pulse" d="M104 26l3 7 7 3-7 3-3 7-3-7-7-3 7-3z"/>
+  {% elif name == "look" %}
+  <g class="a-float"><path class="c-white c-edge" d="M98 26c-36 0-62 24-62 52 0 22 18 36 36 36 10 0 12-8 8-14-4-7 0-14 10-14h16c20 0 36-12 36-30 0-17-20-30-44-30z"/>
+  <circle class="c-brand a-pulse" cx="70" cy="62" r="8"/><circle class="c-gold a-pulse d1" cx="96" cy="48" r="8"/><circle class="c-sky a-pulse d2" cx="124" cy="56" r="8"/><circle class="c-mint a-pulse" cx="60" cy="88" r="8"/></g>
+  <g class="a-swap-a"><circle class="c-gold" cx="164" cy="44" r="14"/></g>
+  <g class="a-swap-b"><circle class="c-ink" cx="164" cy="44" r="14"/><circle class="c-soft" cx="170" cy="38" r="12"/></g>
+  {% elif name == "language" %}
+  <g class="a-float"><path class="c-brand" d="M38 34h70a12 12 0 0 1 12 12v30a12 12 0 0 1-12 12H66l-16 14v-14H38a12 12 0 0 1-12-12V46a12 12 0 0 1 12-12z"/>
+  <text class="t-white a-swap-a" x="73" y="70" font-size="26" font-weight="800" text-anchor="middle">Fr</text><text class="t-white a-swap-b" x="73" y="72" font-size="28" font-weight="800" text-anchor="middle">ع</text></g>
+  <g class="a-float2"><path class="c-gold" d="M162 56h-58a12 12 0 0 0-12 12v26a12 12 0 0 0 12 12h40l14 12v-12h4a12 12 0 0 0 12-12V68a12 12 0 0 0-12-12z"/>
+  <text class="t-white a-swap-b" x="132" y="90" font-size="22" font-weight="800" text-anchor="middle">En</text><text class="t-white a-swap-a" x="132" y="90" font-size="22" font-weight="800" text-anchor="middle">Ar</text></g>
+  {% elif name == "team" %}
+  <g class="a-float"><circle class="c-gold" cx="62" cy="58" r="14"/><path class="c-gold" d="M38 104c0-16 11-26 24-26s24 10 24 26z"/></g>
+  <g class="a-float2"><circle class="c-brand" cx="100" cy="48" r="16"/><path class="c-brand" d="M72 104c0-19 13-30 28-30s28 11 28 30z"/></g>
+  <g class="a-float"><circle class="c-sky" cx="138" cy="58" r="14"/><path class="c-sky" d="M114 104c0-16 11-26 24-26s24 10 24 26z"/></g>
+  <g class="a-pop d1"><rect class="c-mint" x="150" y="22" width="30" height="24" rx="6"/><path class="s-mint" d="M157 22v-6a8 8 0 0 1 16 0v6"/><circle class="c-white" cx="165" cy="34" r="3"/></g>
+  {% elif name == "assistant" %}
+  <g class="a-float"><rect class="c-brand" x="56" y="40" width="76" height="62" rx="18"/><rect class="c-white" x="66" y="54" width="56" height="30" rx="12"/>
+  <g class="a-blink"><circle class="c-ink" cx="82" cy="69" r="5"/><circle class="c-ink" cx="106" cy="69" r="5"/></g>
+  <path class="s-brand" d="M94 40V28"/><circle class="c-gold a-pulse" cx="94" cy="24" r="6"/></g>
+  <g class="a-pop d1"><path class="c-white c-edge" d="M138 34h36a8 8 0 0 1 8 8v16a8 8 0 0 1-8 8h-20l-10 9v-9h-6a8 8 0 0 1-8-8V42a8 8 0 0 1 8-8z"/><circle class="c-mute" cx="146" cy="50" r="3"/><circle class="c-mute" cx="156" cy="50" r="3"/><circle class="c-mute" cx="166" cy="50" r="3"/></g>
+  {% elif name == "link" %}
+  <g class="a-float"><rect class="s-brand" x="40" y="58" width="56" height="28" rx="14" style="stroke-width:9"/><rect class="s-gold" x="84" y="58" width="56" height="28" rx="14" style="stroke-width:9"/></g>
+  <g class="a-pop d1"><circle class="c-sky" cx="160" cy="40" r="16"/><ellipse class="s-white" cx="160" cy="40" rx="6" ry="16"/><path class="s-white" d="M144 40h32"/></g>
+  {% elif name == "identity" %}
+  <g class="a-float"><rect class="c-white c-edge" x="40" y="34" width="120" height="76" rx="14"/><circle class="c-brand" cx="72" cy="72" r="18"/><text class="t-white" x="72" y="79" font-size="20" font-weight="800" text-anchor="middle">9</text>
+  <rect class="c-ink" x="98" y="58" width="48" height="8" rx="4"/><rect class="c-mute" x="98" y="74" width="34" height="6" rx="3"/></g>
+  <path class="c-gold a-pulse" d="M166 26l4 9 9 4-9 4-4 9-4-9-9-4 9-4z"/>
+  {% elif name == "safety" %}
+  <g class="a-float"><path class="c-mint" d="M100 22l44 16v30c0 28-19 46-44 54-25-8-44-26-44-54V38z"/><path class="s-white a-draw" style="--len:50" d="M80 72l14 14 26-28"/></g>
+  <g class="a-pop d2"><rect class="c-white c-edge" x="146" y="88" width="40" height="28" rx="6"/><rect class="c-mute" x="152" y="96" width="28" height="4" rx="2"/><rect class="c-mute" x="152" y="104" width="20" height="4" rx="2"/></g>
+  {% elif name == "data" %}
+  <rect class="c-white c-edge" x="34" y="28" width="132" height="88" rx="12"/><rect class="c-brand" x="34" y="28" width="132" height="20" rx="10"/><rect class="c-brand" x="34" y="38" width="132" height="10"/>
+  {% for row in range(3) %}<rect class="c-mute" x="46" y="{{ 58 + row * 18 }}" width="34" height="8" rx="4"/><rect class="c-mute" x="88" y="{{ 58 + row * 18 }}" width="62" height="8" rx="4"/>{% endfor %}
+  <g class="a-slide"><path class="c-gold" d="M150 96l18-18 8 8-18 18-10 2z"/></g>
+  {% else %}
+  <g class="a-float"><circle class="c-brand" cx="100" cy="72" r="30"/><path class="s-white" d="M88 72l8 8 16-18"/></g>
+  {% endif %}
+</svg>
+{%- endmacro %}
+
+{# The top of a page: what it is for, in a picture and three steps.
+   guide = {"key", "art", "title", "text", "steps": [(icon, title, text)]} #}
+{% macro intro(guide) -%}
+<section class="guide" id="pageGuide" data-guide="{{ guide.key }}" aria-label="How this page works">
+  <div class="guide-art">{{ scene(guide.art) }}</div>
+  <div class="guide-body">
+    <div class="guide-kicker"><i class="bi bi-signpost-2"></i>How this page works</div>
+    <h3 class="guide-title">{{ guide.title }}</h3>
+    <p class="guide-text">{{ guide.text }}</p>
+    <ol class="guide-steps">
+      {% for icon, title, text in guide.steps %}
+      <li class="guide-step" style="--step:{{ loop.index0 }};">
+        <span class="guide-step-ico"><i class="bi {{ icon }}"></i></span>
+        <span><b>{{ title }}</b><small>{{ text }}</small></span>
+      </li>
+      {% if not loop.last %}<li class="guide-arrow" style="--step:{{ loop.index0 }};" aria-hidden="true"><span></span></li>{% endif %}
+      {% endfor %}
+    </ol>
+  </div>
+  <button type="button" class="guide-close" data-guide-hide title="Hide this explanation. The “?” at the top of the page brings it back." aria-label="Hide this explanation"><i class="bi bi-x-lg"></i></button>
+</section>
+<script>
+  // Hidden before it is painted when the admin closed it on this browser.
+  (() => {
+    const guide = document.getElementById("pageGuide");
+    try { if (localStorage.getItem("guide:" + guide.dataset.guide) === "hidden") guide.hidden = true; } catch (error) {}
+  })();
+</script>
+{%- endmacro %}

@@ -1,0 +1,737 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Programs · 9antra{% endblock %}
+{% block page_title %}Programs{% endblock %}
+{% block live_topics %}programs{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .pg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:16px; }
+  .pg-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; display:flex; flex-direction:column; transition:box-shadow .18s ease, border-color .18s ease, transform .18s ease; }
+  .pg-card:hover { border-color:#dccfe9; box-shadow:var(--shadow-soft); transform:translateY(-3px); }
+  .pg-card.needs-you { border-color:#f1d9a5; }
+  /* The cover: the program's picture on its own colour. */
+  .pg-cover { position:relative; height:128px; background:linear-gradient(120deg, var(--soft) 0%, #fff 130%); overflow:hidden; display:block; border-radius:21px 21px 0 0; }
+  .pg-cover::before { content:""; position:absolute; right:-40px; top:-60px; width:190px; height:190px; border-radius:50%; background:var(--tone); opacity:.13; transition:transform .5s ease; }
+  .pg-cover::after { content:""; position:absolute; left:-30px; bottom:-50px; width:120px; height:120px; border-radius:50%; background:var(--tone); opacity:.08; transition:transform .5s ease; }
+  .pg-card:hover .pg-cover::before { transform:scale(1.15) translate(-8px, 6px); }
+  .pg-card:hover .pg-cover::after { transform:scale(1.2); }
+  .pg-cover-link { position:absolute; inset:0; display:grid; place-items:center; text-decoration:none; }
+  .pg-cover-tile { width:82px; height:82px; border-radius:26px; background:#fff; display:grid; place-items:center; font-weight:800; font-size:1.7rem; color:var(--tone); box-shadow:0 20px 34px -20px var(--tone); position:relative; z-index:1; transition:transform .3s cubic-bezier(.2,.9,.3,1.3); }
+  .pg-cover-tile img { width:60%; height:60%; object-fit:contain; }
+  .pg-card:hover .pg-cover-tile { transform:translateY(-4px) rotate(-4deg) scale(1.05); }
+  .pg-cover-state { position:absolute; right:12px; top:12px; z-index:2; }
+  .pg-cover-state .ui-chip { background:rgba(255,255,255,.94); box-shadow:0 6px 14px -8px rgba(36,26,56,.4); }
+  .pg-cover-state .ui-chip.ok { color:var(--mint); } .pg-cover-state .ui-chip.warn { color:var(--gold-dark); }
+  .pg-cover-edit { position:absolute; left:12px; top:12px; z-index:2; width:30px; height:30px; border-radius:50%; border:0; background:rgba(255,255,255,.94); color:#5b5670; display:grid; place-items:center; font-size:.72rem; cursor:pointer; opacity:0; transition:opacity .15s ease; }
+  .pg-card:hover .pg-cover-edit, .pg-cover-edit:focus-visible { opacity:1; }
+  .pg-cover-edit:hover { color:var(--primary-berry); }
+  .pg-cover-edit:focus-visible { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  @media (hover: none) { .pg-cover-edit { opacity:1; } }
+  .pg-top { display:flex; gap:14px; padding:16px 18px 0; align-items:flex-start; }
+  .pg-icon-btn { position:relative; border:0; background:none; padding:0; cursor:pointer; border-radius:16px; flex:none; }
+  .pg-icon-btn:focus-visible { outline:2px solid var(--primary-berry); outline-offset:3px; }
+  .pg-icon-edit { position:absolute; right:-6px; bottom:-6px; width:22px; height:22px; border-radius:50%; background:var(--ink-2); color:#fff; display:grid; place-items:center; font-size:.62rem; opacity:0; transform:scale(.8); transition:opacity .15s ease, transform .15s ease; border:2px solid #fff; }
+  .pg-icon-btn:hover .pg-icon-edit, .pg-icon-btn:focus-visible .pg-icon-edit { opacity:1; transform:scale(1); }
+  .pg-name { font-weight:800; font-size:1rem; color:var(--ink-text); line-height:1.25; text-decoration:none; display:block; }
+  .pg-name:hover { color:var(--primary-berry); }
+  .pg-desc { font-size:.8rem; color:#6b6680; line-height:1.5; margin-top:5px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; min-height:2.4em; }
+  .pg-desc.is-missing { color:#b0a9c2; font-style:italic; }
+  .pg-facts { display:flex; flex-wrap:wrap; gap:6px 14px; padding:14px 18px 0; font-size:.76rem; color:#5b5670; font-weight:600; }
+  .pg-facts span { display:inline-flex; align-items:center; gap:5px; }
+  .pg-facts i { color:#a79fbd; }
+  .pg-facts .is-missing { color:#c2bbd2; font-weight:500; }
+  .pg-money { display:grid; grid-template-columns:1fr 1fr 1.2fr; gap:8px; padding:14px 18px 0; }
+  .pg-box { background:#faf8fd; border-radius:12px; padding:9px 11px; }
+  .pg-box-label { font-size:.64rem; font-weight:700; color:#9b95b0; text-transform:uppercase; letter-spacing:.04em; }
+  .pg-box-value { font-weight:800; font-size:.9rem; color:var(--ink-text); margin-top:1px; }
+  .pg-box-value small { font-weight:600; color:var(--muted); font-size:.7rem; }
+  .pg-assist { margin:14px 18px 0; border-radius:14px; padding:11px 13px; background:linear-gradient(135deg, #fffaf0, #fff6fb); border:1px solid #f4e3c0; }
+  .pg-assist-title { font-size:.74rem; font-weight:800; color:var(--gold-dark); display:flex; align-items:center; gap:6px; }
+  .pg-assist-text { font-size:.76rem; color:#6b6680; margin:3px 0 9px; line-height:1.45; }
+  .pg-assist form { margin:0; display:inline; }
+  .pg-foot { display:flex; gap:6px; align-items:center; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; }
+  .pg-foot form { margin:0; }
+  .pg-banner { border-radius:20px; padding:18px 20px; margin-bottom:16px; display:flex; gap:16px; align-items:center; flex-wrap:wrap; background:linear-gradient(120deg, #2b1d49, #5a2a6e 60%, #a42c67); color:#fff; }
+  .pg-banner-ico { width:46px; height:46px; border-radius:14px; background:rgba(255,255,255,.16); display:grid; place-items:center; font-size:1.3rem; flex:none; }
+  .pg-banner h3 { font-size:1.02rem; font-weight:800; margin:0; }
+  .pg-banner p { margin:3px 0 0; font-size:.82rem; color:rgba(255,255,255,.82); max-width:760px; line-height:1.5; }
+  .pg-banner .ui-btn { border-color:transparent; }
+
+  /* Review of a proposal */
+  .rv-source { font-size:.7rem; color:var(--muted); margin-top:3px; display:flex; align-items:center; gap:5px; }
+  .rv-source i { color:var(--accent-gold-dark); }
+  .rv-level { border:1px solid var(--border-color); border-radius:16px; padding:14px; margin-top:12px; background:#fcfbfe; }
+  .rv-week { display:grid; grid-template-columns:64px 1fr; gap:10px; align-items:start; padding-top:10px; margin-top:10px; border-top:1px dashed #e4ddf0; }
+  .rv-week-no { font-size:.7rem; font-weight:800; color:var(--primary-berry); background:var(--berry-subtle); border-radius:9px; padding:6px 0; text-align:center; margin-top:2px; }
+  .rv-note { border-radius:14px; padding:11px 13px; font-size:.8rem; line-height:1.5; }
+  .rv-note.info { background:var(--sky-subtle); color:#1e3a8a; }
+  .rv-note.warn { background:var(--gold-subtle); color:#7c4a03; }
+
+  /* Picture chooser */
+  .ic-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(62px, 1fr)); gap:8px; max-height:300px; overflow:auto; padding:2px; }
+  .ic-choice { border:1px solid var(--border-color); background:#fff; border-radius:14px; aspect-ratio:1; display:grid; place-items:center; cursor:pointer; padding:0; transition:border-color .12s ease, transform .12s ease; }
+  .ic-choice:hover, .ic-choice:focus-visible { border-color:var(--primary-berry); transform:scale(1.05); outline:none; }
+  .ic-choice img { width:58%; height:58%; object-fit:contain; }
+
+  /* Duplicates */
+  .fu-pair { border:1px solid var(--border-color); border-radius:16px; padding:14px; margin-top:10px; }
+  .fu-sides { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; }
+  .fu-side { background:#faf8fd; border-radius:12px; padding:10px 12px; min-width:0; }
+  .fu-side.keep { background:var(--mint-subtle); }
+  .fu-side-label { font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#9b95b0; }
+  .fu-side.keep .fu-side-label { color:var(--mint); }
+  .fu-side-name { font-weight:800; font-size:.86rem; color:var(--ink-text); overflow-wrap:anywhere; }
+  .fu-side-desc { font-size:.74rem; color:#6b6680; margin-top:2px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  @media (max-width: 575px) { .pg-grid { grid-template-columns:1fr; } .fu-sides { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div>
+    <h2>Training programs</h2>
+    <p>Your catalogue. When a program arrives with only a name, the assistant prepares the rest and asks you to confirm it.</p>
+  </div>
+  <div class="ui-actions">
+    <a href="/programs/market" class="ui-btn"><i class="bi bi-graph-up-arrow"></i>What the market asks</a>
+    <button type="button" class="ui-btn" onclick="Fusion.open()"><i class="bi bi-intersect"></i>Find duplicates</button>
+    <a href="/programs/upload" class="ui-btn"><i class="bi bi-file-earmark-arrow-up"></i>Import a PDF</a>
+    <div class="dropdown">
+      <button type="button" class="ui-btn" data-bs-toggle="dropdown" aria-expanded="false" title="Every program with its details, in one PDF"><i class="bi bi-file-earmark-pdf"></i>All programs as PDF</button>
+      <div class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-2" style="min-width:260px;">
+        <div class="dropdown-header small fw-bold">In short (2–3 pages)</div>
+        <a class="dropdown-item rounded-3 small fw-semibold" href="/programs/summary.pdf?lang=fr" target="_blank" rel="noopener"><i class="bi bi-lightning-charge me-2"></i>Open the summary</a>
+        <form method="post" action="/programs/catalogue/send" class="m-0"><input type="hidden" name="lang" value="fr"><input type="hidden" name="kind" value="summary">
+          <button class="dropdown-item rounded-3 small fw-semibold" title="The email is prepared with the PDF attached: you choose who receives it, read it, then send"><i class="bi bi-envelope-paper me-2"></i>Send the summary by email…</button>
+        </form>
+        <div class="dropdown-header small fw-bold mt-1">In detail, week by week</div>
+        <a class="dropdown-item rounded-3 small fw-semibold" href="/programs/catalogue.pdf?lang=fr" target="_blank" rel="noopener"><i class="bi bi-eye me-2"></i>Open it, in French</a>
+        <a class="dropdown-item rounded-3 small fw-semibold" href="/programs/catalogue.pdf?lang=en" target="_blank" rel="noopener"><i class="bi bi-eye me-2"></i>Open it, in English</a>
+        <a class="dropdown-item rounded-3 small fw-semibold" href="/programs/catalogue.pdf?lang=fr&download=1"><i class="bi bi-download me-2"></i>Download it</a>
+        <form method="post" action="/programs/catalogue/send" class="m-0"><input type="hidden" name="lang" value="fr">
+          <button class="dropdown-item rounded-3 small fw-semibold" title="The email is prepared with the PDF attached: you choose who receives it, read it, then send"><i class="bi bi-envelope-paper me-2"></i>Send it by email…</button>
+        </form>
+        <div class="dropdown-divider"></div>
+        <a class="dropdown-item rounded-3 small fw-semibold" href="/programs/documents#write"><i class="bi bi-pencil-square me-2"></i>Any information as a PDF…</a>
+      </div>
+    </div>
+    <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#addProgramModal"><i class="bi bi-plus-lg"></i>Add a program</button>
+  </div>
+</div>
+
+<div id="live-program-summary" data-live-region>
+  {% if stats.incomplete %}
+  <div class="pg-banner">
+    <div class="pg-banner-ico"><i class="bi bi-magic"></i></div>
+    <div class="flex-grow-1">
+      <h3>{{ stats.incomplete }} program{{ 's' if stats.incomplete != 1 }} {{ 'are' if stats.incomplete != 1 else 'is' }} missing details</h3>
+      <p>
+        {% if stats.to_review %}{{ stats.to_review }} proposal{{ 's' if stats.to_review != 1 }} {{ 'are' if stats.to_review != 1 else 'is' }} ready for you to read.{% endif %}
+        {% if stats.writing %}{{ stats.writing }} {{ 'are' if stats.writing != 1 else 'is' }} being prepared; this page updates by itself.{% endif %}
+        {% if not stats.to_review and not stats.writing %}Ask for a proposal on a program's card.{% endif %}
+        Hours and duration come from your other programs; the description and weekly plan are written by the assistant. Nothing is saved until you accept.
+        {% if not model_ready %}<br><strong>The assistant is not answering right now</strong>, so descriptions and plans cannot be written until it runs.{% endif %}
+      </p>
+    </div>
+    {% set first_ready = cards | selectattr('proposal') | selectattr('proposal.status', 'equalto', 'ready') | first %}
+    {% if first_ready %}
+    <a class="ui-btn" href="/programs/all?review={{ first_ready.program.id }}"><i class="bi bi-eye"></i>Review {{ 'the first one' if stats.to_review > 1 else 'it' }}</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <div class="ui-stats mb-3">
+    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-journal-bookmark-fill"></i></div><div><div class="ui-stat-num">{{ stats.total }}</div><div class="ui-stat-label">Programs</div></div></div>
+    <div class="ui-stat t-mint"><div class="ui-stat-ico"><i class="bi bi-check2-circle"></i></div><div><div class="ui-stat-num">{{ stats.complete }}</div><div class="ui-stat-label">Complete</div></div></div>
+    <div class="ui-stat t-gold"><div class="ui-stat-ico"><i class="bi bi-magic"></i></div><div><div class="ui-stat-num">{{ stats.incomplete }}</div><div class="ui-stat-label">Missing details</div></div></div>
+    <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people-fill"></i></div><div><div class="ui-stat-num">{{ stats.registrations }}</div><div class="ui-stat-label">Registrations</div></div></div>
+  </div>
+</div>
+
+<div class="ui-toolbar">
+  <div class="ui-search">
+    <i class="bi bi-search"></i>
+    <input type="search" id="programSearch" placeholder="Search a program…" autocomplete="off" aria-label="Search a program">
+  </div>
+  <div class="ui-pills" id="programFilters" role="group" aria-label="Show">
+    <button type="button" class="ui-pill {{ 'is-active' if status_filter not in ('incomplete', 'pending', 'complete') }}" data-filter="all">All</button>
+    <button type="button" class="ui-pill {{ 'is-active' if status_filter == 'complete' }}" data-filter="complete">Complete</button>
+    <button type="button" class="ui-pill {{ 'is-active' if status_filter == 'incomplete' }}" data-filter="incomplete">Missing details</button>
+    <button type="button" class="ui-pill {{ 'is-active' if status_filter == 'pending' }}" data-filter="pending">To approve</button>
+  </div>
+  <span class="ui-count" id="programCount"></span>
+</div>
+
+<div id="live-program-grid" data-live-region>
+  {% if cards %}
+  <div class="pg-grid" id="programGrid">
+    {% for card in cards %}
+    {% set prog = card.program %}
+    {% set proposal = card.proposal %}
+    <article class="pg-card {{ 'needs-you' if proposal and proposal.status == 'ready' }}" id="program-{{ prog.id }}"
+             style="--tone:{{ card.cover.colour }}; --soft:{{ card.cover.soft }};"
+             data-search="{{ ((prog.name or '') ~ ' ' ~ (prog.description or '')) | lower }}"
+             data-complete="{{ '0' if card.missing else '1' }}" data-approved="{{ '1' if prog.is_approved else '0' }}">
+      <div class="pg-cover">
+        <a class="pg-cover-link" href="/programs/{{ prog.id }}" aria-label="Open {{ prog.name }}">
+          <span class="pg-cover-tile">{% if card.icon.url %}<img src="{{ card.icon.url }}" alt="" loading="lazy">{% else %}{{ card.icon.initials }}{% endif %}</span>
+        </a>
+        <button type="button" class="pg-cover-edit" title="Change the picture" aria-label="Change the picture of {{ prog.name }}"
+                data-icon-for="{{ prog.id }}" data-name="{{ prog.name }}" data-url="{{ card.icon.url or '' }}" data-ref="{{ card.icon.ref or '' }}"><i class="bi bi-pencil-fill"></i></button>
+        <span class="pg-cover-state">
+          {% if not prog.is_approved %}<span class="ui-chip warn"><span class="ui-dot"></span>To approve</span>
+          {% elif card.missing %}<span class="ui-chip muted">Incomplete</span>
+          {% else %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Complete</span>{% endif %}
+        </span>
+      </div>
+      <div class="pg-top">
+        <div class="flex-grow-1" style="min-width:0;">
+          <a class="pg-name" href="/programs/{{ prog.id }}">{{ prog.name or "Unnamed program" }}</a>
+          <div class="pg-desc {{ 'is-missing' if not prog.description }}">{{ prog.description or "No description yet." }}</div>
+        </div>
+      </div>
+
+      <div class="pg-facts">
+        <span class="{{ 'is-missing' if not prog.total_duration_days }}"><i class="bi bi-calendar3"></i>{{ (prog.total_duration_days ~ ' days') if prog.total_duration_days else 'Duration not set' }}</span>
+        <span class="{{ 'is-missing' if not prog.hours_per_week }}"><i class="bi bi-clock"></i>{{ (prog.hours_per_week ~ ' h / week') if prog.hours_per_week else 'Hours not set' }}</span>
+        <span class="{{ 'is-missing' if not card.weeks }}"><i class="bi bi-list-check"></i>{{ (card.weeks ~ ' weeks planned') if card.weeks else 'No weekly plan' }}</span>
+      </div>
+
+      <div class="pg-money">
+        <div class="pg-box"><div class="pg-box-label">Online</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_online or 0) }} <small>DT</small></div></div>
+        <div class="pg-box"><div class="pg-box-label">On site</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_onsite or 0) }} <small>DT</small></div></div>
+        <div class="pg-box"><div class="pg-box-label">Candidates</div><div class="pg-box-value">{{ card.registrations }} <small>{% if card.registrations %}· {{ card.paid }} paid{% endif %}{% if card.classes %} · {{ card.classes }} class{{ 'es' if card.classes != 1 }}{% endif %}</small></div></div>
+      </div>
+
+      {% if card.missing %}
+      <div class="pg-assist">
+        {% if proposal and proposal.status == 'ready' %}
+        <div class="pg-assist-title"><i class="bi bi-magic"></i>Proposal ready</div>
+        <div class="pg-assist-text">For: {{ card.missing | join(', ') | lower }}.</div>
+        <a class="ui-btn primary sm" href="/programs/all?review={{ prog.id }}"><i class="bi bi-eye"></i>Read and confirm</a>
+        {% elif proposal and proposal.status in ('queued', 'writing') %}
+        <div class="pg-assist-title"><span class="ui-spin"></span>{{ 'Being written now' if proposal.status == 'writing' else 'Waiting to be written' }}</div>
+        <div class="pg-assist-text mb-0">The assistant is preparing {{ card.missing | join(', ') | lower }}. A proposal takes a few minutes.</div>
+        {% elif proposal and proposal.status == 'failed' %}
+        <div class="pg-assist-title" style="color:#be123c;"><i class="bi bi-exclamation-triangle"></i>The proposal could not be prepared</div>
+        <div class="pg-assist-text">{{ proposal.error }}</div>
+        <form method="post" action="/programs/{{ prog.id }}/proposal/request"><button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Try again</button></form>
+        {% else %}
+        <div class="pg-assist-title"><i class="bi bi-magic"></i>Missing details</div>
+        <div class="pg-assist-text">{{ card.missing | join(', ') }}.</div>
+        <form method="post" action="/programs/{{ prog.id }}/proposal/request"><button class="ui-btn soft sm"><i class="bi bi-stars"></i>Propose them</button></form>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <div class="pg-foot">
+        <a href="/programs/{{ prog.id }}" class="ui-btn sm"><i class="bi bi-eye"></i>Open</a>
+        {% if not prog.is_approved %}
+        <button type="button" class="ui-btn good sm" data-approve="{{ prog.id }}"><i class="bi bi-check2"></i>Approve</button>
+        {% endif %}
+        <div class="dropdown ms-auto">
+          <button class="ui-btn ghost sm icon" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="More actions for {{ prog.name }}"><i class="bi bi-three-dots"></i></button>
+          <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 p-2" style="font-size:.84rem;">
+            <li><a class="dropdown-item rounded-3" href="/programs/{{ prog.id }}/pdf"><i class="bi bi-file-earmark-pdf me-2"></i>Download or send as a PDF</a></li>
+            <li><button class="dropdown-item rounded-3" type="button" data-icon-for="{{ prog.id }}" data-name="{{ prog.name }}" data-url="{{ card.icon.url or '' }}" data-ref="{{ card.icon.ref or '' }}"><i class="bi bi-image me-2"></i>Change the picture</button></li>
+            <li><button class="dropdown-item rounded-3" type="button" data-duplicates-of="{{ prog.id }}" data-name="{{ prog.name }}"><i class="bi bi-intersect me-2"></i>Look for its duplicates</button></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <form method="post" action="/programs/{{ prog.id }}/delete"
+                    data-confirm="Delete “{{ prog.name }}”? Its weekly plan{% if card.classes %} and its {{ card.classes }} class(es){% endif %} are deleted with it. This cannot be undone.">
+                <button class="dropdown-item rounded-3 text-danger" type="submit"><i class="bi bi-trash3 me-2"></i>Delete</button>
+              </form>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <div class="ui-empty mt-3 d-none" id="programNoMatch"><i class="bi bi-search"></i><strong>No program matches</strong>Try other words, or show all programs.</div>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong>Add your first program, or import your catalogue from a PDF.</div>
+  {% endif %}
+</div>
+
+<!-- ============ Review a proposal ============ -->
+{% if review %}
+{% set prog = review.program %}
+{% set proposal = review.proposal %}
+<div class="modal fade ui-modal" id="reviewModal" tabindex="-1" aria-labelledby="reviewTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-3">
+          {{ ui.program_icon(review.icon, 44) }}
+          <div>
+            <h5 class="modal-title" id="reviewTitle">{{ prog.name }}</h5>
+            <div class="ui-card-sub">Proposal for the missing details</div>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      {% if not review.missing %}
+      <div class="modal-body"><div class="ui-empty"><i class="bi bi-check2-circle"></i><strong>Nothing is missing</strong>This program has all its details.</div></div>
+      {% elif not proposal %}
+      <div class="modal-body">
+        <div class="ui-empty"><i class="bi bi-magic"></i><strong>No proposal yet</strong>Missing: {{ review.missing | join(', ') | lower }}.</div>
+      </div>
+      <div class="modal-footer">
+        <form method="post" action="/programs/{{ prog.id }}/proposal/request" class="m-0"><button class="ui-btn primary"><i class="bi bi-stars"></i>Propose the missing details</button></form>
+      </div>
+      {% elif proposal.status in ('queued', 'writing') %}
+      <div class="modal-body">
+        <div class="ui-empty"><span class="ui-spin" style="width:22px;height:22px;margin-bottom:10px;"></span><strong>The proposal is being prepared</strong>It takes a few minutes. You will get a notification, and the program's card will show “Proposal ready”.</div>
+      </div>
+      {% elif proposal.status == 'failed' %}
+      <div class="modal-body"><div class="rv-note warn"><strong>The proposal could not be prepared.</strong> {{ proposal.error }}</div></div>
+      <div class="modal-footer">
+        <form method="post" action="/programs/{{ prog.id }}/proposal/request" class="m-0"><button class="ui-btn primary"><i class="bi bi-arrow-repeat"></i>Try again</button></form>
+      </div>
+      {% else %}
+      {% set data = proposal.details %}
+      {% set basis = proposal.sources %}
+      <form method="post" action="/programs/{{ prog.id }}/proposal/accept" id="reviewForm" class="d-contents" style="display:contents;">
+      <div class="modal-body">
+        <div class="rv-note info mb-3">
+          <i class="bi bi-info-circle me-1"></i>
+          Correct anything below, then accept. Only what the program is missing is filled in; prices are never changed.
+          Text written by the assistant can contain mistakes: read it as you would a colleague's draft.
+        </div>
+        {% if basis.similar %}
+        <div class="rv-note warn mb-3">
+          <i class="bi bi-intersect me-1"></i>
+          This program looks close to <strong>{{ basis.similar.name }}</strong>. If it is the same training under another name, merge them instead of completing both:
+          <button type="button" class="ui-btn sm ms-1" data-duplicates-of="{{ prog.id }}" data-name="{{ prog.name }}" data-bs-dismiss="modal">Compare them</button>
+        </div>
+        {% endif %}
+        {% if basis.text_error %}
+        <div class="rv-note warn mb-3"><i class="bi bi-exclamation-triangle me-1"></i>{{ basis.text_error }} You can accept the rest now and ask again later.</div>
+        {% endif %}
+
+        {% if 'description' in data %}
+        <div class="ui-field mb-3">
+          <label for="rv-description">Description</label>
+          <textarea class="form-control" id="rv-description" name="description" rows="3">{{ data.description }}</textarea>
+          <div class="rv-source"><i class="bi bi-stars"></i>{{ basis.description }}</div>
+        </div>
+        {% endif %}
+
+        {% set numbers = [('total_duration_days', 'Duration', 'days'), ('hours_per_week', 'Hours per week', 'h'), ('training_hours', 'Training', 'h'), ('supervision_hours', 'Supervision', 'h')] %}
+        <div class="row g-3">
+          {% for key, label, unit in numbers %}{% if key in data %}
+          <div class="col-6 col-md-3 ui-field">
+            <label for="rv-{{ key }}">{{ label }}</label>
+            <div class="input-group input-group-sm">
+              <input class="form-control" id="rv-{{ key }}" name="{{ key }}" type="number" min="1" value="{{ data[key] }}">
+              <span class="input-group-text" style="border-radius:0 11px 11px 0; font-size:.74rem;">{{ unit }}</span>
+            </div>
+            <div class="rv-source"><i class="bi bi-diagram-3"></i>{{ basis[key] }}</div>
+          </div>
+          {% endif %}{% endfor %}
+          {% if 'class_session_time' in data %}
+          <div class="col-12 ui-field">
+            <label for="rv-session">Session time</label>
+            <input class="form-control" id="rv-session" name="class_session_time" value="{{ data.class_session_time }}">
+            <div class="rv-source"><i class="bi bi-diagram-3"></i>{{ basis.class_session_time }}</div>
+          </div>
+          {% endif %}
+        </div>
+
+        {% if data.levels %}
+        <div class="d-flex justify-content-between align-items-end mt-4">
+          <div>
+            <div class="ui-card-title"><i class="bi bi-list-check"></i>Week-by-week plan</div>
+            <div class="rv-source"><i class="bi bi-stars"></i>{{ basis.curriculum }}</div>
+          </div>
+          <span class="ui-card-sub">Empty a week's topic to leave that week out.</span>
+        </div>
+        {% for level in data.levels %}
+        {% set level_index = loop.index0 %}
+        <div class="rv-level">
+          <div class="row g-2">
+            <div class="col-md-5 ui-field"><label for="rv-l{{ level_index }}-title">Level {{ loop.index }}</label><input class="form-control form-control-sm" id="rv-l{{ level_index }}-title" name="level_{{ level_index }}_title" value="{{ level.title }}"></div>
+            <div class="col-md-7 ui-field"><label for="rv-l{{ level_index }}-desc">What it covers</label><input class="form-control form-control-sm" id="rv-l{{ level_index }}-desc" name="level_{{ level_index }}_description" value="{{ level.description }}"></div>
+          </div>
+          {% for week in level.weeks %}
+          <div class="rv-week">
+            <div class="rv-week-no">Week {{ week.week_number }}</div>
+            <div>
+              <input class="form-control form-control-sm fw-semibold" name="week_{{ level_index }}_{{ loop.index0 }}_topic" value="{{ week.topic_title }}" aria-label="Topic of week {{ week.week_number }}">
+              <textarea class="form-control form-control-sm mt-1" name="week_{{ level_index }}_{{ loop.index0 }}_objectives" rows="2" aria-label="What is learned in week {{ week.week_number }}" placeholder="What the learner does and learns this week">{{ week.learning_objectives }}</textarea>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+      <div class="modal-footer justify-content-between">
+        <div class="d-flex gap-2">
+          <button type="submit" class="ui-btn ghost sm danger" form="rv-dismiss" data-confirm="Dismiss this proposal? The program stays as it is.">Dismiss</button>
+          <button type="submit" class="ui-btn sm" form="rv-again" data-confirm="Write a new proposal? This one is replaced; it takes a few minutes."><i class="bi bi-arrow-repeat"></i>Write another</button>
+        </div>
+        <button type="submit" class="ui-btn primary"><i class="bi bi-check2"></i>Accept and save</button>
+      </div>
+      </form>
+      <form method="post" action="/programs/{{ prog.id }}/proposal/dismiss" id="rv-dismiss"></form>
+      <form method="post" action="/programs/{{ prog.id }}/proposal/request" id="rv-again"></form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ============ Add a program ============ -->
+<div class="modal fade ui-modal" id="addProgramModal" tabindex="-1" aria-labelledby="addProgramTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form class="modal-content" method="post" action="/programs/create">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addProgramTitle">Add a program</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field">
+            <label for="add-name">Name</label>
+            <input class="form-control" id="add-name" name="name" required placeholder="For example: Data Analysis with Python">
+            <div class="ui-hint">Only the name is needed. Leave the rest empty and the assistant proposes it; a picture is looked up on the web.</div>
+          </div>
+          <div class="col-12 ui-field"><label for="add-description">Description</label><textarea class="form-control" id="add-description" name="description" rows="2"></textarea></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-online">Online price (DT)</label><input class="form-control" id="add-online" name="price_online" type="number" min="0" step="1" value="0"><div class="ui-hint">0 = your usual price</div></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-onsite">On-site price (DT)</label><input class="form-control" id="add-onsite" name="price_onsite" type="number" min="0" step="1" value="0"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-days">Duration (days)</label><input class="form-control" id="add-days" name="total_duration_days" type="number" min="0" value="0"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-hours">Hours per week</label><input class="form-control" id="add-hours" name="hours_per_week" type="number" min="0" value="0"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-training">Training hours</label><input class="form-control" id="add-training" name="training_hours" type="number" min="0" value="0"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-supervision">Supervision hours</label><input class="form-control" id="add-supervision" name="supervision_hours" type="number" min="0" value="0"></div>
+          <div class="col-md-6 ui-field"><label for="add-session">Session time</label><input class="form-control" id="add-session" name="class_session_time" placeholder="Saturday from 9:00 until 13:00"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="ui-btn primary"><i class="bi bi-plus-lg"></i>Add the program</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Change a picture ============ -->
+<div class="modal fade ui-modal" id="iconModal" tabindex="-1" aria-labelledby="iconTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-3">
+          <span id="iconCurrent"></span>
+          <div>
+            <h5 class="modal-title" id="iconTitle">Picture</h5>
+            <div class="ui-card-sub" id="iconSource"></div>
+          </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="ui-field">
+          <label for="iconQuery">Search the web catalogue</label>
+          <div class="d-flex gap-2">
+            <input class="form-control" id="iconQuery" placeholder="For example: react, robot, shield…" autocomplete="off">
+            <button type="button" class="ui-btn" id="iconSearchBtn"><i class="bi bi-search"></i>Search</button>
+          </div>
+          <div class="ui-hint">Free open-source icons (Iconify). The one you pick is saved here, so it keeps showing without internet.</div>
+        </div>
+        <div id="iconResults" class="mt-3"></div>
+
+        <form method="post" id="iconChooseForm" class="d-none"><input type="hidden" name="action" value="choose"><input type="hidden" name="ref" id="iconRef"></form>
+
+        <hr class="my-3" style="border-color:var(--border-color);">
+        <form method="post" enctype="multipart/form-data" id="iconUploadForm" class="ui-field">
+          <input type="hidden" name="action" value="upload">
+          <label for="iconFile">Or use your own picture</label>
+          <div class="d-flex gap-2">
+            <input class="form-control" type="file" id="iconFile" name="file" accept=".png,.jpg,.jpeg,.webp,.gif,.svg" required>
+            <button class="ui-btn text-nowrap" type="submit"><i class="bi bi-upload"></i>Upload</button>
+          </div>
+          <div class="ui-hint">PNG, JPG, WEBP, GIF or SVG, up to 2 MB.</div>
+        </form>
+      </div>
+      <div class="modal-footer justify-content-between">
+        <form method="post" id="iconRemoveForm" class="m-0"><input type="hidden" name="action" value="remove"><button class="ui-btn ghost sm danger" type="submit">Show initials instead</button></form>
+        <form method="post" id="iconAutoForm" class="m-0"><input type="hidden" name="action" value="auto"><button class="ui-btn sm" type="submit"><i class="bi bi-globe2"></i>Find one automatically</button></form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Duplicates ============ -->
+<div class="modal fade ui-modal" id="fusionModal" tabindex="-1" aria-labelledby="fusionTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="fusionTitle">Duplicate programs</h5>
+          <div class="ui-card-sub" id="fusionSub">Programs that look like the same training under two names.</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="rv-note info">Merging keeps one program and moves the other's candidates, classes and weekly plan to it. The merged program is then deleted, and this cannot be undone.</div>
+        <div id="fusionStatus" class="ui-card-sub mt-3"></div>
+        <div id="fusionResults"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="ui-btn primary" id="fusionScanBtn"><i class="bi bi-search"></i>Scan</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  const modal = id => bootstrap.Modal.getOrCreateInstance(document.getElementById(id));
+
+  // ---------- Search and filters ----------
+  const search = document.getElementById("programSearch");
+  const filters = document.getElementById("programFilters");
+  const applyFilters = () => {
+    const needle = (search.value || "").trim().toLowerCase();
+    const active = (filters.querySelector(".is-active") || {}).dataset?.filter || "all";
+    let shown = 0;
+    const cards = document.querySelectorAll("#programGrid .pg-card");
+    cards.forEach(card => {
+      const matches = (!needle || card.dataset.search.includes(needle)) && (
+        active === "all"
+        || (active === "complete" && card.dataset.complete === "1")
+        || (active === "incomplete" && card.dataset.complete === "0")
+        || (active === "pending" && card.dataset.approved === "0")
+      );
+      card.classList.toggle("d-none", !matches);
+      shown += matches;
+    });
+    const count = document.getElementById("programCount");
+    if (count) count.textContent = cards.length ? `${shown} of ${cards.length} shown` : "";
+    const empty = document.getElementById("programNoMatch");
+    if (empty) empty.classList.toggle("d-none", shown > 0 || !cards.length);
+  };
+  search.addEventListener("input", applyFilters);
+  filters.addEventListener("click", event => {
+    const pill = event.target.closest(".ui-pill");
+    if (!pill) return;
+    filters.querySelectorAll(".ui-pill").forEach(item => item.classList.toggle("is-active", item === pill));
+    applyFilters();
+  });
+  document.addEventListener("live:refreshed", applyFilters);
+  applyFilters();
+
+  // ---------- Approve ----------
+  document.addEventListener("click", async event => {
+    const button = event.target.closest("[data-approve]");
+    if (!button) return;
+    button.disabled = true;
+    try {
+      const response = await fetch(`/programs/${button.dataset.approve}/approve`, { method: "POST" });
+      if (!response.ok) throw new Error();
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      window.alert("The program could not be approved. Try again.");
+    }
+  });
+
+  // ---------- Picture ----------
+  let iconProgram = null;
+  const iconResults = document.getElementById("iconResults");
+  const iconQuery = document.getElementById("iconQuery");
+  document.addEventListener("click", event => {
+    const opener = event.target.closest("[data-icon-for]");
+    if (!opener) return;
+    iconProgram = opener.dataset.iconFor;
+    document.getElementById("iconTitle").textContent = opener.dataset.name;
+    const ref = opener.dataset.ref;
+    document.getElementById("iconSource").textContent =
+      opener.dataset.url ? (ref === "upload" ? "Your own picture" : `From the web catalogue (${ref})`) : "No picture yet: the initials are shown";
+    document.getElementById("iconCurrent").innerHTML = opener.dataset.url
+      ? `<span class="ui-picon" style="width:44px;height:44px;border-radius:13px;"><img src="${escapeHtml(opener.dataset.url)}" alt=""></span>` : "";
+    ["iconChooseForm", "iconUploadForm", "iconRemoveForm", "iconAutoForm"].forEach(id => {
+      document.getElementById(id).action = `/programs/${iconProgram}/icon`;
+    });
+    iconResults.innerHTML = "";
+    iconQuery.value = "";
+    modal("iconModal").show();
+    window.setTimeout(() => iconQuery.focus(), 300);
+  });
+  async function searchIcons() {
+    const words = iconQuery.value.trim();
+    if (!words) { iconQuery.focus(); return; }
+    iconResults.innerHTML = '<div class="ui-card-sub"><span class="ui-spin me-2"></span>Searching…</div>';
+    try {
+      const response = await fetch(`/programs/icons/search?q=${encodeURIComponent(words)}`);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "The search failed.");
+      if (!data.icons.length) {
+        iconResults.innerHTML = '<div class="ui-empty py-3">Nothing found for these words. Try a simpler word, in English.</div>';
+        return;
+      }
+      iconResults.innerHTML = '<div class="ic-grid">' + data.icons.map(icon =>
+        `<button type="button" class="ic-choice" data-ref="${escapeHtml(icon.ref)}" title="${escapeHtml(icon.ref)}"><img src="${escapeHtml(icon.url)}" alt="${escapeHtml(icon.ref)}" loading="lazy"></button>`
+      ).join("") + '</div><div class="ui-hint mt-2">Click a picture to use it.</div>';
+    } catch (error) {
+      iconResults.innerHTML = `<div class="rv-note warn">${escapeHtml(error.message)}</div>`;
+    }
+  }
+  document.getElementById("iconSearchBtn").addEventListener("click", searchIcons);
+  iconQuery.addEventListener("keydown", event => { if (event.key === "Enter") { event.preventDefault(); searchIcons(); } });
+  iconResults.addEventListener("click", event => {
+    const choice = event.target.closest(".ic-choice");
+    if (!choice) return;
+    document.getElementById("iconRef").value = choice.dataset.ref;
+    document.getElementById("iconChooseForm").submit();
+  });
+
+  // ---------- Duplicates ----------
+  const fusionResults = document.getElementById("fusionResults");
+  const fusionStatus = document.getElementById("fusionStatus");
+  const scanButton = document.getElementById("fusionScanBtn");
+  let fusionOnly = null;
+  let fusionChanged = false;
+
+  function pairHtml(data) {
+    const side = (program, kept) => `
+      <div class="fu-side ${kept ? "keep" : ""}">
+        <div class="fu-side-label">${kept ? "Kept" : "Merged into it, then deleted"}</div>
+        <div class="fu-side-name">${escapeHtml(program.name)}</div>
+        <div class="fu-side-desc">${escapeHtml(program.description || "No description")}</div>
+      </div>`;
+    return `
+      <div class="fu-pair" data-source="${escapeHtml(data.source.id)}" data-target="${escapeHtml(data.target.id)}">
+        <div class="fu-sides">
+          ${side(data.source, false)}
+          <i class="bi bi-arrow-right" style="color:#a79fbd;"></i>
+          ${side(data.target, true)}
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2 gap-2 flex-wrap">
+          <span class="ui-chip info">${Math.round(data.similarity * 100)}% alike</span>
+          <div class="d-flex gap-2">
+            <button type="button" class="ui-btn sm" data-swap>Keep the other one</button>
+            <button type="button" class="ui-btn primary sm" data-merge>Merge</button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function scan() {
+    fusionResults.innerHTML = "";
+    scanButton.disabled = true;
+    scanButton.innerHTML = '<span class="ui-spin"></span>Scanning…';
+    fusionStatus.textContent = "Comparing every pair of programs…";
+    let found = 0;
+    try {
+      const response = await fetch("/programs/fuse-duplicates-stream?threshold=0.75");
+      if (!response.ok) throw new Error(`The scan failed (${response.status}).`);
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const messages = buffer.split("\n\n");
+        buffer = messages.pop();
+        for (const message of messages) {
+          const payload = message.split("\n").filter(line => line.startsWith("data:")).map(line => line.slice(5).trim()).join("");
+          if (!payload) continue;
+          let data;
+          try { data = JSON.parse(payload); } catch (error) { continue; }
+          if (data.error) throw new Error(data.error);
+          if (fusionOnly && data.source.id !== fusionOnly && data.target.id !== fusionOnly) continue;
+          fusionResults.insertAdjacentHTML("beforeend", pairHtml(data));
+          found += 1;
+          fusionStatus.textContent = `${found} possible duplicate pair${found !== 1 ? "s" : ""} so far…`;
+        }
+      }
+      fusionStatus.textContent = found
+        ? `${found} possible duplicate pair${found !== 1 ? "s" : ""}. Check each one before merging.`
+        : "";
+      if (!found) fusionResults.innerHTML = '<div class="ui-empty mt-2"><i class="bi bi-check2-circle"></i><strong>No duplicate found</strong>Every program looks distinct.</div>';
+    } catch (error) {
+      fusionStatus.textContent = "";
+      fusionResults.innerHTML = `<div class="rv-note warn mt-2">${escapeHtml(error.message || "The scan failed.")}</div>`;
+    } finally {
+      scanButton.disabled = false;
+      scanButton.innerHTML = '<i class="bi bi-arrow-clockwise"></i>Scan again';
+    }
+  }
+
+  fusionResults.addEventListener("click", async event => {
+    const pair = event.target.closest(".fu-pair");
+    if (!pair) return;
+    if (event.target.closest("[data-swap]")) {
+      [pair.dataset.source, pair.dataset.target] = [pair.dataset.target, pair.dataset.source];
+      const sides = pair.querySelectorAll(".fu-side");
+      const [first, second] = [sides[0].querySelector(".fu-side-name").parentElement.innerHTML, sides[1].querySelector(".fu-side-name").parentElement.innerHTML];
+      const names = [sides[0].querySelector(".fu-side-name").textContent, sides[1].querySelector(".fu-side-name").textContent];
+      const descriptions = [sides[0].querySelector(".fu-side-desc").textContent, sides[1].querySelector(".fu-side-desc").textContent];
+      sides[0].querySelector(".fu-side-name").textContent = names[1];
+      sides[0].querySelector(".fu-side-desc").textContent = descriptions[1];
+      sides[1].querySelector(".fu-side-name").textContent = names[0];
+      sides[1].querySelector(".fu-side-desc").textContent = descriptions[0];
+      return;
+    }
+    const merge = event.target.closest("[data-merge]");
+    if (!merge) return;
+    const names = [...pair.querySelectorAll(".fu-side-name")].map(node => node.textContent);
+    if (!window.confirm(`Merge “${names[0]}” into “${names[1]}”? “${names[0]}” is deleted afterwards. This cannot be undone.`)) return;
+    merge.disabled = true;
+    try {
+      const body = new FormData();
+      body.append("target_program_id", pair.dataset.target);
+      body.append("delete_source", "true");
+      const response = await fetch(`/programs/${pair.dataset.source}/fuse`, { method: "POST", body });
+      if (!response.ok) throw new Error();
+      fusionChanged = true;
+      pair.innerHTML = `<div class="ui-chip ok"><i class="bi bi-check2"></i>Merged into ${escapeHtml(names[1])}</div>`;
+    } catch (error) {
+      merge.disabled = false;
+      window.alert("The merge failed. Nothing was changed.");
+    }
+  });
+  scanButton.addEventListener("click", scan);
+  document.getElementById("fusionModal").addEventListener("hidden.bs.modal", () => { if (fusionChanged) window.location.href = "/programs/all"; });
+
+  window.Fusion = {
+    open(programId = null, name = "") {
+      fusionOnly = programId;
+      fusionResults.innerHTML = "";
+      fusionStatus.textContent = "";
+      document.getElementById("fusionSub").textContent = programId
+        ? `Programs that look like “${name}”.`
+        : "Programs that look like the same training under two names.";
+      scanButton.innerHTML = '<i class="bi bi-search"></i>Scan';
+      modal("fusionModal").show();
+      if (programId) scan();
+    },
+  };
+  document.addEventListener("click", event => {
+    const opener = event.target.closest("[data-duplicates-of]");
+    if (opener) window.setTimeout(() => window.Fusion.open(opener.dataset.duplicatesOf, opener.dataset.name), opener.dataset.bsDismiss ? 350 : 0);
+  });
+
+  // ---------- A proposal to review opens by itself ----------
+  // Once the page is complete: the dialogs' own script is loaded after this one.
+  document.addEventListener("DOMContentLoaded", () => {
+    const review = document.getElementById("reviewModal");
+    if (!review) return;
+    modal("reviewModal").show();
+    // Closing it forgets the address, so a refresh does not open it again.
+    review.addEventListener("hidden.bs.modal", () => window.history.replaceState(null, "", "/programs/all"));
+  });
+})();
+</script>
+{% endblock %}

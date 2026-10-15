@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}All the data · 9antra{% endblock %}
+{% block page_title %}All the data{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .dt-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:12px; margin-bottom:28px; }
+  .dt-card { display:flex; gap:12px; align-items:center; padding:14px 16px; background:#fff; border:1px solid var(--border-color); border-radius:18px; text-decoration:none; color:inherit; transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease; }
+  .dt-card:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); border-color:var(--primary-berry); }
+  .dt-card i { width:40px; height:40px; flex:none; border-radius:12px; display:grid; place-items:center; background:#f3eef9; color:var(--primary-berry); font-size:1.1rem; }
+  .dt-card b { display:block; font-size:.88rem; color:var(--ink-text); } .dt-card span { font-size:.76rem; color:var(--muted); }
+  .dt-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:6px 18px; }
+  .dt-log { display:flex; gap:12px; padding:10px 0; border-top:1px solid var(--border-color); font-size:.82rem; align-items:flex-start; }
+  .dt-log:first-child { border-top:0; } .dt-log span { color:var(--muted); font-size:.75rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Every value, in one place</h2>
+    <p>Open a kind of record to search it, change any field, add a new one or remove one. Every change is written with who made it and what it was before, so nothing is lost. The usual pages stay the easiest way for everyday work; this is for anything they do not show.</p>
+  </div>
+</div>
+<div class="dt-grid">
+  {% for table in tables %}
+  <a class="dt-card" href="/data/{{ table.key }}" id="table-{{ table.key }}"><i class="bi {{ table.icon }}"></i><div><b>{{ table.name }}</b><span>{{ table.count }} record{{ 's' if table.count != 1 }}</span></div></a>
+  {% endfor %}
+</div>
+<h3 class="ui-card-title mb-2"><i class="bi bi-clock-history"></i> Latest changes</h3>
+<div class="dt-box">
+  {% for row in recent %}
+  <div class="dt-log"><i class="bi {{ 'bi-plus-circle' if row.action == 'add' else 'bi-trash3' if row.action == 'delete' else 'bi-pencil' }}"></i>
+    <div><a href="/data/{{ row.table }}/{{ row.row_id }}">{{ names.get(row.table, row.table) }}</a> · {{ {'add': 'added', 'edit': 'changed', 'delete': 'removed'}.get(row.action, row.action) }} by {{ row.who or '?' }}<br><span>{{ row.at.strftime('%d %b %Y, %H:%M') }} UTC</span></div></div>
+  {% else %}
+  <div class="ui-empty" style="border:0;"><i class="bi bi-clock-history"></i><strong>Nothing changed here yet</strong>Changes made on these pages are listed here.</div>
+  {% endfor %}
+</div>
+{% endblock %}

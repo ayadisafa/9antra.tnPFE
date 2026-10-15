@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}{{ label or 'New record' }} · {{ name }} · 9antra{% endblock %}
+{% block page_title %}{{ name }}{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .dt-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:12px; }
+  .dt-two { display:grid; grid-template-columns:minmax(0, 1.6fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .dt-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px 20px; min-width:0; }
+  .dt-field { display:grid; grid-template-columns:minmax(120px, 190px) minmax(0, 1fr); gap:12px; align-items:start; padding:9px 0; border-top:1px solid var(--border-color); }
+  .dt-field:first-child { border-top:0; }
+  .dt-field label { font-size:.8rem; font-weight:700; color:var(--ink-text); padding-top:7px; } .dt-field label small { display:block; font-weight:500; color:var(--muted); font-size:.7rem; }
+  .dt-field .form-control, .dt-field .form-select { border-radius:11px; font-size:.86rem; }
+  .dt-field textarea { min-height:90px; font-family:inherit; }
+  .dt-log { padding:9px 0; border-top:1px solid var(--border-color); font-size:.8rem; } .dt-log:first-child { border-top:0; }
+  .dt-log span { color:var(--muted); font-size:.74rem; } .dt-log code { white-space:pre-wrap; word-break:break-word; }
+  @media (max-width: 900px) { .dt-two { grid-template-columns:minmax(0, 1fr); } .dt-field { grid-template-columns:minmax(0, 1fr); gap:4px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<a href="/data/{{ key }}" class="dt-back"><i class="bi bi-arrow-left"></i>{{ name }}</a>
+<div class="ui-head">
+  <div>
+    <h2><i class="bi {{ icon }}"></i> {{ label or 'New record' }}</h2>
+    <p>{{ 'Every value of this record. Change what you need and save; the change is kept in its history.' if row_id else 'Fill in what you know; the rest can be added later.' }}</p>
+  </div>
+  {% if row_id %}
+  <div class="ui-actions">
+    <form method="post" action="/data/{{ key }}/{{ row_id }}/delete" data-confirm="Remove this record for good? It is written in the edit log, but cannot be undone from here."><button class="ui-btn ghost danger"><i class="bi bi-trash3"></i>Remove</button></form>
+  </div>
+  {% endif %}
+</div>
+
+<div class="dt-two">
+  <form class="dt-box" method="post" action="/data/{{ key }}/{{ row_id or 'new' }}" data-no-i18n>
+    {% for field in fields %}
+    <div class="dt-field">
+      <label for="f-{{ field.name }}">{{ field.label }}{% if field.required %} *{% endif %}<small>{{ field.name }}</small></label>
+      {% if field.readonly %}
+      <input class="form-control" id="f-{{ field.name }}" value="{{ field.value }}" readonly>
+      {% elif field.options is not none %}
+      <select class="form-select" id="f-{{ field.name }}" name="{{ field.name }}"><option value="">—</option>{% for value, text in field.options %}<option value="{{ value }}" {{ 'selected' if value == field.value }}>{{ text }}</option>{% endfor %}</select>
+      {% elif field.widget == 'choice' %}
+      <select class="form-select" id="f-{{ field.name }}" name="{{ field.name }}">{% if not field.required %}<option value="">—</option>{% endif %}{% for choice in field.choices %}<option value="{{ choice }}" {{ 'selected' if choice | string == field.value }}>{{ choice }}</option>{% endfor %}</select>
+      {% elif field.widget == 'yesno' %}
+      <select class="form-select" id="f-{{ field.name }}" name="{{ field.name }}"><option value="yes" {{ 'selected' if field.value == 'yes' }}>Yes</option><option value="no" {{ 'selected' if field.value != 'yes' }}>No</option></select>
+      {% elif field.widget in ('text', 'longtext', 'json') %}
+      <textarea class="form-control" id="f-{{ field.name }}" name="{{ field.name }}" rows="{{ 6 if field.widget == 'json' else 4 }}">{{ field.value }}</textarea>
+      {% else %}
+      <input class="form-control" id="f-{{ field.name }}" name="{{ field.name }}" value="{{ field.value }}"
+             type="{{ {'integer': 'number', 'number': 'number', 'datetime': 'datetime-local', 'date': 'date', 'time': 'time'}.get(field.widget, 'text') }}"{% if field.widget == 'number' %} step="any"{% endif %}{% if field.required %} required{% endif %}>
+      {% endif %}
+    </div>
+    {% endfor %}
+    <button class="ui-btn primary mt-3"><i class="bi bi-check2"></i>{{ 'Save' if row_id else 'Add' }}</button>
+  </form>
+
+  {% if row_id %}
+  <section class="dt-box">
+    <h3 class="ui-card-title mb-2"><i class="bi bi-clock-history"></i> Its history here</h3>
+    {% for change in history %}
+    <div class="dt-log"><b>{{ {'add': 'Added', 'edit': 'Changed', 'delete': 'Removed'}.get(change.action, change.action) }}</b> by {{ change.who or '?' }} <span>· {{ change.at.strftime('%d %b %Y, %H:%M') }} UTC</span>
+      {% for field, pair in change.changes.items() %}{% if pair is sequence and pair is not string %}<div><code>{{ field }}</code>: {{ pair[0] or '—' }} → {{ pair[1] or '—' }}</div>{% endif %}{% endfor %}
+    </div>
+    {% else %}
+    <div class="ui-empty" style="border:0;"><i class="bi bi-clock-history"></i><strong>No change made here yet</strong>Changes you save on this page are listed here.</div>
+    {% endfor %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

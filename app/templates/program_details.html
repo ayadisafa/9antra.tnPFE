@@ -1,0 +1,429 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}{{ program.name }} · Programs{% endblock %}
+{% block page_title %}Program{% endblock %}
+{% block live_topics %}programs{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .pd { --tone:{{ cover.colour }}; --soft:{{ cover.soft }}; }
+  .pd-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:14px; }
+  .pd-back:hover { color:var(--primary-berry); }
+
+  /* ---------- The cover ---------- */
+  .pd-hero { position:relative; overflow:hidden; border-radius:28px; padding:30px clamp(20px, 4vw, 40px); background:linear-gradient(115deg, #fff 0%, #fff 42%, var(--soft) 100%); border:1px solid var(--border-color); display:grid; grid-template-columns:minmax(0, 1fr) 230px; gap:24px; align-items:center; }
+  .pd-hero::before { content:""; position:absolute; right:-70px; top:-90px; width:300px; height:300px; border-radius:50%; background:var(--tone); opacity:.10; }
+  .pd-hero::after { content:""; position:absolute; right:150px; bottom:-60px; width:150px; height:150px; border-radius:50%; background:var(--tone); opacity:.08; }
+  .pd-kicker { display:inline-flex; align-items:center; gap:7px; font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:var(--tone); }
+  .pd-hero h1 { font-size:clamp(1.5rem, 3vw, 2.1rem); font-weight:800; letter-spacing:-.02em; color:var(--ink-text); margin:8px 0 8px; line-height:1.15; overflow-wrap:anywhere; }
+  .pd-lead { font-size:.95rem; color:#5b5670; line-height:1.6; max-width:640px; margin:0; }
+  .pd-lead.is-missing { color:#b0a9c2; font-style:italic; }
+  .pd-tags { display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
+  .pd-tag { display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:6px 13px; font-size:.76rem; font-weight:700; color:#4d4863; }
+  .pd-tag i { color:var(--tone); }
+  .pd-tag.ok { background:var(--mint-subtle); border-color:transparent; color:var(--mint); } .pd-tag.ok i { color:inherit; }
+  .pd-tag.warn { background:var(--gold-subtle); border-color:transparent; color:var(--gold-dark); } .pd-tag.warn i { color:inherit; }
+  .pd-tools { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; position:relative; z-index:1; }
+  .pd-tools form { margin:0; }
+  .pd-art { position:relative; z-index:1; display:grid; place-items:center; height:200px; }
+  .pd-art-tile { width:150px; height:150px; border-radius:42px; background:#fff; display:grid; place-items:center; box-shadow:0 30px 50px -26px var(--tone), 0 0 0 10px rgba(255,255,255,.55); animation:pdFloat 5s ease-in-out infinite; font-weight:800; font-size:3rem; color:var(--tone); }
+  .pd-art-tile img { width:62%; height:62%; object-fit:contain; }
+  .pd-art-dot { position:absolute; border-radius:50%; background:var(--tone); animation:pdFloat 6s ease-in-out infinite; }
+  .pd-art-dot.a { width:16px; height:16px; left:12px; top:26px; opacity:.55; animation-delay:-1.5s; }
+  .pd-art-dot.b { width:10px; height:10px; right:16px; top:52px; opacity:.4; animation-delay:-3s; }
+  .pd-art-dot.c { width:22px; height:22px; right:34px; bottom:14px; opacity:.22; animation-delay:-2.2s; }
+  @keyframes pdFloat { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+
+  /* ---------- The facts ---------- */
+  .pd-facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px; margin:16px 0 26px; }
+  .pd-fact { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px; display:flex; gap:13px; align-items:center; transition:transform .18s ease, box-shadow .18s ease; }
+  .pd-fact:hover { transform:translateY(-3px); box-shadow:var(--shadow-soft); }
+  .pd-fact-ico { width:46px; height:46px; border-radius:15px; display:grid; place-items:center; font-size:1.25rem; flex:none; background:var(--tone-soft, var(--berry-subtle)); color:var(--tone-ink, var(--primary-berry)); }
+  .pd-fact b { display:block; font-size:1.02rem; font-weight:800; color:var(--ink-text); line-height:1.2; overflow-wrap:anywhere; }
+  .pd-fact small { display:block; font-size:.72rem; font-weight:600; color:var(--muted); margin-top:2px; line-height:1.3; }
+  .pd-fact.is-missing b { color:#c2bbd2; font-weight:600; font-size:.9rem; }
+  .f-sky { --tone-soft:var(--sky-subtle); --tone-ink:var(--sky); } .f-gold { --tone-soft:var(--gold-subtle); --tone-ink:var(--gold-dark); }
+  .f-mint { --tone-soft:var(--mint-subtle); --tone-ink:var(--mint); } .f-violet { --tone-soft:#f3e8ff; --tone-ink:#6d28d9; } .f-teal { --tone-soft:#e6fbf8; --tone-ink:#0f766e; }
+
+  .pd-cols { display:grid; grid-template-columns:minmax(0, 1.75fr) minmax(280px, 1fr); gap:22px; align-items:start; }
+  .pd-h { font-weight:800; font-size:1.12rem; color:var(--ink-text); margin:0 0 4px; display:flex; align-items:center; gap:9px; }
+  .pd-h i { color:var(--tone); }
+  .pd-sub { font-size:.84rem; color:var(--muted); margin:0 0 16px; }
+
+  /* ---------- The journey ---------- */
+  .pd-level { margin-bottom:20px; }
+  .pd-level-head { display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:13px 16px; position:relative; z-index:1; }
+  .pd-level-no { width:42px; height:42px; border-radius:14px; background:var(--tone); color:#fff; display:grid; place-items:center; font-weight:800; font-size:1rem; flex:none; box-shadow:0 12px 20px -12px var(--tone); }
+  .pd-level-name { font-weight:800; font-size:.98rem; color:var(--ink-text); line-height:1.25; }
+  .pd-level-desc { font-size:.8rem; color:#6b6680; margin-top:2px; line-height:1.45; }
+  .pd-level-count { margin-left:auto; flex:none; font-size:.7rem; font-weight:800; color:var(--tone); background:var(--soft); border-radius:999px; padding:4px 11px; white-space:nowrap; }
+  .pd-weeks { list-style:none; margin:0; padding:14px 0 0 20px; position:relative; }
+  .pd-weeks::before { content:""; position:absolute; left:20px; top:0; bottom:18px; width:2px; background:repeating-linear-gradient(180deg, #dcd4ea 0 6px, transparent 6px 11px); }
+  .pd-week { position:relative; padding:0 0 12px 34px; }
+  .pd-week-dot { position:absolute; left:-15px; top:10px; width:32px; height:32px; border-radius:50%; background:#fff; border:2px solid var(--tone); color:var(--tone); display:grid; place-items:center; font-size:.76rem; font-weight:800; }
+  .pd-week-card { background:#fff; border:1px solid var(--border-color); border-radius:16px; padding:12px 15px; transition:border-color .15s ease, transform .15s ease; }
+  .pd-week-card:hover { border-color:var(--tone); transform:translateX(3px); }
+  .pd-week-title { font-weight:700; font-size:.92rem; color:var(--ink-text); line-height:1.3; }
+  .pd-week-text { font-size:.81rem; color:#5b5670; margin-top:4px; line-height:1.5; }
+  .pd-video { display:inline-flex; align-items:center; gap:8px; margin-top:9px; font-size:.76rem; font-weight:700; text-decoration:none; color:var(--ink-text); background:#faf8fd; border-radius:12px; padding:6px 11px 6px 6px; max-width:100%; }
+  .pd-video:hover { background:var(--soft); color:var(--ink-text); }
+  .pd-video-play { width:26px; height:26px; border-radius:9px; background:var(--tone); color:#fff; display:grid; place-items:center; font-size:.8rem; flex:none; }
+  .pd-video span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pd-video em { font-style:normal; font-weight:600; color:var(--muted); flex:none; }
+
+  /* ---------- The side ---------- */
+  .pd-side { display:grid; gap:14px; }
+  .pd-box { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; }
+  .pd-box-title { font-weight:800; font-size:.9rem; color:var(--ink-text); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .pd-box-title i { color:var(--tone); }
+  .pd-big { font-weight:800; font-size:1.7rem; color:var(--ink-text); line-height:1; }
+  .pd-big small { font-size:.78rem; font-weight:600; color:var(--muted); }
+  .pd-item { display:flex; gap:11px; align-items:center; padding:9px 0; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; min-width:0; }
+  .pd-item:first-of-type { border-top:0; padding-top:2px; }
+  a.pd-item:hover .pd-item-name { color:var(--primary-berry); }
+  .pd-item-symbol { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; font-size:1.1rem; flex:none; }
+  .pd-item-name { font-weight:700; font-size:.84rem; color:var(--ink-text); line-height:1.25; overflow-wrap:anywhere; }
+  .pd-item-sub { font-size:.72rem; color:var(--muted); margin-top:1px; }
+  .pd-hint { font-size:.8rem; color:#6b6680; line-height:1.5; }
+  .pd-others { display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .pd-other { display:inline-flex; align-items:center; gap:8px; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:5px 13px 5px 5px; font-size:.78rem; font-weight:700; color:var(--ink-text); text-decoration:none; max-width:100%; }
+  .pd-other:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .pd-other span.name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pd-pager { display:flex; justify-content:space-between; gap:10px; margin-top:26px; flex-wrap:wrap; }
+
+  .pd-cols > * { min-width:0; }
+  /* ---------- What the market asks ---------- */
+  .pd-market { margin-top:30px; }
+  .pd-market-grid { display:grid; grid-template-columns:minmax(220px, .8fr) minmax(0, 1.3fr) minmax(0, 1.2fr); gap:14px; margin-top:14px; }
+  .pd-market-box { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; min-width:0; }
+  .pd-market-box > b { display:block; font-size:.9rem; color:var(--ink-text); margin-top:10px; } .pd-market-box > span { display:block; font-size:.76rem; color:var(--muted); line-height:1.45; margin-top:2px; }
+  .pd-fit { --pct:0; --ring:var(--muted); width:104px; height:104px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--ring) calc(var(--pct) * 1%), #ebe5f3 0); }
+  .pd-fit.good { --ring:var(--mint); } .pd-fit.mid { --ring:var(--accent-gold-dark); } .pd-fit.low { --ring:#e11d48; }
+  .pd-fit div { width:80px; height:80px; border-radius:50%; background:#fff; display:grid; place-items:center; align-content:center; font-weight:800; font-size:1.7rem; color:var(--ink-text); line-height:1; }
+  .pd-fit small { font-size:.8rem; color:var(--muted); }
+  .pd-market-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:14px 0 7px; }
+  .pd-market-chips { display:flex; flex-wrap:wrap; gap:5px; }
+  .pd-skill { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(50px, 1fr) 40px; gap:10px; align-items:center; padding:4px 0; font-size:.8rem; }
+  .pd-skill .name { display:flex; align-items:center; gap:7px; font-weight:700; color:var(--ink-text); min-width:0; overflow-wrap:anywhere; }
+  .pd-skill.is-covered .name i { color:var(--mint); } .pd-skill.is-missing .name i { color:var(--gold-dark); }
+  .pd-skill .bar { height:7px; border-radius:99px; background:#efebf6; overflow:hidden; display:block; } .pd-skill .bar span { display:block; height:100%; border-radius:99px; }
+  .pd-skill.is-covered .bar span { background:var(--mint); } .pd-skill.is-missing .bar span { background:var(--accent-gold-dark); }
+  .pd-skill em { font-style:normal; font-weight:800; text-align:right; color:var(--ink-text); font-size:.78rem; }
+  .pd-market-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:.72rem; color:var(--muted); } .pd-market-legend span { display:inline-flex; gap:5px; align-items:center; }
+  .pd-offers { background:#fff; border:1px solid var(--border-color); border-radius:18px; margin-top:16px; padding:4px 16px; }
+  .pd-offers summary { cursor:pointer; padding:11px 0; font-weight:800; font-size:.9rem; color:var(--ink-text); display:flex; gap:9px; align-items:center; list-style:none; }
+  .pd-offers summary i { color:var(--primary-berry); } .pd-offers summary span { margin-left:auto; font-weight:600; font-size:.76rem; color:var(--muted); }
+  .pd-offer-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr); gap:14px; padding:11px 0; border-top:1px solid var(--border-color); align-items:start; }
+  .pd-offer-row b { font-size:.85rem; color:var(--ink-text); overflow-wrap:anywhere; } .pd-offer-row a { text-decoration:none; } .pd-offer-row a:hover b { color:var(--primary-berry); }
+  .pd-offer-row span { display:block; font-size:.75rem; color:var(--muted); }
+  @media (max-width: 767px) { .pd-offer-row { grid-template-columns:minmax(0, 1fr); gap:7px; } }
+  .pd-content { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px; margin-top:12px; }
+  .pd-content-item { background:#fff; border:1px solid var(--border-color); border-left:4px solid var(--gold-dark); border-radius:14px; padding:12px 14px; min-width:0; }
+  .pd-content-item b { display:flex; justify-content:space-between; gap:10px; font-size:.86rem; color:var(--ink-text); } .pd-content-item b em { font-style:normal; color:var(--gold-dark); white-space:nowrap; }
+  .pd-content-item p { margin:5px 0 0; font-size:.79rem; color:#4a445e; line-height:1.45; }
+  .pd-advice { margin:0; padding-left:18px; font-size:.83rem; color:#4a445e; line-height:1.5; } .pd-advice li + li { margin-top:6px; }
+  .pd-offer { padding:6px 0; border-top:1px solid var(--border-color); font-size:.8rem; min-width:0; } .pd-offer:first-of-type { border-top:0; }
+  .pd-offer a, .pd-offer b { font-weight:700; color:var(--ink-text); text-decoration:none; display:block; overflow-wrap:anywhere; } .pd-offer a:hover { color:var(--primary-berry); }
+  .pd-offer span { font-size:.72rem; color:var(--muted); }
+  @media (max-width: 1100px) { .pd-market-grid { grid-template-columns:minmax(0, 1fr); } }
+  @media (max-width: 1050px) { .pd-cols { grid-template-columns:minmax(0, 1fr); } }
+  @media (max-width: 720px) {
+    .pd-hero { grid-template-columns:1fr; padding:22px 18px; border-radius:22px; }
+    .pd-art { height:120px; order:-1; justify-items:start; } .pd-art-tile { width:96px; height:96px; border-radius:28px; font-size:2rem; }
+    .pd-facts { grid-template-columns:1fr 1fr; gap:9px; } .pd-fact { padding:12px; gap:10px; } .pd-fact-ico { width:38px; height:38px; border-radius:12px; font-size:1.05rem; }
+    .pd-level-count { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .pd-art-tile, .pd-art-dot { animation:none; } .pd-fact, .pd-week-card { transition:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pd">
+{% include "_flash.html" %}
+<a href="/programs/all" class="pd-back"><i class="bi bi-arrow-left"></i>All programs</a>
+
+{% if missing %}
+<div class="ui-advice tone-important mb-3">
+  <div class="ui-advice-ico"><i class="bi bi-magic"></i></div>
+  <div class="ui-advice-body">
+    <div class="ui-advice-title">This program is missing details</div>
+    <div class="ui-advice-why">
+      {{ missing | join(', ') }}.
+      {% if proposal and proposal.status == 'ready' %}The assistant prepared them: read the proposal and confirm it.
+      {% elif proposal and proposal.status in ('queued', 'writing') %}The assistant is preparing a proposal; it takes a few minutes.
+      {% elif proposal and proposal.status == 'failed' %}{{ proposal.error }}
+      {% else %}The assistant can propose them for you to confirm.{% endif %}
+    </div>
+  </div>
+  <div class="ui-advice-actions">
+    {% if proposal and proposal.status == 'ready' %}
+    <a class="ui-btn primary sm" href="/programs/all?review={{ program.id }}">Read and confirm</a>
+    {% elif not proposal or proposal.status == 'failed' %}
+    <form method="post" action="/programs/{{ program.id }}/proposal/request"><button class="ui-btn primary sm">Propose them</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ============ What it is ============ -->
+<section class="pd-hero">
+  <div style="position:relative; z-index:1; min-width:0;">
+    <span class="pd-kicker"><i class="bi bi-journal-bookmark-fill"></i>Training program</span>
+    <h1>{{ program.name }}</h1>
+    <p class="pd-lead {{ 'is-missing' if not program.description }}">{{ program.description or "No description yet." }}</p>
+    <div class="pd-tags">
+      {% if program.is_approved %}<span class="pd-tag ok"><i class="bi bi-check2-circle"></i>Approved</span>
+      {% else %}<span class="pd-tag warn"><i class="bi bi-hourglass-split"></i>Waiting for your approval</span>{% endif %}
+      {% if story.site.level %}<span class="pd-tag"><i class="bi bi-bar-chart-steps"></i>{{ story.site.level }}</span>{% endif %}
+      {% if story.site.mode %}<span class="pd-tag"><i class="bi bi-geo-alt-fill"></i>{{ story.site.mode }}</span>{% endif %}
+      {% if story.site.certificate %}<span class="pd-tag"><i class="bi bi-award-fill"></i>Certificate</span>{% endif %}
+      {% for technology in story.site.technologies %}<span class="pd-tag"><i class="bi bi-cpu"></i>{{ technology }}</span>{% endfor %}
+    </div>
+    <div class="pd-tools">
+      {% if not program.is_approved %}<button type="button" class="ui-btn good" id="approveProgramBtn" data-program="{{ program.id }}"><i class="bi bi-check2"></i>Approve</button>{% endif %}
+      {% if story.site.url %}<a class="ui-btn" href="{{ story.site.url }}" target="_blank" rel="noopener"><i class="bi bi-globe2"></i>See it on 9antra.tn</a>{% endif %}
+      <a class="ui-btn" href="/quiz/preview/{{ program.id }}" target="_blank" rel="noopener" title="What a candidate is asked before starting this program"><i class="bi bi-signpost-split"></i>Its level check</a>
+      <a class="ui-btn" href="/programs/{{ program.id }}/pdf" title="Download the program as a PDF, or send it to a candidate"><i class="bi bi-file-earmark-pdf"></i>PDF</a>
+      {% if is_admin %}<a class="ui-btn ghost" href="/data/programs/{{ program.id }}" title="Every value of this program, to change"><i class="bi bi-table"></i>Every value</a>{% endif %}
+      <form action="/programs/{{ program.id }}/delete" method="post" data-confirm="Delete “{{ program.name }}”? Its weekly plan and its classes are deleted with it. This cannot be undone.">
+        <button type="submit" class="ui-btn ghost danger"><i class="bi bi-trash3"></i>Delete</button>
+      </form>
+    </div>
+  </div>
+  <div class="pd-art" aria-hidden="true">
+    <span class="pd-art-dot a"></span><span class="pd-art-dot b"></span><span class="pd-art-dot c"></span>
+    <div class="pd-art-tile">{% if icon.url %}<img src="{{ icon.url }}" alt="">{% else %}{{ icon.initials }}{% endif %}</div>
+  </div>
+</section>
+
+<!-- ============ The facts, at a glance ============ -->
+<div class="pd-facts">
+  <div class="pd-fact f-sky {{ 'is-missing' if not program.total_duration_days and not story.site.duration }}">
+    <span class="pd-fact-ico"><i class="bi bi-calendar3"></i></span>
+    <div><b>{% if story.site.duration %}{{ story.site.duration }}{% elif program.total_duration_days %}{{ program.total_duration_days }} days{% else %}Not set{% endif %}</b><small>Duration{% if story.site.duration and program.total_duration_days %} · {{ program.total_duration_days }} days{% endif %}</small></div>
+  </div>
+  <div class="pd-fact f-violet {{ 'is-missing' if not story.weeks }}">
+    <span class="pd-fact-ico"><i class="bi bi-signpost-2-fill"></i></span>
+    <div><b>{% if story.weeks %}{{ story.weeks }} weeks{% else %}No plan yet{% endif %}</b><small>{{ program.levels | length }} level{{ 's' if program.levels | length != 1 }}{% if story.videos %} · {{ story.videos }} video{{ 's' if story.videos != 1 }}{% endif %}</small></div>
+  </div>
+  <div class="pd-fact f-teal {{ 'is-missing' if not program.hours_per_week }}">
+    <span class="pd-fact-ico"><i class="bi bi-clock-fill"></i></span>
+    <div><b>{% if program.hours_per_week %}{{ program.hours_per_week }} h a week{% else %}Not set{% endif %}</b><small>{{ program.class_session_time or 'Session time not set' }}</small></div>
+  </div>
+  <div class="pd-fact f-mint">
+    <span class="pd-fact-ico"><i class="bi bi-laptop"></i></span>
+    <div><b>{{ "%.0f"|format(program.price_online or 0) }} DT</b><small>Online</small></div>
+  </div>
+  <div class="pd-fact f-gold">
+    <span class="pd-fact-ico"><i class="bi bi-building"></i></span>
+    <div><b>{{ "%.0f"|format(program.price_onsite or 0) }} DT</b><small>On site{% if story.site.recordings %} · recordings {{ story.site.recordings }}{% endif %}</small></div>
+  </div>
+</div>
+
+<div class="pd-cols">
+  <!-- ============ The journey ============ -->
+  <div>
+    <h2 class="pd-h"><i class="bi bi-map-fill"></i>The journey, week by week</h2>
+    <p class="pd-sub">What a candidate learns, in the order it is taught.{% if story.videos %} A play button opens the video the website gives for that week.{% endif %}</p>
+
+    {% if not story.journey %}
+    <div class="ui-empty"><i class="bi bi-map"></i><strong>No weekly plan yet</strong>{% if missing %}Ask for a proposal at the top of this page: the assistant writes one for you to confirm.{% else %}Import the program's PDF, or add its weeks.{% endif %}</div>
+    {% endif %}
+
+    {% for step in story.journey %}
+    <div class="pd-level">
+      <div class="pd-level-head">
+        <span class="pd-level-no">{{ loop.index }}</span>
+        <div style="min-width:0;">
+          <div class="pd-level-name">{{ step.title }}</div>
+          {% if step.level.description %}<div class="pd-level-desc">{{ step.level.description }}</div>{% endif %}
+        </div>
+        <span class="pd-level-count">{{ step.weeks | length }} week{{ 's' if step.weeks | length != 1 }}</span>
+      </div>
+      {% if step.weeks %}
+      <ol class="pd-weeks">
+        {% for item in step.weeks %}
+        <li class="pd-week">
+          <span class="pd-week-dot">{{ item.number }}</span>
+          <div class="pd-week-card">
+            <div class="pd-week-title">{{ item.week.topic_title }}</div>
+            {% if item.week.learning_objectives %}<div class="pd-week-text">{{ item.week.learning_objectives }}</div>{% endif %}
+            {% if item.video %}
+            <a class="pd-video" href="{{ item.video.url }}" target="_blank" rel="noopener" title="{{ item.video.title }}">
+              <span class="pd-video-play"><i class="bi bi-play-fill"></i></span>
+              <span>{{ item.video.title }}</span>
+              {% if item.video.length %}<em>{{ item.video.length }}</em>{% endif %}
+              {% if item.video.free %}<em style="color:var(--mint);">free</em>{% endif %}
+            </a>
+            {% endif %}
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <div class="pd-hint" style="padding:12px 4px 0 56px;">No week written for this level yet.</div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- ============ Around it ============ -->
+  <aside class="pd-side">
+    <div class="pd-box">
+      <div class="pd-box-title"><i class="bi bi-people-fill"></i>Who follows it</div>
+      <div class="pd-big">{{ story.people.total }} <small>registered · {{ story.people.paid }} paid</small></div>
+      <div class="ui-bar mt-2 {{ 'is-full' if story.people.total and story.people.paid == story.people.total }}"><span style="width:{{ story.people.pct }}%;"></span></div>
+      <a class="ui-link d-inline-block mt-2" href="/candidate/all?search={{ program.name | urlencode }}">See the candidates</a>
+    </div>
+
+    <div class="pd-box">
+      <div class="pd-box-title"><i class="bi bi-easel2-fill"></i>Its classes</div>
+      {% for row in story.classes %}
+      <a class="pd-item" href="/classes/{{ row.cls.id }}">
+        <span class="pd-item-symbol" style="background:{{ row.look.soft }};">{{ row.look.symbol }}</span>
+        <div style="min-width:0; flex:1;">
+          <div class="pd-item-name">{{ row.cls.name }}</div>
+          <div class="pd-item-sub">{{ row.summary.enrolled }} candidate{{ 's' if row.summary.enrolled != 1 }} · {{ row.cls.professor_name or 'no professor yet' }}</div>
+        </div>
+        {% if row.summary.on_hold %}<span class="ui-chip warn">On hold</span>
+        {% elif row.summary.status == 'ongoing' %}<span class="ui-chip ok"><span class="ui-dot"></span>Running</span>
+        {% elif row.summary.status == 'completed' %}<span class="ui-chip muted">Completed</span>
+        {% else %}<span class="ui-chip info">{{ row.summary.start.strftime('%d %b') if row.summary.start else 'Not started' }}</span>{% endif %}
+      </a>
+      {% else %}
+      <div class="pd-hint">No class yet. One opens by itself when a first candidate pays.</div>
+      {% endfor %}
+    </div>
+
+    <div class="pd-box">
+      <div class="pd-box-title"><i class="bi bi-person-badge-fill"></i>Who can teach it</div>
+      {% for professor in story.teachers %}
+      <div class="pd-item">
+        {{ ui.avatar(professor.name, 36) }}
+        <div style="min-width:0; flex:1;"><div class="pd-item-name">{{ professor.name }}</div><div class="pd-item-sub">{{ professor.specialties }}</div></div>
+        {% if not professor.is_available %}<span class="ui-chip bad">Unavailable</span>{% endif %}
+      </div>
+      {% else %}
+      <div class="pd-hint">No professor has this program among their specialities, so its classes cannot start.</div>
+      {% endfor %}
+      <a class="ui-link d-inline-block mt-2" href="/classes/?tab=professors">{{ 'Open the professors' if story.teachers else 'Give this speciality to a professor' }}</a>
+    </div>
+
+    <div class="pd-box">
+      <div class="pd-box-title"><i class="bi bi-signpost-split-fill"></i>Before it starts</div>
+      <div class="pd-hint">Each paid candidate says where they stand on {{ story.level_form.topics }} topic{{ 's' if story.level_form.topics != 1 }} of this program{% if story.level_form.checks %} and answers {{ story.level_form.checks }} questions, from easy to advanced{% else %}. This subject has no check questions yet, so the level comes from what they say{% endif %}.</div>
+      <a class="ui-btn sm mt-2" href="/quiz/preview/{{ program.id }}" target="_blank" rel="noopener"><i class="bi bi-eye"></i>See the form</a>
+    </div>
+  </aside>
+</div>
+
+<!-- ============ What the market asks ============ -->
+<section class="pd-market" id="market">
+  <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap">
+    <div>
+      <h2 class="pd-h"><i class="bi bi-graph-up-arrow"></i>What employers ask</h2>
+      <p class="pd-sub mb-0">{% if market.offers %}Counted from {{ market.offers }} job offer{{ 's' if market.offers != 1 }} in {{ market.field }}{% for source, count in market.sources.items() %}{{ ' (' if loop.first else ', ' }}{{ count }} {{ 'from public job boards' if source == 'Public job boards' else 'pasted by you' if source == 'Pasted by you' else 'from 9antra.tn' }}{{ ')' if loop.last }}{% endfor %}.{% else %}{{ market.advice[0] if market.advice }}{% endif %}</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      {% if market.search %}<a class="ui-btn sm" href="{{ market.search.linkedin }}" target="_blank" rel="noopener noreferrer" title="Opens LinkedIn's own job search for “{{ market.search.words }}” in Tunisia"><i class="bi bi-linkedin"></i>See these jobs on LinkedIn</a>{% endif %}
+      <a class="ui-btn sm" href="/programs/market#paste"><i class="bi bi-clipboard-plus"></i>Paste an offer</a>
+      <a class="ui-btn sm soft" href="/programs/market">All programs</a>
+    </div>
+  </div>
+  {% if market.offers %}
+  <div class="pd-market-grid">
+    <div class="pd-market-box">
+      {% set fit = market.fit or 0 %}<div class="pd-fit {{ 'good' if fit >= 70 else 'mid' if fit >= 45 else 'low' }}" style="--pct:{{ fit }};"><div>{{ fit }}<small>%</small></div></div>
+      <b>of what offers ask is already in the program</b>
+      <span>Each skill weighs as much as it is asked for.{% if not market.enough %} Few offers so far: a hint, not a measure.{% endif %}</span>
+      {% if market.employers %}
+      <div class="pd-market-label">Asked of everybody</div>
+      <div class="pd-market-chips">{% for item in market.employers %}<span class="ui-chip {{ 'ok' if item.covered else 'muted' }}" title="{{ 'Named in the program' if item.covered else 'Not named in the program' }}">{{ item.label }} · {{ item.pct }}%</span>{% endfor %}</div>
+      {% endif %}
+    </div>
+    <div class="pd-market-box">
+      <div class="pd-market-label" style="margin-top:0;">The skills offers ask for</div>
+      {% for item in market.skills %}
+      <div class="pd-skill {{ 'is-covered' if item.covered else 'is-missing' }}" title="{{ item.count }} of {{ market.offers }} offers">
+        <span class="name"><i class="bi {{ 'bi-check-circle-fill' if item.covered else 'bi-plus-circle' }}"></i>{{ item.label }}</span>
+        <span class="bar"><span style="width:{{ item.pct }}%;"></span></span>
+        <em>{{ item.pct }}%</em>
+      </div>
+      {% endfor %}
+      <div class="pd-market-legend"><span><i class="bi bi-check-circle-fill" style="color:var(--mint);"></i>taught in the program</span><span><i class="bi bi-plus-circle" style="color:var(--gold-dark);"></i>not in the program</span></div>
+    </div>
+    <div class="pd-market-box">
+      <div class="pd-market-label" style="margin-top:0;">What to do</div>
+      <ul class="pd-advice">{% for line in market.advice %}<li>{{ line }}</li>{% endfor %}</ul>
+      {% if market.latest %}
+      <div class="pd-market-label">Latest offers</div>
+      {% for offer in market.latest %}
+      <div class="pd-offer">{% if offer.url %}<a href="{{ offer.url }}" target="_blank" rel="noopener noreferrer">{{ offer.title }}</a>{% else %}<b>{{ offer.title }}</b>{% endif %}<span>{{ offer.company }}{% if offer.company %} · {% endif %}{{ offer.source }}</span></div>
+      {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+  {% if market.list %}
+  <details class="pd-offers" id="offers" {{ 'open' if market.list | length <= 6 }}>
+    <summary><i class="bi bi-briefcase"></i>The {{ market.list | length }} latest offers of this field, one by one<span>what each one asks</span></summary>
+    {% for offer in market.list %}
+    <div class="pd-offer-row">
+      <div style="min-width:0;">
+        {% if offer.url %}<a href="{{ offer.url }}" target="_blank" rel="noopener noreferrer"><b>{{ offer.title }}</b></a>{% else %}<b>{{ offer.title }}</b>{% endif %}
+        <span>{{ offer.company }}{% if offer.company and offer.location %} · {% endif %}{{ offer.location }}{% if offer.posted %} · {{ offer.posted.strftime('%d %b %Y') }}{% endif %}{% if offer.source == 'Pasted by you' %} · pasted by you{% endif %}</span>
+      </div>
+      <div class="pd-market-chips">
+        {% for name in offer.missing %}<span class="ui-chip warn" title="Asked by this offer, not named in the program">{{ name }}</span>{% endfor %}
+        {% for name in offer.taught %}<span class="ui-chip ok" title="Asked by this offer and taught in the program">{{ name }}</span>{% endfor %}
+        {% for name in offer.also %}<span class="ui-chip muted">{{ name }}</span>{% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </details>
+  {% endif %}
+  {% if market.content %}
+  <div class="pd-market-label" id="content-ideas" style="margin-top:18px;">Content to add, from what offers ask</div>
+  <div class="pd-content">
+    {% for item in market.content %}
+    <div class="pd-content-item"><b>{{ item.label }}<em title="{{ item.count }} of {{ market.offers }} offers">{{ item.pct }}% of offers</em></b><p>{{ item.module }}</p></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% endif %}
+</section>
+
+<!-- ============ The others ============ -->
+{% if others %}
+<h2 class="pd-h mt-4"><i class="bi bi-grid-fill"></i>Other programs</h2>
+<div class="pd-others">
+  {% for other in others %}
+  <a class="pd-other" href="/programs/{{ other.program.id }}">{{ ui.program_icon(other.icon, 30) }}<span class="name">{{ other.program.name }}</span></a>
+  {% endfor %}
+</div>
+{% endif %}
+<div class="pd-pager">
+  {% if previous %}<a class="ui-btn" href="/programs/{{ previous.id }}"><i class="bi bi-arrow-left"></i>{{ previous.name }}</a>{% else %}<span></span>{% endif %}
+  {% if following %}<a class="ui-btn" href="/programs/{{ following.id }}">{{ following.name }}<i class="bi bi-arrow-right"></i></a>{% endif %}
+</div>
+</div>
+
+<script>
+(() => {
+  const button = document.getElementById("approveProgramBtn");
+  if (!button) return;
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    try {
+      const response = await fetch(`/programs/${button.dataset.program}/approve`, { method: "POST" });
+      if (!response.ok) throw new Error();
+      window.location.reload();
+    } catch (error) {
+      button.disabled = false;
+      window.alert("The program could not be approved. Try again.");
+    }
+  });
+})();
+</script>
+{% endblock %}

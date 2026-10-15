@@ -1,0 +1,61 @@
+{# Pieces shared by the dashboard, candidates and programs pages. #}
+
+{# A program's picture, or its initials on a colour when it has none. #}
+{% macro program_icon(icon, size=48, name="") -%}
+<span class="ui-picon {{ '' if icon.url else 'is-tile' }}"
+      style="width:{{ size }}px; height:{{ size }}px; border-radius:{{ (size * 0.3) | round | int }}px;{% if not icon.url %} background:{{ icon.soft }}; color:{{ icon.colour }}; font-size:{{ (size * 0.36) | round(1) }}px;{% endif %}">
+  {%- if icon.url %}<img src="{{ icon.url }}" alt="" loading="lazy">{% else %}{{ icon.initials }}{% endif -%}
+</span>
+{%- endmacro %}
+
+{# A person's initials on a colour chosen from their name. #}
+{% macro avatar(name, size=44) -%}
+{%- set clean = (name or "?") | trim -%}
+{%- set parts = clean.split() -%}
+{%- set initials = (parts[0][:1] ~ (parts[1][:1] if parts | length > 1 else parts[0][1:2])) if parts else "?" -%}
+{%- set palettes = [("#a42c67", "#fdf2f7"), ("#b45309", "#fef3c7"), ("#15803d", "#e9f9ef"), ("#1d4ed8", "#eef3ff"), ("#6d28d9", "#f3e8ff"), ("#0f766e", "#e6fbf8")] -%}
+{%- set lowered = clean | lower -%}
+{%- set palette = palettes[(lowered | length + lowered.count("a") + lowered.count("e") * 2 + lowered.count("i") * 3 + lowered.count("s") * 5 + lowered.count("r") * 7) % (palettes | length)] -%}
+<span class="ui-avatar" aria-hidden="true"
+      style="width:{{ size }}px; height:{{ size }}px; font-size:{{ (size * 0.36) | round(1) }}px; background:{{ palette[1] }}; color:{{ palette[0] }};">{{ initials }}</span>
+{%- endmacro %}
+
+{# One recommendation: what to do, why, and the button that does it. #}
+{% macro advice(item, back="/") -%}
+<div class="ui-advice tone-{{ item.tone }}">
+  <div class="ui-advice-ico"><i class="bi {{ item.icon }}"></i></div>
+  <div class="ui-advice-body">
+    <div class="ui-advice-title">{{ item.title }}</div>
+    <div class="ui-advice-why">{{ item.why }}</div>
+    {% if item.facts %}
+    <div class="ui-advice-facts">{% for fact in item.facts %}<span class="ui-chip">{{ fact }}</span>{% endfor %}</div>
+    {% endif %}
+  </div>
+  <div class="ui-advice-actions">
+    {% if item.action %}
+      {% if item.action.method == "post" %}
+      <form method="post" action="{{ item.action.url }}"{% if item.action.confirm %} data-confirm="{{ item.action.confirm }}"{% endif %}>
+        {% for field_name, field_value in item.action.fields.items() %}<input type="hidden" name="{{ field_name }}" value="{{ field_value }}">{% endfor %}
+        <button class="ui-btn primary sm" type="submit">{{ item.action.label }}</button>
+      </form>
+      {% else %}
+      <a class="ui-btn primary sm" href="{{ item.action.url }}">{{ item.action.label }}</a>
+      {% endif %}
+    {% endif %}
+    {% if item.link %}<a class="ui-btn sm" href="{{ item.link.url }}">{{ item.link.label }}</a>{% endif %}
+    {% if item.can_snooze %}
+    <form method="post" action="/advice/snooze">
+      <input type="hidden" name="key" value="{{ item.key }}">
+      <input type="hidden" name="back" value="{{ back }}">
+      <button class="ui-btn ghost sm" type="submit" title="Hide this recommendation for 3 days, or until the situation changes">Not now</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+{# How well something was understood: a level from weekly_questions.level_of. #}
+{% macro level_chip(level, score=None) -%}
+{%- set tones = {"ok": "ok", "warn": "warn", "bad": "bad", "muted": "muted"} -%}
+<span class="ui-chip {{ tones.get(level.tone, 'muted') }}">{% if score is not none %}{{ score | round | int }}% · {% endif %}{{ level.label }}</span>
+{%- endmacro %}

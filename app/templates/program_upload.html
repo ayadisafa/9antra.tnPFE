@@ -1,0 +1,298 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Program PDF - 9antra{% endblock %}
+{% block page_title %}Upload & Review Programs{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Error & Success Notifications -->
+        {% if error %}
+        <div class="alert alert-danger rounded-3 mb-4 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
+        </div>
+        {% endif %}
+
+        {% if success_msg %}
+        <div class="alert alert-success rounded-3 mb-4 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>{{ success_msg }}
+            <a href="/programs/all" class="alert-link ms-2">View Catalog &rarr;</a>
+        </div>
+        {% endif %}
+
+        <!-- STEP 1: UPLOAD & LIVE PIPELINE VISUALIZER -->
+        {% if not results %}
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4" id="uploadCard">
+            <h5 class="fw-bold text-dark mb-2">
+                <i class="bi bi-file-earmark-pdf-fill text-danger me-2"></i>Step 1: Upload Catalog PDF
+            </h5>
+            <p class="text-muted small mb-4">Select a training catalog PDF. The system will process, detect existing records, and prepare draft programs for review.</p>
+
+            <form action="/programs/upload" method="post" enctype="multipart/form-data" id="extractForm">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold text-dark">Select PDF File</label>
+                    <input type="file" name="file" accept="application/pdf" class="form-control" required>
+                </div>
+
+                <button class="qa-item qa-item-edit border-0 mt-3" type="submit" id="extractBtn">
+                    <i class="bi bi-cpu-fill"></i>
+                    <span>Start Extraction Pipeline</span>
+                </button>
+            </form>
+        </div>
+
+        <!-- ON-SCREEN REAL-TIME PIPELINE MONITOR -->
+        <div id="pipelineMonitor" class="card border-0 bg-dark text-light rounded-4 p-4 mb-4 shadow-lg d-none">
+            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-secondary pb-3">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="spinner-border text-primary" role="status" style="width: 1.75rem; height: 1.75rem;"></div>
+                    <div>
+                        <h6 class="fw-bold mb-0 text-white">Pipeline Execution Engine Active</h6>
+                        <small class="text-secondary" id="currentPipelineTask">Initializing PDF parser...</small>
+                    </div>
+                </div>
+                <span class="badge bg-primary-subtle text-primary border border-primary fs-7">Live Screen Trace</span>
+            </div>
+
+            <!-- Animated Progress Bar -->
+            <div class="progress mb-4" style="height: 6px; background-color: #2b3035;">
+                <div id="pipelineProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 10%;"></div>
+            </div>
+
+            <!-- Visual Execution Sequence -->
+            <div class="d-flex flex-column gap-3 font-monospace fs-7" id="pipelineSteps">
+                <div id="pStep1" class="d-flex align-items-center gap-3 text-warning fw-semibold">
+                    <i class="bi bi-arrow-right-circle-fill fs-6"></i>
+                    <span>[1/4] Reading & Extracting Raw PDF Text Streams</span>
+                </div>
+                <div id="pStep2" class="d-flex align-items-center gap-3 opacity-40">
+                    <i class="bi bi-circle fs-6"></i>
+                    <span>[2/4] Executing Schema Extraction via Gemini AI</span>
+                </div>
+                <div id="pStep3" class="d-flex align-items-center gap-3 opacity-40">
+                    <i class="bi bi-circle fs-6"></i>
+                    <span>[3/4] Cross-Referencing Database Records for Duplicate Names</span>
+                </div>
+                <div id="pStep4" class="d-flex align-items-center gap-3 opacity-40">
+                    <i class="bi bi-circle fs-6"></i>
+                    <span>[4/4] Generating Interactive Review Screen</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+
+        <!-- STEP 2: ON-SCREEN REVIEW, EDIT & SELECTION -->
+        {% if results %}
+        <form action="/programs/confirm-import" method="post" id="confirmForm">
+            <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-3">
+                    <div>
+                        <h5 class="fw-bold text-dark mb-1">
+                            <i class="bi bi-pencil-square text-primary me-2"></i>Step 2: Review & Edit Detected Programs
+                        </h5>
+                        <small class="text-muted">Extracted <strong>{{ results|length }}</strong> program entity candidate(s). Check items to commit to DB, uncheck to skip.</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAllCheckboxes(true)">Select All</button>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" onclick="setAllCheckboxes(false)">Deselect All</button>
+                    </div>
+                </div>
+
+                <!-- Program Cards Grid -->
+                <div class="d-flex flex-column gap-4 my-2">
+                    {% for item in results %}
+                    <div class="card border rounded-3 p-3 bg-light-subtle shadow-xs">
+                        <div class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2">
+                            <!-- Checkbox selector -->
+                            <div class="form-check d-flex align-items-center gap-2">
+                                <input class="form-check-input item-checkbox" type="checkbox" name="selected_items" value="{{ item.temp_id }}" id="check_{{ item.temp_id }}" checked style="transform: scale(1.2);">
+                                <label class="form-check-label fw-bold text-dark mb-0 ms-1" for="check_{{ item.temp_id }}">
+                                    Item #{{ loop.index }}: {{ item.name }}
+                                </label>
+                            </div>
+
+                            <!-- Real-time DB Detection Badge -->
+                            {% if item.is_existing %}
+                                <span class="badge bg-warning text-dark border border-warning px-3 py-2">
+                                    <i class="bi bi-exclamation-circle-fill me-1"></i>SIMILAR FOUND — Will Edit Existing Record
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success border border-success px-3 py-2">
+                                    <i class="bi bi-plus-circle-fill me-1"></i>NEW — Will Add New Database Record
+                                </span>
+                            {% endif %}
+                        </div>
+
+                        <!-- HIDDEN DATA PAYLOADS -->
+                        <input type="hidden" name="existing_id_{{ item.temp_id }}" value="{{ item.existing_id or '' }}">
+                        <input type="hidden" name="levels_json_{{ item.temp_id }}" value="{{ item.levels_json if item.levels_json else (item.levels | tojson) }}">
+
+                        <!-- Core Program Details -->
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Program Title</label>
+                                <input type="text" name="name_{{ item.temp_id }}" value="{{ item.name }}" class="form-control form-control-sm" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Online Price (DT)</label>
+                                <input type="number" step="0.01" name="price_online_{{ item.temp_id }}" value="{{ item.price_online or item.price or 0.0 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Onsite Price (DT)</label>
+                                <input type="number" step="0.01" name="price_onsite_{{ item.temp_id }}" value="{{ item.price_onsite or item.price or 0.0 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Total Duration (Days)</label>
+                                <input type="number" name="total_duration_days_{{ item.temp_id }}" value="{{ item.total_duration_days or item.duration_days or 30 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Hours / Week</label>
+                                <input type="number" name="hours_per_week_{{ item.temp_id }}" value="{{ item.hours_per_week or 0 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Training Hours</label>
+                                <input type="number" name="training_hours_{{ item.temp_id }}" value="{{ item.training_hours or 0 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-3">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Supervision Hours</label>
+                                <input type="number" name="supervision_hours_{{ item.temp_id }}" value="{{ item.supervision_hours or 0 }}" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Class Session Time</label>
+                                <input type="text" name="class_session_time_{{ item.temp_id }}" value="{{ item.class_session_time or '' }}" placeholder="e.g. Mon/Wed/Fri 18:00 - 21:00" class="form-control form-control-sm">
+                            </div>
+
+                            <div class="col-12">
+                                <label class="form-label small fw-semibold text-secondary mb-1">Description</label>
+                                <textarea name="description_{{ item.temp_id }}" class="form-control form-control-sm" rows="2">{{ item.description }}</textarea>
+                            </div>
+                        </div>
+
+                        <!-- Accordion for Levels & Curriculums -->
+                        {% if item.levels %}
+                        <div class="accordion mt-3" id="accordion_{{ item.temp_id }}">
+                            <div class="accordion-item border rounded-2">
+                                <h2 class="accordion-header" id="heading_{{ item.temp_id }}">
+                                    <button class="accordion-button collapsed py-2 text-dark bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse_{{ item.temp_id }}" aria-expanded="false">
+                                        <i class="bi bi-diagram-3-fill text-primary me-2"></i>
+                                        <span class="fw-semibold small">Extracted Program Levels ({{ item.levels|length }}) & Weekly Curriculums</span>
+                                    </button>
+                                </h2>
+                                <div id="collapse_{{ item.temp_id }}" class="accordion-collapse collapse" data-bs-parent="#accordion_{{ item.temp_id }}">
+                                    <div class="accordion-body bg-white p-3">
+                                        {% for level in item.levels %}
+                                        <div class="border rounded p-3 mb-3 bg-light">
+                                            <div class="fw-bold text-dark mb-1">Level {{ level.level_order or loop.index }}: {{ level.title }}</div>
+                                            {% if level.description %}
+                                                <p class="small text-muted mb-2">{{ level.description }}</p>
+                                            {% endif %}
+
+                                            {% if level.weeks %}
+                                            <div class="table-responsive">
+                                                <table class="table table-sm table-bordered bg-white mb-0 fs-7">
+                                                    <thead class="table-secondary">
+                                                        <tr>
+                                                            <th style="width: 80px;">Week #</th>
+                                                            <th>Topic Title</th>
+                                                            <th>Learning Objectives / Daily Agenda</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% for week in level.weeks %}
+                                                        <tr>
+                                                            <td class="fw-bold text-center">Week {{ week.week_number }}</td>
+                                                            <td>{{ week.topic_title }}</td>
+                                                            <td class="text-muted" style="white-space: pre-line;">{{ week.learning_objectives }}</td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Confirmation Buttons -->
+                <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                    <a href="/programs/upload" class="btn btn-light border text-secondary">Cancel & Restart</a>
+                    <button type="submit" class="qa-item qa-item-pay border-0" id="saveConfirmBtn">
+                        <i class="bi bi-database-fill-check"></i>
+                        <span>Confirm & Sync Selected to Database</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+        {% endif %}
+
+    </div>
+</div>
+
+<script>
+    // Live On-Screen Process Animator
+    const extractForm = document.getElementById('extractForm');
+    if (extractForm) {
+        extractForm.addEventListener('submit', function() {
+            document.getElementById('uploadCard').classList.add('d-none');
+            const monitor = document.getElementById('pipelineMonitor');
+            const progressBar = document.getElementById('pipelineProgressBar');
+            const currentTask = document.getElementById('currentPipelineTask');
+
+            monitor.classList.remove('d-none');
+
+            setTimeout(() => {
+                progressBar.style.width = '35%';
+                currentTask.innerText = 'Extracting structured program entities with Gemini...';
+                setStepState('pStep1', 'pStep2');
+            }, 1000);
+
+            setTimeout(() => {
+                progressBar.style.width = '70%';
+                currentTask.innerText = 'Searching database to flag existing vs new titles...';
+                setStepState('pStep2', 'pStep3');
+            }, 3200);
+
+            setTimeout(() => {
+                progressBar.style.width = '95%';
+                currentTask.innerText = 'Building interactive draft review components...';
+                setStepState('pStep3', 'pStep4');
+            }, 5200);
+        });
+    }
+
+    function setStepState(finishedId, activeId) {
+        const finished = document.getElementById(finishedId);
+        const active = document.getElementById(activeId);
+
+        if (finished) {
+            finished.className = "d-flex align-items-center gap-3 text-success fw-semibold opacity-75";
+            finished.querySelector('i').className = "bi bi-check-circle-fill fs-6";
+        }
+        if (active) {
+            active.className = "d-flex align-items-center gap-3 text-warning fw-semibold";
+            active.querySelector('i').className = "bi bi-arrow-right-circle-fill fs-6";
+        }
+    }
+
+    function setAllCheckboxes(status) {
+        document.querySelectorAll('.item-checkbox').forEach(cb => cb.checked = status);
+    }
+</script>
+{% endblock %}

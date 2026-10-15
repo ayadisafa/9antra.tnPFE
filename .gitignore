@@ -1,0 +1,27 @@
+# What git must never keep. The code goes in git; secrets and people's data do not.
+
+# Passwords and keys
+.env
+.env.*
+*.bak
+app/firebase_key.json
+
+# The real database, its copies and the files people uploaded
+# (they are protected by the daily copies in _backups, not by git)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+_backups/
+data/
+tests/data/
+app/static/brand/
+
+# Made by Python and editors
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+*.log

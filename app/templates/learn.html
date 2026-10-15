@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% if quiz %}Questions de la semaine {{ quiz.week_number }} · 9antra{% else %}9antra{% endif %}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; --red:#be123c; --red-soft:#fff1f2; --gold:#b45309; --gold-soft:#fef3c7; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:660px; margin:0 auto; padding:22px 16px 48px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:18px; }
+    .brand span { width:34px; height:34px; border-radius:11px; background:var(--berry); color:#fff; display:grid; place-items:center; font-size:1rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:22px; padding:26px clamp(18px, 5vw, 34px); box-shadow:0 22px 44px -30px rgba(36,26,56,.35); }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 11px; border-radius:999px; }
+    h1 { font-size:1.45rem; line-height:1.25; margin:12px 0 6px; letter-spacing:-.01em; }
+    .lead { color:var(--muted); font-size:.93rem; margin:0; }
+    fieldset { border:0; margin:0; padding:22px 0 0; }
+    fieldset + fieldset { margin-top:22px; border-top:1px solid var(--line); }
+    legend { display:flex; gap:10px; align-items:flex-start; font-weight:650; font-size:1rem; padding:0; margin-bottom:12px; width:100%; }
+    .num { flex:none; width:26px; height:26px; border-radius:50%; background:var(--berry-soft); color:var(--berry); font-size:.8rem; font-weight:800; display:grid; place-items:center; margin-top:1px; }
+    .option { display:flex; gap:11px; align-items:flex-start; padding:12px 14px; border:1.5px solid var(--line); border-radius:13px; font-size:.93rem; cursor:pointer; margin-top:8px; transition:border-color .12s ease, background .12s ease; }
+    .option:hover { border-color:var(--berry); }
+    .option input { margin:3px 0 0; width:17px; height:17px; accent-color:var(--berry); flex:none; }
+    .option:has(input:checked) { border-color:var(--berry); background:var(--berry-soft); }
+    .option:has(input:focus-visible) { outline:2px solid var(--berry); outline-offset:2px; }
+    .submit { margin-top:26px; width:100%; border:0; border-radius:14px; padding:14px 20px; font:inherit; font-weight:700; font-size:1rem; color:#fff; background:var(--berry); cursor:pointer; }
+    .submit:hover { background:var(--berry-dark); }
+    .submit:focus-visible { outline:2px solid var(--berry); outline-offset:3px; }
+    .problem { margin-top:16px; background:var(--gold-soft); color:#7c4a03; border-radius:13px; padding:11px 14px; font-size:.9rem; font-weight:600; }
+    .score { display:flex; align-items:center; gap:18px; margin-top:18px; padding:18px; border-radius:18px; background:#faf8fd; }
+    .ring { --pct:0; width:92px; height:92px; border-radius:50%; flex:none; display:grid; place-items:center; background:conic-gradient(var(--tone) calc(var(--pct) * 1%), #ebe5f3 0); }
+    .ring div { width:72px; height:72px; border-radius:50%; background:#fff; display:grid; place-items:center; font-weight:800; font-size:1.35rem; }
+    .score strong { display:block; font-size:1.08rem; }
+    .score p { margin:3px 0 0; color:var(--muted); font-size:.9rem; }
+    .answer { display:flex; gap:10px; align-items:flex-start; padding:10px 13px; border-radius:12px; font-size:.92rem; margin-top:7px; border:1.5px solid var(--line); }
+    .answer.right { background:var(--mint-soft); border-color:#b7e4c7; color:#0f5132; font-weight:650; }
+    .answer.wrong { background:var(--red-soft); border-color:#fecdd3; color:#9f1239; }
+    .answer .mark { flex:none; font-weight:800; width:18px; text-align:center; }
+    .tag { font-size:.74rem; font-weight:700; margin-left:auto; white-space:nowrap; padding-left:8px; }
+    .explain { margin-top:10px; font-size:.87rem; color:#5b5670; border-left:3px solid var(--line); padding-left:11px; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+    /* How the week went: three clicks and two free answers. */
+    .feel { margin-top:26px; padding-top:22px; border-top:2px dashed var(--line); }
+    .feel h2 { font-size:1.12rem; font-weight:800; margin:6px 0 4px; }
+    .faces { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; }
+    .face { cursor:pointer; text-align:center; }
+    .face input { position:absolute; opacity:0; width:0; height:0; }
+    .face span { display:block; border:1.5px solid var(--line); border-radius:14px; padding:10px 4px 8px; font-size:.76rem; font-weight:700; color:#5b5670; transition:border-color .15s ease, background .15s ease, transform .15s ease; }
+    .face b { display:block; font-size:1.7rem; line-height:1.15; font-weight:400; }
+    .face:hover span { border-color:var(--berry); }
+    .face input:checked + span { border-color:var(--berry); background:#fdf2f7; color:var(--berry); transform:translateY(-2px); }
+    .face input:focus-visible + span { outline:2px solid var(--berry); outline-offset:2px; }
+    .pills { display:flex; flex-wrap:wrap; gap:8px; }
+    .pills .option { flex:1 1 150px; margin:0; }
+    .feel textarea { width:100%; border:1.5px solid var(--line); border-radius:13px; padding:11px 13px; font:inherit; font-size:.93rem; min-height:84px; resize:vertical; color:inherit; background:#fff; }
+    .feel textarea:focus { outline:none; border-color:var(--berry); }
+    .thanks { margin-top:18px; border-radius:14px; padding:13px 15px; background:#f4f1f9; font-size:.9rem; color:#4a445e; }
+    @media (max-width: 520px) { .faces { gap:5px; } .face span { font-size:.66rem; padding:8px 2px 6px; } .face b { font-size:1.4rem; } }
+    @media (prefers-reduced-motion: reduce) { .option, .face span { transition:none; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="/static/brand/icon-64.png" alt="" width="34" height="34" style="border-radius:50%;" data-fallback="9" onerror="this.outerHTML='<span>'+this.dataset.fallback+'</span>'">{{ app_name or '9antra' }}</div>
+
+  {% if not quiz %}
+  <div class="card">
+    <span class="eyebrow">Lien introuvable</span>
+    <h1>Cette page n'existe pas ou n'est plus disponible</h1>
+    <p class="lead">Vérifiez que vous avez ouvert le lien complet reçu par email. En cas de doute, répondez à cet email : notre équipe vous enverra un nouveau lien.</p>
+  </div>
+
+  {% elif result.done %}
+  {% set tone = "var(--mint)" if result.score >= 80 else ("var(--gold)" if result.score >= 50 else "var(--red)") %}
+  <div class="card">
+    <span class="eyebrow">Semaine {{ quiz.week_number }}</span>
+    <h1>{{ quiz.course_name }}</h1>
+    <p class="lead">Merci, vos réponses sont enregistrées. Voici la correction.</p>
+    <div class="score">
+      <div class="ring" style="--pct:{{ result.score }}; --tone:{{ tone }};"><div>{{ result.right }}/{{ result.total }}</div></div>
+      <div>
+        {% if result.score >= 80 %}
+        <strong>Très bien : la semaine est acquise.</strong>
+        <p>Vous pouvez aborder la suite sereinement.</p>
+        {% elif result.score >= 50 %}
+        <strong>L'essentiel est là.</strong>
+        <p>Relisez les points marqués en rouge ci-dessous avant la prochaine séance.</p>
+        {% else %}
+        <strong>Cette semaine mérite d'être revue.</strong>
+        <p>Ce n'est pas grave : reprenez les points ci-dessous et parlez-en à votre formateur, nous y reviendrons ensemble.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    {% for row in result.rows %}
+    <fieldset>
+      <legend><span class="num">{{ loop.index }}</span><span>{{ row.question }}</span></legend>
+      {% for option in row.options %}
+      {% set is_right = loop.index0 == row.correct %}
+      {% set is_given = loop.index0 == row.given %}
+      <div class="answer {{ 'right' if is_right else ('wrong' if is_given else '') }}">
+        <span class="mark" aria-hidden="true">{{ '✓' if is_right else ('✗' if is_given else '') }}</span>
+        <span>{{ option }}</span>
+        {% if is_right and is_given %}<span class="tag">Votre réponse, correcte</span>
+        {% elif is_right %}<span class="tag">Bonne réponse</span>
+        {% elif is_given %}<span class="tag">Votre réponse</span>{% endif %}
+      </div>
+      {% endfor %}
+      {% if row.explanation %}<div class="explain">Dans le cours : « {{ row.explanation }} »</div>{% endif %}
+    </fieldset>
+    {% endfor %}
+    {% if said and (said.mood or said.hard or said.message) %}
+    <div class="thanks">Merci aussi de nous avoir dit comment s'est passée votre semaine : votre formateur lit vos réponses pour adapter la suite.</div>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <form class="card" method="post" action="/learn/{{ quiz.access_token }}">
+    <span class="eyebrow">Semaine {{ quiz.week_number }} · {{ result.total }} question{{ 's' if result.total != 1 }}</span>
+    <h1>{{ quiz.course_name }}</h1>
+    <p class="lead">Une seule réponse par question, sans vos notes. Ce n'est pas un examen : le résultat nous aide à savoir ce qu'il faut revoir ensemble. La correction s'affiche dès l'envoi.</p>
+    {% if problem %}<div class="problem" role="alert">{{ problem }}</div>{% endif %}
+
+    {% for row in result.rows %}
+    {% set question_index = loop.index0 %}
+    <fieldset>
+      <legend><span class="num">{{ loop.index }}</span><span>{{ row.question }}</span></legend>
+      {% for option in row.options %}
+      <label class="option">
+        <input type="radio" name="q{{ question_index }}" value="{{ loop.index0 }}" required>
+        <span>{{ option }}</span>
+      </label>
+      {% endfor %}
+    </fieldset>
+    {% endfor %}
+    <div class="feel">
+      <span class="eyebrow">Et vous, comment ça va ?</span>
+      <h2>Trois clics pour nous dire comment vous avez vécu la semaine</h2>
+      <p class="lead">Votre formateur lit ces réponses pour adapter la suite du cours.</p>
+      <fieldset>
+        <legend><span>{{ feel.questions.mood }}</span></legend>
+        <div class="faces">
+          {% for value, emoji, words in feel.mood %}
+          <label class="face"><input type="radio" name="mood" value="{{ value }}" required><span><b aria-hidden="true">{{ emoji }}</b>{{ words }}</span></label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend><span>{{ feel.questions.pace }}</span></legend>
+        <div class="pills">
+          {% for value, words in feel.pace %}
+          <label class="option"><input type="radio" name="pace" value="{{ value }}" required><span>{{ words }}</span></label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend><span>{{ feel.questions.confidence }}</span></legend>
+        <div class="pills">
+          {% for value, words in feel.confidence %}
+          <label class="option"><input type="radio" name="confidence" value="{{ value }}" required><span>{{ words }}</span></label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend><span>{{ feel.questions.hard }}</span></legend>
+        <textarea name="hard" maxlength="1200" placeholder="Écrivez librement, en quelques mots." aria-label="{{ feel.questions.hard }}"></textarea>
+      </fieldset>
+      <fieldset>
+        <legend><span>{{ feel.questions.message }} <span style="font-weight:500; color:var(--muted);">(facultatif)</span></span></legend>
+        <textarea name="message" maxlength="1200" aria-label="{{ feel.questions.message }}"></textarea>
+      </fieldset>
+    </div>
+    <button class="submit" type="submit">Envoyer mes réponses</button>
+  </form>
+  {% endif %}
+
+  <div class="foot">{{ app_name or "9antra" }} · centre de formation</div>
+</div>
+</body>
+</html>

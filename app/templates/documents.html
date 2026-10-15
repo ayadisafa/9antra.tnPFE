@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}PDF documents · 9antra{% endblock %}
+{% block page_title %}PDF documents{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .dc-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:16px; }
+  .dc-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:22px; display:flex; flex-direction:column; gap:12px;
+             transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .dc-card:hover { transform:translateY(-3px); border-color:#dccfe9; box-shadow:0 18px 36px -24px rgba(60,20,90,.4); }
+  .dc-ico { width:52px; height:52px; border-radius:16px; display:grid; place-items:center; font-size:1.45rem; background:var(--berry-subtle); color:var(--primary-berry); }
+  .dc-ico.t-gold { background:var(--gold-subtle); color:var(--gold-dark); } .dc-ico.t-sky { background:var(--sky-subtle); color:var(--sky); }
+  .dc-card:hover .dc-ico { animation:dcHop .5s ease; }
+  @keyframes dcHop { 40% { transform:translateY(-4px) rotate(-6deg); } }
+  .dc-name { font-weight:800; font-size:1.02rem; color:var(--ink-text); }
+  .dc-what { font-size:.82rem; color:var(--muted); line-height:1.5; margin-top:2px; }
+  .dc-buttons { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; }
+  .dc-buttons form { margin:0; }
+  .dc-section { font-weight:800; font-size:1.05rem; color:var(--ink-text); margin:26px 0 12px; display:flex; align-items:center; gap:8px; }
+  .dc-section i { color:var(--primary-berry); }
+  .dc-write { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:22px; }
+  .dc-starts { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+  .dc-write textarea { min-height:260px; font-size:.88rem; line-height:1.55; }
+  .dc-help { font-size:.76rem; color:var(--muted); line-height:1.6; margin-top:6px; }
+  .dc-help code { background:#f4f1f9; color:var(--primary-berry); border-radius:6px; padding:1px 6px; font-size:.74rem; }
+  .dc-note { display:flex; gap:10px; align-items:flex-start; background:#f6f3fb; border-radius:14px; padding:12px 14px; font-size:.8rem; color:#4a445e; margin-top:14px; }
+  .dc-note i { color:var(--primary-berry); margin-top:2px; }
+  @media (prefers-reduced-motion: reduce) { .dc-card, .dc-card:hover { transition:none; transform:none; } .dc-card:hover .dc-ico { animation:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div>
+    <h2>PDF documents</h2>
+    <p>Everything you can give your clients as a PDF: your programs in short or in detail, one program, or any information you write. Nothing goes out before you read the email and press Send.</p>
+  </div>
+</div>
+{% if not ready %}<div class="ui-empty mb-3"><i class="bi bi-exclamation-triangle"></i><strong>The PDF library is not installed</strong>Run “pip install reportlab”, then restart the application.</div>{% endif %}
+
+<div class="dc-section"><i class="bi bi-journal-bookmark-fill"></i>Your programs, ready to send</div>
+<div class="dc-grid">
+  <div class="dc-card" id="summary">
+    <div class="dc-ico"><i class="bi bi-lightning-charge-fill"></i></div>
+    <div><div class="dc-name">All programs in short</div><div class="dc-what">{{ count }} programs on two or three pages: what each one teaches, how long it lasts, its path, its tools and its prices. The one to send to someone who is still choosing.</div></div>
+    <div class="dc-buttons">
+      <a class="ui-btn sm" href="/programs/summary.pdf?lang=fr" target="_blank" rel="noopener"><i class="bi bi-eye"></i>Open</a>
+      <a class="ui-btn sm ghost" href="/programs/summary.pdf?lang=en" target="_blank" rel="noopener">In English</a>
+      <a class="ui-btn sm ghost" href="/programs/summary.pdf?lang=fr&download=1"><i class="bi bi-download"></i>Download</a>
+      <form method="post" action="/programs/catalogue/send"><input type="hidden" name="kind" value="summary"><input type="hidden" name="lang" value="fr">
+        <button class="ui-btn sm primary"><i class="bi bi-send"></i>Send by email…</button></form>
+    </div>
+  </div>
+  <div class="dc-card" id="detail">
+    <div class="dc-ico t-gold"><i class="bi bi-book-half"></i></div>
+    <div><div class="dc-name">All programs in detail</div><div class="dc-what">A first page with every program at a glance, then each one week by week, with its pace and prices. For someone who wants to know everything.</div></div>
+    <div class="dc-buttons">
+      <a class="ui-btn sm" href="/programs/catalogue.pdf?lang=fr" target="_blank" rel="noopener"><i class="bi bi-eye"></i>Open</a>
+      <a class="ui-btn sm ghost" href="/programs/catalogue.pdf?lang=en" target="_blank" rel="noopener">In English</a>
+      <a class="ui-btn sm ghost" href="/programs/catalogue.pdf?lang=fr&download=1"><i class="bi bi-download"></i>Download</a>
+      <form method="post" action="/programs/catalogue/send"><input type="hidden" name="lang" value="fr">
+        <button class="ui-btn sm primary"><i class="bi bi-send"></i>Send by email…</button></form>
+    </div>
+  </div>
+  <div class="dc-card" id="one">
+    <div class="dc-ico t-sky"><i class="bi bi-file-earmark-richtext"></i></div>
+    <div><div class="dc-name">One program</div><div class="dc-what">Its PDF in one of three looks (brochure, classic, one page), in French or English, to open, download or send.</div></div>
+    <div class="dc-buttons">
+      <select class="form-select form-select-sm" id="dc-program" aria-label="Which program" style="border-radius:10px; max-width:100%;">
+        {% for program in programs %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
+      </select>
+      <button type="button" class="ui-btn sm primary" id="dc-program-open"><i class="bi bi-arrow-right"></i>Its PDF</button>
+    </div>
+  </div>
+</div>
+
+<div class="dc-section" id="write"><i class="bi bi-pencil-square"></i>Any information, as a PDF</div>
+<form class="dc-write" method="post" action="/programs/documents/send">
+  <div class="dc-starts" role="group" aria-label="Start from">
+    <span class="ui-chip muted">Start from:</span>
+    {% for item in starters %}
+    <button type="button" class="ui-pill" data-start="{{ item.key }}"><i class="bi {{ item.icon }}"></i>{{ item.name }}</button>
+    {% endfor %}
+    <button type="button" class="ui-pill" data-start="blank"><i class="bi bi-file-earmark"></i>A blank page</button>
+  </div>
+  <div class="row g-3">
+    <div class="col-lg-8 ui-field"><label for="dc-title">Title</label><input class="form-control" id="dc-title" name="title" value="{{ title }}" maxlength="140" placeholder="For example: Practical information for the November start" required></div>
+    <div class="col-6 col-lg-2 ui-field"><label for="dc-lang">Words of the PDF</label>
+      <select class="form-select" id="dc-lang" name="lang"><option value="fr">Français</option><option value="en">English</option></select></div>
+    <div class="col-6 col-lg-2 ui-field"><label for="dc-for">Prepared for <span class="fw-normal">(optional)</span></label><input class="form-control" id="dc-for" name="for_name" maxlength="60" placeholder="A name"></div>
+    <div class="col-12 ui-field">
+      <label for="dc-text">Text</label>
+      <textarea class="form-control" id="dc-text" name="text" maxlength="{{ limit }}" required placeholder="Write or paste anything: a price list, practical information, an answer of the assistant…">{{ text }}</textarea>
+      <div class="dc-help">An empty line starts a new paragraph. A line starting with <code>-</code> is a point of a list. A short line ending with <code>:</code> is a heading.
+        <code>**words**</code> are bold. A paragraph starting with <code>[box]</code>, <code>[box gold]</code>, <code>[box green]</code> or <code>[box grey]</code> is a coloured square.</div>
+    </div>
+  </div>
+  <div class="d-flex flex-wrap gap-2 mt-3">
+    <button class="ui-btn" formaction="/programs/documents/pdf" formtarget="_blank"><i class="bi bi-eye"></i>See the PDF</button>
+    <button class="ui-btn" formaction="/programs/documents/pdf" formtarget="_blank" name="download" value="1"><i class="bi bi-download"></i>Download it</button>
+    <button class="ui-btn primary"><i class="bi bi-send"></i>Send it by email…</button>
+  </div>
+  <div class="dc-note"><i class="bi bi-shield-check"></i><div>In the email you choose who receives it (one candidate, a class, a program or everyone) and you read it before it goes.
+    Check that the text holds nothing private about other people before sending it to a client.</div></div>
+  <div class="dc-note"><i class="bi bi-robot"></i><div>The assistant does it too: ask it “… in pdf” (for example “the price list in pdf”), or say “make it a pdf” after any of its answers.</div></div>
+</form>
+
+<script>
+(() => {
+  const starters = {{ starters | tojson }};
+  const title = document.getElementById("dc-title"), text = document.getElementById("dc-text");
+  document.querySelectorAll("[data-start]").forEach(button => button.addEventListener("click", () => {
+    const chosen = starters.find(item => item.key === button.dataset.start);
+    if ((title.value || text.value) && !window.confirm("Replace what is written with this?")) return;
+    title.value = chosen ? chosen.title : ""; text.value = chosen ? chosen.text : "";
+    (chosen ? text : title).focus();
+  }));
+  const select = document.getElementById("dc-program");
+  document.getElementById("dc-program-open")?.addEventListener("click", () => { if (select.value) window.location.href = `/programs/${select.value}/pdf`; });
+})();
+</script>
+{% endblock %}

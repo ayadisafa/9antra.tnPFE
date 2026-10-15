@@ -1,0 +1,132 @@
+{# How a class lived one week: faces, pace, what was hard, who needs the professor.
+   Needs `feelings` (week_insights.week_feelings) and the `ui` macros. #}
+<style>
+  .fl { margin-top:22px; padding-top:20px; border-top:2px dashed #e6e0f0; }
+  .fl-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; margin-top:14px; }
+  .fl-box { background:#faf8fd; border-radius:16px; padding:14px 16px; }
+  .fl-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#9b95b0; margin-bottom:10px; }
+  .fl-faces { display:grid; grid-template-columns:repeat(5, 1fr); gap:6px; align-items:end; height:92px; }
+  .fl-face { display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; gap:3px; }
+  .fl-face i { display:block; width:100%; max-width:30px; border-radius:8px 8px 3px 3px; background:var(--primary-berry); min-height:3px; opacity:.85; transform-origin:bottom; animation:flGrow .8s cubic-bezier(.2,.8,.3,1) both; }
+  .fl-face:nth-child(1) i { background:#e11d48; } .fl-face:nth-child(2) i { background:#f59e0b; } .fl-face:nth-child(3) i { background:#a8a2bd; }
+  .fl-face:nth-child(4) i { background:#22c55e; } .fl-face:nth-child(5) i { background:var(--mint); }
+  .fl-face span { font-size:1.15rem; line-height:1; }
+  .fl-face b { font-size:.7rem; color:#5b5670; }
+  @keyframes flGrow { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+  .fl-pace { display:flex; height:14px; border-radius:99px; overflow:hidden; background:#ece7f5; }
+  .fl-pace span { display:block; height:100%; }
+  .fl-legend { display:flex; justify-content:space-between; font-size:.72rem; color:#5b5670; margin-top:7px; font-weight:600; }
+  .fl-big { font-weight:800; font-size:1.5rem; color:var(--ink-text); line-height:1; }
+  .fl-big small { font-size:.72rem; color:var(--muted); font-weight:700; }
+  .fl-do { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:13px; background:var(--gold-subtle); color:#78350f; font-size:.84rem; margin-top:8px; line-height:1.45; }
+  .fl-do i { color:var(--gold-dark); margin-top:2px; }
+  .fl-theme { border:1px solid var(--border-color); border-radius:14px; padding:12px 14px; margin-top:8px; background:#fff; }
+  .fl-theme-head { display:flex; gap:9px; align-items:center; font-weight:800; font-size:.86rem; color:var(--ink-text); }
+  .fl-theme-head i { color:var(--primary-berry); }
+  .fl-quote { font-size:.82rem; color:#4a445e; border-left:3px solid #e0d9ee; padding-left:10px; margin-top:8px; font-style:italic; line-height:1.5; }
+  .fl-quote b { font-style:normal; color:var(--ink-text); }
+  .fl-person { display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:12px; align-items:flex-start; padding:14px 0; border-top:1px solid var(--border-color); }
+  .fl-person:first-of-type { border-top:0; }
+  .fl-mood { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; font-size:1.5rem; background:#f4f1f9; flex:none; }
+  .fl-name { font-weight:800; font-size:.9rem; color:var(--ink-text); text-decoration:none; }
+  a.fl-name:hover { color:var(--primary-berry); }
+  .fl-sum { font-size:.82rem; color:#5b5670; margin-top:2px; line-height:1.5; }
+  .fl-why { font-size:.76rem; color:#9f1239; margin-top:5px; font-weight:600; }
+  .fl-model { font-size:.76rem; color:#5b5670; margin-top:6px; background:#f6f3fb; border-radius:10px; padding:7px 10px; }
+  @media (prefers-reduced-motion: reduce) { .fl-face i { animation:none; } }
+</style>
+
+<div class="fl" id="feelings">
+  <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+    <div>
+      <div class="ui-card-title"><i class="bi bi-emoji-smile"></i>How the class lived the week</div>
+      <div class="ui-card-sub">From what each candidate said with their answers: the faces, the pace, and their own words.</div>
+    </div>
+    <div class="ui-actions">
+      {% if feelings.to_act %}<span class="ui-chip bad">{{ feelings.to_act }} need{{ 's' if feelings.to_act == 1 }} you now</span>{% endif %}
+      {% if feelings.to_watch %}<span class="ui-chip warn">{{ feelings.to_watch }} to keep an eye on</span>{% endif %}
+    </div>
+  </div>
+
+  {% if not feelings.felt and not feelings.people %}
+  <div class="ui-empty mt-3"><i class="bi bi-emoji-neutral"></i><strong>Nothing said yet</strong>As soon as a candidate answers, you see here how the week went for them.</div>
+  {% else %}
+  <div class="fl-grid">
+    <div class="fl-box">
+      <div class="fl-label">How the week went{% if feelings.mood.average %} · {{ feelings.mood.average }} out of 5{% endif %}</div>
+      <div class="fl-faces" role="img" aria-label="{% for face in feelings.mood.faces %}{{ face.label }}: {{ face.count }}{{ ', ' if not loop.last }}{% endfor %}">
+        {% for face in feelings.mood.faces %}
+        <div class="fl-face" title="{{ face.label }}: {{ face.count }}">
+          <b>{{ face.count or '' }}</b>
+          <i style="height:{{ (face.count / feelings.mood.top * 46) | round | int if feelings.mood.top else 0 }}px; animation-delay:{{ loop.index0 * 0.08 }}s;"></i>
+          <span aria-hidden="true">{{ face.emoji }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="fl-box">
+      <div class="fl-label">The pace</div>
+      {% set said = feelings.pace.said %}
+      {% if said %}
+      <div class="fl-pace" role="img" aria-label="Too slow {{ feelings.pace.slow }}, right {{ feelings.pace.right }}, too fast {{ feelings.pace.fast }}">
+        <span style="width:{{ feelings.pace.slow / said * 100 }}%; background:var(--sky);"></span>
+        <span style="width:{{ feelings.pace.right / said * 100 }}%; background:var(--mint);"></span>
+        <span style="width:{{ feelings.pace.fast / said * 100 }}%; background:#e11d48;"></span>
+      </div>
+      <div class="fl-legend"><span>{{ feelings.pace.slow }} too slow</span><span>{{ feelings.pace.right }} right</span><span>{{ feelings.pace.fast }} too fast</span></div>
+      {% else %}<div class="ui-card-sub">Nobody said yet.</div>{% endif %}
+      <div class="fl-label mt-3 mb-1">Could redo it alone</div>
+      {% if feelings.confidence %}<div class="fl-big">{{ feelings.confidence }} <small>out of 4</small></div>{% else %}<div class="ui-card-sub">Nobody said yet.</div>{% endif %}
+    </div>
+    <div class="fl-box">
+      <div class="fl-label">Result and confidence, side by side</div>
+      {% for profile in feelings.profiles %}
+      <div class="d-flex gap-2 align-items-center mb-2" title="{{ profile.text }}">
+        <span class="ui-chip {{ profile.tone }}" style="min-width:30px; justify-content:center;">{{ profile.count }}</span>
+        <span style="font-size:.8rem; font-weight:700; color:var(--ink-text); line-height:1.25;">{{ profile.label }}</span>
+      </div>
+      {% else %}<div class="ui-card-sub">Shows who struggles and knows it, and who thinks they understood but did not.</div>{% endfor %}
+    </div>
+  </div>
+
+  {% if feelings.advice %}
+  <div class="mt-3">
+    <div class="ui-card-title" style="font-size:.86rem;"><i class="bi bi-lightbulb"></i>For the next session</div>
+    {% for item in feelings.advice %}<div class="fl-do"><i class="bi {{ item.icon }}"></i><span>{{ item.text }}</span></div>{% endfor %}
+  </div>
+  {% endif %}
+
+  {% if feelings.themes %}
+  <div class="mt-3">
+    <div class="ui-card-title" style="font-size:.86rem;"><i class="bi bi-chat-quote"></i>What they say was hard</div>
+    {% for theme in feelings.themes %}
+    <div class="fl-theme">
+      <div class="fl-theme-head"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}<span class="ui-chip ms-auto">{{ theme.count }} candidate{{ 's' if theme.count != 1 }}</span></div>
+      {% for quote in theme.quotes %}<div class="fl-quote"><b>{{ quote.name }}:</b> “{{ quote.words }}”</div>{% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="mt-3">
+    <div class="ui-card-title" style="font-size:.86rem;"><i class="bi bi-people"></i>One by one</div>
+    {% for row in feelings.people %}
+    {% set insight = row.insight %}
+    <div class="fl-person">
+      <div class="fl-mood" title="{{ insight.mood_view.label if insight.mood_view else 'Did not say' }}">{{ insight.mood_view.emoji if insight.mood_view else '·' }}</div>
+      <div style="min-width:0;">
+        {% if row.candidate and is_admin %}<a class="fl-name" href="/candidate/{{ row.candidate.id }}#feelings">{{ row.name }}</a>{% else %}<span class="fl-name">{{ row.name }}</span>{% endif %}
+        {% if insight.profile_view %}<span class="ui-chip {{ insight.profile_view.tone }} ms-1" title="{{ insight.profile_view.text }}"><i class="bi {{ insight.profile_view.icon }}"></i>{{ insight.profile_view.label }}</span>{% endif %}
+        <div class="fl-sum">{{ insight.summary }}</div>
+        {% if insight.words %}<div class="fl-quote">“{{ insight.words }}”</div>{% endif %}
+        {% if insight.reading %}
+        <div class="fl-model"><i class="bi bi-robot me-1"></i>Second reading: {{ insight.reading.summary }}{% if not insight.reading.agrees %} <b>The two readings disagree: read the words yourself.</b>{% endif %}</div>
+        {% endif %}
+        {% if insight.attention.level != 'ok' and insight.attention.reasons %}<div class="fl-why"><i class="bi bi-flag-fill me-1"></i>{{ insight.attention.reasons | join(' · ') | capitalize }}</div>{% endif %}
+      </div>
+      <span class="ui-chip {{ insight.attention_view.tone }}">{{ insight.attention_view.label }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>

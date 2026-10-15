@@ -1,0 +1,680 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}{{ name }} · 9antra{% endblock %}
+{% block page_title %}Candidate{% endblock %}
+{% block live_topics %}candidate:{{ candidate.id }}{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .cp-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
+  .cp-back:hover { color:var(--primary-berry); }
+
+  /* Who: a coloured cover, the face, the name, how to reach them, and what can be done at once. */
+  .cp-hero { position:relative; background:#fff; border:1px solid var(--border-color); border-radius:26px; overflow:hidden; }
+  .cp-cover { position:relative; height:104px; background:linear-gradient(120deg, var(--primary-berry) 0%, #7a2a8f 48%, var(--accent-gold-dark) 100%); overflow:hidden; }
+  .cp-cover span { position:absolute; border-radius:50%; background:rgba(255,255,255,.14); animation:cpFloat 9s ease-in-out infinite alternate; }
+  .cp-cover span:nth-child(1) { width:180px; height:180px; right:-40px; top:-70px; }
+  .cp-cover span:nth-child(2) { width:90px; height:90px; right:200px; top:40px; animation-duration:12s; background:rgba(255,210,140,.22); }
+  .cp-cover span:nth-child(3) { width:46px; height:46px; left:38%; top:14px; animation-duration:7s; }
+  .cp-cover i { position:absolute; color:rgba(255,255,255,.22); font-size:1.6rem; animation:cpFloat 10s ease-in-out infinite alternate; }
+  .cp-cover i:nth-of-type(1) { left:56%; top:52px; } .cp-cover i:nth-of-type(2) { left:70%; top:12px; font-size:1.2rem; animation-duration:13s; } .cp-cover i:nth-of-type(3) { left:84%; top:60px; font-size:1.3rem; }
+  @keyframes cpFloat { from { transform:translate(0, 0) rotate(0); } to { transform:translate(-16px, 10px) rotate(12deg); } }
+  .cp-hero-main { display:flex; gap:20px; align-items:flex-end; flex-wrap:wrap; padding:0 26px 22px; margin-top:-46px; position:relative; }
+  .cp-face { border-radius:50%; padding:5px; background:#fff; box-shadow:0 12px 26px -14px rgba(60,20,90,.45); flex:none; align-self:flex-start; }
+  .cp-id { flex:1 1 280px; min-width:0; padding-top:52px; }
+  .cp-name { font-weight:800; font-size:1.55rem; color:var(--ink-text); margin:0; letter-spacing:-.015em; }
+  .cp-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .cp-contact { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .cp-contact > * { display:inline-flex; align-items:center; gap:7px; padding:6px 12px; border-radius:999px; background:#f6f3fb; color:#4a445e; font-size:.8rem; font-weight:600; text-decoration:none; max-width:100%; }
+  .cp-contact > * span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cp-contact a:hover { background:var(--berry-subtle); color:var(--primary-berry); }
+  .cp-contact i { color:var(--primary-berry); flex:none; }
+  .cp-hero .ui-actions { padding-bottom:4px; }
+
+  /* The parts of the file, one at a time. */
+  .cp-tabs { display:none; gap:6px; padding:6px; margin:4px 0 18px; background:#fff; border:1px solid var(--border-color); border-radius:18px; overflow-x:auto; scrollbar-width:none; }
+  .cp-tabs::-webkit-scrollbar { display:none; }
+  .cp-tabbed .cp-tabs { display:flex; }
+  .cp-tab { flex:none; display:inline-flex; align-items:center; gap:8px; border:0; background:transparent; color:#5b5670; font-weight:700; font-size:.84rem; padding:10px 15px; border-radius:13px; cursor:pointer; transition:background .15s ease, color .15s ease; white-space:nowrap; }
+  .cp-tab:hover { background:#f6f3fb; color:var(--ink-text); }
+  .cp-tab.is-on { background:var(--ink-2); color:#fff; }
+  .cp-tab .cp-count { font-size:.68rem; font-weight:800; padding:1px 7px; border-radius:999px; background:#efe9f6; color:#5b5670; }
+  .cp-tab.is-on .cp-count { background:rgba(255,255,255,.18); color:#fff; }
+  .cp-tab .cp-alert { width:8px; height:8px; border-radius:50%; background:#e11d48; box-shadow:0 0 0 3px rgba(225,29,72,.18); }
+  .cp-tab:focus-visible { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  #cp-file, #cp-file [id] { scroll-margin-top:104px; }    /* below the top bar, which stays on screen */
+  .cp-tabbed .cp-pane { display:none; }
+  .cp-tabbed .cp-pane.is-on { display:block; animation:cpPane .3s ease both; }
+  @keyframes cpPane { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* Overview: the programs in one look. */
+  .cp-glance { display:flex; gap:12px; align-items:center; padding:12px; border-radius:16px; text-decoration:none; color:inherit; transition:background .15s ease; }
+  .cp-glance + .cp-glance { margin-top:4px; }
+  .cp-glance:hover { background:#f8f5fc; }
+  .cp-glance-name { font-weight:800; font-size:.86rem; color:var(--ink-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cp-glance-sub { font-size:.74rem; color:var(--muted); display:flex; gap:10px; align-items:center; margin-top:4px; }
+  .cp-glance-sub .ui-bar { flex:1; max-width:160px; height:6px; }
+  .cp-glance .bi-chevron-right { color:#c4bcd6; transition:transform .15s ease; }
+  .cp-glance:hover .bi-chevron-right { transform:translateX(3px); color:var(--primary-berry); }
+
+  .cp-next { border-radius:22px; padding:20px; background:linear-gradient(135deg, #fffaf3, #fff6fb); border:1px solid #f2dfc2; }
+  .cp-next.is-fine { background:linear-gradient(135deg, var(--mint-subtle), #f7fffb); border-color:#c9ecd6; }
+  .cp-next-label { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gold-dark); display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+  .cp-next.is-fine .cp-next-label { color:var(--mint); }
+  .cp-next .ui-advice { background:#fff; }
+
+  .cp-grid { display:grid; grid-template-columns:minmax(0, 1.7fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .cp-program { border:1px solid var(--border-color); border-radius:18px; padding:16px; margin-top:12px; }
+  .cp-program:first-of-type { margin-top:0; }
+  .cp-program.is-due { border-color:#f1d9a5; }
+  .cp-program-name { font-weight:800; font-size:.95rem; color:var(--ink-text); }
+  .cp-meta { font-size:.76rem; color:var(--muted); }
+  .cp-facts { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin-top:12px; }
+  .cp-fact { background:#faf8fd; border-radius:12px; padding:9px 11px; }
+  .cp-fact-label { font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#9b95b0; }
+  .cp-fact-value { font-weight:700; font-size:.84rem; color:var(--ink-text); margin-top:1px; }
+  .cp-forms { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  .cp-forms form { margin:0; display:flex; gap:6px; align-items:center; }
+  .cp-forms .form-control, .cp-forms .form-select { border-radius:10px; font-size:.78rem; border-color:var(--border-color); }
+  .cp-rem { display:inline-flex; align-items:center; gap:4px; font-size:.66rem; font-weight:800; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+  .cp-rem.sent { background:var(--mint-subtle); color:var(--mint); }
+  .cp-rem.planned { background:var(--sky-subtle); color:var(--sky); }
+  .cp-rem.due { background:var(--gold-subtle); color:var(--gold-dark); }
+  .cp-rem.skipped { background:#f1eff5; color:#85809c; }
+  .cp-rem.failed { background:#fff1f2; color:#be123c; }
+
+  .cp-line { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; }
+  .cp-line:first-child { border-top:0; padding-top:2px; }
+  a.cp-line:hover .cp-line-title { color:var(--primary-berry); }
+  .cp-line-title { font-weight:700; font-size:.85rem; color:var(--ink-text); line-height:1.3; }
+  .cp-line-sub { font-size:.74rem; color:var(--muted); margin-top:1px; }
+  .bh-top { display:flex; gap:16px; align-items:center; }
+  .bh-ring { --pct:0; --ring:var(--muted); width:86px; height:86px; border-radius:50%; flex:none; display:grid; place-items:center; background:conic-gradient(var(--ring) calc(var(--pct) * 1%), #ebe5f3 0); }
+  .bh-ring.tone-ok { --ring:var(--mint); } .bh-ring.tone-info { --ring:var(--sky); } .bh-ring.tone-warn { --ring:var(--accent-gold-dark); } .bh-ring.tone-bad { --ring:#e11d48; }
+  .bh-ring div { width:66px; height:66px; border-radius:50%; background:#fff; display:grid; place-items:center; align-content:center; font-weight:800; font-size:1.3rem; color:var(--ink-text); line-height:1; }
+  .bh-ring small { display:block; font-size:.6rem; font-weight:700; color:var(--muted); }
+  .bh-headline { font-weight:800; font-size:1.05rem; color:var(--ink-text); }
+  .bh-traits { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+  .bh-why { margin:12px 0 0; padding-left:18px; font-size:.8rem; color:#4a445e; line-height:1.5; }
+  .bh-why li + li { margin-top:2px; }
+  .bh-params { margin-top:14px; border-top:1px dashed #e4ddf0; padding-top:10px; }
+  .bh-params > summary { cursor:pointer; font-size:.8rem; font-weight:800; color:var(--primary-berry); margin-bottom:6px; }
+  .bh-param { display:grid; grid-template-columns:minmax(0, 1.6fr) minmax(60px, .7fr) 118px; gap:12px; align-items:center; padding:8px 0; border-top:1px solid var(--border-color); }
+  .bh-param b { display:block; font-size:.82rem; color:var(--ink-text); } .bh-param span { display:block; font-size:.78rem; color:#4a445e; } .bh-param em { display:block; font-style:normal; font-size:.7rem; color:var(--muted); line-height:1.35; margin-top:1px; }
+  .bh-param.is-none b, .bh-param.is-none span { color:#a7a0ba; }
+  .bh-bar { height:7px; border-radius:99px; background:#efebf6; overflow:hidden; } .bh-bar span { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--accent-gold-dark), var(--primary-berry)); }
+  .bh-points { font-weight:800; font-size:.92rem; color:var(--ink-text); text-align:right; } .bh-points small { display:block; font-size:.66rem; font-weight:600; color:var(--muted); }
+  @media (max-width: 575px) { .bh-param { grid-template-columns:1fr; gap:5px; } .bh-points { text-align:left; } }
+  .cp-day { width:44px; flex:none; text-align:center; border-radius:12px; background:#f4f1f9; color:#5b5670; padding:6px 0; line-height:1.1; }
+  .cp-day b { display:block; font-size:1rem; font-weight:800; }
+  .cp-day span { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .cp-day.is-next { background:var(--primary-berry); color:#fff; }
+  .cp-email { border-top:1px solid var(--border-color); padding:10px 0; }
+  .cp-email:first-of-type { border-top:0; }
+  .cp-email summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; gap:10px; align-items:center; }
+  .cp-email summary::-webkit-details-marker { display:none; }
+  .cp-email-body { font-size:.8rem; color:#5b5670; white-space:pre-wrap; margin:8px 0 4px; line-height:1.5; }
+  .cp-missed { font-size:.76rem; color:#6b6680; margin:4px 0 0 0; padding-left:16px; }
+  .ui-card { padding:22px; }
+  @media (max-width: 1199px) { .cp-grid { grid-template-columns:1fr; } }
+  @media (max-width: 640px) {
+    .cp-hero-main { padding:0 16px 18px; gap:12px; }
+    .cp-id { padding-top:0; flex-basis:100%; }
+    .cp-name { font-size:1.3rem; }
+    .cp-cover { height:84px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cp-cover span, .cp-cover i, .cp-tabbed .cp-pane.is-on { animation:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-2"><a href="/candidate/all" class="cp-back"><i class="bi bi-arrow-left me-1"></i>All candidates</a></div>
+{% include "_flash.html" %}
+
+{% set total_due = program_cards | sum(attribute='total') %}
+{% set total_paid = program_cards | sum(attribute='paid') %}
+{% set remaining = program_cards | sum(attribute='due') %}
+{% set paid_pct = ((total_paid / total_due * 100) | round | int) if total_due else 0 %}
+
+<!-- Who -->
+<section class="cp-hero mb-3" id="live-candidate-hero" data-live-region>
+  <div class="cp-cover" aria-hidden="true"><span></span><span></span><span></span><i class="bi bi-mortarboard-fill"></i><i class="bi bi-code-slash"></i><i class="bi bi-stars"></i></div>
+  <div class="cp-hero-main">
+    <div class="cp-face">{{ ui.avatar(name, 96) }}</div>
+    <div class="cp-id">
+      <h2 class="cp-name">{{ name }}</h2>
+      <div class="cp-chips">
+        {% if program_cards | selectattr('class') | list %}<span class="ui-chip brand"><i class="bi bi-mortarboard-fill"></i>In a class</span>
+        {% elif program_cards %}<span class="ui-chip muted">Registered</span>
+        {% else %}<span class="ui-chip muted">No program</span>{% endif %}
+        {% if remaining > 0 %}<span class="ui-chip warn">{{ "%.0f"|format(remaining) }} DT due</span>
+        {% elif total_due > 0 %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Paid in full</span>{% endif %}
+        {% if emails_waiting %}<span class="ui-chip bad"><i class="bi bi-envelope-exclamation"></i>{{ emails_waiting }} email{{ 's' if emails_waiting != 1 }} waiting</span>{% endif %}
+      </div>
+      <div class="cp-contact">
+        <a href="mailto:{{ candidate.email }}" title="Email"><i class="bi bi-envelope"></i><span>{{ candidate.email }}</span></a>
+        {% if candidate.phone %}<a href="tel:{{ candidate.phone }}" title="Phone"><i class="bi bi-telephone"></i><span>{{ candidate.phone }}</span></a>{% endif %}
+        {% if candidate.university %}<span title="University"><i class="bi bi-building"></i><span>{{ candidate.university }}</span></span>{% endif %}
+        {% if candidate.city %}<span title="City"><i class="bi bi-geo-alt"></i><span>{{ candidate.city }}</span></span>{% endif %}
+      </div>
+    </div>
+    <div class="ui-actions">
+      <a href="/inbox/compose?candidate={{ candidate.id }}" class="ui-btn primary"><i class="bi bi-pencil-square"></i>Write</a>
+      <a href="/inbox?candidate={{ candidate.id }}" class="ui-btn"><i class="bi bi-chat-left-text"></i>Discussions</a>
+      <button type="button" class="ui-btn" data-bs-toggle="modal" data-bs-target="#editCandidateModal"><i class="bi bi-pencil"></i>Edit</button>
+      {% if is_admin %}<a href="/data/candidates/{{ candidate.id }}" class="ui-btn ghost" title="Every value of this candidate, to change"><i class="bi bi-table"></i>Every value</a>{% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- The next step -->
+{% set main_advice = advice[0] %}
+<section class="cp-next mb-3 {{ 'is-fine' if main_advice.tone == 'good' }}" id="live-candidate-advice" data-live-region>
+  <div class="cp-next-label"><i class="bi bi-compass"></i>{{ 'Next step' if advice | length == 1 else 'Next steps, most pressing first' }}</div>
+  {% for item in advice %}{{ ui.advice(item, "/candidate/" ~ candidate.id) }}{% endfor %}
+</section>
+
+<!-- In numbers -->
+<div class="ui-stats mb-3" id="live-candidate-figures" data-live-region>
+  <div class="ui-stat {{ 't-mint' if total_due and remaining <= 0 else 't-gold' }}">
+    <div class="ui-stat-ico"><i class="bi bi-wallet2"></i></div>
+    <div class="flex-grow-1">
+      <div class="ui-stat-num">{{ "%.0f"|format(total_paid) }} <small>/ {{ "%.0f"|format(total_due) }} DT</small></div>
+      <div class="ui-bar mt-1 {{ 'is-full' if total_due and remaining <= 0 }}"><span style="width:{{ paid_pct }}%;"></span></div>
+      <div class="ui-stat-label">Paid · {{ paid_pct }}%</div>
+    </div>
+  </div>
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-journal-bookmark-fill"></i></div><div><div class="ui-stat-num">{{ program_cards | length }}</div><div class="ui-stat-label">Program{{ 's' if program_cards | length != 1 }} · {{ program_cards | selectattr('class') | list | length }} with a class</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-patch-check-fill"></i></div>
+    <div>
+      {% if learning.average is not none %}
+      <div class="ui-stat-num">{{ learning.average | round | int }}<small>%</small>
+        {% if learning.trend == 'up' %}<i class="bi bi-arrow-up-right" style="color:var(--mint); font-size:.9rem;" title="Improving"></i>{% elif learning.trend == 'down' %}<i class="bi bi-arrow-down-right" style="color:#be123c; font-size:.9rem;" title="Going down"></i>{% endif %}
+      </div>
+      <div class="ui-stat-label">{{ learning.level.label }} · {{ learning.answered }} week{{ 's' if learning.answered != 1 }} answered</div>
+      {% else %}
+      <div class="ui-stat-num">—</div><div class="ui-stat-label">{{ 'Weekly questions sent, no answer yet' if learning.waiting else 'No weekly questions yet' }}</div>
+      {% endif %}
+    </div>
+  </div>
+  <div class="ui-stat {{ 't-red' if presence.rate is not none and presence.rate < 60 else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-person-check-fill"></i></div>
+    <div>
+      {% if presence.rate is not none %}
+      <div class="ui-stat-num">{{ presence.rate }}<small>%</small></div>
+      <div class="ui-stat-label">Attendance · {{ presence.absent }} absence{{ 's' if presence.absent != 1 }} in {{ presence.marked }} session{{ 's' if presence.marked != 1 }}</div>
+      {% else %}
+      <div class="ui-stat-num">—</div><div class="ui-stat-label">Presence not marked yet</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="cp-file">
+<nav class="cp-tabs" role="tablist" aria-label="The parts of {{ name }}'s file">
+  <button type="button" class="cp-tab" role="tab" data-tab="overview"><i class="bi bi-grid-1x2"></i>Overview</button>
+  <button type="button" class="cp-tab" role="tab" data-tab="programs"><i class="bi bi-journal-bookmark"></i>Programs &amp; payments<span class="cp-count">{{ program_cards | length }}</span></button>
+  <button type="button" class="cp-tab" role="tab" data-tab="learning"><i class="bi bi-patch-check"></i>Learning{% if learning.average is not none %}<span class="cp-count">{{ learning.average | round | int }}%</span>{% endif %}</button>
+  <button type="button" class="cp-tab" role="tab" data-tab="behaviour"><i class="bi bi-activity"></i>Behaviour{% if behaviour.score is not none %}<span class="cp-count">{{ behaviour.score }}/100</span>{% endif %}</button>
+  <button type="button" class="cp-tab" role="tab" data-tab="emails"><i class="bi bi-envelope"></i>Emails{% if emails_waiting %}<span class="cp-alert" title="{{ emails_waiting }} waiting for your answer"></span>{% endif %}</button>
+  <button type="button" class="cp-tab" role="tab" data-tab="history"><i class="bi bi-clock-history"></i>History</button>
+</nav>
+
+<!-- Overview: the programs in one look, the notes, what comes next -->
+<div class="cp-pane" data-pane="overview" role="tabpanel" aria-label="Overview">
+  <div class="cp-grid">
+    <div>
+      <section class="ui-card mb-3" id="live-candidate-glance" data-live-region>
+        <div class="ui-card-head">
+          <div><div class="ui-card-title"><i class="bi bi-journal-bookmark"></i>Programs at a glance</div><div class="ui-card-sub">Click one to see its payment, its class and what can be done.</div></div>
+          <a class="ui-link" href="#programs">Programs &amp; payments</a>
+        </div>
+        {% for card in program_cards %}
+        <a class="cp-glance" href="#registration-{{ card.registration.id }}">
+          {% if card.icon %}{{ ui.program_icon(card.icon, 42) }}{% endif %}
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="cp-glance-name">{{ card.name }}</div>
+            <div class="cp-glance-sub">
+              <div class="ui-bar {{ 'is-full' if card.is_paid }}"><span style="width:{{ card.paid_pct }}%;"></span></div>
+              <span class="text-nowrap">{{ "%.0f"|format(card.paid) }} / {{ "%.0f"|format(card.total) }} DT</span>
+              <span class="d-none d-sm-inline text-truncate"><i class="bi bi-mortarboard me-1"></i>{{ card.class.name if card.class else 'no class yet' }}</span>
+            </div>
+          </div>
+          {% if card.is_paid %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Paid</span>
+          {% elif card.paid > 0 %}<span class="ui-chip warn">Partly paid</span>
+          {% else %}<span class="ui-chip bad">Not paid</span>{% endif %}
+          <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong>Add the first one in “Programs &amp; payments”.</div>
+        {% endfor %}
+      </section>
+
+      <!-- Notes -->
+      <section class="ui-card mb-3" id="notes">
+        <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-sticky"></i>Your notes</div><div class="ui-card-sub">Only you see them; they are never sent.</div></div></div>
+        <form method="post" action="/candidate/{{ candidate.id }}/notes">
+          <textarea class="form-control" name="admin_notes" rows="3" style="border-radius:12px; font-size:.84rem; border-color:var(--border-color);" placeholder="For example: prefers to be called after 6 pm; will pay at the end of the month." aria-label="Your notes about this candidate">{{ candidate.admin_notes or '' }}</textarea>
+          <button class="ui-btn sm mt-2">Save notes</button>
+        </form>
+      </section>
+    </div>
+
+    <div>
+      <!-- Coming sessions -->
+      <section class="ui-card mb-3" id="live-candidate-agenda" data-live-region>
+        <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-event"></i>Next sessions</div></div></div>
+        {% for session in session_agenda %}
+        <a class="cp-line" href="/classes/{{ session.class_id }}">
+          <div class="cp-day {{ 'is-next' if loop.first }}"><b>{{ session.date.strftime('%d') }}</b><span>{{ session.date.strftime('%b') }}</span></div>
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="cp-line-title">{{ session.topic or session.program }}</div>
+            <div class="cp-line-sub">{{ session.date.strftime('%A') }}{% if session.start_time %} · {{ session.start_time.strftime('%H:%M') }}{% if session.end_time %}–{{ session.end_time.strftime('%H:%M') }}{% endif %}{% else %} · time not set{% endif %} · {{ session.class_name }}</div>
+          </div>
+        </a>
+        {% else %}
+        <div class="ui-empty py-3"><i class="bi bi-calendar-x"></i>No session to come. They appear once the candidate is in a class with a start date.</div>
+        {% endfor %}
+      </section>
+
+      <!-- Professors -->
+      {% if class_professors %}
+      <section class="ui-card mb-3" id="live-candidate-professors" data-live-region>
+        <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-person-badge"></i>Professors</div></div></div>
+        {% for professor in class_professors %}
+        <div class="cp-line">
+          {{ ui.avatar(professor.name, 38) }}
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="cp-line-title">{{ professor.name }}</div>
+            <div class="cp-line-sub">{% for item in professor.classes %}<a href="/classes/{{ item.id }}" class="text-decoration-none" style="color:var(--primary-berry);">{{ item.name }}</a>{{ ', ' if not loop.last }}{% endfor %}</div>
+          </div>
+        </div>
+        {% endfor %}
+      </section>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Programs and payments -->
+<div class="cp-pane" data-pane="programs" role="tabpanel" aria-label="Programs and payments">
+    <section class="ui-card mb-3" id="programs">
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-journal-bookmark"></i>Programs</div><div class="ui-card-sub">What {{ name.split()[0] }} signed up for, with the payment and the class of each.</div></div>
+        {% set adding = request.query_params.get('add') %}
+        <form method="post" action="/candidate/{{ candidate.id }}/registrations" class="d-flex gap-2 flex-wrap">
+          <select name="program_id" class="form-select form-select-sm" style="border-radius:10px; max-width:230px;" aria-label="Program to add" required>
+            <option value="">Add a program…</option>
+            {% for program in all_programs %}<option value="{{ program.id }}" {{ 'selected' if program.id == adding }}>{{ program.name }}</option>{% endfor %}
+          </select>
+          <select name="delivery_mode" class="form-select form-select-sm" style="border-radius:10px; width:auto;" aria-label="Online or on site"><option value="online">Online</option><option value="onsite">On site</option></select>
+          <button class="ui-btn soft sm"><i class="bi bi-plus-lg"></i>Add</button>
+        </form>
+      </div>
+
+      <div id="live-candidate-programs" data-live-region>
+        {% for card in program_cards %}
+        {% set reg = card.registration %}
+        <div class="cp-program {{ 'is-due' if card.due > 0 }}" id="registration-{{ reg.id }}">
+          <div class="d-flex gap-3 align-items-start">
+            {% if card.icon %}{{ ui.program_icon(card.icon, 46) }}{% endif %}
+            <div class="flex-grow-1" style="min-width:0;">
+              <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
+                <div class="cp-program-name">{{ card.name }}</div>
+                {% if card.is_paid %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Paid</span>
+                {% elif card.paid > 0 %}<span class="ui-chip warn">Partly paid</span>
+                {% else %}<span class="ui-chip bad">Not paid</span>{% endif %}
+              </div>
+              <div class="cp-meta">{{ 'On site' if reg.delivery_mode == 'onsite' else 'Online' }}{% if card.registered %} · registered {{ card.registered.strftime('%d %b %Y') }}{% endif %}{% if reg.status.value == 'completed' %} · completed{% endif %}</div>
+              <div class="d-flex align-items-center gap-2 mt-2">
+                <div class="ui-bar flex-grow-1 {{ 'is-full' if card.is_paid }}"><span style="width:{{ card.paid_pct }}%;"></span></div>
+                <span class="cp-meta text-nowrap fw-bold">{{ "%.0f"|format(card.paid) }} / {{ "%.0f"|format(card.total) }} DT</span>
+              </div>
+            </div>
+          </div>
+
+          {% if card.class %}
+          <div class="cp-facts">
+            <div class="cp-fact"><div class="cp-fact-label">Class</div><div class="cp-fact-value"><a href="/classes/registration/{{ reg.id }}" class="text-decoration-none" style="color:var(--primary-berry);">{{ card.class.name }}</a></div></div>
+            <div class="cp-fact"><div class="cp-fact-label">{{ 'First session' if card.class.status.value == 'not_started' else 'Started' }}</div><div class="cp-fact-value">{{ card.class_info.starts_label }}{% if card.class.status.value == 'not_started' and card.class_info.countdown %} · {{ card.class_info.countdown }}{% endif %}</div></div>
+            <div class="cp-fact"><div class="cp-fact-label">Professor</div><div class="cp-fact-value">{{ card.class.professor_name or 'Not assigned yet' }}</div></div>
+            {% if card.class.status.value == 'ongoing' %}<div class="cp-fact"><div class="cp-fact-label">Progress</div><div class="cp-fact-value">Week {{ card.class_info.current_week }} of {{ card.class_info.total_weeks }}</div></div>{% endif %}
+          </div>
+          {% if card.reminders %}
+          <div class="mt-2 d-flex flex-wrap gap-1 align-items-center">
+            <span class="cp-meta me-1">Session reminders:</span>
+            {% for reminder in card.reminders %}<span class="cp-rem {{ reminder.state }}">{{ reminder.days }} d · {{ reminder.label }}</span>{% endfor %}
+          </div>
+          {% endif %}
+          {% endif %}
+
+          <div class="cp-forms">
+            {% if card.due > 0 %}
+            <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record the full payment of {{ '%.0f'|format(card.due) }} DT for {{ card.name }}? The candidate gets a confirmation email{{ '' if card.class else ' and a place in a class' }}.">
+              <input type="hidden" name="amount" value="{{ card.due }}"><input type="hidden" name="method" value="manual">
+              <button class="ui-btn good sm"><i class="bi bi-check2-circle"></i>Paid in full ({{ "%.0f"|format(card.due) }} DT)</button>
+            </form>
+            <form method="post" action="/payment/confirm/{{ reg.id }}">
+              <input class="form-control form-control-sm" type="number" name="amount" min="0.01" step="0.01" max="{{ card.due }}" placeholder="Part paid, DT" aria-label="Amount paid in DT" style="width:128px;" required>
+              <input type="hidden" name="method" value="manual">
+              <button class="ui-btn sm">Record</button>
+            </form>
+            {% elif not reg.program_id %}
+            <form method="post" action="/candidate/registrations/{{ reg.id }}/program" title="This name matched no program: say which one it is and its price is set">
+              <select class="form-select form-select-sm" name="program_id" aria-label="Which program is it" style="max-width:260px;" required>
+                <option value="">Which program is “{{ card.name }}”?</option>
+                {% for program in all_programs %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
+              </select>
+              <button class="ui-btn sm">It is this one</button>
+            </form>
+            {% elif card.is_paid and not card.class %}
+            <span class="ui-chip warn"><i class="bi bi-hourglass-split"></i>Paid, waiting for a class</span>
+            {% endif %}
+            {% if card.options and card.is_paid %}
+            <form method="post" action="/candidate/registrations/{{ reg.id }}/assign">
+              <select class="form-select form-select-sm" name="class_group_id" aria-label="{{ 'Change class' if card.class else 'Assign to a class' }}" style="max-width:260px;" required>
+                <option value="">{{ 'Move to another class…' if card.class else 'Assign to a class…' }}</option>
+                {% for option in card.options %}<option value="{{ option.id }}">{{ option.label }}</option>{% endfor %}
+              </select>
+              <button class="ui-btn sm">{{ 'Move' if card.class else 'Assign' }}</button>
+            </form>
+            {% endif %}
+            {% if card.class %}<a class="ui-btn ghost sm" href="/classes/{{ card.class.id }}/course"><i class="bi bi-folder2-open"></i>Course</a>{% endif %}
+            {% if reg.program_id %}
+            <form method="post" action="/programs/{{ reg.program_id }}/pdf/send" title="Prepares an email to {{ candidate.full_name }} with the program attached: you read it, then send">
+              <input type="hidden" name="candidate_id" value="{{ candidate.id }}"><input type="hidden" name="personal" value="1">
+              <button class="ui-btn ghost sm"><i class="bi bi-file-earmark-pdf"></i>Send the program (PDF)</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% else %}
+        <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong>Add the first one with the list above.</div>
+        {% endfor %}
+        {% if cancelled %}
+        <div class="cp-meta mt-3">Cancelled: {% for reg in cancelled %}{{ reg.program.name if reg.program else reg.program_name }}{{ ', ' if not loop.last }}{% endfor %}.</div>
+        {% endif %}
+      </div>
+    </section>
+</div>
+
+<!-- Learning: what was understood, where they started from, how the weeks went -->
+<div class="cp-pane" data-pane="learning" role="tabpanel" aria-label="Learning">
+    <!-- Learning -->
+    <section class="ui-card mb-3" id="live-candidate-learning" data-live-region>
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-patch-check"></i>What was understood</div><div class="ui-card-sub">Answers to the questions sent after each week of class.</div></div>
+        {% if learning.average is not none %}{{ ui.level_chip(learning.level, learning.average) }}{% endif %}
+      </div>
+      {% for week in learning.weeks %}
+      <a class="cp-line" href="/classes/{{ week.class_id }}/course?week={{ week.week }}">
+        <div class="cp-day"><b>{{ week.week }}</b><span>Week</span></div>
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="cp-line-title">{{ week.class_name }}</div>
+          {% if week.done %}
+            {% if week.missed %}
+            <div class="cp-line-sub">Missed:</div>
+            <ul class="cp-missed">{% for question in week.missed[:3] %}<li>{{ question }}</li>{% endfor %}</ul>
+            {% else %}<div class="cp-line-sub">Every question right.</div>{% endif %}
+          {% elif week.sent %}<div class="cp-line-sub">Questions received, not answered yet.</div>
+          {% else %}<div class="cp-line-sub">The email with the questions was not delivered.</div>{% endif %}
+        </div>
+        {% if week.done %}{{ ui.level_chip(week.level, week.score) }}
+        {% elif week.sent %}<span class="ui-chip muted">Waiting</span>
+        {% else %}<span class="ui-chip bad">Not delivered</span>{% endif %}
+      </a>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-patch-question"></i><strong>No weekly questions yet</strong>They are sent from a class's course page once the week's files are added.</div>
+      {% endfor %}
+
+      {% if level_checks %}
+      <div class="mt-3 pt-3" id="level" style="border-top:1px dashed #e4ddf0;">
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="ui-card-title" style="font-size:.86rem;"><i class="bi bi-signpost-split"></i>Where they started from</div>
+          <a class="ui-link" href="/quiz/all">Level checks</a>
+        </div>
+        {% for row in level_checks %}
+        <a class="cp-line" href="/quiz/all?focus={{ row.quiz.id }}" style="text-decoration:none;">
+          <div style="min-width:0; flex:1;">
+            <div class="cp-line-title">{{ row.program }}</div>
+            <div class="cp-line-sub">
+              {% if row.result %}{{ row.result.info.meaning }}{% if row.result.checks.asked %} · {{ row.result.checks.right }} of {{ row.result.checks.asked }} check questions right{% endif %}
+              {% elif row.state == 'sent' %}Sent {{ row.quiz.sent_at.strftime('%d %b') }}, not answered yet
+              {% else %}Prepared, not sent yet{% endif %}
+            </div>
+          </div>
+          {% if row.result %}<span class="ui-chip {{ row.result.info.tone }}">{{ row.result.info.label }}</span>
+          {% elif row.state == 'sent' %}<span class="ui-chip info">Waiting</span>
+          {% else %}<span class="ui-chip warn">To send</span>{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- How the weeks went -->
+    <section class="ui-card mb-3" id="feelings" data-live-region>
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-emoji-smile"></i>How the weeks went for {{ name.split()[0] }}</div><div class="ui-card-sub">What they said with their weekly answers, read next to their results.</div></div>
+        {% if feelings.mood_average %}<span class="ui-chip {{ 'ok' if feelings.mood_average >= 3.5 else ('bad' if feelings.mood_average < 2.5 else 'warn') }}">{{ feelings.mood_average }} out of 5{% if feelings.mood_direction == 'up' %} · getting better{% elif feelings.mood_direction == 'down' %} · getting worse{% endif %}</span>{% endif %}
+      </div>
+      {% if not feelings.weeks %}
+      <div class="ui-empty py-3"><i class="bi bi-emoji-neutral"></i>Nothing yet. With each week's questions, {{ name.split()[0] }} says how the week went: it shows here.</div>
+      {% else %}
+      {% if feelings.weeks | length > 1 %}
+      <div class="d-flex align-items-end gap-2 mb-3" role="img" aria-label="Mood week by week" style="height:74px;">
+        {% for week in feelings.weeks %}
+        {% set mood = week.insight.mood or 0 %}
+        <div style="flex:1 1 0; max-width:64px; text-align:center;" title="Week {{ week.week }}: {{ week.insight.mood_view.label if week.insight.mood_view else 'did not say' }}{% if week.insight.score is not none %}, {{ week.insight.score | round | int }}%{% endif %}">
+          <div style="font-size:1.05rem; line-height:1;">{{ week.insight.mood_view.emoji if week.insight.mood_view else '·' }}</div>
+          <div style="height:{{ 6 + mood * 7 }}px; border-radius:7px 7px 3px 3px; margin-top:3px; background:{{ ['#ddd7ea', '#e11d48', '#f59e0b', '#a8a2bd', '#22c55e', 'var(--mint)'][mood] }};"></div>
+          <div style="font-size:.64rem; font-weight:800; color:var(--muted); margin-top:3px;">W{{ week.week }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% for week in feelings.weeks | reverse %}
+      {% set insight = week.insight %}
+      <div style="display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:12px; align-items:flex-start; padding:13px 0; border-top:1px solid var(--border-color);">
+        <div style="width:42px; height:42px; border-radius:14px; display:grid; place-items:center; font-size:1.5rem; background:#f4f1f9;">{{ insight.mood_view.emoji if insight.mood_view else '·' }}</div>
+        <div style="min-width:0;">
+          <div style="font-weight:800; font-size:.88rem; color:var(--ink-text);">Week {{ week.week }} <span class="ui-card-sub" style="font-weight:600;">· {{ week.course }}</span></div>
+          <div class="d-flex flex-wrap gap-1 mt-1">
+            {% if insight.sentiment_view %}<span class="ui-chip {{ insight.sentiment_view.tone }}">{{ insight.sentiment_view.emoji }} {{ insight.sentiment_view.label }}</span>{% endif %}
+            {% if insight.profile_view %}<span class="ui-chip {{ insight.profile_view.tone }}" title="{{ insight.profile_view.text }}"><i class="bi {{ insight.profile_view.icon }}"></i>{{ insight.profile_view.label }}</span>{% endif %}
+            {% if insight.pace_view and insight.pace != 'right' %}<span class="ui-chip warn">Pace: {{ insight.pace_view.label | lower }}</span>{% endif %}
+            {% for theme in insight.theme_views[:3] %}<span class="ui-chip"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>{% endfor %}
+          </div>
+          <div style="font-size:.82rem; color:#5b5670; margin-top:5px; line-height:1.5;">{{ insight.summary }}</div>
+          {% if insight.words %}<div style="font-size:.82rem; color:#4a445e; border-left:3px solid #e0d9ee; padding-left:10px; margin-top:7px; font-style:italic; line-height:1.5;">“{{ insight.words }}”</div>{% endif %}
+          {% if insight.reading %}<div style="font-size:.76rem; color:#5b5670; margin-top:6px; background:#f6f3fb; border-radius:10px; padding:7px 10px;"><i class="bi bi-robot me-1"></i>Second reading: {{ insight.reading.summary }}{% if not insight.reading.agrees %} <b>The two readings disagree: read the words yourself.</b>{% endif %}</div>{% endif %}
+          {% if insight.profile_view and insight.profile in ('overconfident', 'underconfident', 'struggling') %}<div style="font-size:.78rem; color:#5b5670; margin-top:6px;"><i class="bi bi-lightbulb me-1" style="color:var(--gold-dark);"></i>{{ insight.profile_view.text }}</div>{% endif %}
+          {% if insight.attention.level != 'ok' and insight.attention.reasons %}<div style="font-size:.76rem; color:#9f1239; margin-top:5px; font-weight:600;"><i class="bi bi-flag-fill me-1"></i>{{ insight.attention.reasons | join(' · ') | capitalize }}</div>{% endif %}
+        </div>
+        <span class="ui-chip {{ insight.attention_view.tone }}">{{ insight.attention_view.label }}</span>
+      </div>
+      {% endfor %}
+      {% endif %}
+    </section>
+</div>
+
+<!-- How they behave: a score, and every parameter it comes from -->
+<div class="cp-pane" data-pane="behaviour" role="tabpanel" aria-label="Behaviour">
+    <section class="ui-card mb-3" id="behaviour">
+      <div class="ui-card-head">
+        <div>
+          <div class="ui-card-title"><i class="bi bi-activity"></i>How they behave</div>
+          <div class="ui-card-sub">Counted from what the application measured: nothing here is an opinion, and each parameter is shown with its rule.</div>
+        </div>
+      </div>
+      <div class="bh-top">
+        <div class="bh-ring tone-{{ behaviour.tone }}" style="--pct:{{ behaviour.score or 0 }};"><div>{% if behaviour.score is not none %}{{ behaviour.score }}<small>/100</small>{% else %}–{% endif %}</div></div>
+        <div style="min-width:0;">
+          <div class="bh-headline">{{ behaviour.headline }}</div>
+          <div class="cp-line-sub">From {{ behaviour.used }} of {{ behaviour.of }} parameters{% if behaviour.score is none %}: two are needed for a score{% endif %}.</div>
+          <div class="bh-traits">{% for trait in behaviour.traits %}<span class="ui-chip {{ trait.tone }}" title="{{ trait.why }}">{{ trait.label }}</span>{% endfor %}</div>
+        </div>
+      </div>
+      {% if behaviour.traits %}
+      <ul class="bh-why">{% for trait in behaviour.traits %}<li><b>{{ trait.label }}.</b> {{ trait.why }}</li>{% endfor %}</ul>
+      {% endif %}
+      <details class="bh-params" {{ 'open' if behaviour.score is not none }}>
+        <summary>The parameters used</summary>
+        {% for param in behaviour.params %}
+        <div class="bh-param {{ 'is-none' if param.score is none }}" title="{{ param.rule }}">
+          <div style="min-width:0;"><b>{{ param.label }}</b><span>{{ param.value }}</span><em>{{ param.rule }}</em></div>
+          <div class="bh-bar"><span style="width:{{ param.score or 0 }}%;"></span></div>
+          <div class="bh-points">{% if param.score is not none %}{{ param.score }}<small>/100 · counts for {{ param.share }}%</small>{% else %}<small>not measured yet</small>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </details>
+    </section>
+</div>
+
+<!-- Emails -->
+<div class="cp-pane" data-pane="emails" role="tabpanel" aria-label="Emails">
+    <section class="ui-card mb-3" id="live-candidate-emails" data-live-region>
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-envelope"></i>Emails</div><div class="ui-card-sub">Everything written to and by {{ name.split()[0] }}, newest first.</div></div>
+        <a class="ui-link" href="/inbox?candidate={{ candidate.id }}">All discussions</a>
+      </div>
+      {% set status_labels = {"failed": "Not delivered", "needs_admin": "Needs your answer", "no_reply": "No answer needed", "processing": "Being read", "replied": "Answered", "test": "Test", "sent": "Sent", "received": "Received"} %}
+      {% for email in email_conversation[:8] %}
+      <details class="cp-email">
+        <summary>
+          <span class="cp-line-title"><i class="bi {{ 'bi-arrow-down-left' if email.direction == 'inbound' else 'bi-arrow-up-right' }} me-1" style="color:var(--primary-berry);"></i>{{ email.subject or "No subject" }}</span>
+          <span class="d-flex align-items-center gap-2 flex-none">
+            <span class="cp-line-sub text-nowrap d-none d-sm-inline">{{ email.received_at.strftime("%d %b %H:%M") if email.received_at else "" }}</span>
+            <span class="ui-chip {{ 'bad' if email.status == 'failed' else ('warn' if email.status == 'needs_admin' else ('ok' if email.status in ('sent', 'received', 'replied', 'no_reply') else 'info')) }}">{{ status_labels.get(email.status, email.status | capitalize) }}</span>
+          </span>
+        </summary>
+        <div class="cp-line-sub mt-1">
+          {% if email.direction == "inbound" %}From the candidate
+          {% elif email.author == "admin" %}Written by you
+          {% elif email.intent == "reply" %}Answered by the system{% if email.confidence is not none %} ({{ (email.confidence * 100) | round | int }}% confidence){% endif %}
+          {% else %}Sent by the system{% endif %}
+        </div>
+        <div class="cp-email-body">{{ email.body | truncate(900) }}</div>
+        {% if email.thread_id %}<a class="ui-link" href="/inbox?filter=all&thread={{ email.thread_id }}">Open the discussion</a>{% endif %}
+      </details>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-envelope-open"></i><strong>No email yet</strong>The first one goes out when the candidate pays, or when you write.</div>
+      {% endfor %}
+    </section>
+</div>
+
+<!-- History -->
+<div class="cp-pane" data-pane="history" role="tabpanel" aria-label="History">
+    <section class="ui-card mb-3" id="live-candidate-history" data-live-region>
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-clock-history"></i>History</div><div class="ui-card-sub">What happened in {{ name.split()[0] }}'s file, newest first.</div></div></div>
+      {% set shown = namespace(count=0, last="") %}
+      {% for activity in activities %}
+        {% set line = (activity.event_type or '') ~ '|' ~ (activity.details or '') %}
+        {% if shown.count < 30 and line != shown.last %}
+        {% set shown.count = shown.count + 1 %}
+        {% set shown.last = line %}
+        <div class="cp-line">
+          <div class="flex-grow-1" style="min-width:0;">
+            <div class="cp-line-sub" style="color:#5b5670;">{{ activity.details or activity.event_type }}</div>
+          </div>
+          <span class="cp-line-sub text-nowrap">{{ activity.created_at.strftime('%d %b %Y') if activity.created_at else '' }}</span>
+        </div>
+        {% endif %}
+      {% else %}
+      <div class="ui-empty py-3">Nothing recorded yet.</div>
+      {% endfor %}
+    </section>
+</div>
+</div>
+
+<!-- Edit -->
+<div class="modal fade ui-modal" id="editCandidateModal" tabindex="-1" aria-labelledby="editCandidateTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="/candidate/{{ candidate.id }}/edit">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editCandidateTitle">Edit {{ name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="ec-name">Full name</label><input class="form-control" id="ec-name" name="full_name" value="{{ candidate.full_name or '' }}" required></div>
+          <div class="col-md-7 ui-field"><label for="ec-email">Email</label><input class="form-control" id="ec-email" name="email" type="email" value="{{ candidate.email }}" required></div>
+          <div class="col-md-5 ui-field"><label for="ec-phone">Phone</label><input class="form-control" id="ec-phone" name="phone" value="{{ candidate.phone or '' }}"></div>
+          <div class="col-md-6 ui-field"><label for="ec-university">University</label><input class="form-control" id="ec-university" name="university" value="{{ candidate.university or '' }}"></div>
+          <div class="col-md-6 ui-field"><label for="ec-city">City</label><input class="form-control" id="ec-city" name="city" value="{{ candidate.city or '' }}"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="ui-btn primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* One part of the file at a time. A link to a place inside a part (#registration-…, #feelings, #notes)
+   opens that part; the part last opened comes back after a form is sent. Without this script every part shows. */
+(() => {
+  const file = document.getElementById("cp-file");
+  if (!file) return;
+  const tabs = Array.from(file.querySelectorAll(".cp-tab"));
+  const panes = Array.from(file.querySelectorAll(".cp-pane"));
+  const names = tabs.map(tab => tab.dataset.tab);
+  const memory = "candidate-tab:{{ candidate.id }}";
+  const paneOf = id => {
+    if (!id) return null;
+    if (names.includes(id)) return id;
+    if (id === "payment-pending") return "programs";
+    const target = document.getElementById(id);
+    const pane = target && target.closest(".cp-pane");
+    return pane ? pane.dataset.pane : null;
+  };
+  const show = (name, remember = true) => {
+    tabs.forEach(tab => {
+      const on = tab.dataset.tab === name;
+      tab.classList.toggle("is-on", on);
+      tab.setAttribute("aria-selected", on ? "true" : "false");
+      tab.tabIndex = on ? 0 : -1;
+    });
+    panes.forEach(pane => pane.classList.toggle("is-on", pane.dataset.pane === name));
+    if (remember) { try { sessionStorage.setItem(memory, name); } catch (error) {} }
+  };
+  const go = (id, smooth) => {
+    const name = paneOf(id);
+    if (!name) return false;
+    show(name);
+    const target = names.includes(id) ? file : document.getElementById(id);
+    if (target) requestAnimationFrame(() => target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" }));
+    return true;
+  };
+
+  file.classList.add("cp-tabbed");
+  let first = null;
+  try { first = sessionStorage.getItem(memory); } catch (error) {}
+  const asked = decodeURIComponent(location.hash.slice(1));
+  if (!(asked && go(asked, false))) show(names.includes(first) ? first : "overview", false);
+
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => { show(tab.dataset.tab); history.replaceState(null, "", "#" + tab.dataset.tab); });
+    tab.addEventListener("keydown", event => {
+      const step = event.key === "ArrowRight" ? 1 : event.key === "ArrowLeft" ? -1 : 0;
+      if (!step) return;
+      const next = tabs[(index + step + tabs.length) % tabs.length];
+      next.focus(); next.click(); event.preventDefault();
+    });
+  });
+  // Links inside the page ("Programs & payments", a program at a glance) open the part they lead to.
+  document.addEventListener("click", event => {
+    const link = event.target.closest && event.target.closest('a[href^="#"]');
+    if (!link || link.closest(".cp-tabs")) return;
+    const id = decodeURIComponent(link.getAttribute("href").slice(1));
+    if (paneOf(id) && go(id, true)) { history.replaceState(null, "", "#" + id); event.preventDefault(); }
+  });
+  window.addEventListener("hashchange", () => go(decodeURIComponent(location.hash.slice(1)), true));
+  // A notification that leads here asks for the part its news is in (see "spot" in base.html).
+  document.addEventListener("pane:open", event => { if (names.includes(event.detail)) show(event.detail); });
+})();
+</script>
+{% endblock %}

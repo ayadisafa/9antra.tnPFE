@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Database</title>
+
+    <style>
+
+        body{
+            font-family:Arial;
+            margin:40px;
+            background:#f4f4f4;
+        }
+
+        table{
+            width:100%;
+            border-collapse:collapse;
+            margin-bottom:40px;
+            background:white;
+        }
+
+        th,td{
+            border:1px solid #ddd;
+            padding:10px;
+        }
+
+        th{
+            background:#222;
+            color:white;
+        }
+
+        h2{
+            margin-top:50px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h1>Training Management Database</h1>
+
+<h2>Candidates</h2>
+
+<table>
+
+<tr>
+    <th>Name</th>
+    <th>Email</th>
+    <th>University</th>
+    <th>City</th>
+</tr>
+
+{% for c in candidates %}
+<tr>
+    <td>{{ c.full_name }}</td>
+    <td>{{ c.email }}</td>
+    <td>{{ c.university }}</td>
+    <td>{{ c.city }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+<h2>Programs</h2>
+
+<table>
+
+<tr>
+    <th>Name</th>
+</tr>
+
+{% for p in programs %}
+<tr>
+    <td>{{ p.name }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+<h2>Candidate Courses</h2>
+
+<table>
+
+<tr>
+    <th>Candidate ID</th>
+    <th>Course</th>
+    <th>Status</th>
+    <th>Payment</th>
+</tr>
+
+{% for c in courses %}
+<tr>
+    <td>{{ c.candidate_id }}</td>
+    <td>{{ c.course_name }}</td>
+    <td>{{ c.status }}</td>
+    <td>{{ c.payment_status }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+<h2>Activities</h2>
+
+<table>
+
+<tr>
+    <th>Candidate</th>
+    <th>Event</th>
+    <th>Date</th>
+</tr>
+
+{% for a in activities %}
+<tr>
+    <td>{{ a.candidate_id }}</td>
+    <td>{{ a.event_type }}</td>
+    <td>{{ a.created_at }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+<h2>Notifications</h2>
+
+<table>
+
+<tr>
+    <th>Candidate</th>
+    <th>Type</th>
+    <th>Status</th>
+</tr>
+
+{% for n in notifications %}
+<tr>
+    <td>{{ n.candidate_id }}</td>
+    <td>{{ n.notification_type }}</td>
+    <td>{{ n.status }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+
+<h2>Quizzes</h2>
+
+<table>
+
+<tr>
+    <th>Candidate</th>
+    <th>Course</th>
+    <th>Score</th>
+</tr>
+
+{% for q in quizzes %}
+<tr>
+    <td>{{ q.candidate_id }}</td>
+    <td>{{ q.course_name }}</td>
+    <td>{{ q.score }}</td>
+</tr>
+{% endfor %}
+
+</table>
+
+</body>
+
+</html>

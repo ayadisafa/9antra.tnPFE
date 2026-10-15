@@ -1,0 +1,630 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+{% import "_ui_art.html" as art %}
+
+{% block title %}Dashboard · {{ app_brand.name }}{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block live_topics %}dashboard,classes,candidates,inbox,programs{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .db-hello { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .db-date { font-size:.8rem; font-weight:700; color:var(--primary-berry); background:var(--berry-subtle); border-radius:999px; padding:4px 12px; }
+
+  /* Four pictures: where things stand */
+  .db-tiles { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:18px; margin-bottom:26px; }
+  .db-tile { position:relative; display:flex; flex-direction:column; background:#fff; border:1px solid var(--border-color); border-radius:26px; padding:18px 20px 20px; text-decoration:none; color:inherit; overflow:hidden; transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+  a.db-tile:hover { transform:translateY(-3px); border-color:var(--tone, var(--primary-berry)); box-shadow:0 20px 34px -24px rgba(36,26,56,.5); color:inherit; }
+  .db-tile-art { width:112px; margin:-6px 0 2px -8px; }
+  .db-tile-label { font-size:.7rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:var(--tone, var(--muted)); }
+  .db-tile-num { font-weight:800; font-size:2.1rem; line-height:1.1; color:var(--ink-text); margin-top:4px; }
+  .db-tile-num small { font-size:.9rem; font-weight:700; color:var(--muted); }
+  .db-tile-say { font-size:.85rem; color:#5b5670; margin-top:6px; line-height:1.4; }
+  .db-tile-go { position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--tone-soft, #f4f1f9); color:var(--tone, var(--muted)); }
+  .db-tile .ui-bar { margin-top:10px; }
+
+  /* What needs you: three things, one button each */
+  .db-needs { border-radius:26px; padding:24px; background:#fff; border:1px solid var(--border-color); margin-bottom:26px; }
+  .db-needs-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+  .db-title { font-weight:800; font-size:1.12rem; color:var(--ink-text); display:flex; align-items:center; gap:10px; }
+  .db-title > i { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1rem; }
+  .db-todo { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; }
+  .db-do { display:flex; flex-direction:column; gap:10px; border-radius:20px; padding:18px; background:#faf8fd; border:1px solid transparent; }
+  .db-do.tone-urgent { background:#fff5f6; border-color:#fecdd3; }
+  .db-do.tone-warn { background:var(--gold-subtle); }
+  .db-do.tone-good { background:var(--mint-subtle); }
+  .db-do-top { display:flex; gap:12px; align-items:flex-start; }
+  .db-do-ico { width:44px; height:44px; border-radius:14px; flex:none; display:grid; place-items:center; font-size:1.25rem; background:#fff; color:var(--primary-berry); box-shadow:0 8px 18px -12px rgba(36,26,56,.4); }
+  .db-do.tone-urgent .db-do-ico { color:#be123c; } .db-do.tone-warn .db-do-ico { color:var(--gold-dark); } .db-do.tone-good .db-do-ico { color:var(--mint); }
+  .db-do-title { font-weight:800; font-size:.95rem; color:var(--ink-text); line-height:1.3; }
+  .db-do-why { font-size:.8rem; color:#5b5670; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+  .db-do details[open] + .db-do-why, .db-do.is-open .db-do-why { -webkit-line-clamp:unset; line-clamp:unset; }
+  .db-do-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:auto; }
+  .db-do-actions form { margin:0; }
+  .db-clear { display:flex; gap:18px; align-items:center; padding:10px 6px; }
+  .db-clear .art { width:130px; flex:none; }
+  .db-clear strong { display:block; font-size:1.05rem; color:var(--ink-text); }
+  .db-clear span { font-size:.86rem; color:#5b5670; }
+  .db-more summary { list-style:none; cursor:pointer; display:inline-flex; margin-top:14px; }
+  .db-more summary::-webkit-details-marker { display:none; }
+  .db-more[open] summary { display:none; }
+  .db-more > div { margin-top:14px; }
+
+  .db-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:18px; margin-bottom:26px; align-items:start; }
+  .db-card { background:#fff; border:1px solid var(--border-color); border-radius:26px; padding:22px 24px; min-width:0; }
+  .db-card-head { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:12px; flex-wrap:wrap; }
+  .db-sub { font-size:.8rem; color:var(--muted); }
+  /* What candidates say: the analysis, then every feedback in a row that slides. */
+  .db-said { margin-bottom:26px; }
+  .db-smart { margin-bottom:26px; }
+  .db-smart-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(250px, 1fr)); gap:10px; margin-top:12px; }
+  .db-smart-item { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border:1px solid var(--border-color); border-radius:16px; text-decoration:none; color:inherit; background:#fff; transition:transform .16s ease, box-shadow .16s ease; }
+  .db-smart-item:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+  .db-smart-item i { font-size:1.1rem; color:var(--primary-berry); margin-top:1px; }
+  .db-smart-item.is-idea { border-left:4px solid var(--accent-gold-dark, #b45309); } .db-smart-item.is-idea i { color:var(--accent-gold-dark, #b45309); }
+  .db-smart-item b { display:block; font-size:.86rem; color:var(--ink-text); } .db-smart-item small { display:block; font-size:.76rem; color:var(--muted); line-height:1.4; }
+  .db-said-top { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.6fr); gap:12px; }
+  .db-said-box { background:#faf8fd; border-radius:18px; padding:14px 16px; display:flex; gap:14px; align-items:center; min-width:0; }
+  .db-said-box b { display:block; font-size:.9rem; color:var(--ink-text); }
+  .db-said-box span { font-size:.76rem; color:var(--muted); line-height:1.4; }
+  .db-said-ring { --pct:0; width:74px; height:74px; border-radius:50%; flex:none; display:grid; place-items:center; background:conic-gradient(var(--mint) calc(var(--pct) * 1%), #ebe5f3 0); }
+  .db-said-ring div { width:56px; height:56px; border-radius:50%; background:#fff; display:grid; place-items:center; font-weight:800; font-size:1.02rem; color:var(--ink-text); }
+  .db-said-stars { text-align:center; flex:none; }
+  .db-said-stars b { font-size:1.7rem; font-weight:800; line-height:1; }
+  .db-said-stars span, .db-said-mini { color:#f5b301; font-size:.72rem; display:block; white-space:nowrap; }
+  .db-said-themes { display:grid; gap:6px; margin-top:8px; }
+  .db-said-theme { display:grid; grid-template-columns:minmax(0, 1.1fr) minmax(60px, 1fr) 38px; gap:10px; align-items:center; font-size:.78rem; }
+  .db-said-theme .name { font-weight:700; color:#4d4863; display:flex; align-items:center; gap:7px; font-size:.78rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .db-said-theme .name i { color:var(--primary-berry); }
+  .db-said-theme .bar { height:7px; border-radius:99px; background:#ebe5f3; overflow:hidden; display:block; }
+  .db-said-theme .bar span { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--accent-gold-dark), var(--primary-berry)); }
+  .db-said-theme em { font-style:normal; font-weight:800; color:var(--ink-text); text-align:right; font-size:.76rem; }
+  .db-said-words { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin-top:12px; }
+  .db-said-alert { display:flex; gap:10px; align-items:flex-start; margin-top:12px; border-radius:14px; padding:10px 14px; background:var(--gold-subtle); color:#7c4a03; font-size:.82rem; }
+  .db-said-row { display:flex; gap:12px; overflow-x:auto; scroll-snap-type:x proximity; padding:14px 2px 10px; margin-top:6px; scrollbar-width:thin; }
+  .db-said-row:focus-visible { outline:2px solid var(--primary-berry); outline-offset:4px; border-radius:18px; }
+  .db-said-card { flex:0 0 300px; scroll-snap-align:start; background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:14px 16px; display:flex; flex-direction:column; gap:9px; transition:transform .18s ease, box-shadow .18s ease; }
+  .db-said-card:hover { transform:translateY(-3px); box-shadow:var(--shadow-soft); }
+  .db-said-card.is-waiting { background:#fbfaff; border-style:dashed; }
+  .db-said-who { display:flex; gap:10px; align-items:center; min-width:0; }
+  .db-said-who b { display:block; font-size:.86rem; color:var(--ink-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .db-said-avatar { width:36px; height:36px; border-radius:50%; background:var(--berry-subtle); color:var(--primary-berry); display:grid; place-items:center; font-weight:800; flex:none; }
+  .db-said-card p { margin:0; font-size:.82rem; color:#4a445e; line-height:1.55; }
+  .db-said-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; }
+  @media (max-width: 1100px) { .db-said-top { grid-template-columns:1fr 1fr; } .db-said-box.wide { grid-column:1 / -1; } }
+  @media (max-width: 560px) { .db-said-top { grid-template-columns:1fr; } .db-said-card { flex-basis:82vw; } }
+  @media (prefers-reduced-motion: reduce) { .db-said-card { transition:none; } }
+  .db-row { display:flex; gap:14px; align-items:center; padding:12px 0; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; }
+  .db-row:first-of-type { border-top:0; }
+  a.db-row:hover .db-row-title { color:var(--primary-berry); }
+  .db-row-title { font-weight:700; font-size:.9rem; color:var(--ink-text); line-height:1.3; }
+  .db-row-sub { font-size:.77rem; color:var(--muted); margin-top:2px; }
+  .db-day { width:50px; flex:none; text-align:center; border-radius:15px; background:#f4f1f9; color:#5b5670; padding:7px 0; line-height:1.1; }
+  .db-day b { display:block; font-size:1.08rem; font-weight:800; }
+  .db-day span { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .db-day.is-today { background:var(--primary-berry); color:#fff; }
+  .db-news-ico { width:42px; height:42px; border-radius:14px; flex:none; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.1rem; }
+  /* The two cards of the week: a picture in the head, rows that arrive one by one and move under the mouse. */
+  .db-head-art { align-items:center; gap:14px; }
+  .db-head-pic { width:74px; flex:none; margin:-6px 0 -6px -6px; }
+  .db-session, .db-news { position:relative; border-radius:16px; padding:11px 10px; margin:0 -10px; border-top-color:transparent; transition:background .18s ease, transform .18s ease; }
+  .db-session + .db-session, .db-news + .db-news { box-shadow:0 -1px 0 var(--border-color); }
+  .db-session:hover, .db-news:hover { background:#faf6fd; transform:translateX(3px); }
+  .db-go { color:var(--primary-berry); opacity:0; transform:translateX(-6px); transition:opacity .18s ease, transform .18s ease; }
+  .db-session:hover .db-go, .db-news:hover .db-go { opacity:1; transform:none; }
+  .db-people { display:inline-flex; align-items:center; gap:4px; font-size:.74rem; font-weight:800; color:#6b6180; background:#f4f1f9; border-radius:99px; padding:3px 9px; flex:none; }
+  .db-day { transition:transform .18s ease; } .db-session:hover .db-day { transform:scale(1.06) rotate(-3deg); }
+  .db-day.is-today { background:linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark)); box-shadow:0 0 0 0 rgba(164,44,103,.45); animation:dayPulse 2.4s ease-out infinite; }
+  .db-day.is-soon { background:var(--gold-subtle, #fff7e6); color:var(--accent-gold-dark, #b45309); }
+  .db-session .db-day { width:58px; } .db-session .db-day span { font-size:.54rem; letter-spacing:.02em; }
+  @keyframes dayPulse { 0% { box-shadow:0 0 0 0 rgba(164,44,103,.45); } 70% { box-shadow:0 0 0 10px rgba(164,44,103,0); } 100% { box-shadow:0 0 0 0 rgba(164,44,103,0); } }
+  .db-news-count { font-weight:800; color:var(--ink-text); }
+  .db-news .db-news-ico { transition:transform .2s ease; } .db-news:hover .db-news-ico { transform:translateY(-3px) rotate(-6deg); }
+  .db-news.k-formation .db-news-ico { background:#f1e9ff; color:#7c3aed; } .db-news.k-event .db-news-ico { background:var(--gold-subtle, #fff7e6); color:var(--accent-gold-dark, #b45309); }
+  .db-news.k-offer .db-news-ico { background:#e6fbf7; color:#0f766e; } .db-news.k-news .db-news-ico { background:#e8f1ff; color:#2563eb; }
+  .db-news.k-video .db-news-ico { background:#ffe8ee; color:#e11d48; } .db-news.k-feedback .db-news-ico { background:var(--mint-subtle, #e9f9ef); color:var(--mint, #16a34a); }
+  @media (prefers-reduced-motion: no-preference) { .db-session, .db-news { animation:rowIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 70ms + .15s); } }
+  @media (prefers-reduced-motion: reduce) { .db-day.is-today { animation:none; } }
+  @media (max-width: 575px) { .db-people { display:none; } .db-head-pic { width:58px; } }
+  .db-news-num { font-weight:800; font-size:1.25rem; color:var(--ink-text); min-width:34px; text-align:right; }
+
+  /* The week in a few figures */
+  .db-parts { display:grid; grid-template-columns:repeat(6, minmax(0, 1fr)); gap:12px; margin-bottom:26px; }
+  .db-part { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 12px; text-align:center; text-decoration:none; color:inherit; transition:border-color .15s ease, transform .15s ease; }
+  .db-part:hover { border-color:var(--primary-berry); transform:translateY(-2px); color:inherit; }
+  .db-part i { width:42px; height:42px; border-radius:14px; display:inline-grid; place-items:center; font-size:1.1rem; background:#f4f1f9; color:#6b6680; }
+  .db-part.t-brand i { background:var(--berry-subtle); color:var(--primary-berry); } .db-part.t-ok i { background:var(--mint-subtle); color:var(--mint); }
+  .db-part.t-warn i { background:var(--gold-subtle); color:var(--gold-dark); } .db-part.t-info i { background:var(--sky-subtle); color:var(--sky); }
+  .db-part b { display:block; font-size:1.5rem; font-weight:800; color:var(--ink-text); line-height:1.2; margin-top:8px; }
+  .db-part span { font-size:.74rem; font-weight:700; color:#6b6680; }
+  .db-part.is-none b { color:#c2bbd2; }
+
+  /* Lists that open when asked for */
+  .db-fold { background:#fff; border:1px solid var(--border-color); border-radius:22px; margin-bottom:12px; overflow:hidden; }
+  .db-fold > summary { list-style:none; cursor:pointer; display:flex; align-items:center; gap:14px; padding:16px 22px; }
+  .db-fold > summary::-webkit-details-marker { display:none; }
+  .db-fold > summary > i:first-child { width:40px; height:40px; border-radius:13px; display:grid; place-items:center; background:#f4f1f9; color:#6b6680; font-size:1.05rem; flex:none; }
+  .db-fold[open] > summary > i:first-child { background:var(--berry-subtle); color:var(--primary-berry); }
+  .db-fold-title { font-weight:800; font-size:.96rem; color:var(--ink-text); }
+  .db-fold > summary .chev { margin-left:auto; color:#b5afc8; transition:transform .2s ease; }
+  .db-fold[open] > summary .chev { transform:rotate(180deg); color:var(--primary-berry); }
+  .db-fold-body { padding:4px 22px 20px; }
+  .db-class { padding:13px 0; border-top:1px solid var(--border-color); }
+  .db-class:first-child { border-top:0; }
+  .db-class-name { font-weight:800; font-size:.9rem; color:var(--ink-text); text-decoration:none; }
+  .db-class-name:hover { color:var(--primary-berry); }
+
+  /* The week at a glance */
+  .wk-grid { display:grid; grid-template-columns:repeat(7, minmax(118px, 1fr)); gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .wk-day { background:#faf8fd; border-radius:14px; padding:8px; min-height:120px; }
+  .wk-day-name { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#8d88a3; text-align:center; padding:3px 0 7px; }
+  .wk-day.is-today { background:var(--berry-subtle); }
+  .wk-day.is-today .wk-day-name { color:var(--primary-berry); }
+  .wk-chip { display:block; background:#fff; border:1px solid var(--border-color); border-left:3px solid var(--primary-berry); border-radius:10px; padding:7px 8px; margin-bottom:6px; text-decoration:none; color:inherit; }
+  .wk-chip:hover { border-color:var(--primary-berry); color:inherit; }
+  .wk-chip.is-conflict { border-left-color:#e11d48; background:#fff5f6; }
+  .wk-chip-time { font-size:.66rem; font-weight:800; color:var(--primary-berry); }
+  .wk-chip-title { font-size:.76rem; font-weight:700; color:var(--ink-text); line-height:1.25; overflow-wrap:anywhere; }
+  .wk-chip-meta { font-size:.66rem; color:var(--muted); margin-top:2px; }
+  .wk-empty { font-size:.7rem; color:#c2bbd2; text-align:center; padding-top:18px; }
+
+  @media (max-width: 1299px) { .db-tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } .db-todo { grid-template-columns:1fr; } .db-parts { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 991px) { .db-two { grid-template-columns:1fr; } }
+  @media (max-width: 520px) { .db-tiles { grid-template-columns:1fr; } .db-parts { grid-template-columns:repeat(2, minmax(0, 1fr)); } .db-needs, .db-card { padding:18px; } }
+  @media (prefers-reduced-motion: reduce) { .db-tile, .db-part { transition:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+{% set hour = now.hour %}
+
+<div class="ui-head">
+  <div>
+    <div class="db-hello">
+      <h2>Good {{ 'morning' if hour < 12 else ('afternoon' if hour < 18 else 'evening') }}</h2>
+      <span class="db-date">{{ now.strftime('%A %d %B') }}</span>
+    </div>
+    <p>Four pictures of where things stand, then what needs you today.</p>
+  </div>
+  <div class="ui-actions">
+    <a href="/inbox/compose" class="ui-btn"><i class="bi bi-pencil-square"></i>Write an email</a>
+    <a href="/candidate/all?add=1" class="ui-btn"><i class="bi bi-person-plus"></i>Add a candidate</a>
+    <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-calendar-plus"></i>Create a class</button>
+  </div>
+</div>
+
+<!-- Where things stand, in four pictures -->
+<section class="db-tiles" id="live-dashboard-figures" data-live-region>
+  <a class="db-tile tone-brand" href="/candidate/all">
+    <span class="db-tile-go"><i class="bi bi-arrow-up-right"></i></span>
+    <div class="db-tile-art">{{ art.scene("candidates") }}</div>
+    <div class="db-tile-label">Candidates</div>
+    <div class="db-tile-num"><span data-count="{{ figures.candidates }}">{{ figures.candidates }}</span></div>
+    <div class="db-tile-say">{% if figures.new_candidates %}{{ figures.new_candidates }} registered this week{% else %}No new registration this week{% endif %}</div>
+  </a>
+  <a class="db-tile tone-gold" href="/payments">
+    <span class="db-tile-go"><i class="bi bi-arrow-up-right"></i></span>
+    <div class="db-tile-art">{{ art.scene("payments") }}</div>
+    <div class="db-tile-label">Payments</div>
+    <div class="db-tile-num"><span data-count="{{ figures.collection_rate }}">{{ figures.collection_rate }}</span><small>% received</small></div>
+    <div class="ui-bar {{ 'is-full' if figures.collection_rate >= 100 }}"><span style="width:{{ figures.collection_rate }}%;"></span></div>
+    <div class="db-tile-say">{{ "{:,.0f}".format(figures.collected).replace(",", " ") }} DT received{% if figures.due > 0 %} · {{ "{:,.0f}".format(figures.due).replace(",", " ") }} DT still to come from {{ figures.owing_candidates }} candidate{{ 's' if figures.owing_candidates != 1 }}{% else %} · everyone has paid{% endif %}</div>
+  </a>
+  <a class="db-tile tone-sky" href="/classes/">
+    <span class="db-tile-go"><i class="bi bi-arrow-up-right"></i></span>
+    <div class="db-tile-art">{{ art.scene("classes") }}</div>
+    <div class="db-tile-label">Classes</div>
+    <div class="db-tile-num"><span data-count="{{ figures.classes_running }}">{{ figures.classes_running }}</span> <small>running</small></div>
+    <div class="db-tile-say">{{ figures.classes_upcoming }} about to start{% if figures.understanding is not none %} · candidates understood {{ figures.understanding | round | int }}% of the weekly questions{% endif %}</div>
+  </a>
+  <a class="db-tile tone-rose" href="/inbox">
+    <span class="db-tile-go"><i class="bi bi-arrow-up-right"></i></span>
+    <div class="db-tile-art">{{ art.scene("inbox") }}</div>
+    <div class="db-tile-label">Emails</div>
+    <div class="db-tile-num"><span data-count="{{ figures.emails_waiting }}">{{ figures.emails_waiting }}</span> <small>waiting for you</small></div>
+    <div class="db-tile-say">{{ 'Open the inbox to answer' if figures.emails_waiting else 'Nothing to answer: the assistant handled the rest' }}</div>
+  </a>
+</section>
+
+<!-- What needs you -->
+<section class="db-needs" id="live-dashboard-advice" data-live-region>
+  <div class="db-needs-head">
+    <div class="db-title"><i class="bi bi-compass"></i>What needs you today{% if advice %} <span class="ui-chip {{ 'bad' if advice_summary.urgent else 'brand' }}">{{ advice | length }}</span>{% endif %}</div>
+    <span class="db-sub">The most pressing first. One button does each of them.</span>
+  </div>
+  {% macro todo(item) %}
+  <div class="db-do tone-{{ item.tone }}">
+    <div class="db-do-top">
+      <div class="db-do-ico"><i class="bi {{ item.icon }}"></i></div>
+      <div class="db-do-title">{{ item.title }}</div>
+    </div>
+    <div class="db-do-why" title="{{ item.why }}">{{ item.why }}</div>
+    <div class="db-do-actions">
+      {% if item.action %}
+        {% if item.action.method == "post" %}
+        <form method="post" action="{{ item.action.url }}"{% if item.action.confirm %} data-confirm="{{ item.action.confirm }}"{% endif %}>
+          {% for field_name, field_value in item.action.fields.items() %}<input type="hidden" name="{{ field_name }}" value="{{ field_value }}">{% endfor %}
+          <button class="ui-btn primary sm" type="submit">{{ item.action.label }}</button>
+        </form>
+        {% else %}
+        <a class="ui-btn primary sm" href="{{ item.action.url }}">{{ item.action.label }}</a>
+        {% endif %}
+      {% endif %}
+      {% if item.link %}<a class="ui-btn sm" href="{{ item.link.url }}">{{ item.link.label }}</a>{% endif %}
+      {% if item.can_snooze %}
+      <form method="post" action="/advice/snooze">
+        <input type="hidden" name="key" value="{{ item.key }}"><input type="hidden" name="back" value="/">
+        <button class="ui-btn ghost sm" type="submit" title="Hide this for 3 days, or until the situation changes">Not now</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% endmacro %}
+  {% if advice %}
+  <div class="db-todo">{% for item in advice[:3] %}{{ todo(item) }}{% endfor %}</div>
+  {% if advice | length > 3 %}
+  <details class="db-more">
+    <summary><span class="ui-btn sm"><i class="bi bi-chevron-down"></i>Show the {{ advice | length - 3 }} other{{ 's' if advice | length - 3 != 1 }}</span></summary>
+    <div class="db-todo">{% for item in advice[3:] %}{{ todo(item) }}{% endfor %}</div>
+  </details>
+  {% endif %}
+  {% else %}
+  <div class="db-clear">
+    {{ art.scene("dashboard") }}
+    <div><strong>Nothing needs you right now</strong><span>No email is waiting, payments are being followed and every class has what it needs.</span></div>
+  </div>
+  {% endif %}
+</section>
+
+<!-- Reminders: the ones planned, and the ones worth writing -->
+<section class="db-card db-smart" id="live-dashboard-reminders">
+  <div class="db-card-head">
+    <div class="db-title"><i class="bi bi-alarm"></i>Reminders</div>
+    <a class="ui-btn sm" href="/reminders#new"><i class="bi bi-plus-lg"></i>New reminder</a>
+  </div>
+  <div class="db-smart-grid">
+    {% for item in smart.ideas %}
+    <a class="db-smart-item is-idea" href="{{ item.href }}"><i class="bi {{ item.icon }}"></i><span><b>{{ item.text }}</b><small>{{ item.why }}</small></span></a>
+    {% endfor %}
+    {% for row in smart.planned %}
+    <a class="db-smart-item" href="/reminders#planned"><i class="bi bi-send-check"></i><span><b>{{ row.reminder.subject }}</b><small>Goes {{ row.when.strftime('%a %d %b at %H:%M') }} · {{ row.reminder.audience_label }}</small></span></a>
+    {% endfor %}
+    {% if not smart.ideas and not smart.planned %}
+    <a class="db-smart-item" href="/reminders"><i class="bi bi-lightbulb"></i><span><b>Nothing to remind right now</b><small>Write your own reminder to a candidate, a class or everyone, now or for later.</small></span></a>
+    {% endif %}
+  </div>
+</section>
+
+<div class="db-two">
+  <!-- The sessions to come -->
+  <section class="db-card" id="live-dashboard-sessions" data-live-region>
+    <div class="db-card-head db-head-art">
+      <div class="db-head-pic" aria-hidden="true">{{ art.scene("sessions") }}</div>
+      <div style="min-width:0; flex:1;">
+        <div class="db-title">Next sessions</div>
+        <div class="db-sub">{{ sessions | length }} in the next 7 days{% if sessions and sessions[0].is_today %} · the first one today{% endif %}</div>
+      </div>
+      <a class="ui-link" href="/classes/">All classes</a>
+    </div>
+    {% for session in sessions[:5] %}
+    {% set days = (session.date - now.date()).days if now is defined and now else 9 %}
+    <a class="db-row db-session {{ 'is-today' if session.is_today else 'is-soon' if days == 1 }}" href="/classes/{{ session.class.id }}" style="--i:{{ loop.index }};">
+      <div class="db-day {{ 'is-today' if session.is_today else 'is-soon' if days == 1 }}"><b>{{ session.date.strftime('%d') }}</b><span>{{ 'Today' if session.is_today else 'Tomorrow' if days == 1 else session.date.strftime('%a') }}</span></div>
+      {% if session.program_icon %}{{ ui.program_icon(session.program_icon, 38) }}{% endif %}
+      <div class="flex-grow-1" style="min-width:0;">
+        <div class="db-row-title text-truncate">{{ session.topic or (session.class.program.name if session.class.program else session.class.name) }}</div>
+        <div class="db-row-sub"><i class="bi bi-clock"></i> {% if session.start_time %}{{ session.start_time.strftime('%H:%M') }}{% else %}Time not set{% endif %} · {{ session.class.name }}</div>
+      </div>
+      {% if not session.class.professor_name %}<span class="ui-chip bad">No professor</span>{% endif %}
+      <span class="db-people" title="{{ session.members }} candidate{{ 's' if session.members != 1 }}"><i class="bi bi-people-fill"></i>{{ session.members }}</span>
+      <i class="bi bi-arrow-right db-go" aria-hidden="true"></i>
+    </a>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-calendar-x"></i><strong>No session in the next 7 days</strong>They appear here once a class has a start date.</div>
+    {% endfor %}
+  </section>
+
+  <!-- What is new on the website and the Facebook page -->
+  <section class="db-card" id="live-dashboard-news">
+    <div class="db-card-head db-head-art">
+      <div class="db-head-pic" aria-hidden="true">{{ art.scene("news") }}</div>
+      <div style="min-width:0; flex:1;">
+        <div class="db-title">New on 9antra.tn this week</div>
+        <div class="db-sub">Read by itself every six hours</div>
+      </div>
+      <a class="ui-link" href="/website">Open</a>
+    </div>
+    {% for line in news.lines %}
+    {% set kind = (line.url or '').split('#')[-1] %}
+    <a class="db-row db-news k-{{ kind }}" href="{{ line.url }}" style="--i:{{ loop.index }};">
+      <span class="db-news-ico"><i class="bi {{ line.icon }}"></i></span>
+      <div class="flex-grow-1" style="min-width:0;">
+        <div class="db-row-title"><b class="db-news-count" data-count="{{ line.count }}">{{ line.count }}</b> new {{ line.one if line.count == 1 else line.label | lower }}</div>
+        <div class="db-row-sub text-truncate">{{ line.names | join(' · ') }}</div>
+      </div>
+      <i class="bi bi-arrow-right db-go" aria-hidden="true"></i>
+    </a>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-check2-circle"></i><strong>Nothing new these last {{ news.days }} days</strong>The website is read again by itself every six hours.</div>
+    {% endfor %}
+  </section>
+</div>
+
+<!-- The last seven days in a few figures -->
+<div class="db-card-head" style="margin:0 4px 12px;">
+  <div class="db-title"><i class="bi bi-activity"></i>The last 7 days</div>
+  <span class="db-sub">What happened, by part of the work. Each figure opens its page.</span>
+</div>
+<section class="db-parts" id="live-dashboard-activity" data-live-region>
+  {% for part in parts %}
+  <a class="db-part t-{{ part.tone }} {{ 'is-none' if not part.count }}" href="{{ part.url }}"{% if part.last %} title="Last one: {{ part.last.strftime('%A %d %B at %H:%M') }}"{% endif %}>
+    <i class="bi {{ part.icon }}"></i>
+    <b>{{ part.count }}</b>
+    <span>{{ part.label }}</span>
+  </a>
+  {% endfor %}
+</section>
+
+<!-- The lists, opened when asked for -->
+<details class="db-fold" id="live-dashboard-classes" data-live-region>
+  <summary><i class="bi bi-collection-play"></i><div><div class="db-fold-title">Classes</div><div class="db-sub">Where each class is, and what candidates understood so far.</div></div><i class="bi bi-chevron-down chev"></i></summary>
+  <div class="db-fold-body">
+    {% for row in classes %}
+    {% set cls = row.class %}
+    <div class="db-class">
+      <div class="d-flex align-items-center gap-3">
+        {% if row.program_icon %}{{ ui.program_icon(row.program_icon, 40) }}{% endif %}
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <a class="db-class-name" href="/classes/{{ cls.id }}">{{ cls.name }}</a>
+            {% if cls.status.value == 'ongoing' %}<span class="ui-chip brand">Week {{ row.summary.current_week }} of {{ row.summary.total_weeks }}</span>
+            {% else %}<span class="ui-chip info">{{ ('Starts ' ~ row.summary.countdown) if row.summary.countdown else row.summary.starts_label }}</span>{% endif %}
+            {% if row.course.average is not none %}{{ ui.level_chip(row.course.level, row.course.average) }}{% endif %}
+          </div>
+          <div class="db-row-sub">{{ cls.program.name if cls.program else 'No program' }} · {{ row.summary.enrolled }}/{{ row.summary.capacity }} candidates · {{ cls.professor_name or 'no professor yet' }}</div>
+        </div>
+        <a class="ui-btn sm" href="/classes/{{ cls.id }}/course" title="Course files and weekly questions"><i class="bi bi-folder2-open"></i>Course</a>
+      </div>
+      {% if cls.status.value == 'ongoing' %}<div class="ui-bar mt-2"><span style="width:{{ row.progress }}%;"></span></div>{% endif %}
+    </div>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-mortarboard"></i><strong>No class yet</strong>A class is created when a candidate pays, or with “Create a class”.</div>
+    {% endfor %}
+    <a class="ui-link d-inline-block mt-2" href="/classes/">Manage the classes</a>
+  </div>
+</details>
+
+<details class="db-fold" id="timetable">
+  <summary><i class="bi bi-grid-3x3-gap"></i><div><div class="db-fold-title">Weekly timetable</div><div class="db-sub">Which class meets on which day. A red line means the same professor is booked twice.</div></div><i class="bi bi-chevron-down chev"></i></summary>
+  <div class="db-fold-body">
+    <div class="ui-actions mb-3">
+      <select id="wk-status" class="form-select form-select-sm" style="width:auto; border-radius:10px;" aria-label="Show classes">
+        <option value="">All classes</option><option value="ongoing">Running</option><option value="not_started">Not started</option><option value="completed">Completed</option>
+      </select>
+      <select id="wk-professor" class="form-select form-select-sm" style="width:auto; border-radius:10px;" aria-label="Show a professor"><option value="">All professors</option></select>
+      <a class="ui-btn sm" href="/api/dashboard/calendar/export.ics"><i class="bi bi-download"></i>Calendar file</a>
+    </div>
+    <div class="wk-grid" id="weekGrid"><div class="ui-card-sub">Loading the timetable…</div></div>
+  </div>
+</details>
+
+<details class="db-fold" id="live-dashboard-registrations" data-live-region>
+  <summary><i class="bi bi-person-plus"></i><div><div class="db-fold-title">Newest registrations</div><div class="db-sub">The last candidates who registered, and what they still owe.</div></div><i class="bi bi-chevron-down chev"></i></summary>
+  <div class="db-fold-body">
+    {% for item in registrations %}
+    <a class="db-row" href="/candidate/{{ item.candidate.id }}">
+      {{ ui.avatar(item.name, 38) }}
+      <div class="flex-grow-1" style="min-width:0;">
+        <div class="db-row-title">{{ item.name }}</div>
+        <div class="db-row-sub text-truncate">{{ item.programs | join(', ') }}</div>
+      </div>
+      {% if item.owes > 0 %}<span class="ui-chip warn">{{ "%.0f"|format(item.owes) }} DT due</span>{% else %}<span class="ui-chip ok">Paid</span>{% endif %}
+    </a>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-people"></i><strong>No candidate yet</strong>They appear here as soon as they register.</div>
+    {% endfor %}
+  </div>
+</details>
+
+<details class="db-fold mb-4" id="live-dashboard-programs" data-live-region>
+  <summary><i class="bi bi-journal-bookmark"></i><div><div class="db-fold-title">Most chosen programs</div><div class="db-sub">The programs candidates register for the most.</div></div><i class="bi bi-chevron-down chev"></i></summary>
+  <div class="db-fold-body">
+    {% for item in programs %}
+    <a class="db-row" href="/programs/{{ item.program.id }}">
+      {{ ui.program_icon(item.icon, 38) }}
+      <div class="flex-grow-1" style="min-width:0;"><div class="db-row-title text-truncate">{{ item.program.name }}</div>
+        <div class="db-row-sub">{{ "%.0f"|format(item.program.price_online or 0) }} DT online · {{ "%.0f"|format(item.program.price_onsite or 0) }} DT on site</div></div>
+      <span class="ui-chip">{{ item.registrations }} registered</span>
+    </a>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong></div>
+    {% endfor %}
+  </div>
+</details>
+
+<!-- What candidates say: every feedback published on the website, read and analysed -->
+{% if said.total %}
+<section class="db-card db-said" id="live-dashboard-feedback">
+  <div class="db-card-head">
+    <div>
+      <div class="db-title"><i class="bi bi-chat-heart-fill"></i>What your candidates say</div>
+      <div class="db-sub">The {{ said.total }} feedback published on 9antra.tn, read one by one: who said it, what they said, how it sounds and what it is about.</div>
+    </div>
+    <a class="ui-link" href="/website#feedback">Open on the Website page</a>
+  </div>
+
+  {% if said.read or said.rated %}
+  <div class="db-said-top">
+    {% if said.happy_share is not none %}
+    <div class="db-said-box">
+      <div class="db-said-ring" style="--pct:{{ said.happy_share }};"><div>{{ said.happy_share }}%</div></div>
+      <div><b>are happy</b><span>{{ said.counts.positive }} happy · {{ said.counts.mixed }} mixed · {{ said.counts.negative }} unhappy, out of {{ said.judged }} read</span></div>
+    </div>
+    {% endif %}
+    {% if said.stars %}
+    <div class="db-said-box">
+      <div class="db-said-stars"><b>{{ said.stars }}</b><span>{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < said.stars | round(0, 'floor') else 'bi-star-half' if n < said.stars else 'bi-star' }}"></i>{% endfor %}</span></div>
+      <div><b>stars on average</b><span>{{ said.rated }} of them show a rating</span></div>
+    </div>
+    {% endif %}
+    {% if said.themes %}
+    <div class="db-said-box wide">
+      <div style="min-width:0; width:100%;">
+        <b>What they talk about</b>
+        <div class="db-said-themes">
+          {% for theme in said.themes[:5] %}
+          <div class="db-said-theme" title="{{ theme.count }} feedback, {{ theme.happy }} of them happy">
+            <span class="name"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>
+            <span class="bar"><span style="width:{{ theme.share }}%;"></span></span>
+            <em>{{ theme.share }}%</em>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% if said.praise %}
+  <div class="db-said-words"><span class="db-sub">Words that come back:</span>{% for word, count in said.praise %}<span class="ui-chip ok">{{ word }}{% if count > 1 %} · {{ count }}{% endif %}</span>{% endfor %}</div>
+  {% endif %}
+  {% endif %}
+  {% if said.to_answer %}
+  <div class="db-said-alert"><i class="bi bi-exclamation-circle-fill"></i><span><b>{{ said.to_answer | length }} feedback {{ 'are' if said.to_answer | length != 1 else 'is' }} not fully happy.</b> They are first in the row below: read them and answer the person.</span></div>
+  {% endif %}
+
+  <div class="db-said-row" tabindex="0" aria-label="Every feedback, one after the other">
+    {% for row in (said.to_answer + (said.rows | rejectattr('reading.sentiment', 'in', ['negative', 'mixed']) | list)) %}
+    <article class="db-said-card {{ 'is-waiting' if not row.text }}">
+      <div class="db-said-who">
+        <span class="db-said-avatar">{{ (row.name or '?')[:1] | upper }}</span>
+        <div style="min-width:0;">
+          <b>{{ row.name or 'A candidate' }}</b>
+          {% if row.stars %}<span class="db-said-mini">{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < row.stars else 'bi-star' }}"></i>{% endfor %}</span>{% endif %}
+        </div>
+        {% if row.text %}<span class="ui-chip {{ row.view.tone }} ms-auto"><i class="bi {{ row.view.icon }}"></i>{{ row.view.label }}</span>{% endif %}
+      </div>
+      {% if row.text %}
+      <p>“{{ row.text[:230] }}{{ '…' if row.text | length > 230 }}”</p>
+      <div class="db-said-tags">{% for theme in row.themes[:3] %}<span class="ui-chip brand"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>{% endfor %}{% if row.reading.language %}<span class="ui-chip muted">{{ row.reading.language }}</span>{% endif %}</div>
+      {% elif row.waiting %}
+      <p class="db-sub">Not read yet: it is read by itself in the next minutes.</p>
+      {% else %}
+      <p class="db-sub">Its text could not be read from the picture.</p>
+      {% endif %}
+    </article>
+    {% endfor %}
+  </div>
+  <div class="db-sub" style="margin-top:8px;"><i class="bi bi-arrow-left-right me-1"></i>Slide to read them all{% if said.waiting %} · {{ said.waiting }} still to read{% endif %}</div>
+</section>
+{% endif %}
+
+<!-- Create a class -->
+<div class="modal fade ui-modal" id="createClassModal" tabindex="-1" aria-labelledby="createClassTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="/classes/create">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createClassTitle">Create a class</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="cc-program">Program</label>
+            <select name="program_id" id="cc-program" class="form-select" required>
+              <option value="">Choose a program</option>
+              {% for program in dashboard_programs %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-12 ui-field"><label for="cc-professor">Professor</label>
+            <select name="professor_id" id="cc-professor" class="form-select">
+              <option value="">Decide later</option>
+              {% for professor in dashboard_professors %}<option value="{{ professor.id }}">{{ professor.name }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-6 ui-field"><label for="cc-start">First session</label><input name="start_date" id="cc-start" type="date" class="form-control"><div class="ui-hint">Empty = your usual start rule</div></div>
+          <div class="col-6 ui-field"><label for="cc-capacity">Places</label><input name="max_capacity" id="cc-capacity" type="number" min="1" value="30" class="form-control"></div>
+          <div class="col-4 ui-field"><label for="cc-day">Day</label>
+            <select name="days_of_week" id="cc-day" class="form-select">
+              {% for key, label in [('', 'Usual day'), ('mon', 'Monday'), ('tue', 'Tuesday'), ('wed', 'Wednesday'), ('thu', 'Thursday'), ('fri', 'Friday'), ('sat', 'Saturday'), ('sun', 'Sunday')] %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="col-4 ui-field"><label for="cc-from">From</label><input name="start_time" id="cc-from" type="time" class="form-control"></div>
+          <div class="col-4 ui-field"><label for="cc-to">To</label><input name="end_time" id="cc-to" type="time" class="form-control"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button>
+        <button class="ui-btn primary" type="submit"><i class="bi bi-calendar-plus"></i>Create the class</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const grid = document.getElementById("weekGrid");
+  const statusFilter = document.getElementById("wk-status");
+  const professorFilter = document.getElementById("wk-professor");
+  let events = [];
+
+  function chip(event) {
+    const week = event.current_week && event.total_weeks ? ` · week ${event.current_week}/${event.total_weeks}` : "";
+    const body = `
+      <div class="wk-chip-time">${escapeHtml(event.startTime || "")}${event.endTime ? "–" + escapeHtml(event.endTime) : ""}</div>
+      <div class="wk-chip-title">${escapeHtml(event.title)}</div>
+      <div class="wk-chip-meta">${escapeHtml(event.professor || "No professor")} · ${event.enrolled || 0}/${event.capacity || "—"}${week}</div>
+      ${event.conflict ? '<div class="wk-chip-meta" style="color:#be123c; font-weight:700;">Professor booked twice</div>' : ""}`;
+    return event.url
+      ? `<a class="wk-chip ${event.conflict ? "is-conflict" : ""}" href="${escapeHtml(event.url)}">${body}</a>`
+      : `<div class="wk-chip ${event.conflict ? "is-conflict" : ""}">${body}</div>`;
+  }
+
+  function draw() {
+    const shown = events.filter(event =>
+      (!statusFilter.value || event.status === statusFilter.value) &&
+      (!professorFilter.value || event.professor === professorFilter.value));
+    const today = (new Date().getDay() + 6) % 7;   // Monday first
+    grid.innerHTML = DAYS.map((name, index) => {
+      const weekday = (index + 1) % 7;             // the server counts from Sunday = 0
+      const day = shown
+        .filter(event => (event.daysOfWeek || []).includes(weekday))
+        .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+      return `<div class="wk-day ${index === today ? "is-today" : ""}">
+        <div class="wk-day-name">${name}</div>
+        ${day.length ? day.map(chip).join("") : '<div class="wk-empty">—</div>'}
+      </div>`;
+    }).join("");
+  }
+
+  async function load() {
+    try {
+      const response = await fetch("/api/dashboard/calendar/events");
+      if (!response.ok) throw new Error();
+      events = await response.json();
+      const chosen = professorFilter.value;
+      const professors = [...new Set(events.map(event => event.professor).filter(Boolean))].sort();
+      professorFilter.innerHTML = '<option value="">All professors</option>' +
+        professors.map(name => `<option ${name === chosen ? "selected" : ""}>${escapeHtml(name)}</option>`).join("");
+      draw();
+    } catch (error) {
+      grid.innerHTML = '<div class="ui-card-sub">The timetable could not be loaded.</div>';
+    }
+  }
+  statusFilter.addEventListener("change", draw);
+  professorFilter.addEventListener("change", draw);
+  document.addEventListener("live:change", event => {
+    const topics = (event.detail && event.detail.topics) || [];
+    if (topics.some(topic => topic === "classes" || topic === "dashboard")) load();
+  });
+  load();
+})();
+// A list that was opened stays open (also after the page refreshes itself).
+document.querySelectorAll("details.db-fold").forEach(fold => {
+  try { if (localStorage.getItem("dashboard:" + fold.id) === "open") fold.open = true; } catch (error) {}
+  fold.addEventListener("toggle", () => { try { localStorage.setItem("dashboard:" + fold.id, fold.open ? "open" : "closed"); } catch (error) {} });
+});
+</script>
+{% endblock %}

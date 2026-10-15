@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Payments · {{ app_brand.name }}{% endblock %}
+{% block page_title %}Payments{% endblock %}
+{% block live_topics %}candidates{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .pay-row { display:grid; grid-template-columns:minmax(0, 1.5fr) 110px minmax(0, 1.6fr) auto; gap:18px; align-items:center; padding:16px 4px; border-top:1px solid var(--border-color); }
+  .pay-row:first-of-type { border-top:0; }
+  .pay-due { font-weight:800; font-size:1.05rem; color:var(--ink-text); text-align:right; }
+  .pay-state { font-size:.82rem; color:#5b5670; line-height:1.45; }
+  .pay-state b { color:var(--ink-text); display:block; font-size:.86rem; }
+  .pay-wa { background:#e7f8ee; border-color:transparent; color:#128c4b; }
+  .pay-wa:hover { border-color:#128c4b; color:#128c4b; }
+  @media (max-width: 991px) { .pay-row { grid-template-columns:1fr; gap:8px; } .pay-due { text-align:left; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Payments</h2>
+    <p>Who still has to pay, and where their reminder stands. The application writes once by itself; the next reminder is always your decision.</p>
+  </div>
+</div>
+
+<div class="ui-stats mb-4">
+  <div class="ui-stat t-gold"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ '%.0f' | format(totals.due) }} <small>DT</small></div><div class="ui-stat-label">Still to receive</div></div></div>
+  <div class="ui-stat t-mint"><div class="ui-stat-ico"><i class="bi bi-check2-circle"></i></div><div><div class="ui-stat-num">{{ '%.0f' | format(totals.paid) }} <small>DT</small></div><div class="ui-stat-label">Already received</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people"></i></div><div><div class="ui-stat-num">{{ totals.people }}</div><div class="ui-stat-label">Candidate{{ 's' if totals.people != 1 }} who owe</div></div></div>
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-check"></i></div><div><div class="ui-stat-num">{{ totals.to_decide }}</div><div class="ui-stat-label">Waiting for your decision</div></div></div>
+</div>
+
+<section class="ui-card" data-live-region="payments">
+  {% for row in rows %}
+  {% set advice = row.advice %}
+  <div class="pay-row">
+    <a class="d-flex align-items-center gap-3 text-decoration-none" href="/candidate/{{ row.candidate.id }}" style="color:inherit; min-width:0;">
+      {{ ui.avatar(row.name, 44) }}
+      <span style="min-width:0;">
+        <span class="d-block text-truncate" style="font-weight:800; font-size:.92rem;">{{ row.name }}</span>
+        <span class="ui-card-sub d-block text-truncate">{{ row.programs | join(', ') }}</span>
+      </span>
+    </a>
+    <div class="pay-due">{{ '%.0f' | format(row.due) }} DT</div>
+    <div class="pay-state">
+      {% if advice %}<b>{{ advice.title }}</b>{% endif %}
+      {% if row.wrote %}They wrote to you after the reminder.
+      {% elif row.sent %}{{ row.sent }} reminder{{ 's' if row.sent != 1 }} sent, the last {{ 'today' if row.days == 0 else 'yesterday' if row.days == 1 else row.days ~ ' days ago' }}. No payment and no answer since.
+      {% else %}No reminder sent yet.{% endif %}
+    </div>
+    <div class="ui-actions">
+      {% if advice and advice.action and advice.action.method == "get" %}
+      <a class="ui-btn primary sm" href="{{ advice.action.url }}{{ '?back=/payments' if 'payment-reminder' in advice.action.url }}">{{ advice.action.label }}</a>
+      {% else %}
+      <a class="ui-btn sm" href="/candidate/{{ row.candidate.id }}/payment-reminder?back=/payments">Write now</a>
+      {% endif %}
+      {% if row.whatsapp %}<a class="ui-btn sm pay-wa" href="{{ row.whatsapp }}" target="_blank" rel="noopener" title="Open WhatsApp on this candidate's number"><i class="bi bi-whatsapp"></i></a>{% endif %}
+    </div>
+  </div>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-emoji-smile"></i><strong>Everyone has paid</strong>Nothing is owed at the moment.</div>
+  {% endfor %}
+</section>
+{% endblock %}

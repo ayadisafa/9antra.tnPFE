@@ -1,0 +1,665 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Classes · 9antra{% endblock %}
+{% block page_title %}Classes{% endblock %}
+{% block live_topics %}classes{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .cl-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; border-bottom:1px solid var(--border-color); }
+  .cl-tab { border:0; background:none; padding:10px 14px; font-weight:700; font-size:.86rem; color:#6b6680; border-bottom:3px solid transparent; margin-bottom:-1px; display:inline-flex; align-items:center; gap:7px; }
+  .cl-tab:hover { color:var(--primary-berry); }
+  .cl-tab.active { color:var(--primary-berry); border-bottom-color:var(--primary-berry); }
+  .cl-tab .count { font-size:.68rem; background:#f1eff5; color:#5b5670; border-radius:999px; padding:1px 8px; }
+  .cl-tab .count.warn { background:var(--gold-subtle); color:var(--gold-dark); }
+
+  /* A class, as the sign on its door. */
+  .cg-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:16px; }
+  .cg-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; transition:box-shadow .18s ease, transform .18s ease; }
+  .cg-card:hover { box-shadow:var(--shadow-soft); transform:translateY(-2px); }
+  .cg-top { padding:16px 18px; display:flex; gap:14px; align-items:center; background:var(--soft); border-bottom:3px solid var(--tone); }
+  .cg-symbol { width:58px; height:58px; border-radius:18px; background:#fff; display:grid; place-items:center; font-size:1.8rem; flex:none; box-shadow:0 8px 18px -10px var(--tone); }
+  .cg-name { font-weight:800; font-size:1.05rem; color:var(--ink-text); text-decoration:none; line-height:1.2; display:block; overflow-wrap:anywhere; }
+  .cg-name:hover { color:var(--tone); }
+  .cg-program { font-size:.76rem; color:#5b5670; font-weight:600; margin-top:2px; }
+  .cg-status { margin-left:auto; align-self:flex-start; font-size:.68rem; font-weight:800; border-radius:999px; padding:4px 10px; background:#fff; color:var(--tone); white-space:nowrap; display:inline-flex; align-items:center; gap:5px; }
+  .cg-status .pulse { width:7px; height:7px; border-radius:50%; background:var(--tone); animation:cgPulse 1.6s ease-in-out infinite; }
+  @keyframes cgPulse { 50% { opacity:.3; } }
+  .cg-body { padding:14px 18px 6px; display:grid; gap:9px; }
+  .cg-line { display:flex; gap:10px; align-items:center; font-size:.82rem; color:#4d4863; }
+  .cg-line > i { width:18px; text-align:center; color:#a79fbd; flex:none; }
+  .cg-line strong { color:var(--ink-text); }
+  .cg-line .is-missing { color:#be123c; font-weight:700; }
+  .cg-card.is-hold .cg-status { background:var(--gold-subtle); color:var(--gold-dark); }
+  .cg-needs { margin:12px 18px 0; border-radius:14px; padding:10px 12px; background:var(--gold-subtle); color:#7c4a03; font-size:.78rem; line-height:1.45; display:flex; gap:9px; align-items:flex-start; }
+  .cg-needs i { font-size:1rem; margin-top:1px; flex:none; }
+  .cg-needs b { display:block; font-size:.8rem; }
+  .cg-needs.soft { background:#f6f3fb; color:#5b5670; }
+  .pf-pick { display:flex; flex-wrap:wrap; gap:6px; }
+  .pf-pick label { cursor:pointer; margin:0; }
+  .pf-pick input { position:absolute; opacity:0; width:0; height:0; }
+  .pf-pick span { display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.78rem; font-weight:700; color:#5b5670; transition:border-color .12s ease, background-color .12s ease, color .12s ease; }
+  .pf-pick span::before { content:"+"; font-weight:800; color:#b5afc8; }
+  .pf-pick input:checked + span { border-color:var(--primary-berry); background:var(--berry-subtle); color:var(--primary-berry); }
+  .pf-pick input:checked + span::before { content:"✓"; color:var(--primary-berry); }
+  .pf-pick input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .cg-seats { padding:10px 18px 0; }
+  .cg-seats-head { display:flex; justify-content:space-between; font-size:.72rem; font-weight:700; color:#6b6680; margin-bottom:6px; }
+  .cg-seat-row { display:flex; flex-wrap:wrap; gap:4px; }
+  .cg-seat { width:15px; height:13px; border-radius:4px 4px 2px 2px; background:#ece8f3; }
+  .cg-seat.taken { background:var(--tone); }
+  .cg-weeks { padding:12px 18px 0; }
+  .cg-week-row { display:flex; gap:3px; }
+  .cg-week { flex:1 1 0; height:7px; border-radius:99px; background:#ece8f3; }
+  .cg-week.done { background:var(--tone); opacity:.55; }
+  .cg-week.now { background:var(--tone); }
+  .cg-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; align-items:center; }
+  @media (prefers-reduced-motion: reduce) { .cg-status .pulse { animation:none; } .cg-card { transition:none; } }
+
+  /* A professor, as their staff card. */
+  .pf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
+  .pf-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; }
+  .pf-band { height:64px; background:linear-gradient(120deg, var(--ink-2), var(--primary-berry)); position:relative; }
+  .pf-band .ui-chip { position:absolute; right:14px; top:14px; background:rgba(255,255,255,.92); }
+  .pf-head { padding:0 18px; margin-top:-30px; display:flex; gap:12px; align-items:flex-end; position:relative; z-index:1; }
+  .pf-head .ui-avatar { border:4px solid #fff; box-shadow:0 8px 18px -10px rgba(36,26,56,.5); }
+  .pf-name { font-weight:800; font-size:1.02rem; color:var(--ink-text); line-height:1.2; margin-top:36px; }
+  .pf-role { font-size:.72rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .pf-body { padding:12px 18px 0; display:grid; gap:9px; }
+  .pf-tags { display:flex; flex-wrap:wrap; gap:5px; }
+  .pf-line { display:flex; gap:10px; align-items:center; font-size:.8rem; color:#4d4863; min-width:0; }
+  .pf-line i { width:18px; text-align:center; color:#a79fbd; flex:none; }
+  .pf-line a { color:inherit; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pf-line a:hover { color:var(--primary-berry); }
+  .pf-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:12px 18px 0; }
+  .pf-stat { background:#faf8fd; border-radius:12px; padding:8px 10px; text-align:center; }
+  .pf-stat b { display:block; font-size:1.05rem; font-weight:800; color:var(--ink-text); line-height:1.1; }
+  .pf-stat span { font-size:.64rem; font-weight:700; color:#9b95b0; text-transform:uppercase; letter-spacing:.04em; }
+  .pf-classes { display:flex; flex-wrap:wrap; gap:5px; padding:10px 18px 0; }
+  .pf-class { font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; text-decoration:none; color:var(--ink-text); background:#f4f1f9; }
+  .pf-class:hover { background:var(--berry-subtle); color:var(--primary-berry); }
+  .pf-access { margin:12px 18px 0; border-radius:12px; padding:9px 12px; font-size:.76rem; display:flex; gap:8px; align-items:center; }
+  .pf-access.on { background:var(--mint-subtle); color:#0f5132; }
+  .pf-access.off { background:#f4f1f9; color:#5b5670; }
+  .pf-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; }
+  .pf-foot form { margin:0; }
+
+  .wk-grid { display:grid; grid-template-columns:repeat(7, minmax(118px, 1fr)); gap:8px; overflow-x:auto; padding-bottom:4px; }
+  .wk-day { background:#faf8fd; border-radius:14px; padding:8px; min-height:120px; }
+  .wk-day-name { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#8d88a3; text-align:center; padding:3px 0 7px; }
+  .wk-day.is-today { background:var(--berry-subtle); }
+  .wk-day.is-today .wk-day-name { color:var(--primary-berry); }
+  .wk-chip { display:block; background:#fff; border:1px solid var(--border-color); border-left:3px solid var(--primary-berry); border-radius:10px; padding:7px 8px; margin-bottom:6px; text-decoration:none; color:inherit; }
+  .wk-chip:hover { border-color:var(--primary-berry); color:inherit; }
+  .wk-chip.is-conflict { border-left-color:#e11d48; background:#fff5f6; }
+  .wk-chip-time { font-size:.66rem; font-weight:800; color:var(--primary-berry); }
+  .wk-chip-title { font-size:.76rem; font-weight:700; color:var(--ink-text); line-height:1.25; overflow-wrap:anywhere; }
+  .wk-chip-meta { font-size:.66rem; color:var(--muted); margin-top:2px; }
+  .wk-empty { font-size:.7rem; color:#c2bbd2; text-align:center; padding-top:18px; }
+  .dc-card { border:1px solid var(--border-color); border-radius:16px; padding:14px; margin-bottom:10px; background:#fff; }
+  .dc-card .form-select, .dc-card .form-control { border-radius:10px; font-size:.82rem; border-color:var(--border-color); }
+  @media (max-width: 575px) { .cg-grid, .pf-grid { grid-template-columns:1fr; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+{% set status_labels = {'not_started': 'Not started', 'ongoing': 'Running', 'completed': 'Completed'} %}
+
+<div class="ui-head">
+  <div>
+    <h2>Classes and professors</h2>
+    <p>
+      {% if settings.auto_create_class_on_payment %}Candidates join a class the moment they pay; a new class is created when none is open for their program.
+      {% else %}Candidates join an open class the moment they pay. Automatic class creation is off.{% endif %}
+      A class starts only with candidates in it and a professor of its speciality.
+      <a href="/settings#classes" class="ui-link">Change the rules</a>
+    </p>
+  </div>
+  <div class="ui-actions">
+    <button type="button" class="ui-btn" data-bs-toggle="modal" data-bs-target="#professorModal" data-professor-new><i class="bi bi-person-plus"></i>Add a professor</button>
+    <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#create-class-modal"><i class="bi bi-plus-lg"></i>Create a class</button>
+  </div>
+</div>
+
+<div class="ui-stats mb-3" id="live-classes-kpis" data-live-region>
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-play-circle-fill"></i></div><div><div class="ui-stat-num">{{ counts.ongoing }}</div><div class="ui-stat-label">Running</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ counts.not_started }}</div><div class="ui-stat-label">Not started</div></div></div>
+  <div class="ui-stat {{ 't-red' if counts.on_hold else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-pause-circle-fill"></i></div><div><div class="ui-stat-num">{{ counts.on_hold }}</div><div class="ui-stat-label">On hold: cannot start</div></div></div>
+  <div class="ui-stat {{ 't-gold' if pending_registrations else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-person-plus"></i></div><div><div class="ui-stat-num">{{ pending_registrations | length }}</div><div class="ui-stat-label">Paid, waiting for a class</div></div></div>
+</div>
+
+<div class="cl-tabs" id="classesTabs" role="tablist">
+  <button class="cl-tab active" data-bs-toggle="pill" data-bs-target="#tab-classes" data-tab="classes" type="button" role="tab"><i class="bi bi-collection-play"></i>Classes <span class="count" id="live-classes-count" data-live-region>{{ classes | length }}</span></button>
+  <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-professors" data-tab="professors" type="button" role="tab"><i class="bi bi-person-badge"></i>Professors <span class="count">{{ professor_cards | length }}</span></button>
+  <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-timetable" data-tab="timetable" type="button" role="tab"><i class="bi bi-calendar-week"></i>Timetable</button>
+  <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-decisions" data-tab="decisions" type="button" role="tab"><i class="bi bi-person-plus"></i>Waiting for a class <span id="live-decisions-count" data-live-region>{% if pending_registrations %}<span class="count warn">{{ pending_registrations | length }}</span>{% endif %}</span></button>
+</div>
+
+<div class="tab-content" id="classesTabsContent">
+
+  <!-- ================= Classes ================= -->
+  <div class="tab-pane fade show active" id="tab-classes" role="tabpanel">
+    <div class="ui-toolbar">
+      <div class="ui-search"><i class="bi bi-search"></i><input type="search" id="classSearch" placeholder="Search a class, a program, a professor…" autocomplete="off" aria-label="Search a class"></div>
+      <div class="ui-pills" id="classFilters" role="group" aria-label="Show">
+        <button type="button" class="ui-pill is-active" data-filter="all">All</button>
+        <button type="button" class="ui-pill" data-filter="ongoing">Running</button>
+        <button type="button" class="ui-pill" data-filter="not_started">Not started</button>
+        <button type="button" class="ui-pill" data-filter="completed">Completed</button>
+      </div>
+      <span class="ui-count" id="classCount"></span>
+    </div>
+
+    <div id="live-classes-grid" data-live-region>
+      {% if classes %}
+      <div class="cg-grid" id="classGrid">
+        {% for cls in classes %}
+        {% set info = summaries[cls.id] %}
+        {% set look = looks[cls.id] %}
+        <article class="cg-card {{ 'is-hold' if info.on_hold }}" style="--tone:{{ look.colour }}; --soft:{{ look.soft }};" data-status="{{ info.status }}"
+                 data-search="{{ (cls.name ~ ' ' ~ (cls.program.name if cls.program else '') ~ ' ' ~ (cls.professor_name or '') ~ ' ' ~ (cls.room or '')) | lower }}">
+          <div class="cg-top">
+            <div class="cg-symbol" aria-hidden="true">{{ look.symbol }}</div>
+            <div style="min-width:0;">
+              <a class="cg-name" href="/classes/{{ cls.id }}">{{ cls.name }}</a>
+              <div class="cg-program">{{ cls.program.name if cls.program else 'No program yet' }}</div>
+            </div>
+            <span class="cg-status">{% if info.status == 'ongoing' %}<span class="pulse"></span>{% endif %}{% if info.on_hold %}<i class="bi bi-pause-fill"></i>On hold{% else %}{{ status_labels[info.status] }}{% endif %}</span>
+          </div>
+
+          <div class="cg-body">
+            <div class="cg-line"><i class="bi bi-person-badge"></i>{% if cls.professor_name %}<strong>{{ cls.professor_name }}</strong>{% else %}<span class="is-missing">No professor yet</span>{% endif %}</div>
+            <div class="cg-line"><i class="bi bi-clock"></i><span>{% if cls.start_time %}{{ info.schedule_label }}{% else %}<span class="is-missing">Session time not set</span>{% endif %}{% if cls.room %} · {{ cls.room }}{% endif %}</span></div>
+            <div class="cg-line"><i class="bi bi-flag"></i>
+              <span>
+                {% if info.on_hold %}Was due <strong>{{ info.starts_label }}</strong>
+                {% elif info.start %}{{ 'Starts' if info.status == 'not_started' else 'Started' }} <strong>{{ info.starts_label }}</strong>{% if info.status == 'not_started' and info.countdown %} · {{ info.countdown }}{% endif %}
+                {% else %}<strong>{{ info.starts_label }}</strong>{% endif %}
+              </span>
+            </div>
+          </div>
+
+          {% if info.needs %}
+          <div class="cg-needs {{ 'soft' if not info.on_hold and info.status == 'not_started' }}">
+            <i class="bi {{ 'bi-pause-circle-fill' if info.on_hold else 'bi-exclamation-circle-fill' }}"></i>
+            <span><b>{{ 'Waiting: it cannot start' if info.on_hold else ('Before it can start' if info.status == 'not_started' else 'To put in order') }}</b>{% set needed = info.needs | join(' · ') %}{{ needed[:1] | upper }}{{ needed[1:] }}.</span>
+          </div>
+          {% endif %}
+
+          <div class="cg-seats">
+            <div class="cg-seats-head"><span>Places</span><span>{{ info.enrolled }} of {{ info.capacity }} taken</span></div>
+            {% if info.capacity <= 40 %}
+            <div class="cg-seat-row" aria-hidden="true">{% for seat in range(info.capacity) %}<span class="cg-seat {{ 'taken' if seat < info.enrolled }}"></span>{% endfor %}</div>
+            {% else %}
+            <div class="ui-bar"><span style="width:{{ info.fill_pct }}%; background:{{ look.colour }};"></span></div>
+            {% endif %}
+          </div>
+
+          {% if info.status != 'not_started' %}
+          <div class="cg-weeks">
+            <div class="cg-seats-head"><span>{{ 'Completed' if info.status == 'completed' else 'Week ' ~ info.current_week ~ ' of ' ~ info.total_weeks }}</span></div>
+            <div class="cg-week-row" aria-hidden="true">{% for week in range(1, info.total_weeks + 1) %}<span class="cg-week {{ 'done' if week < info.current_week or info.status == 'completed' else ('now' if week == info.current_week else '') }}"></span>{% endfor %}</div>
+          </div>
+          {% endif %}
+
+          <div class="cg-foot">
+            <a class="ui-btn sm" href="/classes/{{ cls.id }}"><i class="bi bi-box-arrow-in-right"></i>Open</a>
+            <a class="ui-btn sm" href="/classes/{{ cls.id }}/course" title="Course files and weekly questions"><i class="bi bi-folder2-open"></i>Course</a>
+            <a class="ui-btn sm" href="/classes/{{ cls.id }}/attendance" title="Who was at each session"><i class="bi bi-person-check"></i>Presence</a>
+            {% if not info.enrolled and info.status != 'completed' %}
+            <form method="post" action="/classes/{{ cls.id }}/delete" class="m-0 ms-auto" data-confirm="Remove {{ cls.name }}? It has no candidate. This cannot be undone.">
+              <button class="ui-btn sm danger" title="Nobody is in this class: it can be removed"><i class="bi bi-trash3"></i>Remove</button>
+            </form>
+            {% endif %}
+            <button type="button" class="ui-btn soft sm {{ 'ms-auto' if info.enrolled or info.status == 'completed' }}" data-parameters="{{ cls.id }}" data-name="{{ cls.name }}" title="Change every parameter of this class"><i class="bi bi-sliders"></i>Parameters</button>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <div class="ui-empty mt-3 d-none" id="classNoMatch"><i class="bi bi-search"></i><strong>No class matches</strong>Try other words, or show all classes.</div>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-mortarboard"></i><strong>No class yet</strong>The first one is created by itself when a candidate pays.</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ================= Professors ================= -->
+  <div class="tab-pane fade" id="tab-professors" role="tabpanel">
+    <div class="ui-card-sub mb-3">Only a professor who has a program among their specialities can teach its classes: a new class gets one of them by itself, and a class without one waits. A professor with access signs in and sees only their own classes: the course, and the presence of candidates.</div>
+    {% if professor_cards %}
+    <div class="pf-grid">
+      {% for card in professor_cards %}
+      {% set professor = card.professor %}
+      <article class="pf-card">
+        <div class="pf-band">
+          {% if not professor.is_available %}<span class="ui-chip bad">Unavailable</span>
+          {% elif professor.available_from and professor.available_from > today %}<span class="ui-chip warn">From {{ professor.available_from.strftime('%d %b') }}</span>
+          {% else %}<span class="ui-chip ok"><span class="ui-dot"></span>Available</span>{% endif %}
+        </div>
+        <div class="pf-head">
+          {{ ui.avatar(professor.name, 62) }}
+          <div class="pb-1" style="min-width:0;"><div class="pf-name">{{ professor.name }}</div><div class="pf-role">Professor</div></div>
+        </div>
+        <div class="pf-body">
+          <div class="pf-tags">
+            {% for specialty in card.specialties %}<span class="ui-chip brand">{{ specialty }}</span>{% else %}<span class="ui-chip muted">No specialty set</span>{% endfor %}
+          </div>
+          <div class="pf-line"><i class="bi bi-envelope"></i>{% if professor.email %}<a href="mailto:{{ professor.email }}">{{ professor.email }}</a>{% else %}<span class="text-muted">No email</span>{% endif %}</div>
+          <div class="pf-line"><i class="bi bi-telephone"></i>{% if professor.phone %}<a href="tel:{{ professor.phone }}">{{ professor.phone }}</a>{% else %}<span class="text-muted">No phone</span>{% endif %}</div>
+          {% if card.absences %}
+          <div class="pf-line"><i class="bi bi-calendar-x"></i><span>Absent {% for absence in card.absences %}{{ absence.absence_date.strftime('%d %b') }}{{ ', ' if not loop.last }}{% endfor %}</span></div>
+          {% endif %}
+        </div>
+        <div class="pf-stats">
+          <div class="pf-stat"><b>{{ card.classes | length }}</b><span>Classes</span></div>
+          <div class="pf-stat"><b>{{ card.candidates }}</b><span>Candidates</span></div>
+          <div class="pf-stat"><b>{{ card.hours | round | int if card.hours == card.hours | round else card.hours }}</b><span>Hours / week</span></div>
+        </div>
+        {% if card.classes %}
+        <div class="pf-classes">{% for item in card.classes %}<a class="pf-class" href="/classes/{{ item.id }}">{{ looks[item.id].symbol }} {{ item.name }}</a>{% endfor %}</div>
+        {% endif %}
+        <div class="pf-access {{ 'on' if card.account and card.account.is_active else 'off' }}">
+          {% if card.account and card.account.is_active %}<i class="bi bi-key-fill"></i><span>Signs in with <strong>{{ card.account.email }}</strong>{% if card.account.last_login_at %} · last time {{ card.account.last_login_at.strftime('%d %b') }}{% else %} · never signed in yet{% endif %}</span>
+          {% else %}<i class="bi bi-key"></i><span>No access yet: cannot sign in.</span>{% endif %}
+        </div>
+        <div class="pf-foot">
+          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#professorModal"
+                  data-professor-edit="{{ professor.id }}" data-name="{{ professor.name }}" data-email="{{ professor.email or '' }}" data-phone="{{ professor.phone or '' }}"
+                  data-specialties="{{ card.specialties | join(', ') }}" data-from="{{ professor.available_from or '' }}" data-until="{{ professor.available_until or '' }}"
+                  data-available="{{ '1' if professor.is_available else '0' }}"><i class="bi bi-pencil"></i>Edit</button>
+          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#accessModal"
+                  data-access="{{ professor.id }}" data-name="{{ professor.name }}" data-email="{{ (card.account.email if card.account else professor.email) or '' }}"
+                  data-has="{{ '1' if card.account else '0' }}"><i class="bi bi-key"></i>{{ 'New password' if card.account else 'Give access' }}</button>
+          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#absenceModal" data-absence="{{ professor.id }}" data-name="{{ professor.name }}"><i class="bi bi-calendar-x"></i>Absence</button>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-person-badge"></i><strong>No professor yet</strong>Add the first one: classes can then be given to them.</div>
+    {% endif %}
+  </div>
+
+  <!-- ================= Timetable ================= -->
+  <div class="tab-pane fade" id="tab-timetable" role="tabpanel">
+    <section class="ui-card mb-3">
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-calendar-week"></i>The week</div><div class="ui-card-sub">Which class meets on which day. A red line means the same professor is booked twice.</div></div>
+        <a class="ui-btn sm" href="/api/dashboard/calendar/export.ics"><i class="bi bi-download"></i>Calendar file</a>
+      </div>
+      <div class="wk-grid" id="classes-week-grid"><div class="ui-card-sub">Loading the timetable…</div></div>
+    </section>
+
+    <section class="ui-card">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar3"></i>Sessions, candidate by candidate</div><div class="ui-card-sub">What each candidate studies next, and schedules that overlap.</div></div></div>
+      <div class="table-responsive" id="live-session-calendar" data-live-region>
+        <table class="table align-middle mb-0" style="font-size:.84rem;">
+          <thead><tr class="small text-muted"><th>When</th><th>Candidate</th><th>Progress</th><th>Class and topic</th><th>Status</th></tr></thead>
+          <tbody>
+            {% for item in session_calendar %}
+            <tr class="{{ 'table-warning' if item.conflict_reason else '' }}">
+              <td class="text-nowrap"><div class="fw-semibold">{{ item.date_label }}</div><div class="small text-muted">{{ item.start_time }}–{{ item.end_time }}</div></td>
+              <td><a class="fw-semibold text-decoration-none" style="color:var(--primary-berry);" href="/candidate/{{ item.candidate_id }}">{{ item.candidate_name }}</a></td>
+              <td style="min-width:170px">
+                <div class="d-flex justify-content-between small mb-1"><span>Week {{ item.current_week }}/{{ item.total_weeks }}</span><span>{{ item.completion_percentage | round(0) | int }}%</span></div>
+                <div class="ui-bar"><span style="width:{{ item.completion_percentage }}%;"></span></div>
+              </td>
+              <td><a class="fw-semibold text-decoration-none" style="color:var(--ink-text)" href="/classes/{{ item.class_id }}">{{ item.class_name }}</a><div class="small text-muted">{{ item.program_name }} · Week {{ item.week_number }}: {{ item.topic }}</div></td>
+              <td>
+                {% if item.conflict_reason %}<span class="ui-chip warn"><i class="bi bi-exclamation-triangle"></i>Overlap</span><div class="small text-warning-emphasis mt-1">{{ item.conflict_reason }}</div>
+                {% else %}<span class="ui-chip {{ 'ok' if item.session_status == 'ongoing' else ('muted' if item.session_status == 'completed' else 'info') }}">{{ item.session_status | capitalize }}</span>{% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No session to show yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= Waiting for a class ================= -->
+  <div class="tab-pane fade" id="tab-decisions" role="tabpanel">
+    <div class="ui-card-sub mb-3">Normally empty: paying gives a class at once. A registration lands here when its program is not linked yet, when automatic class creation is off, or after you remove a candidate from a class.</div>
+    <div id="live-decisions" data-live-region>
+      {% for reg in pending_registrations %}
+      <div class="dc-card" id="decision-{{ reg.id }}">
+        <div class="d-flex justify-content-between align-items-center mb-2 gap-2">
+          <div class="d-flex align-items-center gap-3">
+            {{ ui.avatar(reg.candidate.full_name or reg.candidate.email, 40) }}
+            <div><strong>{{ reg.candidate.full_name or reg.candidate.email }}</strong>
+              <div class="small text-muted">{{ reg.program.name if reg.program else reg.program_name }} · paid in full{% if not reg.program_id %} · <span class="text-danger">program not linked</span>{% endif %}</div></div>
+          </div>
+          <a href="/candidate/{{ reg.candidate_id }}" class="ui-btn sm">Profile</a>
+        </div>
+        <form method="post" action="/classes/registration/{{ reg.id }}/decision" class="row g-2 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label small" for="decision-{{ reg.id }}-action">What to do</label>
+            <select name="decision" id="decision-{{ reg.id }}-action" class="form-select form-select-sm" data-decision-select required>
+              <option value="auto">Place automatically</option>
+              <option value="assign_existing">Put in an existing class</option>
+              <option value="create_new">Create a new class</option>
+              <option value="leave_pending">Leave for now</option>
+            </select>
+          </div>
+          <div class="col-md-4 existing-class-field d-none">
+            <label class="form-label small" for="decision-{{ reg.id }}-class">Class</label>
+            <select name="class_group_id" id="decision-{{ reg.id }}-class" class="form-select form-select-sm">
+              <option value="">Choose…</option>
+              {% for cls in classes if cls.program_id == reg.program_id and cls.status.value != "completed" %}
+              <option value="{{ cls.id }}">{{ cls.name }} · {{ summaries[cls.id].starts_label }} · {{ summaries[cls.id].enrolled }}/{{ summaries[cls.id].capacity }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="col-md-7 new-class-fields d-none">
+            <div class="row g-2">
+              <div class="col-6"><select name="professor_id" class="form-select form-select-sm" aria-label="Professor" title="Only the professors who have this program among their specialities"><option value="">Professor: pick automatically</option>{% for professor in professors if professor.id in teachers.get(reg.program_id, []) %}<option value="{{ professor.id }}">{{ professor.name }}</option>{% endfor %}</select></div>
+              <div class="col-6"><input name="start_date" type="date" class="form-control form-control-sm" aria-label="Start date (empty = usual rule)" title="Empty = your usual start rule"></div>
+              <div class="col-6"><input name="max_capacity" type="number" min="1" class="form-control form-control-sm" placeholder="Places ({{ settings.default_class_capacity }})"></div>
+              <div class="col-6"><input name="total_weeks" type="number" min="1" class="form-control form-control-sm" placeholder="Weeks (from the program)"></div>
+            </div>
+          </div>
+          <div class="col-md-2"><button class="ui-btn primary sm w-100">Apply</button></div>
+        </form>
+      </div>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-check2-circle"></i><strong>Every paid candidate has a class</strong></div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ================= Parameters of a class ================= -->
+<div class="modal fade ui-modal" id="parametersModal" tabindex="-1" aria-labelledby="parametersTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div><h5 class="modal-title" id="parametersTitle">Parameters</h5><div class="ui-card-sub">Everything about this class, in one place.</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="parametersBody" style="background:var(--canvas);"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Create a class ================= -->
+<div class="modal fade ui-modal" id="create-class-modal" tabindex="-1" aria-labelledby="createClassTitle" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form class="modal-content" method="post" action="/classes/create">
+      <div class="modal-header">
+        <div><h5 class="modal-title" id="createClassTitle">Create a class</h5><div class="ui-card-sub">A class is made for the candidates who paid and have no class yet: they are placed in it at once.</div></div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      {% if not waiting_counts %}
+      <div class="modal-body">
+        <div class="ui-empty"><i class="bi bi-people"></i><strong>Nobody is waiting for a class</strong>Every paid candidate already has one, so a new class would be empty. The next one is created by itself when a candidate pays and no class of their program is open.</div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Close</button></div>
+      {% else %}
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6 ui-field"><label for="nc-program">Program</label><select name="program_id" id="nc-program" class="form-select" required><option value="">Choose…</option>{% for program in programs if waiting_counts.get(program.id) %}<option value="{{ program.id }}">{{ program.name }} · {{ waiting_counts[program.id] }} waiting</option>{% endfor %}</select>
+            <div class="ui-hint">Only the programs with candidates waiting for a class.</div></div>
+          <div class="col-md-6 ui-field"><label for="nc-professor">Professor</label><select name="professor_id" id="nc-professor" class="form-select"><option value="">{{ 'Pick automatically' if settings.auto_assign_professor else 'No professor yet' }}</option>{% for professor in professors %}{% set fits = [] %}{% for program_id, ids in teachers.items() if professor.id in ids %}{{ fits.append(program_id) or '' }}{% endfor %}<option value="{{ professor.id }}" data-programs="{{ fits | join(' ') }}">{{ professor.name }}</option>{% endfor %}</select>
+            <div class="ui-hint" id="nc-professor-hint">Only the professors who have this program among their specialities.</div></div>
+          <div class="col-md-6 ui-field"><label for="nc-start">First session</label><input name="start_date" id="nc-start" type="date" class="form-control">
+            <div class="ui-hint">{% if settings.class_start_mode == 'min_enrollment' %}Empty: starts when {{ settings.min_students_to_start }} candidates are enrolled.{% else %}Empty: {{ settings.default_class_start_days }} days from today, on the first session day.{% endif %}</div></div>
+          <div class="col-6 col-md-3 ui-field"><label for="nc-capacity">Places</label><input name="max_capacity" id="nc-capacity" type="number" min="1" class="form-control" placeholder="{{ settings.default_class_capacity }}"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="nc-weeks">Weeks</label><input name="total_weeks" id="nc-weeks" type="number" min="1" class="form-control" placeholder="From the program"></div>
+          <div class="col-md-6 ui-field"><label for="nc-day">Day</label>
+            <select name="days_of_week" id="nc-day" class="form-select">
+              {% for key, label in [('', 'Usual day'), ('mon', 'Monday'), ('tue', 'Tuesday'), ('wed', 'Wednesday'), ('thu', 'Thursday'), ('fri', 'Friday'), ('sat', 'Saturday'), ('sun', 'Sunday')] %}<option value="{{ key }}">{{ label }}</option>{% endfor %}
+            </select></div>
+          <div class="col-6 col-md-3 ui-field"><label for="nc-from">From</label><input name="start_time" id="nc-from" type="time" class="form-control"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="nc-to">To</label><input name="end_time" id="nc-to" type="time" class="form-control"></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary"><i class="bi bi-plus-lg"></i>Create the class</button></div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- ================= Add or edit a professor ================= -->
+<div class="modal fade ui-modal" id="professorModal" tabindex="-1" aria-labelledby="professorTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="/classes/professors/create" id="professorForm">
+      <div class="modal-header"><h5 class="modal-title" id="professorTitle">Add a professor</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="pf-name">Name</label><input class="form-control" id="pf-name" name="name" required></div>
+          <div class="col-md-7 ui-field"><label for="pf-email">Email</label><input class="form-control" id="pf-email" name="email" type="email"></div>
+          <div class="col-md-5 ui-field"><label for="pf-phone">Phone</label><input class="form-control" id="pf-phone" name="phone"></div>
+          <div class="col-12 ui-field">
+            <label>What they teach</label>
+            <div class="pf-pick" id="pf-programs">
+              {% for program in programs %}<label><input type="checkbox" name="programs" value="{{ program.name }}"><span>{{ program.name }}</span></label>{% endfor %}
+            </div>
+            <div class="ui-hint">Tick their specialities. Only a professor who has a program here can be given its classes.</div>
+            <input class="form-control mt-2" id="pf-specialties" name="specialties" placeholder="Other subjects, separated by commas" aria-label="Other subjects">
+          </div>
+          <div class="col-6 ui-field"><label for="pf-from">Available from</label><input class="form-control" id="pf-from" name="available_from" type="date"></div>
+          <div class="col-6 ui-field"><label for="pf-until">Available until</label><input class="form-control" id="pf-until" name="available_until" type="date"></div>
+          <div class="col-12" id="pf-available-row">
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="pf-available" name="is_available" value="true" checked><label class="form-check-label small fw-semibold" for="pf-available">Can be given classes</label></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="professorSubmit">Add the professor</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= Access of a professor ================= -->
+<div class="modal fade ui-modal" id="accessModal" tabindex="-1" aria-labelledby="accessTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><div><h5 class="modal-title" id="accessTitle">Access</h5><div class="ui-card-sub">They sign in on the same address as you, and see only their own classes.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <form method="post" id="accessForm" autocomplete="off">
+        <div class="modal-body">
+          <div class="ui-field mb-3"><label for="ac-email">Email they sign in with</label><input class="form-control" id="ac-email" name="email" type="email" required autocomplete="off"></div>
+          <div class="ui-field"><label for="ac-password">Password</label><input class="form-control" id="ac-password" name="password" type="text" minlength="{{ min_password }}" required autocomplete="off">
+            <div class="ui-hint">At least {{ min_password }} characters. Give it to them yourself; they can change it after signing in.</div></div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="submit" class="ui-btn ghost sm danger d-none" id="accessRemove" form="accessRemoveForm" data-confirm="Remove this professor's access? They will no longer be able to sign in.">Remove access</button>
+          <div class="d-flex gap-2 ms-auto"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="accessSubmit">Give access</button></div>
+        </div>
+      </form>
+      <form method="post" id="accessRemoveForm"></form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Absence of a professor ================= -->
+<div class="modal fade ui-modal" id="absenceModal" tabindex="-1" aria-labelledby="absenceTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" id="absenceForm">
+      <div class="modal-header"><h5 class="modal-title" id="absenceTitle">Absence</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="ab-date">Day</label><input name="absence_date" id="ab-date" type="date" class="form-control" required></div>
+          <div class="col-6 ui-field"><label for="ab-from">From</label><input name="start_time" id="ab-from" type="time" class="form-control"><div class="ui-hint">Empty = the whole day</div></div>
+          <div class="col-6 ui-field"><label for="ab-to">To</label><input name="end_time" id="ab-to" type="time" class="form-control"></div>
+          <div class="col-12 ui-field"><label for="ab-reason">Reason</label><input name="reason" id="ab-reason" class="form-control" placeholder="Optional"></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary">Save the absence</button></div>
+    </form>
+  </div>
+</div>
+
+{% include "_class_parameters_assets.html" %}
+<script>
+(() => {
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+
+  // ---------- The tab named in ?tab= opens, and stays in the address ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    const wanted = new URLSearchParams(window.location.search).get("tab");
+    const button = wanted && document.querySelector(`#classesTabs [data-tab="${CSS.escape(wanted)}"]`);
+    if (button) bootstrap.Tab.getOrCreateInstance(button).show();
+    document.querySelectorAll("#classesTabs [data-tab]").forEach(tab => {
+      tab.addEventListener("shown.bs.tab", () => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("tab", tab.dataset.tab);
+        window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+      });
+    });
+  });
+
+  // ---------- Search and filters ----------
+  const search = document.getElementById("classSearch");
+  const filters = document.getElementById("classFilters");
+  const apply = () => {
+    const needle = (search.value || "").trim().toLowerCase();
+    const active = (filters.querySelector(".is-active") || {}).dataset?.filter || "all";
+    const cards = document.querySelectorAll("#classGrid .cg-card");
+    let shown = 0;
+    cards.forEach(card => {
+      const matches = (!needle || card.dataset.search.includes(needle)) && (active === "all" || card.dataset.status === active);
+      card.classList.toggle("d-none", !matches);
+      shown += matches;
+    });
+    const count = document.getElementById("classCount");
+    if (count) count.textContent = cards.length ? `${shown} of ${cards.length} shown` : "";
+    const empty = document.getElementById("classNoMatch");
+    if (empty) empty.classList.toggle("d-none", shown > 0 || !cards.length);
+  };
+  search.addEventListener("input", apply);
+  filters.addEventListener("click", event => {
+    const pill = event.target.closest(".ui-pill");
+    if (!pill) return;
+    filters.querySelectorAll(".ui-pill").forEach(item => item.classList.toggle("is-active", item === pill));
+    apply();
+  });
+  document.addEventListener("live:refreshed", apply);
+  apply();
+
+  // ---------- Parameters of a class, in a dialog ----------
+  document.addEventListener("click", async event => {
+    const opener = event.target.closest("[data-parameters]");
+    if (!opener) return;
+    const body = document.getElementById("parametersBody");
+    document.getElementById("parametersTitle").textContent = opener.dataset.name;
+    body.innerHTML = '<div class="ui-card-sub p-3"><span class="ui-spin me-2"></span>Opening…</div>';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById("parametersModal")).show();
+    try {
+      const response = await fetch(`/classes/${opener.dataset.parameters}/parameters-form`, { headers: { "Accept": "text/html" } });
+      if (!response.ok) throw new Error();
+      body.innerHTML = await response.text();
+      window.initClassParameters(body);
+    } catch (error) {
+      body.innerHTML = '<div class="ui-empty">The parameters could not be opened. Close this and try again.</div>';
+    }
+  });
+
+  // ---------- A new class: only the professors of the chosen program ----------
+  const newProgram = document.getElementById("nc-program");
+  const newProfessor = document.getElementById("nc-professor");
+  if (newProgram && newProfessor) {
+    const hint = document.getElementById("nc-professor-hint");
+    const fit = () => {
+      let count = 0;
+      [...newProfessor.options].forEach(option => {
+        if (!option.value) return;
+        const fits = Boolean(newProgram.value) && (option.dataset.programs || "").split(" ").includes(newProgram.value);
+        option.hidden = option.disabled = !fits;
+        count += fits;
+      });
+      if (newProfessor.selectedOptions[0] && newProfessor.selectedOptions[0].disabled) newProfessor.value = "";
+      hint.textContent = !newProgram.value ? "Only the professors who have this program among their specialities."
+        : count ? `${count} professor${count !== 1 ? "s have" : " has"} this speciality.`
+        : "No professor has this speciality yet: the class is created and waits for one.";
+    };
+    newProgram.addEventListener("change", fit);
+    fit();
+  }
+
+  // ---------- Decisions: only the fields the chosen decision needs ----------
+  document.addEventListener("change", event => {
+    if (!event.target.matches("[data-decision-select]")) return;
+    const form = event.target.form;
+    form.querySelector(".existing-class-field").classList.toggle("d-none", event.target.value !== "assign_existing");
+    form.querySelector(".new-class-fields").classList.toggle("d-none", event.target.value !== "create_new");
+  });
+
+  // ---------- Professors: one form to add or edit, one for access, one for absences ----------
+  document.addEventListener("click", event => {
+    const edit = event.target.closest("[data-professor-edit]");
+    const fresh = event.target.closest("[data-professor-new]");
+    if (edit || fresh) {
+      const form = document.getElementById("professorForm");
+      const data = edit ? edit.dataset : {};
+      form.action = edit ? `/classes/professors/${data.professorEdit}/edit` : "/classes/professors/create";
+      document.getElementById("professorTitle").textContent = edit ? `Edit ${data.name}` : "Add a professor";
+      document.getElementById("professorSubmit").textContent = edit ? "Save" : "Add the professor";
+      document.getElementById("pf-name").value = data.name || "";
+      document.getElementById("pf-email").value = data.email || "";
+      document.getElementById("pf-phone").value = data.phone || "";
+      // Their specialities: the programs are ticked, anything else goes in the free line.
+      const known = (data.specialties || "").split(",").map(item => item.trim()).filter(Boolean);
+      const boxes = [...document.querySelectorAll("#pf-programs input")];
+      boxes.forEach(box => { box.checked = known.some(item => item.toLowerCase() === box.value.toLowerCase()); });
+      document.getElementById("pf-specialties").value =
+        known.filter(item => !boxes.some(box => box.value.toLowerCase() === item.toLowerCase())).join(", ");
+      document.getElementById("pf-from").value = data.from || "";
+      document.getElementById("pf-until").value = data.until || "";
+      document.getElementById("pf-available").checked = edit ? data.available === "1" : true;
+      document.getElementById("pf-available-row").classList.toggle("d-none", !edit);
+    }
+    const access = event.target.closest("[data-access]");
+    if (access) {
+      const has = access.dataset.has === "1";
+      document.getElementById("accessForm").action = `/classes/professors/${access.dataset.access}/access`;
+      document.getElementById("accessRemoveForm").action = `/classes/professors/${access.dataset.access}/access/remove`;
+      document.getElementById("accessTitle").textContent = (has ? "New password for " : "Give access to ") + access.dataset.name;
+      document.getElementById("accessSubmit").textContent = has ? "Save the new password" : "Give access";
+      document.getElementById("accessRemove").classList.toggle("d-none", !has);
+      document.getElementById("ac-email").value = access.dataset.email || "";
+      document.getElementById("ac-password").value = "";
+    }
+    const absence = event.target.closest("[data-absence]");
+    if (absence) {
+      document.getElementById("absenceForm").action = `/classes/professors/${absence.dataset.absence}/absences`;
+      document.getElementById("absenceTitle").textContent = `Absence of ${absence.dataset.name}`;
+    }
+  });
+
+  // ---------- The week ----------
+  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const grid = document.getElementById("classes-week-grid");
+  function chip(item) {
+    const week = item.current_week && item.total_weeks ? ` · week ${item.current_week}/${item.total_weeks}` : "";
+    const body = `
+      <div class="wk-chip-time">${escapeHtml(item.startTime || "")}${item.endTime ? "–" + escapeHtml(item.endTime) : ""}</div>
+      <div class="wk-chip-title">${escapeHtml(item.title)}</div>
+      <div class="wk-chip-meta">${escapeHtml(item.professor || "No professor")} · ${item.enrolled || 0}/${item.capacity || "—"}${week}</div>
+      ${item.conflict ? '<div class="wk-chip-meta" style="color:#be123c; font-weight:700;">Professor booked twice</div>' : ""}`;
+    return item.url ? `<a class="wk-chip ${item.conflict ? "is-conflict" : ""}" href="${escapeHtml(item.url)}">${body}</a>`
+                    : `<div class="wk-chip ${item.conflict ? "is-conflict" : ""}">${body}</div>`;
+  }
+  async function loadWeek() {
+    try {
+      const response = await fetch("/api/dashboard/calendar/events");
+      if (!response.ok) throw new Error();
+      const events = (await response.json()).filter(item => item.status !== "completed");
+      const today = (new Date().getDay() + 6) % 7;
+      grid.innerHTML = DAYS.map((name, index) => {
+        const weekday = (index + 1) % 7;
+        const day = events.filter(item => (item.daysOfWeek || []).includes(weekday)).sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+        return `<div class="wk-day ${index === today ? "is-today" : ""}"><div class="wk-day-name">${name}</div>${day.length ? day.map(chip).join("") : '<div class="wk-empty">—</div>'}</div>`;
+      }).join("");
+    } catch (error) {
+      grid.innerHTML = '<div class="ui-card-sub">The timetable could not be loaded.</div>';
+    }
+  }
+  document.addEventListener("DOMContentLoaded", loadWeek);
+  document.addEventListener("live:refreshed", loadWeek);
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{# Every parameter of one class, in one form. Shown on the class page and, on
+   the list of classes, in a dialog. Needs: cls, summary, look, symbols,
+   colours, professors, modes, day_options, selected_days, reminder_offsets,
+   created_local, now, back. #}
+<form method="post" action="/classes/{{ cls.id }}/parameters" class="cp-form" data-class-parameters
+      data-created="{{ created_local.strftime('%Y-%m-%d') if created_local else now.strftime('%Y-%m-%d') }}">
+  <input type="hidden" name="back" value="{{ back }}">
+
+  <div class="cp-group">
+    <div class="cp-group-title"><i class="bi bi-emoji-smile"></i>How it looks</div>
+    <div class="cp-look">
+      <span class="cp-look-now" data-look-preview style="background:{{ look.soft }}; color:{{ look.colour }};">{{ look.symbol }}</span>
+      <div class="flex-grow-1">
+        <label class="cp-label" for="param-name-{{ cls.id }}">Name</label>
+        <input name="name" id="param-name-{{ cls.id }}" value="{{ cls.name }}" class="form-control form-control-sm" required>
+      </div>
+    </div>
+    <div class="cp-label mt-2">Symbol</div>
+    <div class="cp-symbols" role="radiogroup" aria-label="Symbol of the class">
+      <label class="cp-symbol" title="Chosen by the system from the program"><input type="radio" name="symbol" value="" {{ 'checked' if not look.chosen_symbol }}><span>Auto</span></label>
+      {% for symbol in symbols %}
+      <label class="cp-symbol"><input type="radio" name="symbol" value="{{ symbol }}" {{ 'checked' if look.chosen_symbol == symbol }}><span>{{ symbol }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="cp-label mt-2">Colour</div>
+    <div class="cp-colours" role="radiogroup" aria-label="Colour of the class">
+      <label class="cp-colour" title="Chosen by the system"><input type="radio" name="color" value="" {{ 'checked' if not look.chosen_colour }}><span class="is-auto">A</span></label>
+      {% for colour in colours %}
+      <label class="cp-colour"><input type="radio" name="color" value="{{ colour }}" {{ 'checked' if look.chosen_colour == colour }}><span style="background:{{ colour }};"></span></label>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="cp-group">
+    <div class="cp-group-title"><i class="bi bi-person-badge"></i>Who and where</div>
+    <div class="row g-2">
+      <div class="col-sm-7">
+        <label class="cp-label" for="param-professor-{{ cls.id }}">Professor</label>
+        <select name="professor_id" id="param-professor-{{ cls.id }}" class="form-select form-select-sm">
+          <option value="">No professor yet</option>
+          {% for professor in professors %}
+          <option value="{{ professor.id }}" {% if cls.professor_id == professor.id %}selected{% endif %}>
+            {{ professor.name }}{% if not professor.fits %} (not their speciality){% endif %}{% if not professor.is_available %} (unavailable){% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who have {{ cls.program.name if cls.program else 'this program' }} among their specialities. <a href="/classes/?tab=professors" class="ui-link">Professors</a></div>
+      </div>
+      <div class="col-sm-5">
+        <label class="cp-label" for="param-room-{{ cls.id }}">Room or link</label>
+        <input name="room" id="param-room-{{ cls.id }}" value="{{ cls.room or '' }}" class="form-control form-control-sm" placeholder="Room 2, or the meeting link">
+      </div>
+    </div>
+  </div>
+
+  <div class="cp-group">
+    <div class="cp-group-title"><i class="bi bi-calendar-week"></i>When it meets</div>
+    <div class="cp-days">
+      {% for key, label in day_options %}
+      <label class="cp-day"><input type="checkbox" name="days" value="{{ key }}" {% if key in selected_days %}checked{% endif %}><span>{{ label }}</span></label>
+      {% endfor %}
+    </div>
+    <div class="row g-2 mt-1">
+      <div class="col-6 col-sm-3"><label class="cp-label" for="param-from-{{ cls.id }}">From</label><input name="start_time" id="param-from-{{ cls.id }}" type="time" value="{{ cls.start_time.strftime('%H:%M') if cls.start_time else '' }}" class="form-control form-control-sm"></div>
+      <div class="col-6 col-sm-3"><label class="cp-label" for="param-to-{{ cls.id }}">To</label><input name="end_time" id="param-to-{{ cls.id }}" type="time" value="{{ cls.end_time.strftime('%H:%M') if cls.end_time else '' }}" class="form-control form-control-sm"></div>
+      <div class="col-6 col-sm-3"><label class="cp-label" for="param-capacity-{{ cls.id }}">Places</label><input name="capacity" id="param-capacity-{{ cls.id }}" type="number" min="{{ [summary.enrolled, 1] | max }}" value="{{ summary.capacity }}" class="form-control form-control-sm" required></div>
+      <div class="col-6 col-sm-3"><label class="cp-label" for="param-weeks-{{ cls.id }}">Weeks</label><input name="total_weeks" id="param-weeks-{{ cls.id }}" type="number" min="1" max="104" value="{{ summary.total_weeks }}" class="form-control form-control-sm" required></div>
+    </div>
+  </div>
+
+  <div class="cp-group">
+    <div class="cp-group-title"><i class="bi bi-flag"></i>When it starts</div>
+    <label class="cp-rule">
+      <input class="form-check-input" type="radio" name="start_mode" value="{{ modes.fixed }}" {% if cls.start_mode == modes.fixed %}checked{% endif %}>
+      <span class="cp-rule-body">
+        <span class="cp-rule-title">On a date I choose</span>
+        <span class="cp-rule-fields"><input name="fixed_start_date" type="date" value="{{ summary.start.strftime('%Y-%m-%d') if summary.start else '' }}" class="form-control form-control-sm" aria-label="Start date" style="max-width:190px;"></span>
+      </span>
+    </label>
+    <label class="cp-rule">
+      <input class="form-check-input" type="radio" name="start_mode" value="{{ modes.min_enrollment }}" {% if cls.start_mode == modes.min_enrollment %}checked{% endif %}>
+      <span class="cp-rule-body">
+        <span class="cp-rule-title">When enough candidates are enrolled</span>
+        <span class="cp-rule-fields">
+          At least <input name="min_students_to_start" type="number" min="1" value="{{ cls.min_students_to_start }}" class="form-control form-control-sm cp-small" aria-label="Minimum candidates"> candidates,
+          then <input name="min_start_notice_days" type="number" min="0" max="60" value="{{ cls.min_start_notice_days }}" class="form-control form-control-sm cp-small" aria-label="Days of notice"> days to warn everyone.
+          <span class="cp-hint d-block">{{ summary.enrolled }} enrolled now.</span>
+        </span>
+      </span>
+    </label>
+    <label class="cp-rule">
+      <input class="form-check-input" type="radio" name="start_mode" value="{{ modes.after_days }}" {% if cls.start_mode == modes.after_days %}checked{% endif %}>
+      <span class="cp-rule-body">
+        <span class="cp-rule-title">A number of days after it was created</span>
+        <span class="cp-rule-fields">
+          <input name="start_delay_days" type="number" min="0" max="365" value="{{ cls.start_delay_days }}" class="form-control form-control-sm cp-small" aria-label="Days after creation"> days after creation, on the first session day.
+          <span class="cp-hint d-block" data-delay-preview></span>
+        </span>
+      </span>
+    </label>
+  </div>
+
+  <div class="cp-group">
+    <div class="cp-group-title"><i class="bi bi-bell"></i>Reminders to candidates</div>
+    <label class="cp-label" for="param-reminders-{{ cls.id }}">Days before the first session</label>
+    <input name="reminder_days" id="param-reminders-{{ cls.id }}" value="{{ reminder_offsets | join(', ') }}" class="form-control form-control-sm" placeholder="7, 3, 1">
+    <div class="cp-hint">Each reminder gives the exact date and time. Empty = no reminder.</div>
+    <div class="form-check mt-2">
+      <input class="form-check-input" type="checkbox" name="notify_members" id="param-notify-{{ cls.id }}" checked>
+      <label class="form-check-label cp-hint" for="param-notify-{{ cls.id }}" style="color:var(--ink-text);">Email the enrolled candidates if the date or schedule changes</label>
+    </div>
+  </div>
+
+  <button class="btn btn-berry w-100 cp-save" type="submit"><i class="bi bi-check2 me-1"></i>Save</button>
+</form>

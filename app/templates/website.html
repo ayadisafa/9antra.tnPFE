@@ -1,0 +1,475 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Website · {{ app_brand.name }}{% endblock %}
+{% block page_title %}Website{% endblock %}
+{% block live_topics %}programs{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .ws-tabs { display:flex; gap:8px; flex-wrap:wrap; margin:26px 0 18px; position:sticky; top:var(--stick-top, 0px); z-index:5; background:var(--canvas); padding:8px 0; }
+  .ws-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:18px; }
+  .ws-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:20px; display:flex; flex-direction:column; gap:12px; }
+  .ws-title { font-weight:800; font-size:1rem; color:var(--ink-text); line-height:1.3; }
+  .ws-text { font-size:.83rem; color:#5b5670; line-height:1.55; }
+  .ws-facts { display:flex; flex-wrap:wrap; gap:6px; }
+  .ws-follow { border-radius:14px; padding:12px 14px; background:var(--mint-subtle); font-size:.82rem; color:#14532d; }
+  .ws-follow.is-none { background:#f4f1f9; color:#5b5670; }
+  .ws-follow a { color:inherit; font-weight:800; }
+  .ws-diff { border:1px dashed #e7c98a; background:#fffaf0; border-radius:14px; padding:12px 14px; font-size:.8rem; }
+  .ws-diff-row { display:grid; grid-template-columns:minmax(0, 1fr) auto; gap:10px; align-items:start; padding:8px 0; border-top:1px solid #f3e3bf; }
+  .ws-diff-row:first-of-type { border-top:0; }
+  .ws-diff b { color:var(--ink-text); }
+  .ws-diff .yours { color:#8d88a3; }
+  .ws-diff .theirs { color:#92400e; }
+  .ws-done { border:1px solid #bfe8cd; background:var(--mint-subtle); border-radius:14px; padding:12px 14px; font-size:.8rem; color:#0f5132; }
+  .ws-done .ws-diff-row { border-top-color:#cfeedb; }
+  .ws-done b { color:#0f5132; }
+  .ws-done .yours { color:#5f8f73; text-decoration:line-through; text-decoration-color:rgba(15,81,50,.35); }
+  .ws-done .now { color:#0f5132; font-weight:600; }
+  .ws-done .ui-chip { background:#fff; cursor:default; }
+  .ws-done-foot { border-top:1px solid #cfeedb; margin-top:2px; padding-top:8px; font-weight:700; }
+  .ws-same { display:flex; gap:8px; align-items:flex-start; border-radius:14px; padding:10px 13px; background:#f6f3fb; color:#5b5670; font-size:.8rem; }
+  .ws-same i { color:var(--mint); font-size:1rem; }
+  .ws-clip { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ws-day { width:58px; flex:none; text-align:center; border-radius:16px; background:var(--berry-subtle); color:var(--primary-berry); padding:8px 0; line-height:1.1; }
+  .ws-day b { display:block; font-size:1.3rem; font-weight:800; }
+  .ws-day span { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+  .ws-media { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:14px; }
+  .ws-thumb { position:relative; display:block; border-radius:16px; overflow:hidden; background:#efebf6; aspect-ratio:16 / 10; border:1px solid var(--border-color); text-decoration:none; }
+  .ws-thumb.is-tall { aspect-ratio:3 / 4; }
+  .ws-thumb img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .25s ease; }
+  .ws-thumb:hover img { transform:scale(1.04); }
+  .ws-thumb .cap { position:absolute; left:0; right:0; bottom:0; padding:22px 10px 8px; font-size:.72rem; font-weight:700; color:#fff; background:linear-gradient(180deg, transparent, rgba(20,12,36,.82)); }
+  .ws-thumb .play { position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-size:2rem; text-shadow:0 4px 14px rgba(0,0,0,.5); }
+  .ws-change { display:flex; gap:10px; align-items:flex-start; padding:8px 0; border-top:1px solid var(--border-color); font-size:.83rem; color:#4a445e; text-decoration:none; }
+  .ws-change:first-of-type { border-top:0; }
+  .ws-change i { width:28px; height:28px; border-radius:9px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); flex:none; font-size:.85rem; }
+  .ws-section { scroll-margin-top:70px; margin-top:34px; }
+  .ws-section > h3 { font-weight:800; font-size:1.1rem; margin:0 0 4px; display:flex; align-items:center; gap:9px; }
+  .ws-section > h3 i { color:var(--primary-berry); }
+  .ws-section > p { color:var(--muted); font-size:.84rem; margin:0 0 16px; }
+  .fb-wait { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-radius:16px; background:#f6f3fb; color:#5b5670; font-size:.84rem; margin-bottom:16px; }
+  .fb-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(270px, 1fr)); gap:16px; margin-bottom:18px; }
+  .fb-big, .fb-block { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:20px; }
+  .fb-big { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .fb-ring { --share:0; width:92px; height:92px; border-radius:50%; flex:none; display:grid; place-items:center; background:conic-gradient(var(--mint) calc(var(--share) * 1%), #ece7f5 0); position:relative; animation:fbPop .6s cubic-bezier(.2,.9,.3,1.2) both; }
+  .fb-ring::before { content:""; position:absolute; inset:10px; border-radius:50%; background:#fff; }
+  .fb-ring b { position:relative; font-size:1.25rem; font-weight:800; color:var(--ink-text); }
+  .fb-big-title { font-weight:800; font-size:1.15rem; color:var(--ink-text); line-height:1.1; }
+  .fb-stars-big { margin-left:auto; text-align:center; line-height:1.2; }
+  .fb-stars-big b { display:block; font-size:1.7rem; font-weight:800; color:var(--ink-text); }
+  .fb-stars-big span, .fb-stars { color:#f5b301; white-space:nowrap; font-size:.8rem; letter-spacing:1px; }
+  .fb-stars-big small { display:block; font-size:.7rem; color:var(--muted); font-weight:700; }
+  .fb-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:#9b95b0; margin-bottom:10px; }
+  .fb-theme { display:grid; grid-template-columns:minmax(0, 190px) minmax(40px, 1fr) auto; gap:10px; align-items:center; padding:5px 0; font-size:.82rem; color:var(--ink-text); }
+  .fb-theme-name { font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .fb-theme-name i { color:var(--primary-berry); margin-right:7px; }
+  .fb-bar { height:9px; border-radius:99px; background:#ece7f5; overflow:hidden; }
+  .fb-bar span { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--primary-berry), var(--accent-gold-dark)); transform-origin:left; animation:fbGrow .8s cubic-bezier(.2,.8,.3,1) both; }
+  .fb-answer { border:1px solid #fecdd3; background:#fff5f6; border-radius:18px; padding:14px 16px; margin-bottom:18px; }
+  .fb-answer-row { display:flex; gap:10px; align-items:flex-start; font-size:.83rem; color:#4a445e; padding:6px 0; line-height:1.5; }
+  .fb-answer-row .ui-chip { flex:none; }
+  .fb-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(380px, 1fr)); gap:14px; }
+  .fb-card { display:grid; grid-template-columns:84px minmax(0, 1fr); gap:14px; background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:14px; align-items:start; }
+  .fb-pic { display:block; width:84px; aspect-ratio:4 / 5; border-radius:12px; overflow:hidden; background:#efebf6; border:1px solid var(--border-color); }
+  .fb-pic img { width:100%; height:100%; object-fit:cover; display:block; transition:transform .25s ease; }
+  .fb-pic:hover img { transform:scale(1.06); }
+  .fb-pic.is-none { display:grid; place-items:center; color:#1877f2; font-size:1.6rem; }
+  .fb-body { display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .fb-head { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.9rem; color:var(--ink-text); }
+  .fb-words { font-size:.83rem; color:#4a445e; line-height:1.55; font-style:italic; }
+  @keyframes fbGrow { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  @keyframes fbPop { from { transform:scale(.7); opacity:0; } to { transform:none; opacity:1; } }
+  @media (max-width: 520px) { .fb-list { grid-template-columns:1fr; } .fb-theme { grid-template-columns:minmax(0, 1fr) 70px auto; } }
+  @media (prefers-reduced-motion: reduce) { .fb-bar span, .fb-ring { animation:none; } .fb-pic img { transition:none; } }
+  @media (prefers-reduced-motion: reduce) { .ws-thumb img { transition:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div>
+    <h2>What 9antra.tn says</h2>
+    <p>
+      {% if view.last and view.last.ok %}Read {{ last_local.strftime('%A %d %B at %H:%M') }}. It is read again by itself every six hours.
+      {% elif view.last %}The last reading, {{ last_local.strftime('%d %B at %H:%M') }}, did not work: {{ view.last.note }}
+      {% else %}The website has not been read yet. It is read by itself a few minutes after the application starts.{% endif %}
+    </p>
+  </div>
+  <div class="ui-actions">
+    <a class="ui-btn" href="{{ view.site }}" target="_blank" rel="noopener"><i class="bi bi-box-arrow-up-right"></i>Open 9antra.tn</a>
+    <form method="post" action="/website/check" class="m-0"><button class="ui-btn primary" id="checkNow"><i class="bi bi-arrow-repeat"></i>Read the website now</button></form>
+  </div>
+</div>
+
+<div class="ui-stats">
+  {% for kind, info in kinds.items() %}
+  {% if view.counts[kind] or kind in ('formation', 'event') %}
+  <a class="ui-stat {{ ['', 't-gold', 't-sky', 't-mint', 't-red', ''][loop.index0 % 6] }}" href="#{{ kind }}">
+    <div class="ui-stat-ico"><i class="bi {{ info.icon }}"></i></div>
+    <div><div class="ui-stat-num">{{ view.counts[kind] }}</div><div class="ui-stat-label">{{ info.label }}</div></div>
+  </a>
+  {% endif %}
+  {% endfor %}
+</div>
+
+{% if view.checks %}
+<section class="ui-card mt-4">
+  <div class="ui-card-head">
+    <div>
+      <div class="ui-card-title"><i class="bi bi-clock-history"></i>What changed</div>
+      <div class="ui-card-sub">What each reading of the website brought into the application.</div>
+    </div>
+    {% if view.to_decide %}<a class="ui-chip warn" href="#formation" style="text-decoration:none;">{{ view.to_decide }} difference{{ 's' if view.to_decide != 1 }} for you to decide</a>{% endif %}
+  </div>
+  {% set shown = namespace(count=0) %}
+  {% for check in view.checks %}
+    {% for line in check.lines[:12] %}
+    {% set shown.count = shown.count + 1 %}
+    <a class="ws-change" href="{{ line.url or '#' }}"><i class="bi {{ line.icon }}"></i><span>{{ line.text }} <span class="ui-card-sub">· {{ local(check.checked_at).strftime('%d %b %H:%M') }}</span></span></a>
+    {% endfor %}
+  {% endfor %}
+  {% if not shown.count %}<div class="ui-empty py-3"><i class="bi bi-check2-circle"></i>The last readings found nothing new: the application says what the website says.</div>{% endif %}
+</section>
+{% endif %}
+
+{# ---------------- Formations and the programs that follow them ---------------- #}
+<section class="ws-section" id="formation">
+  <h3><i class="bi bi-mortarboard-fill"></i>Formations and your programs</h3>
+  <p>Each formation of the website fills the program that follows it. What you wrote yourself is never replaced: where it differs, you choose.</p>
+  <div class="ws-grid">
+    {% for entry in view.formations %}
+    {% set item = entry.item %}{% set details = entry.details %}{% set program = entry.program %}
+    <article class="ws-card">
+      <div class="d-flex justify-content-between gap-2 align-items-start">
+        <div class="ws-title">{{ item.title }}</div>
+        <a class="ui-link" href="{{ item.url }}" target="_blank" rel="noopener" title="See it on the website"><i class="bi bi-box-arrow-up-right"></i></a>
+      </div>
+      <div class="ws-text ws-clip">{{ details.description }}</div>
+      <div class="ws-facts">
+        {% if details.duration %}<span class="ui-chip"><i class="bi bi-hourglass-split"></i>{{ details.duration | truncate(28) }}</span>{% endif %}
+        {% if details.level %}<span class="ui-chip info">{{ details.level }}</span>{% endif %}
+        {% if details.mode %}<span class="ui-chip">{{ details.mode }}</span>{% endif %}
+        {% if details.price.onsite %}<span class="ui-chip warn">{{ details.price.onsite }} sur place</span>{% endif %}
+        {% if details.price.online %}<span class="ui-chip warn">{{ details.price.online }} en ligne</span>{% endif %}
+        {% if details.price.recordings %}<span class="ui-chip">{{ details.price.recordings }} enregistrements</span>{% endif %}
+        {% if details.certificate %}<span class="ui-chip ok"><i class="bi bi-award"></i>Certificate</span>{% endif %}
+        <span class="ui-chip muted">{{ details.weeks | length }} week{{ 's' if details.weeks | length != 1 }} · {{ details.views or 0 }} views</span>
+      </div>
+      {% if details.schedule %}<div class="ws-text"><i class="bi bi-calendar-week me-1"></i>{{ details.schedule }}</div>{% endif %}
+
+      {% if program %}
+      <div class="ws-follow">
+        <i class="bi bi-link-45deg"></i> Followed by your program <a href="/programs/{{ program.id }}">{{ program.name }}</a>
+        {% if entry.plan and entry.plan.from_site %}· weekly plan taken from the website{% elif entry.plan and entry.plan.your_weeks %}· weekly plan: your own ({{ entry.plan.your_weeks }} weeks){% endif %}
+      </div>
+      {% if entry.differences or (entry.plan and entry.plan.site_weeks and not entry.plan.from_site) %}
+      <div class="ws-diff">
+        <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+          <b>Where your program says something else</b>
+          <form method="post" action="/website/programs/{{ program.id }}/take" class="m-0" data-confirm="Replace everything listed here in “{{ program.name }}” with what the website says, weekly plan included?">
+            <input type="hidden" name="field" value="all"><button class="ui-btn sm">Take all from the website</button>
+          </form>
+        </div>
+        {% for difference in entry.differences %}
+        <div class="ws-diff-row">
+          <div>
+            <b>{{ difference.label }}</b>
+            <div class="yours {{ 'ws-clip' if difference.long }}">Yours: {{ difference.yours }}</div>
+            <div class="theirs {{ 'ws-clip' if difference.long }}">Website: {{ difference.website }}</div>
+          </div>
+          <form method="post" action="/website/programs/{{ program.id }}/take" class="m-0"><input type="hidden" name="field" value="{{ difference.field }}"><button class="ui-btn sm ghost" title="Use the website's version">Use the website's</button></form>
+        </div>
+        {% endfor %}
+        {% if entry.plan and entry.plan.site_weeks and not entry.plan.from_site %}
+        <div class="ws-diff-row">
+          <div><b>Weekly plan</b><div class="yours">Yours: {{ entry.plan.your_weeks }} weeks you wrote or confirmed</div><div class="theirs">Website: {{ entry.plan.site_weeks }} weeks, with their videos</div></div>
+          <form method="post" action="/website/programs/{{ program.id }}/take" class="m-0" data-confirm="Replace the weekly plan of “{{ program.name }}” with the website's?"><input type="hidden" name="field" value="plan"><button class="ui-btn sm ghost">Use the website's</button></form>
+        </div>
+        {% endif %}
+      </div>
+      {% elif not entry.changed %}
+      <div class="ws-same"><i class="bi bi-check2-all"></i><span>Your program says the same as the website{% if entry.same %} ({{ entry.same | join(', ') | lower }}){% endif %}. Nothing to change.</span></div>
+      {% endif %}
+      {# What was already changed in the program: said once, and no button to press again. #}
+      {% if entry.changed %}
+      <div class="ws-done">
+        <b><i class="bi bi-check2-circle me-1"></i>Already changed in your program</b>
+        {% for change in entry.changed %}
+        <div class="ws-diff-row">
+          <div>
+            <b>{{ change.label }}</b>
+            <div class="yours {{ 'ws-clip' if change.long }}">Before: {{ change.was }}</div>
+            <div class="now {{ 'ws-clip' if change.long }}">Now: {{ change.now }}</div>
+          </div>
+          <span class="ui-chip ok" title="{{ 'You chose the website\'s version' if change.by == 'you' else 'It followed the website by itself' }}{% if change.when %} on {{ local(change.when).strftime('%d %b at %H:%M') }}{% endif %}. Nothing left to do."><i class="bi bi-check2"></i>Changed{% if change.when %} {{ local(change.when).strftime('%d %b') }}{% endif %}</span>
+        </div>
+        {% endfor %}
+        {% if not entry.differences and not (entry.plan and entry.plan.site_weeks and not entry.plan.from_site) %}<div class="ws-done-foot">It now says the same as the website.</div>{% endif %}
+      </div>
+      {% endif %}
+      {% elif entry.ignored %}
+      <div class="ws-follow is-none"><i class="bi bi-eye-slash"></i> Kept as information only: no program follows it.</div>
+      {% else %}
+      <div class="ws-follow is-none"><i class="bi bi-hourglass-split"></i> A program will be created for it at the next reading.</div>
+      {% endif %}
+
+      <form method="post" action="/website/formations/{{ item.id }}/program" class="d-flex gap-2 align-items-center mt-auto">
+        <select class="form-select form-select-sm" name="program_id" aria-label="Program that follows {{ item.title }}" style="border-radius:10px; font-size:.78rem;">
+          {% for candidate in view.all_programs %}
+          <option value="{{ candidate.id }}" {{ 'selected' if program and candidate.id == program.id }}>{{ candidate.name }}</option>
+          {% endfor %}
+          <option value="new">A new program</option>
+          <option value="-" {{ 'selected' if entry.ignored }}>No program (information only)</option>
+        </select>
+        <button class="ui-btn sm" title="Choose which program follows this formation">Change</button>
+      </form>
+    </article>
+    {% else %}
+    <div class="ui-empty" style="grid-column:1 / -1;"><i class="bi bi-cloud-download"></i><strong>Nothing read yet</strong>Press “Read the website now”.</div>
+    {% endfor %}
+  </div>
+  {% if view.own_programs and view.formations %}
+  <p class="ws-text mt-3"><i class="bi bi-info-circle me-1"></i>Programs that exist only here, not on the website:
+    {% for program in view.own_programs %}<a class="ui-link" href="/programs/{{ program.id }}">{{ program.name }}</a>{{ ', ' if not loop.last }}{% endfor %}.</p>
+  {% endif %}
+</section>
+
+{# ---------------- Events ---------------- #}
+<section class="ws-section" id="event">
+  <h3><i class="bi bi-calendar-event-fill"></i>Events</h3>
+  <p>The workshops announced on the website. The email assistant knows them and can answer candidates who ask.</p>
+  <div class="ws-grid">
+    {% for item in view.events_coming %}
+    {% set when = local(item.starts_at) %}
+    <article class="ws-card" style="flex-direction:row; align-items:flex-start;">
+      <div class="ws-day"><b>{{ when.strftime('%d') }}</b><span>{{ when.strftime('%b') }}</span></div>
+      <div style="min-width:0;">
+        <div class="ws-title">{{ item.title }}</div>
+        <div class="ws-facts mt-2">
+          <span class="ui-chip brand"><i class="bi bi-clock"></i>{{ when.strftime('%A %H:%M') }}</span>
+          {% if item.details.mode %}<span class="ui-chip">{{ item.details.mode }}</span>{% endif %}
+          <span class="ui-chip muted">{{ item.details.registered or 0 }} registered</span>
+        </div>
+        <a class="ui-link d-inline-block mt-2" href="{{ item.url }}" target="_blank" rel="noopener">See it on the website</a>
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty" style="grid-column:1 / -1;"><i class="bi bi-calendar-x"></i>No event to come on the website.</div>
+    {% endfor %}
+  </div>
+  {% if view.events_past %}<p class="ws-text mt-3">Already past: {% for item in view.events_past[:6] %}{{ item.title }}{{ ' · ' if not loop.last }}{% endfor %}</p>{% endif %}
+</section>
+
+{# ---------------- Internship offers ---------------- #}
+{% if view.offers %}
+<section class="ws-section" id="offer">
+  <h3><i class="bi bi-briefcase-fill"></i>Internship offers</h3>
+  <p>The internships and end-of-studies projects the website offers.</p>
+  <div class="ws-grid">
+    {% for item in view.offers %}
+    <article class="ws-card">
+      <div class="ws-title">{{ item.title | title }}</div>
+      <div class="ws-text ws-clip">{{ item.details.description }}</div>
+      <div class="ws-facts">
+        {% if item.details.type %}<span class="ui-chip brand">{{ item.details.type }}</span>{% endif %}
+        {% if item.category %}<span class="ui-chip info">{{ item.category | title }}</span>{% endif %}
+        {% if item.details.duration %}<span class="ui-chip">{{ item.details.duration }}</span>{% endif %}
+        {% if item.details.location %}<span class="ui-chip"><i class="bi bi-geo-alt"></i>{{ item.details.location }}</span>{% endif %}
+      </div>
+      {% if item.details.skills %}<div class="ws-facts">{% for skill in item.details.skills[:6] %}<span class="ui-chip muted">{{ skill }}</span>{% endfor %}</div>{% endif %}
+      <a class="ui-link mt-auto" href="{{ item.url }}" target="_blank" rel="noopener">See it on the website</a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- News and Facebook posts ---------------- #}
+{% if view.news or view.posts %}
+<section class="ws-section" id="news">
+  <h3><i class="bi bi-newspaper"></i>News</h3>
+  <p>What was published lately. It is part of what the email assistant knows.</p>
+  <div class="ws-grid">
+    {% for item in view.news + view.posts[:8] %}
+    <article class="ws-card" id="{{ 'post' if item.kind == 'post' and loop.index0 == view.news | length else '' }}">
+      <div class="ws-facts">
+        <span class="ui-chip {{ 'info' if item.kind == 'post' else 'brand' }}"><i class="bi {{ 'bi-facebook' if item.kind == 'post' else 'bi-globe2' }}"></i>{{ 'Facebook' if item.kind == 'post' else (item.category or 'News') }}</span>
+        {% if item.starts_at %}<span class="ui-chip muted">{{ item.starts_at.strftime('%d %b %Y') }}</span>{% endif %}
+      </div>
+      <div class="ws-title">{{ item.title }}</div>
+      <div class="ws-text" style="display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;">{{ item.summary }}</div>
+      <a class="ui-link mt-auto" href="{{ item.url }}" target="_blank" rel="noopener">Read it</a>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Videos ---------------- #}
+{% if view.videos %}
+<section class="ws-section" id="video">
+  <h3><i class="bi bi-play-btn-fill"></i>Videos</h3>
+  <p>The videos published on the website{{ ' and on the Facebook page' if view.facebook }}. They stay where they are hosted; the application keeps their address and opens them there. The videos of each course week are on the program's page.</p>
+  <div class="ws-media">
+    {% for item in view.videos %}
+    <a class="ws-thumb" href="{{ item.url }}" target="_blank" rel="noopener" title="{{ item.title }}">
+      {% if item.details.thumbnail %}<img src="{{ item.details.thumbnail }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}
+      <span class="play"><i class="bi bi-play-circle-fill"></i></span>
+      <span class="cap">{{ item.title }}</span>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# ---------------- Feedback ---------------- #}
+{% if said.total %}
+<section class="ws-section" id="feedback">
+  <h3><i class="bi bi-chat-heart-fill"></i>Feedback</h3>
+  <p>What learners said, as published on the website{{ ' and on the Facebook page' if view.facebook }}. Each picture is kept on this computer, its words are read, and their tone is worked out with the same word rules as the weekly check-in.</p>
+
+  {% if said.waiting or (said.unreadable and said.reader) %}
+  <div class="fb-wait">
+    <span class="ui-spin" aria-hidden="true"></span>
+    <span>{{ said.waiting }} of {{ said.total }} still to read. They are read by themselves, a few every three minutes.</span>
+    <form method="post" action="/website/feedback/read" class="m-0 ms-auto"><button class="ui-btn sm"><i class="bi bi-eyeglasses"></i>Read them now</button></form>
+  </div>
+  {% elif said.unreadable and not said.reader %}
+  <div class="fb-wait"><i class="bi bi-info-circle"></i><span>The pictures are kept, but this computer cannot read the text inside them (that needs Windows with French installed). Their stars are still counted.</span></div>
+  {% endif %}
+
+  {% if said.read or said.rated %}
+  <div class="fb-summary">
+    <div class="fb-big">
+      {% if said.happy_share is not none %}
+      <div class="fb-ring" style="--share:{{ said.happy_share }};" role="img" aria-label="{{ said.happy_share }} percent happy"><b>{{ said.happy_share }}%</b></div>
+      <div>
+        <div class="fb-big-title">happy</div>
+        <div class="ui-card-sub">{{ said.counts.positive }} happy · {{ said.counts.mixed }} mixed · {{ said.counts.negative }} unhappy, out of {{ said.judged }} read</div>
+      </div>
+      {% endif %}
+      {% if said.stars %}
+      <div class="fb-stars-big"><b>{{ said.stars }}</b><span>{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < said.stars | round(0, 'floor') else 'bi-star-half' if n < said.stars else 'bi-star' }}"></i>{% endfor %}</span><small>{{ said.rated }} rated</small></div>
+      {% endif %}
+    </div>
+
+    {% if said.themes %}
+    <div class="fb-block">
+      <div class="fb-label">What people talk about</div>
+      {% for theme in said.themes %}
+      <div class="fb-theme" title="{{ theme.happy }} of them happy">
+        <span class="fb-theme-name"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>
+        <span class="fb-bar"><span style="width:{{ theme.share }}%;"></span></span>
+        <b>{{ theme.count }}</b>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="fb-block">
+      {% if said.praise %}
+      <div class="fb-label">The words that come back</div>
+      <div class="ws-facts mb-3">{% for word, count in said.praise %}<span class="ui-chip ok">{{ word }}{% if count > 1 %} · {{ count }}{% endif %}</span>{% endfor %}</div>
+      {% endif %}
+      {% if said.languages %}
+      <div class="fb-label">Written in</div>
+      <div class="ws-facts">{% for language, count in said.languages %}<span class="ui-chip">{{ language }} · {{ count }}</span>{% endfor %}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if said.to_answer %}
+  <div class="fb-answer">
+    <div class="fb-label" style="color:#9f1239;"><i class="bi bi-flag-fill me-1"></i>To answer: {{ said.to_answer | length }} feedback that {{ 'is' if said.to_answer | length == 1 else 'are' }} not fully happy</div>
+    {% for row in said.to_answer %}
+    <div class="fb-answer-row"><span class="ui-chip {{ row.view.tone }}"><i class="bi {{ row.view.icon }}"></i>{{ row.view.label }}</span><span><b>{{ row.name or row.item.title }}</b>{% if row.text %}: “{{ row.text[:260] }}{{ '…' if row.text | length > 260 }}”{% endif %}</span></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="fb-list">
+    {% for row in said.rows %}
+    <article class="fb-card">
+      {% if row.picture %}
+      <a class="fb-pic" href="{{ row.picture }}" target="_blank" rel="noopener" title="Open the picture"><img src="{{ row.picture }}" alt="" loading="lazy" referrerpolicy="no-referrer"></a>
+      {% else %}
+      <span class="fb-pic is-none"><i class="bi bi-facebook"></i></span>
+      {% endif %}
+      <div class="fb-body">
+        <div class="fb-head">
+          <b>{{ row.name or row.item.title }}</b>
+          {% if row.stars %}<span class="fb-stars" title="{{ row.stars }} out of 5">{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < row.stars else 'bi-star' }}"></i>{% endfor %}</span>{% endif %}
+          <span class="ui-chip {{ row.view.tone }} ms-auto"><i class="bi {{ row.view.icon }}"></i>{{ row.view.label }}</span>
+        </div>
+        {% if row.text %}
+        <div class="fb-words">“{{ row.text }}”</div>
+        {% elif row.waiting %}
+        <div class="ui-card-sub">Waiting to be read.</div>
+        {% else %}
+        <div class="ui-card-sub">{{ row.reading.why or 'The words could not be read.' }}</div>
+        {% endif %}
+        {% if row.themes or row.reading.language %}
+        <div class="ws-facts">
+          {% for theme in row.themes %}<span class="ui-chip brand"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>{% endfor %}
+          {% if row.reading.language %}<span class="ui-chip muted">{{ row.reading.language }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="ws-section" id="kept">
+  <h3><i class="bi bi-archive-fill"></i>Kept from the website</h3>
+  <p>Nothing taken from 9antra.tn is ever deleted by the application. What the website no longer shows stays recorded here, with everything that was read; only you can remove it.</p>
+  {% if kept %}
+  <div class="ui-card">
+    {% for item in kept %}
+    <div class="d-flex gap-3 align-items-center py-2" style="{{ 'border-top:1px solid var(--border-color);' if not loop.first }}">
+      <div style="min-width:0; flex:1;">
+        <div class="ui-card-title" style="font-size:.9rem;">{{ item.title }}</div>
+        <div class="ws-text" style="font-size:.78rem;">{{ kinds[item.kind].one | capitalize if item.kind in kinds else item.kind }} · first seen {{ local(item.first_seen_at).strftime('%d %b %Y') if item.first_seen_at }} · no longer on the website since {{ local(item.gone_at).strftime('%d %b %Y') }}{% if item.summary %} · {{ item.summary[:120] }}{% endif %}</div>
+      </div>
+      {% if item.url %}<a class="ui-btn ghost sm" href="{{ item.url }}" target="_blank" rel="noopener noreferrer">Its address</a>{% endif %}
+      <form method="post" action="/website/items/{{ item.id }}/remove" class="m-0" data-confirm="Remove “{{ item.title }}” from your records? This cannot be undone."><button class="ui-btn ghost sm icon danger" aria-label="Remove this record"><i class="bi bi-trash3"></i></button></form>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-archive"></i><strong>Everything read is still on the website</strong>When something disappears from 9antra.tn it is listed here, kept as it was.</div>
+  {% endif %}
+</section>
+
+<section class="ws-section" id="post">
+  <h3><i class="bi bi-facebook"></i>The Facebook page</h3>
+  {% if view.facebook %}
+  <p>Connected: its posts, videos and reviews are read with the website, {{ view.posts | length }} post{{ 's' if view.posts | length != 1 }} so far.</p>
+  {% else %}
+  <div class="ui-card">
+    <div class="d-flex gap-3 align-items-start flex-wrap">
+      {% if app_brand.logo %}<img src="{{ app_brand.icon_big }}" alt="" style="width:56px; height:56px; border-radius:50%; border:1px solid var(--border-color);">{% endif %}
+      <div style="flex:1 1 320px;">
+        <div class="ui-card-title">The icon comes from your Facebook page. Its posts, videos and reviews need one more thing.</div>
+        <p class="ws-text mt-2 mb-0">Facebook gives a page's picture to everyone, so the application's icon already follows the page. For the posts, the videos and the reviews, Facebook asks for the page's own access token: only an admin of the page can create it (Meta for Developers → your app → “Page access token”). Put it in the <code>.env</code> file as <code>FACEBOOK_PAGE_ACCESS_TOKEN</code>, next to <code>FACEBOOK_PAGE_ID</code>, restart, and they are read with the website every six hours.</p>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</section>
+
+<script>
+  document.getElementById("checkNow")?.closest("form").addEventListener("submit", event => {
+    const button = document.getElementById("checkNow");
+    button.disabled = true;
+    button.innerHTML = '<span class="ui-spin"></span>Reading 9antra.tn…';
+  });
+</script>
+{% endblock %}

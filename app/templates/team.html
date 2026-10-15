@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Team and access · 9antra{% endblock %}
+{% block page_title %}Team and access{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .tm-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:12px; }
+  .tm-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:16px 18px; margin-bottom:14px; }
+  .tm-top { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .tm-avatar { width:42px; height:42px; border-radius:50%; display:grid; place-items:center; font-weight:800; color:#fff; background:linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark, #b45309)); flex:none; }
+  .tm-top b { font-size:.94rem; color:var(--ink-text); } .tm-top span.meta { display:block; font-size:.76rem; color:var(--muted); }
+  .tm-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:8px 16px; margin-top:12px; }
+  .tm-perm { display:flex; justify-content:space-between; align-items:center; gap:8px; padding:7px 10px; border:1px solid var(--border-color); border-radius:12px; font-size:.8rem; }
+  .tm-perm b { font-weight:700; color:var(--ink-text); display:flex; gap:6px; align-items:center; } .tm-perm b i { color:var(--primary-berry); }
+  .tm-perm select { border:1px solid var(--border-color); border-radius:9px; font-size:.76rem; padding:3px 6px; background:#fff; }
+  .tm-actions { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:12px; }
+  .tm-actions form { margin:0; display:flex; gap:6px; }
+  .tm-actions input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 9px; }
+  .tm-new .form-control, .tm-new .form-select { border-radius:12px; font-size:.86rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<a href="/settings#access" class="tm-back"><i class="bi bi-arrow-left"></i>Settings</a>
+<div class="ui-head">
+  <div>
+    <h2>Who signs in, and what each one sees</h2>
+    <p>An <b>admin</b> sees and changes everything. A <b>team member</b> sees only the parts you choose, and for each part either looks or can also change. Professors have their own space and get their access from the Professors page. Changes apply at once.</p>
+  </div>
+  <div class="ui-actions"><a class="ui-btn primary" href="#add"><i class="bi bi-person-plus"></i>Add a person</a></div>
+</div>
+
+{% for row in people %}
+{% set person = row.user %}
+<section class="tm-card" id="person-{{ person.id }}">
+  <div class="tm-top">
+    <span class="tm-avatar">{{ (person.name or '?')[:1] | upper }}</span>
+    <div style="min-width:0; flex:1;"><b>{{ person.name }}</b>{% if person.id == me.id %} <span class="ui-chip muted">you</span>{% endif %}
+      <span class="meta">{{ person.email }} · {{ row.devices }} device{{ 's' if row.devices != 1 }} signed in{% if person.last_login_at %} · last sign-in {{ person.last_login_at.strftime('%d %b %Y') }}{% endif %}</span></div>
+    <span class="ui-chip {{ 'brand' if person.role == 'admin' else 'warn' if person.role == 'staff' else 'muted' }}">{{ {'admin': 'Admin', 'staff': 'Team member', 'professor': 'Professor'}.get(person.role, person.role) }}</span>
+    {% if not person.is_active %}<span class="ui-chip bad">Cannot sign in</span>{% endif %}
+  </div>
+
+  {% if row.permissions %}
+  <form method="post" action="/settings/team/{{ person.id }}/access">
+    <div class="tm-grid">
+      {% for key, name, icon, start, prefixes in sections %}
+      <div class="tm-perm"><b><i class="bi {{ icon }}"></i>{{ name }}</b>
+        <select name="perm_{{ key }}" aria-label="{{ name }}">{% for level, said in levels.items() %}<option value="{{ level }}" {{ 'selected' if row.permissions[key] == level }}>{{ said }}</option>{% endfor %}</select></div>
+      {% endfor %}
+    </div>
+    <div class="tm-actions"><button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save what {{ person.name.split()[0] }} sees</button></div>
+  </form>
+  {% elif person.role == 'professor' %}
+  <div class="tm-actions"><a class="ui-btn sm" href="/classes/?tab=professors">Managed on the Professors page</a></div>
+  {% endif %}
+
+  {% if person.id != me.id and person.role != 'professor' %}
+  <div class="tm-actions">
+    <form method="post" action="/settings/team/{{ person.id }}/role"><input type="hidden" name="role" value="{{ 'staff' if person.role == 'admin' else 'admin' }}">
+      <button class="ui-btn ghost sm" data-confirm="{{ 'Make ' ~ person.name ~ ' a team member with chosen access?' if person.role == 'admin' else 'Make ' ~ person.name ~ ' an admin? They will see and change everything.' }}">{{ 'Make a team member' if person.role == 'admin' else 'Make an admin' }}</button></form>
+    <form method="post" action="/settings/team/{{ person.id }}/password"><input type="password" name="password" placeholder="New password" aria-label="New password" autocomplete="new-password" minlength="8" required><button class="ui-btn ghost sm">Set password</button></form>
+    <form method="post" action="/settings/team/{{ person.id }}/active"><button class="ui-btn ghost sm {{ 'danger' if person.is_active }}">{{ 'Stop their access' if person.is_active else 'Let them sign in again' }}</button></form>
+  </div>
+  {% endif %}
+</section>
+{% endfor %}
+
+<section class="tm-card tm-new" id="add">
+  <h3 class="ui-card-title mb-2"><i class="bi bi-person-plus"></i> Add a person</h3>
+  <form method="post" action="/settings/team/add">
+    <div class="row g-2">
+      <div class="col-md-4"><input class="form-control" name="name" placeholder="Name" aria-label="Name" required></div>
+      <div class="col-md-4"><input class="form-control" name="email" type="email" placeholder="Email they sign in with" aria-label="Email" required></div>
+      <div class="col-md-4"><input class="form-control" name="password" type="password" placeholder="A first password (8 characters at least)" aria-label="Password" minlength="8" autocomplete="new-password" required></div>
+    </div>
+    <div class="d-flex gap-3 mt-3 flex-wrap" style="font-size:.86rem;">
+      <label><input type="radio" name="role" value="staff" checked onchange="document.getElementById('new-perms').hidden = false"> Team member, with the access below</label>
+      <label><input type="radio" name="role" value="admin" onchange="document.getElementById('new-perms').hidden = true"> Admin, sees and changes everything</label>
+    </div>
+    <div class="tm-grid" id="new-perms">
+      {% for key, name, icon, start, prefixes in sections %}
+      <div class="tm-perm"><b><i class="bi {{ icon }}"></i>{{ name }}</b>
+        <select name="perm_{{ key }}" aria-label="{{ name }}">{% for level, said in levels.items() %}<option value="{{ level }}" {{ 'selected' if (level == 'view' and key in ('dashboard', 'candidates', 'classes', 'programs')) or (level == 'none' and key not in ('dashboard', 'candidates', 'classes', 'programs')) }}>{{ said }}</option>{% endfor %}</select></div>
+      {% endfor %}
+    </div>
+    <button class="ui-btn primary mt-3"><i class="bi bi-person-plus"></i>Add this person</button>
+  </form>
+</section>
+{% endblock %}

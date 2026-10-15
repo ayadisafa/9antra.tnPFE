@@ -1,0 +1,18 @@
+{# One-line result of the last action, passed as ?notice= or ?error= #}
+{% if notice %}
+<div class="alert alert-success page-flash mb-3" role="status"><i class="bi bi-check-circle-fill me-2"></i>{{ notice }}</div>
+{% endif %}
+{% if error %}
+<div class="alert alert-danger page-flash mb-3" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i>{{ error }}</div>
+{% endif %}
+{% if notice or error %}
+<script>
+  // Drop the message from the address bar so a reload does not show it again.
+  (() => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete('notice');
+    url.searchParams.delete('error');
+    window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+  })();
+</script>
+{% endif %}

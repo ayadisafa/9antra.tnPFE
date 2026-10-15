@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ view.name }} · 9antra{% endblock %}
+{% block page_title %}{{ view.name }}{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .dt-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:12px; }
+  .dt-wrap { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow-x:auto; }
+  .dt-table { width:100%; border-collapse:collapse; font-size:.84rem; }
+  .dt-table th { text-align:left; font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; color:#9b95b0; padding:12px 14px; border-bottom:1px solid var(--border-color); white-space:nowrap; }
+  .dt-table td { padding:10px 14px; border-bottom:1px solid var(--border-color); color:var(--ink-text); max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dt-table tr:last-child td { border-bottom:0; }
+  .dt-table tr:hover td { background:#fbf8fe; cursor:pointer; }
+  .dt-pages { display:flex; gap:8px; align-items:center; justify-content:flex-end; margin-top:12px; font-size:.82rem; color:var(--muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<a href="/data" class="dt-back"><i class="bi bi-arrow-left"></i>All the data</a>
+<div class="ui-head">
+  <div>
+    <h2><i class="bi {{ view.icon }}"></i> {{ view.name }}</h2>
+    <p>{{ view.total }} record{{ 's' if view.total != 1 }}{% if view.search %} matching “{{ view.search }}”{% endif %}. Click a line to see and change all its values.</p>
+  </div>
+  <div class="ui-actions">
+    <form method="get" class="d-flex gap-2"><input class="form-control" name="q" value="{{ view.search }}" placeholder="Search in every field" aria-label="Search" style="border-radius:12px; min-width:220px;"><button class="ui-btn">Search</button></form>
+    <a class="ui-btn" href="/data/{{ view.key }}.csv{% if view.search %}?q={{ view.search | urlencode }}{% endif %}" title="Every record{{ ' matching the search' if view.search }}, as a file Excel opens"><i class="bi bi-file-earmark-spreadsheet"></i>Excel</a>
+    <a class="ui-btn primary" href="/data/{{ view.key }}/new"><i class="bi bi-plus-lg"></i>Add</a>
+  </div>
+</div>
+<div class="dt-wrap" data-no-i18n>
+  <table class="dt-table">
+    <thead><tr>{% for column in view.columns %}<th>{{ column }}</th>{% endfor %}<th></th></tr></thead>
+    <tbody>
+      {% for row in view.rows %}
+      <tr onclick="location.href='/data/{{ view.key }}/{{ row.id }}'">{% for cell in row.cells %}<td title="{{ cell }}">{{ cell }}</td>{% endfor %}<td><a class="ui-link" href="/data/{{ view.key }}/{{ row.id }}">Open</a></td></tr>
+      {% else %}
+      <tr><td colspan="{{ view.columns | length + 1 }}"><div class="ui-empty" style="border:0;"><i class="bi bi-inbox"></i><strong>Nothing here</strong>{{ 'No record matches this search.' if view.search else 'Add the first one with the button above.' }}</div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% if view.pages > 1 %}
+<div class="dt-pages">Page {{ view.page }} of {{ view.pages }}
+  {% if view.page > 1 %}<a class="ui-btn sm" href="?q={{ view.search | urlencode }}&page={{ view.page - 1 }}">Previous</a>{% endif %}
+  {% if view.page < view.pages %}<a class="ui-btn sm" href="?q={{ view.search | urlencode }}&page={{ view.page + 1 }}">Next</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

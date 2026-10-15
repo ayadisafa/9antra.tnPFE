@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+{% import "_email_files.html" as email_files %}
+{% block title %}Email templates · 9antra{% endblock %}
+{% block page_title %}Email templates{% endblock %}
+{% block live_topics %}{% if not current %}email_templates{% endif %}{% endblock %}
+
+{% block content %}
+<style>
+  .tp-back { color: var(--muted); font-weight: 600; font-size: .84rem; text-decoration: none; }
+  .tp-back:hover { color: var(--primary-berry); }
+  .tp-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; }
+  .tp-title { font-weight: 800; font-size: 1rem; color: var(--ink-text); }
+  .tp-sub { font-size: .8rem; color: var(--muted); }
+  .tp-card .form-label { font-size: .76rem; font-weight: 700; color: #5b5470; margin-bottom: 4px; }
+  .btn-berry { background: var(--primary-berry); color: #fff; font-weight: 700; border: 0; }
+  .btn-berry:hover { background: var(--berry-dark); color: #fff; }
+
+  .tp-group { font-size: .7rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+  .tp-group:first-child { margin-top: 0; }
+  .tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+  .tp-item { display: flex; flex-direction: column; gap: 8px; background: #fff; border: 1px solid var(--border-color); border-radius: 18px; padding: 16px 18px; text-decoration: none; color: inherit; transition: border-color .15s ease, box-shadow .15s ease; }
+  .tp-item:hover { border-color: var(--primary-berry); box-shadow: 0 10px 24px -16px rgba(164, 44, 103, .5); color: inherit; }
+  .tp-item.is-off { background: #fbfafc; }
+  .tp-item-name { font-weight: 800; font-size: .95rem; color: var(--ink-text); }
+  .tp-item-when { font-size: .8rem; color: #5b5470; line-height: 1.45; flex: 1; }
+  .tp-item-subject { font-size: .76rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tp-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .66rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .tp-chip.own { background: var(--berry-subtle); color: var(--primary-berry); }
+  .tp-chip.orig { background: #f1eff5; color: #6b6180; }
+  .tp-chip.off { background: #fff1f2; color: #be123c; }
+  .tp-chip.info { background: var(--sky-subtle); color: var(--sky); }
+  .tp-edit { font-size: .78rem; font-weight: 700; color: var(--primary-berry); }
+
+  .tp-var { font-family: Consolas, 'Courier New', monospace; font-size: .74rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border-color); background: var(--canvas); color: var(--ink-3); cursor: pointer; }
+  .tp-var:hover { border-color: var(--primary-berry); color: var(--primary-berry); background: var(--berry-subtle); }
+  .tp-var.special { border-color: #f6d8e6; background: var(--berry-subtle); color: var(--primary-berry); }
+  textarea.form-control.tp-body { border-radius: 14px; font-size: .9rem; line-height: 1.6; min-height: 200px; }
+  textarea.form-control.tp-closing { border-radius: 14px; font-size: .9rem; line-height: 1.6; min-height: 84px; }
+  .tp-details { border: 1px dashed #dccbe0; border-radius: 14px; background: #fcfafd; padding: 12px 14px; margin: 14px 0; }
+  .tp-details .form-check-label { font-size: .84rem; font-weight: 700; color: var(--ink-text); }
+  .tp-switch .form-check-input:checked { background-color: var(--primary-berry); border-color: var(--primary-berry); }
+  .tp-auto { border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; background: #fcfafd; }
+  .tp-auto.is-off { border-color: #fecdd3; background: #fff1f2; }
+
+  .tp-styles { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tp-style { position: relative; border: 1px solid var(--border-color); border-radius: 999px; padding: 6px 14px; cursor: pointer; margin: 0; font-size: .8rem; font-weight: 700; color: #5b5470; }
+  .tp-style input { position: absolute; opacity: 0; pointer-events: none; }
+  .tp-style.is-selected { border-color: var(--primary-berry); background: var(--berry-subtle); color: var(--primary-berry); }
+  .tp-style:focus-within { outline: 2px solid var(--primary-berry); outline-offset: 2px; }
+
+  .tp-preview { position: sticky; top: calc(var(--stick-top, 0px) + 8px); }
+  .tp-envelope { border: 1px solid var(--border-color); border-radius: 14px; padding: 10px 14px; font-size: .8rem; background: #fcfafd; margin-bottom: 10px; }
+  .tp-envelope .lbl { color: var(--muted); font-weight: 700; width: 62px; display: inline-block; }
+  .tp-frame-wrap { border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; background: var(--canvas); display: flex; justify-content: center; }
+  .tp-frame { width: 100%; height: 560px; border: 0; display: block; transition: width .2s ease; background: var(--canvas); }
+  .tp-frame.is-phone { width: 390px; }
+  .tp-toggle .btn { font-size: .74rem; font-weight: 700; }
+  .tp-toggle .btn.active { background: var(--primary-berry); border-color: var(--primary-berry); color: #fff; }
+  .tp-warn { font-size: .78rem; color: #be123c; font-weight: 600; }
+  .tp-note { font-size: .78rem; font-weight: 600; color: var(--sky); }
+  .tp-note.is-error { color: #be123c; }
+</style>
+
+{% if current %}
+{# ====================================================================
+   One automatic email: change it, see it
+   ==================================================================== #}
+{% set spec = current.spec %}
+<a href="/inbox/templates" class="tp-back d-inline-block mb-3"><i class="bi bi-arrow-left me-1"></i>All email templates</a>
+
+{% include "_flash.html" %}
+
+<div class="row g-4">
+  <div class="col-xl-6">
+    <form method="post" action="/inbox/templates/auto/{{ spec.key }}/save" id="template-form" class="tp-card">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
+        <div class="tp-title" style="font-size:1.1rem;">{{ spec.name }}</div>
+        {% if current.customized %}<span class="tp-chip own">Changed by you</span>{% else %}<span class="tp-chip orig">Original text</span>{% endif %}
+      </div>
+      <div class="tp-sub mb-3">{{ spec.when }}</div>
+
+      {% if spec.switchable %}
+      <div class="tp-auto mb-3 {% if not current.is_active %}is-off{% endif %}" id="auto-box">
+        <div class="form-check form-switch tp-switch mb-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="template-active" name="is_active" value="true" {% if current.is_active %}checked{% endif %}>
+          <label class="form-check-label fw-bold" style="font-size:.86rem;" for="template-active">The system sends this email by itself</label>
+        </div>
+        <div class="small text-muted mt-1">Switch it off to stop it. Emails you send yourself with a button still go out.</div>
+      </div>
+      {% else %}
+      <input type="hidden" name="is_active" value="true">
+      {% endif %}
+
+      <label class="form-label" for="template-subject">Subject</label>
+      <input class="form-control mb-3" id="template-subject" name="subject" maxlength="200" required value="{{ current.subject }}">
+
+      <label class="form-label" for="template-title">Headline shown at the top of the email</label>
+      <input class="form-control mb-3" id="template-title" name="title" maxlength="120" value="{{ current.title }}" placeholder="Leave empty to use the subject">
+
+      <label class="form-label" for="template-body">Text</label>
+      <textarea class="form-control tp-body" id="template-body" name="body" required>{{ current.body }}</textarea>
+      <div class="form-text">An empty line starts a new paragraph, lines starting with “-” become a list, **two stars** make bold. Your signature is added automatically.</div>
+
+      {% if spec.details %}
+      <div class="tp-details">
+        <div class="form-check form-switch tp-switch mb-0">
+          <input class="form-check-input" type="checkbox" role="switch" id="template-details" name="show_details" value="true" {% if current.show_details %}checked{% endif %}>
+          <label class="form-check-label" for="template-details">Show the details table here</label>
+        </div>
+        <div class="small text-muted mt-1">Filled in for each candidate: program, class, start date, time, schedule, trainer{% if spec.topics %}, amount paid, then what the program covers{% endif %}.</div>
+      </div>
+      {% endif %}
+
+      <label class="form-label {% if not spec.details %}mt-3{% endif %}" for="template-closing">Text at the end{% if spec.details %}, after the table{% endif %}</label>
+      <textarea class="form-control tp-closing" id="template-closing" name="closing" placeholder="Optional">{{ current.closing }}</textarea>
+
+      <div class="mt-3">
+        <div class="form-label">Personal details — click to insert</div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for name, label, sample in extra_variables %}
+          <button type="button" class="tp-var special" data-variable="{{ name }}" title="{{ label }} — for example “{{ sample }}”. Only in this email.">{{ "{" ~ name ~ "}" }}</button>
+          {% endfor %}
+          {% for name, label, sample in variables %}
+          <button type="button" class="tp-var" data-variable="{{ name }}" title="{{ label }} — for example “{{ sample }}”">{{ "{" ~ name ~ "}" }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      {{ email_files.picker(accept_documents, image=image, image_position=current.image_position, attached=attached) }}
+
+      <details class="mt-3" {% if current.cta_label %}open{% endif %}>
+        <summary class="small fw-bold" style="cursor:pointer; color:#5b5470;">Button with a link</summary>
+        <div class="row g-2 mt-1">
+          <div class="col-md-5">
+            <label class="form-label" for="template-cta-label">Button text</label>
+            <input class="form-control form-control-sm" id="template-cta-label" name="cta_label" maxlength="60" value="{{ current.cta_label }}">
+          </div>
+          <div class="col-md-7">
+            <label class="form-label" for="template-cta-url">Link</label>
+            <input class="form-control form-control-sm" id="template-cta-url" name="cta_url" maxlength="400" value="{{ current.cta_url }}" placeholder="https://…">
+          </div>
+        </div>
+      </details>
+
+      <div class="mt-3">
+        <div class="form-label">Design</div>
+        <div class="tp-styles">
+          {% for key, (name, help) in styles.items() %}
+          <label class="tp-style" title="{{ help }}">
+            <input type="radio" name="style" value="{{ key }}" {% if current.style == key %}checked{% endif %}>{{ name }}
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <hr style="border-color: var(--border-color); opacity: 1;">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-berry rounded-pill px-4"><i class="bi bi-check2 me-1"></i>Save changes</button>
+        <button type="button" class="btn btn-light border rounded-pill fw-semibold" id="test-button" {% if not smtp_ready %}disabled title="Email sending is not set up yet"{% endif %}><i class="bi bi-send me-1"></i>Send me a test</button>
+        {% if current.customized %}
+        <button class="btn btn-light border rounded-pill fw-semibold text-danger ms-auto" formaction="/inbox/templates/auto/{{ spec.key }}/reset" formnovalidate
+                data-confirm="Go back to the original text of this email? Your version, its photo and its files are removed from it.">Restore the original</button>
+        {% endif %}
+      </div>
+      <div class="tp-warn mt-2" id="template-warning" role="alert"></div>
+      <div class="tp-note mt-1" id="test-status" role="status">{% if smtp_ready and own_address %}The test goes to {{ own_address }}, with what you see in the preview.{% endif %}</div>
+    </form>
+  </div>
+
+  <!-- ============ Preview ============ -->
+  <div class="col-xl-6">
+    <section class="tp-card tp-preview">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <div>
+          <div class="tp-title">Preview</div>
+          <div class="tp-sub">As a candidate receives it</div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <select class="form-select form-select-sm rounded-pill w-auto" id="preview-candidate" aria-label="Whose details to show">
+            <option value="">Sample details</option>
+            {% for candidate in candidates %}
+            <option value="{{ candidate.id }}">{{ candidate.full_name or candidate.email }}</option>
+            {% endfor %}
+          </select>
+          <div class="btn-group tp-toggle" role="group" aria-label="Preview size">
+            <button type="button" class="btn btn-sm btn-light border active" data-size="desktop"><i class="bi bi-laptop me-1"></i>Computer</button>
+            <button type="button" class="btn btn-sm btn-light border" data-size="phone"><i class="bi bi-phone me-1"></i>Phone</button>
+          </div>
+        </div>
+      </div>
+      <div class="tp-envelope">
+        <div><span class="lbl">From</span>9antra</div>
+        <div><span class="lbl">Subject</span><strong id="preview-subject">{{ initial_subject or "—" }}</strong></div>
+      </div>
+      <div class="tp-frame-wrap">
+        <iframe class="tp-frame" id="preview-frame" title="Email preview" sandbox="allow-same-origin" srcdoc="{{ initial_preview }}"></iframe>
+      </div>
+    </section>
+  </div>
+</div>
+
+{{ email_files.assets() }}
+<script>
+(() => {
+  const KEY = {{ spec.key | tojson }};
+  const form = document.getElementById("template-form");
+  const subject = document.getElementById("template-subject");
+  const title = document.getElementById("template-title");
+  const body = document.getElementById("template-body");
+  const closing = document.getElementById("template-closing");
+  const details = document.getElementById("template-details");
+  const frame = document.getElementById("preview-frame");
+  const warning = document.getElementById("template-warning");
+  const picker = form.querySelector("[data-ef]");
+  const previewFor = document.getElementById("preview-candidate");
+  let lastField = body;
+  let previewTimer = null;
+  let previewRun = 0;
+
+  const draft = () => ({
+    key: KEY,
+    subject: subject.value, title: title.value, body: body.value, closing: closing.value,
+    style: (form.querySelector(".tp-style input:checked") || {}).value || "brand",
+    show_details: details ? details.checked : true,
+    cta_label: document.getElementById("template-cta-label").value,
+    cta_url: document.getElementById("template-cta-url").value,
+    image_id: window.EmailFiles.imageId(picker),
+    image_position: window.EmailFiles.imagePosition(picker),
+    attachment_ids: window.EmailFiles.fileIds(picker),
+    candidate_id: previewFor.value || null,
+  });
+
+  // ---------- personal details ----------
+  [subject, title, body, closing].forEach(field => field.addEventListener("focus", () => { lastField = field; }));
+  document.querySelectorAll(".tp-var").forEach(chip => chip.addEventListener("click", () => {
+    const token = `{${chip.dataset.variable}}`;
+    const field = lastField;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? field.value.length;
+    field.value = field.value.slice(0, start) + token + field.value.slice(end);
+    field.focus();
+    field.setSelectionRange(start + token.length, start + token.length);
+    schedulePreview();
+  }));
+
+  // ---------- design and switches ----------
+  function markStyle() {
+    document.querySelectorAll(".tp-style").forEach(option => {
+      option.classList.toggle("is-selected", option.querySelector("input").checked);
+    });
+  }
+  const active = document.getElementById("template-active");
+  if (active) active.addEventListener("change", () => {
+    document.getElementById("auto-box").classList.toggle("is-off", !active.checked);
+  });
+
+  // ---------- preview ----------
+  function resizeFrame() {
+    try {
+      const height = frame.contentDocument.documentElement.scrollHeight;
+      if (height) frame.style.height = `${Math.min(Math.max(height, 360), 1000)}px`;
+    } catch (error) { /* keep the default height */ }
+  }
+  frame.addEventListener("load", resizeFrame);
+
+  async function refreshPreview() {
+    const run = ++previewRun;
+    try {
+      const response = await fetch("/inbox/templates/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft()),
+      });
+      if (!response.ok || run !== previewRun) return;
+      const data = await response.json();
+      document.getElementById("preview-subject").textContent = data.subject || "—";
+      frame.srcdoc = data.html;
+      warning.textContent = data.unknown.length
+        ? `Unknown detail: ${data.unknown.map(name => `{${name}}`).join(", ")}. Use the buttons above to insert valid ones.`
+        : "";
+    } catch (error) {
+      console.error("Preview failed:", error);
+    }
+  }
+  function schedulePreview() {
+    window.clearTimeout(previewTimer);
+    previewTimer = window.setTimeout(refreshPreview, 350);
+  }
+  form.addEventListener("input", schedulePreview);
+  form.addEventListener("change", () => { markStyle(); schedulePreview(); });
+  form.addEventListener("ef:change", schedulePreview);
+  previewFor.addEventListener("change", schedulePreview);
+  document.querySelectorAll("[data-size]").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll("[data-size]").forEach(other => other.classList.toggle("active", other === button));
+    frame.classList.toggle("is-phone", button.dataset.size === "phone");
+    window.setTimeout(resizeFrame, 250);
+  }));
+
+  // ---------- test ----------
+  const testButton = document.getElementById("test-button");
+  const testStatus = document.getElementById("test-status");
+  testButton.addEventListener("click", async () => {
+    testButton.disabled = true;
+    testStatus.classList.remove("is-error");
+    testStatus.textContent = "Sending the test…";
+    try {
+      const response = await fetch("/inbox/templates/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(draft()),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "The test could not be sent.");
+      testStatus.textContent = `Test sent to ${data.sent_to}. Nothing was sent to any candidate.`;
+    } catch (error) {
+      testStatus.classList.add("is-error");
+      testStatus.textContent = error.message;
+    } finally {
+      testButton.disabled = false;
+    }
+  });
+
+  markStyle();
+})();
+</script>
+
+{% else %}
+{# ====================================================================
+   All templates
+   ==================================================================== #}
+<a href="/inbox" class="tp-back d-inline-block mb-3"><i class="bi bi-arrow-left me-1"></i>Back to the inbox</a>
+
+{% include "_flash.html" %}
+
+<section class="tp-card mb-4">
+  <div class="tp-title mb-1">Emails the system sends by itself</div>
+  <div class="tp-sub mb-3">Open one to read it, change its text, add a photo or attach a file. Every email sent is kept in the candidate's discussion in the <a href="/inbox?filter=all">Inbox</a>.</div>
+
+  <div id="live-templates-auto" data-live-region>
+    {% for group, items in groups.items() %}
+    <div class="tp-group">{{ group }}</div>
+    <div class="tp-grid">
+      {% for item in items %}
+      {% set template = item.template %}
+      <a class="tp-item {% if not template.sends_itself %}is-off{% endif %}" href="/inbox/templates?key={{ template.key }}">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <span class="tp-item-name">{{ template.spec.name }}</span>
+          <span class="tp-edit text-nowrap">Open <i class="bi bi-arrow-right"></i></span>
+        </div>
+        <div class="tp-item-when">{{ template.spec.when }}</div>
+        <div class="tp-item-subject" title="Subject">{{ template.subject }}</div>
+        <div class="d-flex flex-wrap gap-1">
+          {% if not template.sends_itself %}<span class="tp-chip off"><i class="bi bi-pause-fill"></i>Switched off</span>{% endif %}
+          {% if template.customized %}<span class="tp-chip own">Changed by you</span>{% else %}<span class="tp-chip orig">Original text</span>{% endif %}
+          {% if item.photo %}<span class="tp-chip info"><i class="bi bi-image"></i>Photo</span>{% endif %}
+          {% if item.files %}<span class="tp-chip info"><i class="bi bi-paperclip"></i>{{ item.files }} file{{ "s" if item.files > 1 else "" }}</span>{% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="tp-card">
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+    <div class="tp-title">Your own templates</div>
+    <a class="btn btn-sm btn-berry rounded-pill px-3" href="/inbox/compose"><i class="bi bi-pencil-square me-1"></i>Write an email</a>
+  </div>
+  <div class="tp-sub mb-3">Messages you saved to send again. Open one to change it, add a photo or files, and send it to the candidates you choose.</div>
+  <div class="tp-grid" id="live-templates-own" data-live-region>
+    {% for template in own_templates %}
+    <a class="tp-item" href="/inbox/compose?template={{ template.id }}">
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <span class="tp-item-name">{{ template.name }}</span>
+        <span class="tp-edit text-nowrap">Open <i class="bi bi-arrow-right"></i></span>
+      </div>
+      <div class="tp-item-subject" title="Subject">{{ template.subject }}</div>
+      <div class="tp-item-when">{{ template.body | truncate(120) }}</div>
+      <div class="d-flex flex-wrap gap-1">
+        {% if template.image_id %}<span class="tp-chip info"><i class="bi bi-image"></i>Photo</span>{% endif %}
+        {% if template.attachment_ids %}<span class="tp-chip info"><i class="bi bi-paperclip"></i>Files</span>{% endif %}
+      </div>
+    </a>
+    {% else %}
+    <div class="small text-muted">You have not saved a template yet. Write an email, then use “Save template”.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+{% endblock %}

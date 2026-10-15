@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}Knowledge base · 9antra{% endblock %}
+{% block page_title %}Knowledge base{% endblock %}
+{% block live_topics %}knowledge{% endblock %}
+
+{% block content %}
+<style>
+  .kb-back { color: var(--muted); font-weight: 600; font-size: .84rem; text-decoration: none; }
+  .kb-back:hover { color: var(--primary-berry); }
+  .kb-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; }
+  .kb-title { font-weight: 800; font-size: 1rem; color: var(--ink-text); }
+  .kb-sub { font-size: .8rem; color: var(--muted); }
+  .kb-card .form-label { font-size: .76rem; font-weight: 700; color: #5b5470; margin-bottom: 4px; }
+  .btn-berry { background: var(--primary-berry); color: #fff; font-weight: 700; border: 0; }
+  .btn-berry:hover { background: var(--berry-dark); color: #fff; }
+
+  .kb-entry { border: 1px solid var(--border-color); border-radius: 16px; padding: 14px 16px; margin-bottom: 10px; }
+  .kb-entry:last-child { margin-bottom: 0; }
+  .kb-entry.is-editing { border-color: var(--primary-berry); background: var(--berry-subtle); }
+  .kb-q { font-weight: 700; font-size: .92rem; color: var(--ink-text); }
+  .kb-a { font-size: .86rem; color: #4a4160; white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 6px; line-height: 1.55; }
+  .kb-entry { min-width: 0; }
+  .kb-meta { font-size: .72rem; color: var(--muted); font-weight: 600; margin-top: 8px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .kb-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .66rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; }
+  .kb-chip.learned { background: var(--mint-subtle); color: var(--mint); }
+  .kb-chip.admin { background: var(--berry-subtle); color: var(--primary-berry); }
+  .kb-chip.system { background: #f1eff5; color: #6b6180; }
+  .kb-linkbtn { color: var(--primary-berry); font-weight: 700; text-decoration: none; background: none; border: 0; padding: 0; font-size: .72rem; }
+  .kb-linkbtn:hover { text-decoration: underline; }
+  .kb-linkbtn.danger { color: #be123c; }
+  .kb-also { display: flex; gap: 8px; align-items: flex-start; font-size: .78rem; color: #4a4160; margin-top: 10px; padding: 8px 11px; border-radius: 12px; background: var(--mint-subtle); line-height: 1.5; }
+  .kb-also i { color: var(--mint); margin-top: 2px; }
+  .kb-also.is-waiting { background: #f6f3fb; color: var(--muted); }
+  .kb-also.is-waiting i { color: var(--muted); }
+  .kb-guess { margin-top: 10px; font-size: .78rem; color: #4a4160; }
+  .kb-guess summary { cursor: pointer; font-weight: 700; color: #5b5470; }
+  .kb-guess summary i { color: var(--gold-dark); margin-right: 6px; }
+  .kb-guess ul { margin: 8px 0 6px; padding-left: 20px; line-height: 1.6; }
+  .kb-hit-as { font-size: .74rem; color: var(--muted); }
+
+  .kb-scroll { max-height: 460px; overflow-y: auto; padding-right: 6px; }
+  .kb-system { border-top: 1px solid var(--border-color); padding: 10px 0; }
+  .kb-system:first-of-type { border-top: 0; }
+  .kb-system summary { cursor: pointer; font-size: .86rem; font-weight: 700; color: var(--ink-text); }
+  .kb-system pre { white-space: pre-wrap; font-family: inherit; font-size: .8rem; color: #5b5470; margin: 8px 0 0; }
+
+  .kb-hit { border: 1px solid var(--border-color); border-radius: 14px; padding: 10px 12px; margin-top: 8px; font-size: .82rem; }
+  .kb-hit-score { font-weight: 800; color: var(--primary-berry); }
+  .kb-empty { text-align: center; padding: 26px 16px; color: var(--muted); font-size: .86rem; border: 1px dashed var(--border-color); border-radius: 16px; background: var(--canvas); }
+</style>
+
+<a href="/inbox" class="kb-back d-inline-block mb-3"><i class="bi bi-arrow-left me-1"></i>Back to the inbox</a>
+
+{% include "_flash.html" %}
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <!-- ============ What the admin taught ============ -->
+    <section class="kb-card mb-4" id="live-knowledge-written" data-live-region>
+      <div class="kb-title">Answers you taught the system</div>
+      <div class="kb-sub mb-3">When a candidate asks one of these, the system answers alone: it writes your answer again as a full, friendly email, and sends it only if nothing was added or lost. When a question only looks like one of these, it prepares the answer and asks you to check it.</div>
+      {% for entry in written %}
+      <div class="kb-entry {% if editing and editing.id == entry.id %}is-editing{% endif %}">
+        <div class="kb-q">{{ entry.title }}</div>
+        <div class="kb-a">{{ entry.content }}</div>
+        {% if entry.confirmed_wordings %}
+        <div class="kb-also"><i class="bi bi-check2-circle"></i><span><b>Also answered alone when asked as:</b> {{ entry.confirmed_wordings | join(" · ") }}</span></div>
+        {% endif %}
+        {% if entry.guessed_wordings %}
+        <details class="kb-guess">
+          <summary><i class="bi bi-lightbulb"></i>{{ entry.guessed_wordings | length }} other way{{ 's' if entry.guessed_wordings | length != 1 }} it could be asked</summary>
+          <ul>{% for wording in entry.guessed_wordings %}<li>{{ wording }}</li>{% endfor %}</ul>
+          <div class="kb-sub">The system thought of these itself. For them it prepares the answer and asks you; once you send it, that wording is answered alone.</div>
+        </details>
+        {% elif not entry.wordings_at %}
+        <div class="kb-also is-waiting"><i class="bi bi-hourglass-split"></i><span>The system is thinking of other ways this could be asked (a few minutes).</span></div>
+        {% endif %}
+        <div class="kb-meta">
+          <span class="kb-chip {{ entry.origin }}">{{ "Saved from an answer you sent" if entry.origin == "learned" else "Written here" }}</span>
+          <span>Used {{ entry.use_count or 0 }} time(s)</span>
+          <a class="kb-linkbtn" href="/inbox/knowledge?edit={{ entry.id }}#write">Edit</a>
+          <form method="post" action="/inbox/knowledge/{{ entry.id }}/delete">
+            <button class="kb-linkbtn danger" data-confirm="Remove this answer? The system will ask you again when a candidate asks this.">Remove</button>
+          </form>
+        </div>
+      </div>
+      {% else %}
+      <div class="kb-empty">
+        Nothing yet. Each answer you send to a question from the inbox is added here by itself, and you can write one on the right.
+      </div>
+      {% endfor %}
+    </section>
+
+    <!-- ============ What the system knows by itself ============ -->
+    <section class="kb-card">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+          <div class="kb-title">What the system knows by itself</div>
+          <div class="kb-sub">Built from your programs, curricula, open classes and class settings, and from what 9antra.tn publishes (formations, events, offers, news, feedback); it follows every change.</div>
+        </div>
+        <form method="post" action="/inbox/knowledge/reindex">
+          <button class="btn btn-sm btn-light border rounded-pill fw-semibold"><i class="bi bi-arrow-repeat me-1"></i>Refresh now</button>
+        </form>
+      </div>
+      <div class="mt-3 kb-scroll" id="live-knowledge-system" data-live-region>
+        {% set kind_labels = {"program": "Program", "curriculum": "Curriculum", "class": "Class", "process": "How it works"} %}
+        {% for entry in system %}
+        <details class="kb-system">
+          <summary><span class="kb-chip system me-1">{{ kind_labels.get(entry.kind, entry.kind) }}</span>{{ entry.title }}</summary>
+          <pre>{{ entry.content }}</pre>
+        </details>
+        {% else %}
+        <div class="kb-empty">Nothing indexed yet. Add programs, then press “Refresh now”.</div>
+        {% endfor %}
+      </div>
+      <div class="kb-sub mt-3">The system also reads the writing candidate's own registrations, payments and class. One candidate's data is never used to answer another.</div>
+    </section>
+  </div>
+
+  <div class="col-xl-5">
+    <!-- ============ Write an answer ============ -->
+    <section class="kb-card mb-4" id="write">
+      <div class="kb-title">{{ "Edit this answer" if editing else "Teach a new answer" }}</div>
+      <div class="kb-sub mb-3">Useful for what the system cannot know from its data: payment methods, address, certificates, refund policy…</div>
+      <form method="post" action="/inbox/knowledge/save">
+        <input type="hidden" name="entry_id" value="{{ editing.id if editing else '' }}">
+        <label class="form-label" for="kb-title">Question, as a candidate would ask it</label>
+        <input class="form-control mb-3" id="kb-title" name="title" maxlength="300" required
+               value="{{ editing.title if editing else prefill_question }}" placeholder="Quels sont les moyens de paiement acceptés ?">
+        <label class="form-label" for="kb-content">Answer</label>
+        <textarea class="form-control mb-3" id="kb-content" name="content" rows="6" required
+                  placeholder="Vous pouvez payer par virement bancaire, par D17 ou en espèces à notre centre…">{{ editing.content if editing else '' }}</textarea>
+        <div class="d-flex gap-2">
+          <button class="btn btn-berry rounded-pill px-4">{{ "Save changes" if editing else "Add to the knowledge base" }}</button>
+          {% if editing %}<a class="btn btn-light border rounded-pill fw-semibold" href="/inbox/knowledge">Cancel</a>{% endif %}
+        </div>
+      </form>
+    </section>
+
+    <!-- ============ Test ============ -->
+    <section class="kb-card">
+      <div class="kb-title">Check what the system would find</div>
+      <div class="kb-sub mb-3">Type a question to see which knowledge it would use, and how well it matches. No email is sent.</div>
+      <form id="kb-test-form" class="d-flex gap-2">
+        <input class="form-control form-control-sm" id="kb-test-question" placeholder="Combien coûte la formation DevOps ?" aria-label="Question to test" required minlength="2">
+        <button class="btn btn-sm btn-light border fw-semibold text-nowrap">Search</button>
+      </form>
+      <div id="kb-test-results" aria-live="polite"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const form = document.getElementById("kb-test-form");
+  const results = document.getElementById("kb-test-results");
+  const origins = { system: "from your programs and classes", admin: "written by you", learned: "saved from your answer" };
+
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    results.textContent = "Searching…";
+    try {
+      const response = await fetch("/inbox/knowledge/test", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question: document.getElementById("kb-test-question").value }),
+      });
+      if (!response.ok) throw new Error("The search could not run.");
+      const data = await response.json();
+      results.textContent = "";
+      if (!data.hits.length) { results.textContent = "The knowledge base is empty."; return; }
+      data.hits.forEach(hit => {
+        // Built with textContent: knowledge text is never inserted as HTML.
+        const card = document.createElement("div");
+        card.className = "kb-hit";
+        const head = document.createElement("div");
+        const score = document.createElement("span");
+        score.className = "kb-hit-score";
+        score.textContent = `${hit.score}% `;
+        const name = document.createElement("strong");
+        name.textContent = hit.title;
+        head.append(score, name);
+        const origin = document.createElement("div");
+        origin.className = "text-muted small";
+        origin.textContent = origins[hit.origin] || hit.origin;
+        const excerpt = document.createElement("div");
+        excerpt.className = "mt-1";
+        excerpt.textContent = hit.excerpt;
+        card.append(head, origin);
+        if (hit.wording) {
+          const as = document.createElement("div");
+          as.className = "kb-hit-as";
+          as.textContent = `Recognised as: “${hit.wording}”`;
+          card.append(as);
+        }
+        card.append(excerpt);
+        results.append(card);
+      });
+      const verdict = document.createElement("div");
+      verdict.className = "small fw-semibold mt-2";
+      verdict.textContent = data.verdict;
+      results.append(verdict);
+    } catch (error) {
+      results.textContent = error.message;
+    }
+  });
+})();
+</script>
+{% endblock %}

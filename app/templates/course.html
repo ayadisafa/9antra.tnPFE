@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Course · {{ cls.name }}{% endblock %}
+{% block page_title %}Course and weekly questions{% endblock %}
+{% block live_topics %}course:{{ cls.id }}{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .co-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
+  .co-back:hover { color:var(--primary-berry); }
+  .co-layout { display:grid; grid-template-columns:290px minmax(0, 1fr); gap:18px; align-items:start; }
+  .co-rail { position:sticky; top:calc(var(--stick-top, 0px) + 8px); max-height:calc(100vh - var(--stick-top, 0px) - 24px); overflow:auto; padding:10px; }
+  .co-week { display:flex; gap:10px; align-items:flex-start; padding:10px 11px; border-radius:14px; text-decoration:none; color:inherit; border:1px solid transparent; }
+  .co-week:hover { background:#faf8fd; color:inherit; }
+  .co-week.is-selected { background:var(--berry-subtle); border-color:#f3cfe0; }
+  .co-week-no { width:34px; height:34px; border-radius:11px; display:grid; place-items:center; font-weight:800; font-size:.8rem; background:#f1eff5; color:#5b5670; flex:none; }
+  .co-week.is-current .co-week-no { background:var(--primary-berry); color:#fff; }
+  .co-week.is-past .co-week-no { background:var(--mint-subtle); color:var(--mint); }
+  .co-week-topic { font-size:.8rem; font-weight:700; color:var(--ink-text); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .co-week-meta { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+  .co-week-meta .ui-chip { font-size:.62rem; padding:2px 7px; }
+
+  .co-step { display:flex; align-items:center; gap:10px; }
+  .co-step-no { width:26px; height:26px; border-radius:50%; background:var(--ink-2); color:#fff; font-size:.74rem; font-weight:800; display:grid; place-items:center; flex:none; }
+  .co-drop { border:2px dashed #dcd4ea; border-radius:16px; padding:18px; text-align:center; background:#fbfaff; transition:border-color .15s ease, background .15s ease; }
+  .co-drop.is-over { border-color:var(--primary-berry); background:var(--berry-subtle); }
+  .co-drop strong { display:block; font-size:.9rem; color:var(--ink-text); }
+  .co-drop span { font-size:.76rem; color:var(--muted); }
+  .co-picked { font-size:.78rem; color:var(--ink-text); font-weight:600; margin-top:8px; }
+  .co-progress { height:6px; border-radius:99px; background:#efebf6; overflow:hidden; margin-top:10px; }
+  .co-progress > span { display:block; height:100%; width:0; background:var(--primary-berry); transition:width .2s ease; }
+
+  .co-file { display:flex; gap:12px; align-items:flex-start; padding:12px 0; border-top:1px solid var(--border-color); }
+  .co-file:first-child { border-top:0; }
+  .co-file-ico { width:38px; height:38px; border-radius:12px; background:#f4f1f9; color:#5b5670; display:grid; place-items:center; font-size:1.05rem; flex:none; }
+  .co-file-name { font-weight:700; font-size:.86rem; color:var(--ink-text); text-decoration:none; overflow-wrap:anywhere; }
+  .co-file-name:hover { color:var(--primary-berry); }
+  .co-learned { font-size:.74rem; font-weight:700; display:inline-flex; align-items:center; gap:5px; margin-top:2px; }
+  .co-learned.ok { color:var(--mint); }
+  .co-learned.todo { color:var(--gold-dark); }
+
+  .co-q { border:1px solid var(--border-color); border-radius:16px; padding:14px 16px; margin-top:10px; background:#fff; }
+  .co-q.is-review { border-color:#f1d9a5; background:#fffdf7; }
+  .co-q.is-off { opacity:.6; }
+  .co-q-text { font-weight:700; font-size:.9rem; color:var(--ink-text); line-height:1.4; }
+  .co-q-options { list-style:none; padding:0; margin:9px 0 0; display:grid; gap:5px; }
+  .co-q-options li { font-size:.82rem; color:#5b5670; display:flex; gap:8px; align-items:flex-start; padding:5px 9px; border-radius:9px; background:#faf8fd; }
+  .co-q-options li.is-right { background:var(--mint-subtle); color:#0f5132; font-weight:700; }
+  .co-q-options li i { margin-top:2px; }
+  .co-q-source { font-size:.74rem; color:var(--muted); margin-top:9px; border-left:3px solid #e4ddf0; padding-left:9px; line-height:1.45; }
+  /* The buttons of a question sit on one line; "Correct it" unfolds its form underneath. */
+  .co-q-foot { display:flex; gap:6px; flex-wrap:wrap; align-items:flex-start; margin-top:11px; }
+  .co-q-foot form { margin:0; }
+  .co-q-foot details[open] { flex-basis:100%; order:9; }
+  .co-q summary { list-style:none; cursor:pointer; display:inline-flex; }
+  .co-q summary::-webkit-details-marker { display:none; }
+  .co-edit { border-top:1px dashed #e4ddf0; margin-top:10px; padding-top:12px; }
+  .co-option-row { display:flex; gap:8px; align-items:center; margin-top:6px; }
+  .co-option-row input[type=radio] { accent-color:var(--mint); width:16px; height:16px; flex:none; }
+
+  .co-note { border-radius:14px; padding:11px 13px; font-size:.8rem; line-height:1.5; }
+  .co-note.info { background:var(--sky-subtle); color:#1e3a8a; }
+  .co-note.warn { background:var(--gold-subtle); color:#7c4a03; }
+  .co-note.bad { background:#fff1f2; color:#9f1239; }
+  .co-note a { color:inherit; font-weight:800; }
+  .co-result { display:flex; align-items:center; gap:12px; padding:10px 0; border-top:1px solid var(--border-color); }
+  .co-result:first-child { border-top:0; }
+  .co-result-name { font-weight:700; font-size:.85rem; color:var(--ink-text); text-decoration:none; }
+  .co-result-name:hover { color:var(--primary-berry); }
+  .co-hard { font-size:.8rem; color:#5b5670; padding:7px 0; border-top:1px dashed #e4ddf0; }
+  @media (max-width: 991px) { .co-layout { grid-template-columns:1fr; } .co-rail { position:static; max-height:260px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-2">
+  {% if is_admin %}<a href="/classes/{{ cls.id }}" class="co-back"><i class="bi bi-arrow-left me-1"></i>{{ cls.name }}</a>
+  {% else %}<a href="/teacher" class="co-back"><i class="bi bi-arrow-left me-1"></i>My classes</a>{% endif %}
+</div>
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div class="d-flex align-items-center gap-3">
+    {% if program_icon %}{{ ui.program_icon(program_icon, 52) }}{% endif %}
+    <div>
+      <h2>{{ cls.name }}</h2>
+      <p>{{ cls.program.name if cls.program else "Class" }} · {{ summary.enrolled }} candidate{{ 's' if summary.enrolled != 1 }}{% if cls.professor_name %} · {{ cls.professor_name }}{% endif %}{% if cls.status.value == 'ongoing' %} · week {{ summary.current_week }} of {{ summary.total_weeks }}{% endif %}</p>
+    </div>
+  </div>
+  <form method="post" action="/classes/{{ cls.id }}/course/settings" class="ui-actions" id="course-settings">
+    <input type="hidden" name="week" value="{{ selected }}">
+    <div class="ui-field">
+      <label for="co-count">Questions per candidate</label>
+      <input class="form-control form-control-sm" id="co-count" name="weekly_questions_count" type="number" min="1" max="20" value="{{ per_candidate }}" style="width:92px;">
+    </div>
+    <div class="ui-field">
+      <label for="co-mode">Sending</label>
+      <select class="form-select form-select-sm" id="co-mode" name="weekly_questions_mode" style="min-width:230px;">
+        <option value="manual" {{ 'selected' if mode != 'auto' }}>When I press Send</option>
+        <option value="auto" {{ 'selected' if mode == 'auto' }}>By itself, after each week's session</option>
+      </select>
+    </div>
+    <button class="ui-btn sm" style="align-self:flex-end;">Save</button>
+  </form>
+</div>
+
+{% if public_url_local and not forms.ready %}
+<div class="co-note warn mb-3">
+  <i class="bi bi-exclamation-triangle me-1"></i>
+  Candidates cannot open their questions yet: the links in emails start with <strong>{{ public_url }}</strong>, which only works on this computer.
+  {% if is_admin %}<a href="/settings#address">Set the address candidates can reach</a>.{% else %}Tell the admin: the address is set in Settings.{% endif %}
+</div>
+{% endif %}
+
+<div class="co-layout">
+
+  <!-- Weeks -->
+  <nav class="ui-card co-rail" id="live-course-weeks" data-live-region aria-label="Weeks of the class">
+    {% for item in weeks %}
+    <a class="co-week {{ 'is-selected' if item.is_selected }} {{ 'is-current' if item.is_current }} {{ 'is-past' if item.is_past and not item.is_current }}"
+       href="/classes/{{ cls.id }}/course?week={{ item.number }}" {% if item.is_selected %}aria-current="page"{% endif %}>
+      <span class="co-week-no">{{ item.number }}</span>
+      <span style="min-width:0;">
+        <span class="co-week-topic">{{ item.topic or ("Week " ~ item.number) }}</span>
+        <span class="co-week-meta">
+          {% if item.is_current %}<span class="ui-chip brand">This week</span>{% endif %}
+          {% if item.files %}<span class="ui-chip"><i class="bi bi-paperclip"></i>{{ item.files }}</span>{% elif item.has_notes %}<span class="ui-chip"><i class="bi bi-pencil"></i>notes</span>{% endif %}
+          {% if item.status in ('queued', 'queued_more', 'writing') %}<span class="ui-chip info"><span class="ui-spin" style="width:9px;height:9px;border-width:1.5px;"></span>writing</span>
+          {% elif item.ready %}<span class="ui-chip ok">{{ item.ready }} ready</span>{% endif %}
+          {% if item.review %}<span class="ui-chip warn">{{ item.review }} to check</span>{% endif %}
+          {% if item.sent %}<span class="ui-chip {{ item.level.tone if item.average is not none else 'muted' }}"><i class="bi bi-send-check"></i>{{ (item.average | round | int ~ '%') if item.average is not none else 'sent' }}</span>{% endif %}
+        </span>
+      </span>
+    </a>
+    {% endfor %}
+  </nav>
+
+  <div>
+    <!-- 1. The course -->
+    <section class="ui-card mb-3">
+      <div class="ui-card-head">
+        <div>
+          <div class="co-step"><span class="co-step-no">1</span><div class="ui-card-title">Week {{ selected }}{% if topic %} · {{ topic }}{% endif %}</div></div>
+          <div class="ui-card-sub mt-1">Add what was taught this week. The system reads it and writes the questions from it, nothing else.</div>
+        </div>
+      </div>
+
+      <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/files" enctype="multipart/form-data" id="uploadForm">
+        <label class="co-drop d-block" id="dropZone" for="courseFiles">
+          <i class="bi bi-cloud-arrow-up" style="font-size:1.6rem; color:var(--primary-berry);"></i>
+          <strong>Drop the week's files here, or click to choose</strong>
+          <span>PDF, Word, PowerPoint or text (read by the system) · photos, videos up to {{ max_video_mb }} MB and recordings (kept with the week)</span>
+          <input type="file" name="files" id="courseFiles" multiple accept="{{ accept }}" class="visually-hidden">
+          <div class="co-picked d-none" id="pickedFiles"></div>
+        </label>
+        <div class="d-none mt-2" id="uploadExtras">
+          <div class="ui-field">
+            <label for="uploadNote">What do these files show? <span class="fw-normal">(needed for photos, videos and recordings: the system cannot watch or listen)</span></label>
+            <textarea class="form-control" id="uploadNote" name="note" rows="2" placeholder="For example: recording of the session on Docker volumes — why containers lose their data, named volumes vs bind mounts, the docker volume commands."></textarea>
+          </div>
+          <div class="co-progress d-none" id="uploadProgress"><span></span></div>
+          <div class="d-flex gap-2 align-items-center mt-2">
+            <button class="ui-btn primary" type="submit" id="uploadBtn"><i class="bi bi-upload"></i>Add to week {{ selected }}</button>
+            <span class="ui-card-sub" id="uploadStatus"></span>
+          </div>
+        </div>
+      </form>
+
+      <div id="live-course-files" data-live-region class="mt-3">
+        {% for item in materials %}
+        <div class="co-file">
+          <div class="co-file-ico"><i class="bi {{ item.icon }}"></i></div>
+          <div class="flex-grow-1" style="min-width:0;">
+            <a class="co-file-name" href="{{ item.url }}" target="_blank" rel="noopener">{{ item.file.filename }}</a>
+            <span class="ui-card-sub ms-1">{{ item.size }}</span>
+            <div class="co-learned {{ item.learned.tone }}"><i class="bi {{ 'bi-check2-circle' if item.learned.tone == 'ok' else 'bi-pencil-square' }}"></i>{{ item.learned.text }}</div>
+            <form method="post" action="/classes/{{ cls.id }}/course/files/{{ item.file.id }}/note" class="d-flex gap-2 mt-2">
+              <input class="form-control form-control-sm" name="note" value="{{ item.file.note or '' }}" placeholder="A few lines about what this file shows" aria-label="Note about {{ item.file.filename }}" style="border-radius:10px;">
+              <button class="ui-btn sm text-nowrap">Save note</button>
+            </form>
+          </div>
+          <form method="post" action="/classes/{{ cls.id }}/course/files/{{ item.file.id }}/delete" data-confirm="Remove “{{ item.file.filename }}” from week {{ selected }}?">
+            <button class="ui-btn ghost sm icon danger" title="Remove this file" aria-label="Remove {{ item.file.filename }}"><i class="bi bi-trash3"></i></button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+
+      <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/notes" class="ui-field mt-3">
+        <label for="weekNotes">Your notes for the week <span class="fw-normal">(optional: what was covered, in your own words; the system learns from them too)</span></label>
+        <textarea class="form-control" id="weekNotes" name="notes" rows="{{ 5 if week and week.notes else 3 }}" placeholder="No file? Write here what was covered this week: the main ideas, the steps, the tools, the mistakes to avoid.">{{ week.notes if week and week.notes else '' }}</textarea>
+        <button class="ui-btn sm mt-2">Save notes</button>
+      </form>
+    </section>
+
+    <!-- 2. The questions -->
+    <section class="ui-card mb-3" id="questions">
+      <div id="live-course-questions" data-live-region>
+        <div class="ui-card-head">
+          <div>
+            <div class="co-step"><span class="co-step-no">2</span><div class="ui-card-title">Questions</div>
+              {% if counts.ready %}<span class="ui-chip ok">{{ counts.ready }} ready</span>{% endif %}
+              {% if counts.review %}<span class="ui-chip warn">{{ counts.review }} to check</span>{% endif %}
+            </div>
+            <div class="ui-card-sub mt-1">Each candidate gets {{ per_candidate }} of the ready questions, not all the same ones. A question the system could not confirm against the course waits for you and is never sent.</div>
+          </div>
+          <div class="ui-actions">
+            {% set status = week.questions_status if week else 'idle' %}
+            {% if status in ('queued', 'queued_more', 'writing') %}
+            <span class="ui-chip info"><span class="ui-spin"></span>{{ 'Writing now' if status == 'writing' else 'Waiting to be written' }}</span>
+            {% elif can_learn %}
+              {% if questions %}
+              <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/questions/write" class="m-0"><input type="hidden" name="mode" value="more"><button class="ui-btn sm"><i class="bi bi-plus-lg"></i>Write more</button></form>
+              <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/questions/write" class="m-0" data-confirm="Replace the questions the system wrote for week {{ selected }}? The ones you wrote or corrected are kept."><input type="hidden" name="mode" value="fresh"><button class="ui-btn ghost sm"><i class="bi bi-arrow-repeat"></i>Start again</button></form>
+              {% else %}
+              <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/questions/write" class="m-0"><button class="ui-btn primary sm"><i class="bi bi-stars"></i>Write the questions</button></form>
+              {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        {% if status in ('queued', 'queued_more', 'writing') %}
+        <div class="co-note info"><i class="bi bi-hourglass-split me-1"></i>The system is reading the course and writing questions. On this computer it takes a few minutes per file; the questions appear here by themselves.</div>
+        {% elif week and week.questions_note %}
+        <div class="co-note {{ 'bad' if status == 'failed' else 'warn' }}"><i class="bi bi-info-circle me-1"></i>{{ week.questions_note }}</div>
+        {% elif not questions and not can_learn %}
+        <div class="ui-empty"><i class="bi bi-patch-question"></i><strong>No question yet</strong>Add a course file above, or a few lines of notes, and the questions are written from them.</div>
+        {% endif %}
+        {% if not model_ready and can_learn %}
+        <div class="co-note warn mt-2"><i class="bi bi-exclamation-triangle me-1"></i>The assistant is not answering, so the system cannot write questions right now. You can still add your own below.</div>
+        {% endif %}
+
+        {% if counts.review %}
+        <div class="d-flex justify-content-between align-items-center mt-3 gap-2 flex-wrap">
+          <span class="ui-card-sub">{{ counts.review }} question{{ 's' if counts.review != 1 }} could not be confirmed against the course. Read them: they may be right.</span>
+          <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/questions/approve-all" class="m-0" data-confirm="Mark the {{ counts.review }} question(s) as ready without changing them?">
+            <button class="ui-btn sm">I checked them: all ready</button>
+          </form>
+        </div>
+        {% endif %}
+
+        {% for q in questions %}
+        <div class="co-q {{ 'is-review' if q.status == 'review' }} {{ 'is-off' if q.status == 'off' }}">
+          <div class="d-flex justify-content-between align-items-start gap-2">
+            <div class="co-q-text">{{ q.question }}</div>
+            {% if q.status == 'ready' %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Ready</span>
+            {% elif q.status == 'review' %}<span class="ui-chip warn">To check</span>
+            {% else %}<span class="ui-chip muted">Set aside</span>{% endif %}
+          </div>
+          <ul class="co-q-options">
+            {% for option in q.choices %}
+            <li class="{{ 'is-right' if loop.index0 == q.correct_answer }}"><i class="bi {{ 'bi-check-circle-fill' if loop.index0 == q.correct_answer else 'bi-circle' }}"></i><span>{{ option }}</span></li>
+            {% endfor %}
+          </ul>
+          {% if q.status == 'review' and q.review_reason %}
+          <div class="co-note warn mt-2 py-2"><i class="bi bi-exclamation-triangle me-1"></i>{{ q.review_reason }}.</div>
+          {% endif %}
+          {% if q.source_excerpt %}
+          <div class="co-q-source">From {{ q.source_name or "the course" }}: “{{ q.source_excerpt }}”</div>
+          {% elif q.author == 'admin' %}
+          <div class="co-q-source">Written or corrected by you.</div>
+          {% endif %}
+
+          <div class="co-q-foot">
+            {% if q.status != 'ready' %}
+            <form method="post" action="/classes/{{ cls.id }}/course/questions/{{ q.id }}/status"><input type="hidden" name="status" value="ready"><button class="ui-btn good sm"><i class="bi bi-check2"></i>{{ 'It is right: ready' if q.status == 'review' else 'Use it again' }}</button></form>
+            {% endif %}
+            {% if q.status != 'off' %}
+            <form method="post" action="/classes/{{ cls.id }}/course/questions/{{ q.id }}/status"><input type="hidden" name="status" value="off"><button class="ui-btn ghost sm">Set aside</button></form>
+            {% endif %}
+            <form method="post" action="/classes/{{ cls.id }}/course/questions/{{ q.id }}/delete" data-confirm="Delete this question?"><button class="ui-btn ghost sm danger"><i class="bi bi-trash3"></i>Delete</button></form>
+          <details>
+            <summary><span class="ui-btn ghost sm"><i class="bi bi-pencil"></i>Correct it</span></summary>
+            <form method="post" action="/classes/{{ cls.id }}/course/questions/{{ q.id }}/save" class="co-edit">
+              <div class="ui-field"><label for="q-{{ q.id }}">Question</label><textarea class="form-control form-control-sm" id="q-{{ q.id }}" name="question" rows="2" required>{{ q.question }}</textarea></div>
+              <div class="ui-field mt-2">
+                <label>Answers <span class="fw-normal">(select the correct one)</span></label>
+                {% for index in range(4 if q.choices | length <= 4 else 5) %}
+                <div class="co-option-row">
+                  <input type="radio" name="correct" value="{{ index }}" {{ 'checked' if index == q.correct_answer }} aria-label="Answer {{ index + 1 }} is the correct one" required>
+                  <input class="form-control form-control-sm" name="option_{{ index }}" value="{{ q.choices[index] if index < q.choices | length else '' }}" aria-label="Answer {{ index + 1 }}">
+                </div>
+                {% endfor %}
+              </div>
+              <div class="ui-field mt-2"><label for="e-{{ q.id }}">Shown after answering <span class="fw-normal">(optional)</span></label><input class="form-control form-control-sm" id="e-{{ q.id }}" name="explanation" value="{{ q.explanation or '' }}"></div>
+              <button class="ui-btn primary sm mt-2">Save: it becomes ready</button>
+            </form>
+          </details>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <details class="mt-3" id="addQuestion">
+        <summary style="list-style:none; cursor:pointer; display:inline-flex;"><span class="ui-btn soft sm"><i class="bi bi-plus-lg"></i>Add your own question</span></summary>
+        <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/questions/add" class="co-edit">
+          <div class="ui-field"><label for="newQuestion">Question</label><textarea class="form-control form-control-sm" id="newQuestion" name="question" rows="2" required></textarea></div>
+          <div class="ui-field mt-2">
+            <label>Answers <span class="fw-normal">(select the correct one; leave unused lines empty)</span></label>
+            {% for index in range(4) %}
+            <div class="co-option-row">
+              <input type="radio" name="correct" value="{{ index }}" aria-label="Answer {{ index + 1 }} is the correct one" required>
+              <input class="form-control form-control-sm" name="option_{{ index }}" aria-label="Answer {{ index + 1 }}" {{ 'required' if index < 2 }}>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="ui-field mt-2"><label for="newExplanation">Shown after answering <span class="fw-normal">(optional)</span></label><input class="form-control form-control-sm" id="newExplanation" name="explanation"></div>
+          <button class="ui-btn primary sm mt-2">Add the question</button>
+        </form>
+      </details>
+    </section>
+
+    <!-- 3. Sending and results -->
+    <section class="ui-card" id="send">
+      <div id="live-course-results" data-live-region>
+        <div class="ui-card-head">
+          <div>
+            <div class="co-step"><span class="co-step-no">3</span><div class="ui-card-title">Candidates' answers</div>
+              {% if results.average is not none %}{{ ui.level_chip(results.level, results.average) }}{% endif %}
+            </div>
+            <div class="ui-card-sub mt-1">
+              {% if sent_local %}Sent {{ sent_local.strftime('%d %b %Y at %H:%M') }} · {{ results.answered }} of {{ results.sent }} answered.
+              {% elif mode == 'auto' %}Will be sent by the system once the week's session is over{{ ' (it is over: next check within 10 minutes)' if week_over and counts.ready else '' }}.
+              {% else %}Not sent yet. Each of the {{ members | length }} candidate{{ 's' if members | length != 1 }} gets a private link by email.{% endif %}
+            </div>
+          </div>
+          <div class="ui-actions">
+            {% set unsent = (members | length) - results.sent %}
+            {% if counts.ready and members and unsent > 0 %}
+            <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/send" class="m-0"
+                  data-confirm="Send week {{ selected }}'s questions to {{ unsent }} candidate(s) of {{ cls.name }} now?{{ '' if week_over else ' The week is not over yet.' }}">
+              <button class="ui-btn primary" {{ 'disabled' if not smtp_ready }}><i class="bi bi-send"></i>Send to {{ unsent }} candidate{{ 's' if unsent != 1 }}</button>
+            </form>
+            {% endif %}
+            {% if results.sent and results.sent > results.answered %}
+            <form method="post" action="/classes/{{ cls.id }}/course/{{ selected }}/send" class="m-0"
+                  data-confirm="Send the questions again to the {{ results.sent - results.answered }} candidate(s) who have not answered?">
+              <input type="hidden" name="remind" value="1">
+              <button class="ui-btn sm" {{ 'disabled' if not smtp_ready }}><i class="bi bi-bell"></i>Remind {{ results.sent - results.answered }}</button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+
+        {# The road the answers take. #}
+        <div class="d-flex align-items-center gap-2 flex-wrap mb-3" style="font-size:.76rem; font-weight:700; color:#5b5670;">
+          {% if forms.ready or week_form and week_form.id %}
+          <span class="ui-chip ok"><i class="bi bi-ui-checks"></i>Google Form</span><i class="bi bi-arrow-right"></i>
+          <span class="ui-chip {{ 'ok' if forms.firebase else 'bad' }}"><i class="bi bi-fire"></i>Firebase</span><i class="bi bi-arrow-right"></i>
+          <span class="ui-chip ok"><i class="bi bi-house-check"></i>Here</span>
+          {% if week_form and week_form.id %}<a class="ui-link ms-1" href="{{ week_form.url }}" target="_blank" rel="noopener">Open this week's form</a>{% endif %}
+          {% else %}
+          <span class="ui-chip info"><i class="bi bi-link-45deg"></i>Private page of this application</span>
+          <span style="font-weight:600;">Candidates answer on their own private link.{% if is_admin %} <a class="ui-link" href="/settings#google">Use Google Forms and Firebase instead</a>{% endif %}</span>
+          {% endif %}
+        </div>
+        {% if week_form and week_form.error %}<div class="co-note warn mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Google Form: {{ week_form.error }} Candidates use the application's own page for this week.</div>{% endif %}
+        {% if week_form and week_form.unmatched %}<div class="co-note warn mb-2"><i class="bi bi-person-question me-1"></i>{{ week_form.unmatched | length }} answer{{ 's' if week_form.unmatched | length != 1 }} came from an address that is not in this class: {{ week_form.unmatched | map(attribute='email') | join(', ') }}.</div>{% endif %}
+
+        {% if not smtp_ready %}
+        <div class="co-note warn mb-2"><i class="bi bi-exclamation-triangle me-1"></i>Email is not configured, so questions cannot be sent.{% if is_admin %} <a href="/settings#email">See Settings</a>.{% endif %}</div>
+        {% endif %}
+        {% if not members %}
+        <div class="ui-empty"><i class="bi bi-people"></i><strong>No candidate in this class yet</strong>Questions are sent to the candidates enrolled in the class.</div>
+        {% elif not counts.ready and not results.rows %}
+        <div class="ui-empty"><i class="bi bi-send"></i><strong>Nothing to send yet</strong>Questions can be sent as soon as at least one is ready.</div>
+        {% endif %}
+
+        {% for row in results.rows %}
+        <div class="co-result">
+          {{ ui.avatar(row.name, 36) }}
+          <div class="flex-grow-1" style="min-width:0;">
+            {% if row.candidate and is_admin %}<a class="co-result-name" href="/candidate/{{ row.candidate.id }}">{{ row.name }}</a>{% else %}<span class="co-result-name">{{ row.name }}</span>{% endif %}
+            <div class="ui-card-sub">
+              {% if row.done %}{{ row.right }} of {{ row.total }} correct{% if row.quiz.answer_source == 'google_form' %} · through the Google Form{% endif %}
+              {% elif row.sent %}Received {{ row.total }} questions, no answer yet
+              {% else %}The email was not delivered{% endif %}
+            </div>
+          </div>
+          {% if row.done %}
+          <div style="width:120px;" class="d-none d-sm-block"><div class="ui-bar {{ 'is-full' if row.score >= 80 else ('is-low' if row.score < 50 else '') }}"><span style="width:{{ row.score }}%;"></span></div></div>
+          {{ ui.level_chip(row.level, row.score) }}
+          {% elif row.sent %}<span class="ui-chip muted">Waiting</span>
+          {% else %}<span class="ui-chip bad">Not delivered</span>{% endif %}
+        </div>
+        {% endfor %}
+
+        {% if results.hardest %}
+        <div class="mt-3">
+          <div class="ui-card-title" style="font-size:.86rem;"><i class="bi bi-life-preserver"></i>What to go over again</div>
+          {% for item in results.hardest %}
+          <div class="co-hard"><strong>{{ item.wrong }} of {{ item.asked }}</strong> got this wrong: {{ item.question }}</div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if results.sent %}{% include "_week_feelings.html" %}{% endif %}
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+{% if not is_admin %}
+// A professor's page has no live connection: while questions are being
+// written it looks again by itself, unless something is being typed.
+(() => {
+  if (!document.querySelector("#live-course-questions .ui-spin")) return;
+  window.setTimeout(() => {
+    const typing = document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName);
+    if (!typing && !document.querySelector("[data-live-dirty]")) window.location.reload();
+  }, 25000);
+})();
+{% endif %}
+(() => {
+  const form = document.getElementById("uploadForm");
+  const input = document.getElementById("courseFiles");
+  const zone = document.getElementById("dropZone");
+  const picked = document.getElementById("pickedFiles");
+  const extras = document.getElementById("uploadExtras");
+  const progress = document.getElementById("uploadProgress");
+  const status = document.getElementById("uploadStatus");
+  const button = document.getElementById("uploadBtn");
+  const size = bytes => bytes < 1048576 ? `${Math.max(1, Math.round(bytes / 1024))} KB` : `${(bytes / 1048576).toFixed(1)} MB`;
+
+  function showPicked() {
+    const files = [...input.files];
+    picked.classList.toggle("d-none", !files.length);
+    extras.classList.toggle("d-none", !files.length);
+    picked.textContent = files.map(file => `${file.name} (${size(file.size)})`).join(" · ");
+  }
+  input.addEventListener("change", showPicked);
+  ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("is-over"); }));
+  ["dragleave", "drop"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.remove("is-over"); }));
+  zone.addEventListener("drop", event => {
+    if (!event.dataTransfer || !event.dataTransfer.files.length) return;
+    input.files = event.dataTransfer.files;
+    showPicked();
+  });
+
+  // Sent in the background so a long video shows how far it is.
+  form.addEventListener("submit", event => {
+    if (!input.files.length || !window.XMLHttpRequest) return;
+    event.preventDefault();
+    const request = new XMLHttpRequest();
+    request.open("POST", form.action);
+    request.setRequestHeader("X-Requested-With", "fetch");
+    request.responseType = "json";
+    button.disabled = true;
+    progress.classList.remove("d-none");
+    request.upload.addEventListener("progress", progressEvent => {
+      if (!progressEvent.lengthComputable) return;
+      const percent = Math.round(progressEvent.loaded / progressEvent.total * 100);
+      progress.firstElementChild.style.width = percent + "%";
+      status.textContent = percent < 100 ? `Sending… ${percent}%` : "Reading the files…";
+    });
+    const failed = message => {
+      button.disabled = false;
+      progress.classList.add("d-none");
+      status.textContent = message;
+    };
+    request.addEventListener("load", () => {
+      if (request.status >= 200 && request.status < 300 && request.response && request.response.url) {
+        window.location.href = request.response.url;
+      } else {
+        failed(request.status === 413 ? "These files are too large for the server." : "The files could not be added. Try again.");
+      }
+    });
+    request.addEventListener("error", () => failed("The connection was lost while sending. Try again."));
+    request.send(new FormData(form));
+  });
+})();
+</script>
+{% endblock %}

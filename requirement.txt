@@ -1,0 +1,38 @@
+# The Python libraries the application needs (Python 3.11).
+# Install them with:   pip install -r requirement.txt
+# The versions are the ones the application runs with on the centre's PC (15 October 2026).
+#
+# Also needed, outside Python:
+#   - Ollama (https://ollama.com) with the model llama3.2:   ollama pull llama3.2
+#   - Windows 10 or 11, for reading the website's feedback pictures (Windows' own text reader)
+
+# Web application
+fastapi==0.140.13
+uvicorn==0.52.0
+jinja2==3.1.6
+python-multipart==0.0.32
+pydantic==2.12.5
+python-dotenv==1.2.2
+
+# Database
+SQLAlchemy==2.0.23
+
+# Automatic work
+APScheduler==3.10.4
+
+# PDF documents and pictures
+reportlab==5.0.1
+pypdf==6.14.2
+pillow==12.3.0
+
+# The assistants: local model, meaning search, text comparison
+# (sentence-transformers also installs PyTorch, a large download)
+ollama==0.6.3
+sentence-transformers==5.7.0
+RapidFuzz==3.14.5
+
+# Outside services: website, job boards, icons, Firebase, Google Forms
+requests==2.33.1
+httpx==0.28.1
+firebase-admin==6.2.0
+google-auth==2.56.2

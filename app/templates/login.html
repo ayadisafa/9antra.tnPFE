@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{{ ("Set up " if mode == "setup" else "Sign in · ") ~ (app_name or "9antra") }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    :root { --primary-berry:#a42c67; --berry-dark:#8b2355; --berry-subtle:#fdf2f7; --accent-gold-dark:#d97706; --ink:#211433; --ink-2:#2b1d49; --ink-3:#3c2a60; --ink-text:#241a38; --muted:#85809c; --border-color:#eee9f5; --canvas:#f6f3fb; }
+  </style>
+  {% if theme_css %}<style>{{ theme_css | safe }}</style>{% endif %}
+  <style>
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; font-family:'Plus Jakarta Sans', 'Segoe UI', sans-serif; color:var(--ink-text); background:var(--canvas); display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); }
+    .side { position:relative; overflow:hidden; padding:48px; color:#fff; display:flex; flex-direction:column; justify-content:space-between; background:linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 55%, var(--ink-3) 100%); }
+    .side::before, .side::after { content:""; position:absolute; border-radius:50%; filter:blur(70px); pointer-events:none; }
+    .side::before { width:320px; height:320px; background:var(--primary-berry); top:-90px; right:-100px; opacity:.45; }
+    .side::after { width:300px; height:300px; background:var(--accent-gold-dark); bottom:-80px; left:-110px; opacity:.28; }
+    .side > * { position:relative; z-index:1; }
+    .brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.25rem; }
+    .brand span { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; font-size:1.25rem; background:linear-gradient(135deg, var(--accent-gold-dark), var(--primary-berry)); box-shadow:0 10px 22px -8px rgba(0,0,0,.6); }
+    .side h1 { font-size:2.1rem; line-height:1.15; font-weight:800; letter-spacing:-.02em; margin:0 0 14px; max-width:460px; }
+    .side p { color:rgba(255,255,255,.72); font-size:.98rem; line-height:1.6; max-width:430px; margin:0; }
+    .points { list-style:none; padding:0; margin:26px 0 0; display:grid; gap:12px; }
+    .points li { display:flex; gap:12px; align-items:center; color:rgba(255,255,255,.86); font-size:.92rem; font-weight:600; }
+    .points i { width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.12); display:grid; place-items:center; flex:none; }
+    .side small { color:rgba(255,255,255,.45); font-size:.78rem; }
+    .main { display:grid; place-items:center; padding:32px 20px; }
+    .card { width:100%; max-width:420px; background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:34px 32px; box-shadow:0 30px 60px -36px rgba(36,26,56,.45); }
+    .card h2 { font-size:1.45rem; font-weight:800; margin:0 0 6px; letter-spacing:-.01em; }
+    .card .lead { color:var(--muted); font-size:.9rem; margin:0 0 22px; line-height:1.5; }
+    label { display:block; font-size:.78rem; font-weight:700; color:#5b5670; margin:14px 0 5px; }
+    .field { position:relative; }
+    .field i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#a79fbd; }
+    input { width:100%; border:1.5px solid var(--border-color); border-radius:13px; padding:12px 14px 12px 40px; font:inherit; font-size:.93rem; color:var(--ink-text); background:#fff; }
+    input:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 4px color-mix(in srgb, var(--primary-berry) 14%, transparent); }
+    .hint { font-size:.74rem; color:var(--muted); margin-top:5px; }
+    button { margin-top:22px; width:100%; border:0; border-radius:13px; padding:13px 18px; font:inherit; font-weight:800; font-size:.95rem; color:#fff; background:var(--primary-berry); cursor:pointer; transition:background .15s ease, transform .1s ease; }
+    button:hover { background:var(--berry-dark); }
+    button:active { transform:scale(.99); }
+    button:focus-visible { outline:2px solid var(--primary-berry); outline-offset:3px; }
+    .error { background:#fff1f2; color:#9f1239; border-radius:12px; padding:11px 13px; font-size:.86rem; font-weight:600; margin-bottom:6px; display:flex; gap:8px; }
+    .foot { margin-top:18px; font-size:.78rem; color:var(--muted); text-align:center; line-height:1.5; }
+    @media (max-width: 860px) { body { grid-template-columns:1fr; } .side { display:none; } }
+    @media (prefers-reduced-motion: reduce) { button { transition:none; } }
+  </style>
+</head>
+<body>
+  <section class="side" aria-hidden="true">
+    <div class="brand"><img src="/static/brand/icon-192.png" alt="" width="46" height="46" style="border-radius:50%; background:#fff;" data-fallback="🎓" onerror="this.outerHTML='<span>'+this.dataset.fallback+'</span>'">{{ app_name or '9antra' }}</div>
+    <div>
+      <h1>{{ "Welcome. Let's set up your training centre." if mode == "setup" else "Your training centre, in one place." }}</h1>
+      <p>Candidates, payments, classes, courses and emails, with the next thing to do always in front of you.</p>
+      <ul class="points">
+        <li><i class="bi bi-shield-lock"></i>Only people with an account can open the application</li>
+        <li><i class="bi bi-person-badge"></i>Each professor sees only their own classes</li>
+        <li><i class="bi bi-link-45deg"></i>Candidates answer their questions with a private link, no account needed</li>
+      </ul>
+    </div>
+    <small>{{ app_name or '9antra' }} · training management</small>
+  </section>
+
+  <main class="main">
+    {% if mode == "setup" %}
+    <form class="card" method="post" action="/setup" autocomplete="off">
+      <h2>Create the admin account</h2>
+      <p class="lead">This is done once. The account you create here can see and change everything, and can give professors their own access.</p>
+      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>{% endif %}
+      <label for="name">Your name</label>
+      <div class="field"><i class="bi bi-person"></i><input id="name" name="name" value="{{ values.name or '' }}" required autofocus></div>
+      <label for="email">Email address</label>
+      <div class="field"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" value="{{ values.email or '' }}" required autocomplete="username"></div>
+      <div class="hint">You will sign in with it.</div>
+      <label for="password">Password</label>
+      <div class="field"><i class="bi bi-lock"></i><input id="password" name="password" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
+      <div class="hint">At least {{ min_password }} characters.</div>
+      <label for="confirmation">The same password again</label>
+      <div class="field"><i class="bi bi-lock"></i><input id="confirmation" name="confirmation" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
+      <button type="submit">Create my account and enter</button>
+    </form>
+    {% else %}
+    <form class="card" method="post" action="/login">
+      <h2>Sign in</h2>
+      <p class="lead">Admin and professors sign in here.</p>
+      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>{% endif %}
+      <input type="hidden" name="next" value="{{ next }}" style="display:none;">
+      <label for="email">Email address</label>
+      <div class="field"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" value="{{ values.email or '' }}" required autofocus autocomplete="username"></div>
+      <label for="password">Password</label>
+      <div class="field"><i class="bi bi-lock"></i><input id="password" name="password" type="password" required autocomplete="current-password"></div>
+      <button type="submit">Sign in</button>
+      <div class="foot">Forgot your password? The admin can give you a new one from the Professors page.</div>
+    </form>
+    {% endif %}
+  </main>
+</body>
+</html>

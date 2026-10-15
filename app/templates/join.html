@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>Votre séance · {{ app_name or '9antra' }}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --ink-2:#2b1d49; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; --gold:#b45309; --gold-soft:#fef3c7; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:560px; margin:0 auto; padding:22px 14px 56px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:16px; }
+    .brand span { width:34px; height:34px; border-radius:11px; background:var(--berry); color:#fff; display:grid; place-items:center; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:26px; padding:30px clamp(18px, 5vw, 34px); text-align:center; box-shadow:0 26px 50px -34px rgba(36,26,56,.4); }
+    .art { width:132px; margin:0 auto 4px; display:block; }
+    .art .ring { animation:ring 2.2s ease-out infinite; transform-origin:center; transform-box:fill-box; }
+    @keyframes ring { 0% { transform:scale(.7); opacity:.7; } 100% { transform:scale(1.25); opacity:0; } }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 12px; border-radius:999px; }
+    h1 { font-size:1.45rem; line-height:1.25; margin:14px 0 8px; letter-spacing:-.01em; }
+    p { color:var(--muted); font-size:.95rem; margin:0 auto; max-width:420px; }
+    .when { display:inline-flex; gap:8px; align-items:center; margin-top:16px; background:#faf8fd; border-radius:14px; padding:10px 16px; font-weight:700; font-size:.92rem; }
+    .go { display:inline-block; margin-top:22px; border-radius:16px; padding:15px 28px; font-weight:800; font-size:1.05rem; color:#fff; background:var(--berry); text-decoration:none; }
+    .go:hover { background:var(--berry-dark); }
+    .go:focus-visible { outline:2px solid var(--berry); outline-offset:3px; }
+    .small { font-size:.82rem; margin-top:16px; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+    @media (prefers-reduced-motion: reduce) { .art .ring { animation:none; opacity:.25; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="/static/brand/icon-64.png" alt="" width="34" height="34" style="border-radius:50%;" data-fallback="9" onerror="this.outerHTML='<span>'+this.dataset.fallback+'</span>'">{{ app_name or '9antra' }}</div>
+  <div class="card">
+    <svg class="art" viewBox="0 0 160 120" aria-hidden="true">
+      <circle class="ring" cx="80" cy="60" r="46" fill="none" stroke="#a42c67" stroke-width="3"/>
+      <rect x="34" y="30" width="70" height="60" rx="14" fill="#a42c67"/>
+      <path d="M108 50l22-13v46l-22-13z" fill="#2b1d49"/>
+      <circle cx="58" cy="54" r="9" fill="#fff"/><path d="M42 80c2-12 30-12 32 0z" fill="#fff"/>
+    </svg>
+
+    {% if state == 'open' %}
+    <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
+    <h1>Votre séance vous attend</h1>
+    <p>{{ session.topic or 'Séance' }}. Votre arrivée est notée : il ne reste qu'à entrer.</p>
+    <div class="when">📅 {{ day | capitalize }}{% if timed %} · {{ start.strftime('%H:%M') }}{% endif %}</div>
+    <div><a class="go" href="{{ url }}" rel="noopener noreferrer" id="go">Entrer dans la séance</a></div>
+    <p class="small">Ce lien est le vôtre : il note votre présence. Merci de ne pas le transmettre.</p>
+
+    {% elif state == 'early' %}
+    <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
+    <h1>C'est un peu tôt</h1>
+    <p>La salle ouvre {{ opens_minutes }} minutes avant le début. Revenez sur ce même lien à ce moment-là.</p>
+    <div class="when">📅 {{ day | capitalize }}{% if timed %} · {{ start.strftime('%H:%M') }}{% endif %}</div>
+
+    {% elif state == 'closed' %}
+    <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
+    <h1>Cette séance est terminée</h1>
+    <p>Elle a eu lieu {{ day }}. Vous recevrez un nouveau lien pour la prochaine séance.</p>
+
+    {% elif state == 'no_room' %}
+    <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
+    <h1>La salle n'est pas encore prête</h1>
+    <p>Votre formateur n'a pas encore ouvert la réunion. Réessayez dans quelques minutes avec ce même lien.</p>
+
+    {% else %}
+    <span class="eyebrow">Lien introuvable</span>
+    <h1>Ce lien n'est pas valable</h1>
+    <p>Utilisez le lien reçu dans votre dernier email. S'il ne fonctionne pas, répondez à cet email : notre équipe vous en enverra un nouveau.</p>
+    {% endif %}
+  </div>
+  <div class="foot">{{ app_name or "9antra" }} · centre de formation</div>
+</div>
+</body>
+</html>

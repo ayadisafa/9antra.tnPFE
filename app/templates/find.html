@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block title %}Search · 9antra{% endblock %}
+{% block page_title %}Search{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .fd-group { margin-bottom:22px; }
+  .fd-group h3 { font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:0 0 8px; }
+  .fd-list { background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:4px 10px; }
+  .fd-item { display:flex; gap:12px; align-items:center; padding:10px 8px; border-top:1px solid var(--border-color); text-decoration:none; color:inherit; border-radius:12px; }
+  .fd-item:first-child { border-top:0; } .fd-item:hover { background:#fbf8fe; }
+  .fd-item i { color:var(--primary-berry); font-size:1.05rem; } .fd-item b { display:block; font-size:.88rem; color:var(--ink-text); } .fd-item span { font-size:.76rem; color:var(--muted); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ui-head">
+  <div><h2>Find anything</h2><p>Pages, settings, actions, candidates, programs, classes, professors, emails and reminders, all from one box. Tip: press <kbd>Ctrl</kbd> + <kbd>K</kbd> on any page.</p></div>
+</div>
+<form method="get" action="/find" class="d-flex gap-2 mb-4">
+  <input class="form-control" name="q" value="{{ query }}" placeholder="What are you looking for?" aria-label="Search" autofocus style="border-radius:14px; max-width:520px;">
+  <button class="ui-btn primary">Search</button>
+</form>
+{% for group in groups %}
+<section class="fd-group">
+  <h3>{{ group.group }}</h3>
+  <div class="fd-list">
+    {% for item in group["items"] %}<a class="fd-item" href="{{ item.url }}"><i class="bi {{ item.icon }}"></i><div><b>{{ item.title }}</b>{% if item.detail %}<span>{{ item.detail }}</span>{% endif %}</div></a>{% endfor %}
+  </div>
+</section>
+{% else %}
+{% if query %}<div class="ui-empty"><i class="bi bi-search"></i><strong>Nothing found for “{{ query }}”</strong>Try another word: a name, an email, a page, or what you want to do.</div>{% endif %}
+{% endfor %}
+{% endblock %}

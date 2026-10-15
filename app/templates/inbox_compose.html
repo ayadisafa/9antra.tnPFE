@@ -1,0 +1,501 @@
+{% extends "base.html" %}
+{% import "_email_files.html" as email_files %}
+{% block title %}Write an email · 9antra{% endblock %}
+{% block page_title %}Write an email{% endblock %}
+
+{% block content %}
+<style>
+  .cm-back { color: var(--muted); font-weight: 600; font-size: .84rem; text-decoration: none; }
+  .cm-back:hover { color: var(--primary-berry); }
+  .cm-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; }
+  .cm-title { font-weight: 800; font-size: 1rem; color: var(--ink-text); }
+  .cm-sub { font-size: .8rem; color: var(--muted); }
+  .cm-step { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: var(--berry-subtle); color: var(--primary-berry); font-size: .74rem; font-weight: 800; margin-right: 8px; }
+  .cm-card .form-label { font-size: .76rem; font-weight: 700; color: #5b5470; margin-bottom: 4px; }
+  .btn-berry { background: var(--primary-berry); color: #fff; font-weight: 700; border: 0; }
+  .btn-berry:hover { background: var(--berry-dark); color: #fff; }
+  .btn-berry:disabled { background: #d9c3cf; color: #fff; }
+
+  .cm-people { max-height: 232px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 14px; }
+  .cm-person { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--border-color); cursor: pointer; margin: 0; }
+  .cm-person:last-child { border-bottom: 0; }
+  .cm-person:hover { background: #fbf9fd; }
+  .cm-person .form-check-input:checked { background-color: var(--primary-berry); border-color: var(--primary-berry); }
+  .cm-person-name { font-size: .86rem; font-weight: 700; color: var(--ink-text); }
+  .cm-person-mail { font-size: .74rem; color: var(--muted); }
+  .cm-quick .btn { font-size: .74rem; font-weight: 700; border-radius: 999px; }
+
+  .cm-var { font-family: Consolas, 'Courier New', monospace; font-size: .74rem; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border-color); background: var(--canvas); color: var(--ink-3); cursor: pointer; }
+  .cm-var:hover { border-color: var(--primary-berry); color: var(--primary-berry); background: var(--berry-subtle); }
+  textarea.form-control.cm-body { border-radius: 14px; font-size: .9rem; line-height: 1.6; min-height: 240px; }
+
+  .cm-styles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .cm-style { position: relative; border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; cursor: pointer; margin: 0; transition: border-color .15s ease, background .15s ease; }
+  .cm-style input { position: absolute; opacity: 0; pointer-events: none; }
+  .cm-style.is-selected { border-color: var(--primary-berry); background: var(--berry-subtle); }
+  .cm-style:focus-within { outline: 2px solid var(--primary-berry); outline-offset: 2px; }
+  .cm-style-name { font-size: .8rem; font-weight: 800; color: var(--ink-text); margin-top: 8px; }
+  .cm-style-help { font-size: .7rem; color: var(--muted); line-height: 1.35; }
+  .cm-thumb { height: 74px; border-radius: 8px; background: var(--canvas); padding: 7px 9px; overflow: hidden; }
+  .cm-thumb .page { background: #fff; border-radius: 5px; height: 100%; overflow: hidden; border: 1px solid var(--border-color); }
+  .cm-thumb .line { height: 3px; border-radius: 3px; background: #e6e0ef; margin: 5px 7px 0; }
+  .cm-thumb .line.short { width: 45%; }
+  .cm-thumb.brand .head { height: 12px; background: var(--ink); }
+  .cm-thumb.brand .band { height: 9px; background: var(--primary-berry); }
+  .cm-thumb.letter .head { height: 3px; background: linear-gradient(90deg, var(--primary-berry), var(--accent-gold-dark)); }
+  .cm-thumb.letter .mark { width: 9px; height: 9px; border-radius: 3px; background: var(--accent-gold-dark); margin: 6px 7px 0; }
+  .cm-thumb.letter .line.title { height: 5px; width: 60%; background: var(--ink); }
+  .cm-thumb.announcement .head { height: 30px; background: linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); display: flex; align-items: center; justify-content: center; }
+  .cm-thumb.announcement .head span { width: 50%; height: 4px; border-radius: 3px; background: #fff; }
+
+  .cm-ai { border: 1px dashed #dccbe0; border-radius: 14px; background: #fcfafd; }
+  .cm-ai > summary { cursor: pointer; padding: 11px 14px; font-size: .84rem; font-weight: 700; color: var(--primary-berry); list-style: none; }
+  .cm-ai > summary::-webkit-details-marker { display: none; }
+  .cm-ai-body { padding: 0 14px 14px; }
+
+  .cm-preview { position: sticky; top: calc(var(--stick-top, 0px) + 8px); }
+  .cm-preview-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 12px; }
+  .cm-envelope { border: 1px solid var(--border-color); border-radius: 14px; padding: 10px 14px; font-size: .8rem; background: #fcfafd; margin-bottom: 10px; }
+  .cm-envelope .lbl { color: var(--muted); font-weight: 700; width: 62px; display: inline-block; }
+  .cm-frame-wrap { border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; background: var(--canvas); display: flex; justify-content: center; }
+  .cm-frame { width: 100%; height: 520px; border: 0; display: block; transition: width .2s ease; background: var(--canvas); }
+  .cm-frame.is-phone { width: 390px; }
+  .cm-toggle .btn { font-size: .74rem; font-weight: 700; }
+  .cm-toggle .btn.active { background: var(--primary-berry); border-color: var(--primary-berry); color: #fff; }
+  .cm-warn { font-size: .78rem; color: #be123c; font-weight: 600; }
+</style>
+
+<div class="d-flex flex-wrap justify-content-between gap-2 mb-3">
+  <a href="/inbox" class="cm-back"><i class="bi bi-arrow-left me-1"></i>Back to the inbox</a>
+  <a href="/inbox/templates" class="cm-back"><i class="bi bi-envelope-paper me-1"></i>Emails the system sends by itself</a>
+</div>
+
+{% include "_flash.html" %}
+
+{% if not smtp_ready %}
+<div class="alert alert-warning page-flash mb-3" role="status">
+  <i class="bi bi-exclamation-triangle-fill me-2"></i>Email delivery is not configured yet. You can write and preview, and what you send is saved in the discussion, but it will not reach the candidate until you
+  <a href="/settings#email" class="alert-link">set up email</a>.
+</div>
+{% endif %}
+
+<form method="post" action="/inbox/compose/send" id="compose-form">
+<div class="row g-4">
+  <div class="col-xl-6">
+
+    <!-- ============ 1. Recipients ============ -->
+    <section class="cm-card mb-4">
+      <div class="d-flex justify-content-between align-items-center gap-2 mb-1">
+        <div class="cm-title"><span class="cm-step">1</span>Who receives it</div>
+        <span class="small fw-bold" style="color: var(--primary-berry);" id="recipient-count">0 selected</span>
+      </div>
+      <div class="cm-sub mb-3">Each candidate receives their own copy, with their own name, class and dates.</div>
+
+      <div class="cm-quick d-flex flex-wrap gap-2 mb-2">
+        <button type="button" class="btn btn-sm btn-light border" data-pick="all">Everyone</button>
+        <button type="button" class="btn btn-sm btn-light border" data-pick="unpaid">With a balance to pay</button>
+        <button type="button" class="btn btn-sm btn-light border" data-pick="none">Clear</button>
+        {% if classes %}
+        <select class="form-select form-select-sm rounded-pill w-auto" id="pick-class" aria-label="Select a whole class">
+          <option value="">A whole class…</option>
+          {% for class_group in classes %}<option value="{{ class_group.id }}">{{ class_group.name }}</option>{% endfor %}
+        </select>
+        {% endif %}
+        {% if programs %}
+        <select class="form-select form-select-sm rounded-pill w-auto" id="pick-program" aria-label="Select a whole program">
+          <option value="">A whole program…</option>
+          {% for program in programs %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
+        </select>
+        {% endif %}
+      </div>
+      <input type="search" class="form-control form-control-sm mb-2" id="recipient-search" placeholder="Find a candidate" aria-label="Find a candidate">
+
+      <div class="cm-people" id="recipient-list">
+        {% for person in recipients %}
+        <label class="cm-person" data-name="{{ (person.name ~ ' ' ~ person.email) | lower }}"
+               data-classes="{{ person.classes | join(' ') }}" data-programs="{{ person.programs | join(' ') }}"
+               data-unpaid="{{ '1' if person.unpaid else '' }}">
+          <input class="form-check-input mt-0" type="checkbox" name="candidate_ids" value="{{ person.id }}" data-label="{{ person.name }}"
+                 {% if preselected == person.id %}checked{% endif %}>
+          <span>
+            <span class="cm-person-name d-block">{{ person.name }}</span>
+            <span class="cm-person-mail">{{ person.email }}</span>
+          </span>
+        </label>
+        {% else %}
+        <div class="p-3 small text-muted">There is no candidate yet.</div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- ============ 2. Message ============ -->
+    <section class="cm-card mb-4">
+      <div class="cm-title mb-1"><span class="cm-step">2</span>The message</div>
+      <div class="cm-sub mb-3">Write it yourself, start from a template, or let the assistant write a first draft.</div>
+
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col">
+          <label class="form-label" for="template-pick">Start from a template</label>
+          <select class="form-select form-select-sm" id="template-pick">
+            <option value="">Blank email</option>
+            {% for entry in templates_list %}
+            {% set item = entry.template %}
+            <option value="{{ item.id }}" data-name="{{ item.name }}" data-subject="{{ item.subject }}" data-title="{{ item.title or '' }}"
+                    data-style="{{ item.style }}" data-body="{{ item.body }}" data-extras='{{ entry.extras | tojson }}'
+                    {% if template and template.id == item.id %}selected{% endif %}>{{ item.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-sm btn-light border text-danger fw-semibold d-none" id="template-delete" formnovalidate
+                  data-confirm="Delete this template? Emails already sent are not affected.">Delete template</button>
+        </div>
+      </div>
+
+      <details class="cm-ai mb-3">
+        <summary><i class="bi bi-stars me-1"></i>Let the assistant write a first draft</summary>
+        <div class="cm-ai-body">
+          <label class="form-label" for="ai-instruction">What should the email say?</label>
+          <textarea class="form-control form-control-sm mb-2" id="ai-instruction" rows="3" placeholder="Example: tell the class that Saturday's session moves to Sunday at the same time, and apologise for the change."></textarea>
+          <div class="d-flex flex-wrap gap-2 align-items-center">
+            <select class="form-select form-select-sm w-auto" id="ai-tone" aria-label="Tone">
+              {% for key, label in tones.items() %}<option value="{{ key }}">{{ label | capitalize }}</option>{% endfor %}
+            </select>
+            <select class="form-select form-select-sm w-auto" id="ai-language" aria-label="Language">
+              <option value="fr">French</option>
+              <option value="en">English</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-berry rounded-pill px-3" id="ai-draft" {% if not model_ready %}disabled{% endif %}>Write the draft</button>
+            <span class="small text-muted" id="ai-status">{% if not model_ready %}The assistant is not reachable right now.{% else %}Runs on this computer; it takes a few seconds.{% endif %}</span>
+          </div>
+        </div>
+      </details>
+
+      <label class="form-label" for="compose-subject">Subject</label>
+      <input class="form-control mb-3" id="compose-subject" name="subject" maxlength="200" required value="{{ template.subject if template else '' }}" placeholder="Bienvenue dans {program_name} !">
+
+      <label class="form-label" for="compose-title">Headline shown at the top of the email</label>
+      <input class="form-control mb-3" id="compose-title" name="title" maxlength="120" value="{{ template.title if template and template.title else '' }}" placeholder="Leave empty to use the subject">
+
+      <label class="form-label" for="compose-body">Message</label>
+      <textarea class="form-control cm-body" id="compose-body" name="body" required placeholder="Bonjour {first_name},&#10;&#10;…">{{ template.body if template else '' }}</textarea>
+      <div class="d-flex gap-2 flex-wrap mt-2" id="compose-squares">
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-square="[box]\n**Titre**\nVotre texte">Add a square</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-square="[box gold]\n**À retenir**\nVotre texte">Gold square</button>
+        <button type="button" class="btn btn-sm btn-outline-secondary" data-square="[box green]\n**Bonne nouvelle**\nVotre texte">Green square</button>
+      </div>
+      <div class="form-text">An empty line starts a new paragraph, lines starting with “-” become a list, **two stars** make bold, and a paragraph that starts with [box] becomes a coloured square. Your signature is added automatically.</div>
+      <script>
+        document.querySelectorAll("#compose-squares [data-square]").forEach(function (button) {
+          button.addEventListener("click", function () {
+            var area = document.getElementById("compose-body"), before = area.value.slice(0, area.selectionStart), after = area.value.slice(area.selectionEnd);
+            var piece = (before && !before.endsWith("\n\n") ? (before.endsWith("\n") ? "\n" : "\n\n") : "") + button.dataset.square.replace(/\\n/g, "\n") + "\n\n";
+            area.value = before + piece + after; area.focus(); area.selectionStart = area.selectionEnd = (before + piece).length;
+            area.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+        });
+      </script>
+
+      <div class="mt-3">
+        <div class="form-label">Personal details — click to insert</div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for name, label, sample in variables %}
+          <button type="button" class="cm-var" data-variable="{{ name }}" title="{{ label }} — for example “{{ sample }}”">{{ "{" ~ name ~ "}" }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      {{ email_files.picker(accept_documents, image=extras.image, image_position=extras.image_position, attached=extras.files) }}
+
+      <details class="mt-3" id="compose-cta" {% if extras.cta_label %}open{% endif %}>
+        <summary class="small fw-bold" style="cursor:pointer; color:#5b5470;">Add a button with a link</summary>
+        <div class="row g-2 mt-1">
+          <div class="col-md-5">
+            <label class="form-label" for="compose-cta-label">Button text</label>
+            <input class="form-control form-control-sm" id="compose-cta-label" name="cta_label" maxlength="60" placeholder="Rejoindre la séance" value="{{ extras.cta_label }}">
+          </div>
+          <div class="col-md-7">
+            <label class="form-label" for="compose-cta-url">Link</label>
+            <input class="form-control form-control-sm" id="compose-cta-url" name="cta_url" type="url" maxlength="400" placeholder="https://…" value="{{ extras.cta_url }}">
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- ============ 3. Design ============ -->
+    <section class="cm-card mb-4">
+      <div class="cm-title mb-1"><span class="cm-step">3</span>The design</div>
+      <div class="cm-sub mb-3">Three looks in the 9antra colours. The colour and the signature are set in <a href="/settings#assistant">Settings</a>.</div>
+      <div class="cm-styles">
+        {% for key, (name, help) in styles.items() %}
+        <label class="cm-style">
+          <input type="radio" name="style" value="{{ key }}" {% if (template.style if template else 'brand') == key %}checked{% endif %}>
+          <div class="cm-thumb {{ key }}">
+            <div class="page">
+              <div class="head">{% if key == "announcement" %}<span></span>{% endif %}</div>
+              {% if key == "brand" %}<div class="band"></div>{% endif %}
+              {% if key == "letter" %}<div class="mark"></div><div class="line title"></div>{% endif %}
+              <div class="line"></div><div class="line"></div><div class="line short"></div>
+            </div>
+          </div>
+          <div class="cm-style-name">{{ name }}</div>
+          <div class="cm-style-help">{{ help }}</div>
+        </label>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- ============ Send ============ -->
+    <section class="cm-card">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <button class="btn btn-berry rounded-pill px-4" id="send-button" disabled><i class="bi bi-send-fill me-1"></i><span id="send-label">Choose who receives it</span></button>
+        <span class="cm-warn" id="compose-warning" role="alert"></span>
+      </div>
+      <hr style="border-color: var(--border-color); opacity: 1;">
+      <div class="row g-2 align-items-end">
+        <div class="col">
+          <label class="form-label" for="template-name">Keep this message as a template</label>
+          <input class="form-control form-control-sm" id="template-name" name="name" maxlength="120" placeholder="Template name" value="{{ template.name if template else '' }}">
+          <input type="hidden" name="template_id" id="template-id" value="{{ template.id if template else '' }}">
+        </div>
+        <div class="col-auto">
+          <button class="btn btn-sm btn-light border fw-semibold" formaction="/inbox/templates/save" formnovalidate>Save template</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ============ Preview ============ -->
+  <div class="col-xl-6">
+    <section class="cm-card cm-preview">
+      <div class="cm-preview-bar">
+        <div>
+          <div class="cm-title">Preview</div>
+          <div class="cm-sub" id="preview-for">As a candidate will receive it</div>
+        </div>
+        <div class="btn-group cm-toggle" role="group" aria-label="Preview size">
+          <button type="button" class="btn btn-sm btn-light border active" data-size="desktop"><i class="bi bi-laptop me-1"></i>Computer</button>
+          <button type="button" class="btn btn-sm btn-light border" data-size="phone"><i class="bi bi-phone me-1"></i>Phone</button>
+        </div>
+      </div>
+      <div class="cm-envelope">
+        <div><span class="lbl">From</span>9antra</div>
+        <div><span class="lbl">Subject</span><strong id="preview-subject">{{ initial_subject or "—" }}</strong></div>
+      </div>
+      <div class="cm-frame-wrap">
+        <iframe class="cm-frame" id="preview-frame" title="Email preview" sandbox="allow-same-origin" srcdoc="{{ initial_preview }}"></iframe>
+      </div>
+    </section>
+  </div>
+</div>
+</form>
+
+{{ email_files.assets() }}
+<script>
+(() => {
+  const form = document.getElementById("compose-form");
+  const subject = document.getElementById("compose-subject");
+  const title = document.getElementById("compose-title");
+  const body = document.getElementById("compose-body");
+  const picker = form.querySelector("[data-ef]");
+  const frame = document.getElementById("preview-frame");
+  const warning = document.getElementById("compose-warning");
+  const sendButton = document.getElementById("send-button");
+  const sendLabel = document.getElementById("send-label");
+  const people = Array.from(document.querySelectorAll(".cm-person"));
+  const boxes = people.map(row => row.querySelector("input"));
+  let lastField = body;
+  let previewTimer = null;
+  let previewRun = 0;
+
+  // ---------- recipients ----------
+  const selected = () => boxes.filter(box => box.checked);
+
+  function updateRecipients() {
+    const chosen = selected();
+    document.getElementById("recipient-count").textContent = `${chosen.length} selected`;
+    sendButton.disabled = chosen.length === 0;
+    sendLabel.textContent = chosen.length === 0 ? "Choose who receives it"
+      : chosen.length === 1 ? `Send to ${chosen[0].dataset.label}`
+      : `Send to ${chosen.length} candidates`;
+    if (chosen.length > 1) sendButton.dataset.confirm = `Send this email to ${chosen.length} candidates?`;
+    else delete sendButton.dataset.confirm;
+    document.getElementById("preview-for").textContent = chosen.length
+      ? `As ${chosen[0].dataset.label} will receive it`
+      : "With sample details — choose a candidate to see theirs";
+    schedulePreview();
+  }
+
+  function pick(test) {
+    people.forEach(row => {
+      if (row.hidden) return;
+      row.querySelector("input").checked = test(row);
+    });
+    updateRecipients();
+  }
+
+  document.querySelectorAll("[data-pick]").forEach(button => button.addEventListener("click", () => {
+    const mode = button.dataset.pick;
+    pick(row => mode === "all" ? true : mode === "unpaid" ? row.dataset.unpaid === "1" : false);
+  }));
+  [["pick-class", "classes"], ["pick-program", "programs"]].forEach(([id, key]) => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    select.addEventListener("change", () => {
+      if (select.value) pick(row => row.dataset[key].split(" ").includes(select.value));
+      select.value = "";
+    });
+  });
+  document.getElementById("recipient-search").addEventListener("input", event => {
+    const term = event.target.value.trim().toLowerCase();
+    people.forEach(row => { row.hidden = Boolean(term) && !row.dataset.name.includes(term); });
+  });
+  boxes.forEach(box => box.addEventListener("change", updateRecipients));
+
+  // ---------- personal details ----------
+  [subject, title, body].forEach(field => field.addEventListener("focus", () => { lastField = field; }));
+  document.querySelectorAll(".cm-var").forEach(chip => chip.addEventListener("click", () => {
+    const token = `{${chip.dataset.variable}}`;
+    const field = lastField;
+    const start = field.selectionStart ?? field.value.length;
+    const end = field.selectionEnd ?? field.value.length;
+    field.value = field.value.slice(0, start) + token + field.value.slice(end);
+    field.focus();
+    field.setSelectionRange(start + token.length, start + token.length);
+    schedulePreview();
+  }));
+
+  // ---------- design ----------
+  function markStyle() {
+    document.querySelectorAll(".cm-style").forEach(option => {
+      option.classList.toggle("is-selected", option.querySelector("input").checked);
+    });
+  }
+  document.querySelectorAll(".cm-style input").forEach(radio => radio.addEventListener("change", () => {
+    markStyle();
+    schedulePreview();
+  }));
+
+  // ---------- templates ----------
+  const templatePick = document.getElementById("template-pick");
+  const templateDelete = document.getElementById("template-delete");
+  function syncTemplateDelete() {
+    templateDelete.classList.toggle("d-none", !templatePick.value);
+    templateDelete.setAttribute("formaction", `/inbox/templates/${templatePick.value}/delete`);
+  }
+  templatePick.addEventListener("change", () => {
+    const option = templatePick.selectedOptions[0];
+    const hasText = body.value.trim() || subject.value.trim();
+    if (hasText && !window.confirm("Replace what you wrote with this template?")) {
+      templatePick.value = document.getElementById("template-id").value;
+      return;
+    }
+    subject.value = option.dataset.subject || "";
+    title.value = option.dataset.title || "";
+    body.value = option.dataset.body || "";
+    document.getElementById("template-name").value = option.dataset.name || "";
+    document.getElementById("template-id").value = option.value;
+    const style = document.querySelector(`.cm-style input[value="${option.dataset.style || "brand"}"]`);
+    if (style) style.checked = true;
+    // The photo, the files and the button saved with the template come with it.
+    const extras = option.dataset.extras ? JSON.parse(option.dataset.extras) : {};
+    window.EmailFiles.set(picker, extras);
+    document.getElementById("compose-cta-label").value = extras.cta_label || "";
+    document.getElementById("compose-cta-url").value = extras.cta_url || "";
+    document.getElementById("compose-cta").open = Boolean(extras.cta_label);
+    markStyle();
+    syncTemplateDelete();
+    schedulePreview();
+  });
+
+  // ---------- preview ----------
+  function resizeFrame() {
+    try {
+      const height = frame.contentDocument.documentElement.scrollHeight;
+      if (height) frame.style.height = `${Math.min(Math.max(height, 360), 900)}px`;
+    } catch (error) { /* keep the default height */ }
+  }
+  frame.addEventListener("load", resizeFrame);
+
+  async function refreshPreview() {
+    const run = ++previewRun;
+    const chosen = selected();
+    try {
+      const response = await fetch("/inbox/compose/preview", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          subject: subject.value, title: title.value, body: body.value,
+          style: (document.querySelector(".cm-style input:checked") || {}).value || "brand",
+          candidate_id: chosen.length ? chosen[0].value : null,
+          cta_label: document.getElementById("compose-cta-label").value,
+          cta_url: document.getElementById("compose-cta-url").value,
+          image_id: window.EmailFiles.imageId(picker),
+          image_position: window.EmailFiles.imagePosition(picker),
+        }),
+      });
+      if (!response.ok || run !== previewRun) return;
+      const data = await response.json();
+      document.getElementById("preview-subject").textContent = data.subject || "—";
+      frame.srcdoc = data.html;
+      warning.textContent = data.unknown.length
+        ? `Unknown detail: ${data.unknown.map(name => `{${name}}`).join(", ")}. Use the buttons above to insert valid ones.`
+        : "";
+    } catch (error) {
+      console.error("Preview failed:", error);
+    }
+  }
+  function schedulePreview() {
+    window.clearTimeout(previewTimer);
+    previewTimer = window.setTimeout(refreshPreview, 350);
+  }
+  form.addEventListener("input", event => {
+    if (event.target.closest("#recipient-search, #ai-instruction, #template-name, [data-ef-input]")) return;
+    schedulePreview();
+  });
+  form.addEventListener("ef:change", schedulePreview);
+  document.querySelectorAll("[data-size]").forEach(button => button.addEventListener("click", () => {
+    document.querySelectorAll("[data-size]").forEach(other => other.classList.toggle("active", other === button));
+    frame.classList.toggle("is-phone", button.dataset.size === "phone");
+    window.setTimeout(resizeFrame, 250);
+  }));
+
+  // ---------- AI draft ----------
+  const draftButton = document.getElementById("ai-draft");
+  const draftStatus = document.getElementById("ai-status");
+  draftButton.addEventListener("click", async () => {
+    const instruction = document.getElementById("ai-instruction").value.trim();
+    if (instruction.length < 3) { draftStatus.textContent = "Describe what the email should say first."; return; }
+    if (body.value.trim() && !window.confirm("Replace the message you wrote with the assistant's draft?")) return;
+    draftButton.disabled = true;
+    draftStatus.textContent = "Writing…";
+    try {
+      const response = await fetch("/inbox/compose/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          instruction,
+          tone: document.getElementById("ai-tone").value,
+          language: document.getElementById("ai-language").value,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail || "The draft could not be written.");
+      if (data.subject) subject.value = data.subject;
+      if (data.title) title.value = data.title;
+      body.value = data.body;
+      draftStatus.textContent = "Draft ready. Read it and adjust before sending.";
+      schedulePreview();
+    } catch (error) {
+      draftStatus.textContent = error.message;
+    } finally {
+      draftButton.disabled = false;
+    }
+  });
+
+  markStyle();
+  syncTemplateDelete();
+  updateRecipients();
+})();
+</script>
+{% endblock %}

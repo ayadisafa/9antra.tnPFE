@@ -1,0 +1,559 @@
+{% extends "base.html" %}
+{% import "_email_files.html" as email_files %}
+{% block title %}Inbox · 9antra{% endblock %}
+{% block page_title %}Inbox{% endblock %}
+{% block live_topics %}inbox{% endblock %}
+
+{% block content %}
+<style>
+  .ix-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  .ix-kpi { background: #fff; border: 1px solid var(--border-color); border-radius: 18px; padding: 16px 18px; text-decoration: none; display: block; }
+  a.ix-kpi:hover { border-color: var(--primary-berry); }
+  .ix-kpi.is-alert { border-color: #f3d9a4; background: var(--gold-subtle); }
+  .ix-kpi-label { font-size: .68rem; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .ix-kpi.is-alert .ix-kpi-label { color: var(--gold-dark); }
+  .ix-kpi-value { font-weight: 800; font-size: 1.6rem; color: var(--ink-text); line-height: 1.15; margin-top: 4px; }
+  .ix-kpi-sub { font-size: .76rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+  .ix-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .ix-state { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 700; padding: 5px 11px; border-radius: 999px; background: #fff; border: 1px solid var(--border-color); color: #5b5470; text-decoration: none; }
+  .ix-state.ok i { color: var(--mint); }
+  .ix-state.off { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+  .ix-state.off:hover { color: #9f1239; }
+  .btn-berry { background: var(--primary-berry); color: #fff; font-weight: 700; border: 0; }
+  .btn-berry:hover { background: var(--berry-dark); color: #fff; }
+  .ix-toolbar .btn { font-size: .8rem; font-weight: 700; border-radius: 999px; }
+
+  .ix-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
+  @media (max-width: 1199px) { .ix-layout { grid-template-columns: 1fr; } }
+  .ix-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; }
+
+  .ix-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 14px 10px; }
+  .ix-filter { font-size: .74rem; font-weight: 700; padding: 5px 11px; border-radius: 999px; border: 1px solid var(--border-color); color: #6b6180; text-decoration: none; white-space: nowrap; }
+  .ix-filter:hover { border-color: var(--primary-berry); color: var(--primary-berry); }
+  .ix-filter.active { background: var(--primary-berry); border-color: var(--primary-berry); color: #fff; }
+  .ix-filter .n { opacity: .75; margin-left: 3px; }
+  .ix-search { padding: 0 14px 12px; }
+  .ix-search input { border-radius: 999px; font-size: .82rem; background: var(--canvas); border-color: var(--border-color); }
+
+  .ix-rows { max-height: 68vh; overflow-y: auto; border-top: 1px solid var(--border-color); border-radius: 0 0 20px 20px; }
+  .ix-row { display: flex; gap: 11px; padding: 13px 14px; border-bottom: 1px solid var(--border-color); text-decoration: none; color: inherit; border-left: 3px solid transparent; }
+  .ix-row:last-child { border-bottom: 0; }
+  .ix-row:hover { background: #fbf9fd; }
+  .ix-row.is-open { background: var(--berry-subtle); border-left-color: var(--primary-berry); }
+  .ix-avatar { width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .76rem; color: #fff; background: linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark)); }
+  .ix-row-name { font-size: .84rem; font-weight: 700; color: var(--ink-text); }
+  .ix-row-time { font-size: .7rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .ix-row-subject { font-size: .82rem; color: #4a4160; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ix-row.is-unread .ix-row-subject { font-weight: 800; color: var(--ink-text); }
+  .ix-row-snippet { font-size: .76rem; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+  .ix-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary-berry); display: inline-block; margin-right: 5px; }
+
+  .ix-chip { display: inline-flex; align-items: center; gap: 4px; font-size: .66rem; font-weight: 800; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .ix-chip.todo { background: var(--gold-subtle); color: var(--gold-dark); }
+  .ix-chip.ok { background: var(--mint-subtle); color: var(--mint); }
+  .ix-chip.info { background: var(--sky-subtle); color: var(--sky); }
+  .ix-chip.quiet { background: #f1eff5; color: #6b6180; }
+  .ix-chip.bad { background: #fff1f2; color: #be123c; }
+  .ix-chip.berry { background: var(--berry-subtle); color: var(--primary-berry); }
+
+  .ix-head { padding: 18px 22px; border-bottom: 1px solid var(--border-color); }
+  .ix-head h5 { font-weight: 800; color: var(--ink-text); }
+  .ix-head-name { font-weight: 700; color: var(--ink-text); text-decoration: none; }
+  .ix-head-name:hover { color: var(--primary-berry); }
+  .ix-context { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .ix-context a { text-decoration: none; }
+
+  .ix-messages { padding: 20px 22px; max-height: 58vh; overflow-y: auto; background: #fcfafd; }
+  .ix-msg { max-width: 82%; margin-bottom: 16px; }
+  .ix-msg.out { margin-left: auto; }
+  .ix-msg-meta { font-size: .7rem; color: var(--muted); font-weight: 600; margin-bottom: 4px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .ix-msg.out .ix-msg-meta { justify-content: flex-end; }
+  .ix-msg-who { font-weight: 800; color: var(--ink-text); }
+  .ix-bubble { border-radius: 16px; padding: 12px 15px; font-size: .86rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+  .ix-msg.in .ix-bubble { background: #fff; border: 1px solid var(--border-color); border-top-left-radius: 5px; }
+  .ix-msg.out.by-system .ix-bubble { background: var(--berry-subtle); border: 1px solid #f6d8e6; border-top-right-radius: 5px; }
+  .ix-msg.out.by-admin .ix-bubble { background: linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); color: #fff; border-top-right-radius: 5px; }
+  .ix-msg-foot { font-size: .72rem; color: var(--muted); margin-top: 5px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .ix-msg.out .ix-msg-foot { justify-content: flex-end; }
+  .ix-msg-foot a, .ix-linkbtn { color: var(--primary-berry); font-weight: 700; text-decoration: none; background: none; border: 0; padding: 0; font-size: .72rem; }
+  .ix-msg-foot a:hover, .ix-linkbtn:hover { text-decoration: underline; }
+  .ix-sources { font-size: .74rem; color: #5b5470; margin-top: 6px; }
+  .ix-sources summary { cursor: pointer; font-weight: 700; color: var(--muted); }
+  .ix-sources ul { margin: 6px 0 0; padding-left: 18px; }
+
+  .ix-reply { padding: 18px 22px 22px; border-top: 1px solid var(--border-color); }
+  .ix-ask { border: 1px solid #f3d9a4; background: var(--gold-subtle); border-radius: 16px; padding: 14px 16px; margin-bottom: 14px; }
+  .ix-ask-title { font-weight: 800; font-size: .92rem; color: #7c4a03; }
+  .ix-ask-question { font-weight: 700; font-size: .95rem; color: var(--ink-text); margin-top: 6px; }
+  .ix-ask-why { font-size: .8rem; color: #7c4a03; margin-top: 6px; }
+  .ix-meter { position: relative; height: 8px; border-radius: 99px; background: rgba(124, 74, 3, .15); margin-top: 6px; }
+  .ix-meter > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 99px; background: var(--accent-gold-dark); }
+  .ix-meter > i { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--ink-text); border-radius: 2px; }
+  .ix-meter-legend { font-size: .72rem; color: #7c4a03; font-weight: 600; margin-top: 6px; }
+  .ix-reply textarea { border-radius: 14px; font-size: .88rem; line-height: 1.55; }
+  .ix-reply .form-text { font-size: .74rem; }
+  .ix-learn { border: 1px solid var(--border-color); border-radius: 14px; padding: 12px 14px; margin-top: 12px; background: #fcfafd; }
+  .ix-learn .form-check-label { font-size: .84rem; font-weight: 700; color: var(--ink-text); }
+  .ix-learn .form-check-input:checked { background-color: var(--primary-berry); border-color: var(--primary-berry); }
+  .ix-reading { display: flex; align-items: center; gap: 10px; font-size: .86rem; font-weight: 600; color: var(--sky); background: var(--sky-subtle); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; }
+  .ix-empty { text-align: center; padding: 56px 24px; color: var(--muted); }
+  .ix-empty i { font-size: 2rem; color: #d6cfe3; }
+
+  .ix-views { display: inline-flex; gap: 4px; padding: 4px; margin-top: 12px; border-radius: 999px; background: var(--canvas); border: 1px solid var(--border-color); }
+  .ix-view { font-size: .76rem; font-weight: 700; padding: 5px 13px; border-radius: 999px; color: #6b6180; text-decoration: none; white-space: nowrap; }
+  .ix-view:hover { color: var(--primary-berry); }
+  .ix-view.active { background: #fff; color: var(--primary-berry); box-shadow: 0 1px 4px rgba(33, 20, 51, .12); }
+  .ix-view .n { opacity: .7; margin-left: 5px; }
+  .ix-subject { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; font-size: .72rem; font-weight: 800; color: var(--muted); letter-spacing: .03em; }
+  .ix-subject::before, .ix-subject::after { content: ""; flex: 1; height: 1px; background: var(--border-color); }
+  .ix-subject span { max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+</style>
+
+{% include "_flash.html" %}
+
+{% macro initials(name) %}{{ ((name or "?").split(" ") | map("first") | join(""))[:2] | upper }}{% endmacro %}
+
+{% macro thread_chip(thread) %}
+  {% if thread.status == "needs_admin" %}<span class="ix-chip todo"><i class="bi bi-question-circle-fill"></i>Needs your answer</span>
+  {% elif thread.status == "processing" %}<span class="ix-chip info"><i class="bi bi-hourglass-split"></i>Assistant reading</span>
+  {% elif thread.last_status == "failed" %}<span class="ix-chip bad"><i class="bi bi-x-circle-fill"></i>Not delivered</span>
+  {% elif thread.status == "answered" and thread.last_author == "system" %}<span class="ix-chip ok"><i class="bi bi-robot"></i>Answered by system</span>
+  {% elif thread.status == "answered" %}<span class="ix-chip ok"><i class="bi bi-check-circle-fill"></i>Answered by you</span>
+  {% elif thread.status == "received" %}<span class="ix-chip quiet">No answer needed</span>
+  {% elif thread.status == "closed" %}<span class="ix-chip quiet">Closed</span>
+  {% else %}<span class="ix-chip quiet"><i class="bi bi-send-fill"></i>Sent</span>{% endif %}
+  {% if thread.last_status == "test" %}<span class="ix-chip berry">Test</span>{% endif %}
+{% endmacro %}
+
+<!-- ============ KPIs ============ -->
+<div class="ix-kpis mb-3" id="live-inbox-kpis" data-live-region>
+  <a class="ix-kpi {% if kpis.waiting %}is-alert{% endif %}" href="/inbox?filter=todo">
+    <div class="ix-kpi-label">Needs your answer</div>
+    <div class="ix-kpi-value">{{ kpis.waiting }}</div>
+    <div class="ix-kpi-sub">{{ "question(s) the system could not answer" if kpis.waiting else "nothing is waiting for you" }}</div>
+  </a>
+  <a class="ix-kpi" href="/inbox?filter=auto">
+    <div class="ix-kpi-label">Answered by the system</div>
+    <div class="ix-kpi-value">{{ kpis.auto_answered }}</div>
+    <div class="ix-kpi-sub">{% if kpis.auto_rate is not none %}{{ kpis.auto_rate }}% of all answers · last {{ kpis.days }} days{% else %}no answer sent in the last {{ kpis.days }} days{% endif %}</div>
+  </a>
+  <div class="ix-kpi">
+    <div class="ix-kpi-label">Average confidence</div>
+    <div class="ix-kpi-value">{% if kpis.avg_confidence is not none %}{{ kpis.avg_confidence }}%{% else %}—{% endif %}</div>
+    <div class="ix-kpi-sub">of automatic answers · it answers alone from {{ threshold }}%</div>
+  </div>
+  <div class="ix-kpi">
+    <div class="ix-kpi-label">Response time</div>
+    <div class="ix-kpi-value">
+      {% if kpis.median_response_minutes is none %}—
+      {% elif kpis.median_response_minutes < 1 %}&lt; 1 min
+      {% elif kpis.median_response_minutes < 90 %}{{ kpis.median_response_minutes }} min
+      {% else %}{{ (kpis.median_response_minutes / 60) | round(1) }} h{% endif %}
+    </div>
+    <div class="ix-kpi-sub">median, from email to answer · {{ kpis.received }} received</div>
+  </div>
+  <a class="ix-kpi" href="/inbox/knowledge">
+    <div class="ix-kpi-label">Knowledge</div>
+    <div class="ix-kpi-value">{{ knowledge.admin + knowledge.learned }}</div>
+    <div class="ix-kpi-sub">answer(s) you taught · {{ knowledge.system }} from programs and classes</div>
+  </a>
+</div>
+
+<!-- ============ Status and actions ============ -->
+<div class="ix-toolbar mb-3">
+  {% if mailbox_ready %}
+    {% if mailbox_state.last_error %}
+    <a class="ix-state off" href="/settings#email" title="{{ mailbox_state.last_error }}"><i class="bi bi-exclamation-triangle-fill"></i>Mailbox error</a>
+    {% else %}
+    <span class="ix-state ok" title="Read-only: nothing is marked as read or deleted"><i class="bi bi-check-circle-fill"></i>Mailbox connected{% if mailbox_state.last_success_at %} · checked {{ mailbox_state.last_success_at | ago }}{% endif %}</span>
+    {% endif %}
+  {% else %}
+    <a class="ix-state off" href="/settings#email"><i class="bi bi-plug-fill"></i>Mailbox not connected</a>
+  {% endif %}
+  {% if not smtp_ready %}<a class="ix-state off" href="/settings#email"><i class="bi bi-send-slash-fill"></i>Sending is off</a>{% endif %}
+  {% if model_ready %}
+    <span class="ix-state ok"><i class="bi bi-check-circle-fill"></i>Assistant ready</span>
+  {% else %}
+    <a class="ix-state off" href="/settings#assistant" title="The assistant that writes the answers is not running on this computer. Settings says how to start it."><i class="bi bi-cpu-fill"></i>Assistant not reachable</a>
+  {% endif %}
+  <a class="ix-state" href="/settings#assistant">
+    <i class="bi bi-sliders"></i>
+    {% if mode == "auto" %}Answers alone from {{ threshold }}% confidence
+    {% elif mode == "review" %}Asks you before every answer
+    {% else %}Assistant off{% endif %}
+  </a>
+
+  <div class="ms-auto d-flex flex-wrap gap-2">
+    <button class="btn btn-light border" type="button" data-bs-toggle="modal" data-bs-target="#simulateModal"><i class="bi bi-magic me-1"></i>Try with a sample email</button>
+    {% if mailbox_ready %}
+    <form method="post" action="/inbox/check"><button class="btn btn-light border"><i class="bi bi-arrow-repeat me-1"></i>Check mailbox</button></form>
+    {% endif %}
+    <a class="btn btn-light border" href="/inbox/knowledge"><i class="bi bi-lightbulb me-1"></i>Knowledge base</a>
+    <a class="btn btn-light border" href="/inbox/templates"><i class="bi bi-envelope-paper me-1"></i>Email templates</a>
+    <a class="btn btn-berry" href="/inbox/compose"><i class="bi bi-pencil-square me-1"></i>Write an email</a>
+  </div>
+</div>
+
+{% set keep_filters = ("&q=" ~ (search | urlencode) if search else "") ~ ("&candidate=" ~ candidate_filter.id if candidate_filter else "") %}
+{% set keep = keep_filters ~ ("&view=all" if whole_history else "") %}
+
+<div class="ix-layout">
+  <!-- ============ Discussions ============ -->
+  <aside class="ix-card">
+    <div class="ix-filters">
+      {% for key, label in filters.items() %}
+      <a class="ix-filter {% if key == current_filter %}active{% endif %}" href="/inbox?filter={{ key }}{{ keep }}">{{ label }}{% if counts[key] is defined %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
+      {% endfor %}
+    </div>
+    <form class="ix-search" method="get" action="/inbox">
+      <input type="hidden" name="filter" value="{{ current_filter }}">
+      {% if candidate_filter %}<input type="hidden" name="candidate" value="{{ candidate_filter.id }}">{% endif %}
+      <input class="form-control form-control-sm" type="search" name="q" value="{{ search }}" placeholder="Search a candidate or a subject" aria-label="Search discussions">
+    </form>
+    {% if candidate_filter %}
+    <div class="px-3 pb-2 small">
+      <span class="ix-chip berry">Only {{ candidate_filter.full_name or candidate_filter.email }}</span>
+      <a class="ms-1 small" href="/inbox?filter={{ current_filter }}">show everyone</a>
+    </div>
+    {% endif %}
+
+    <div class="ix-rows" id="live-inbox-list" data-live-region>
+      {% for thread in threads %}
+      <a class="ix-row {% if selected and thread.id == selected.id %}is-open{% endif %} {% if thread.unread %}is-unread{% endif %}"
+         href="/inbox?filter={{ current_filter }}&thread={{ thread.id }}{{ keep }}">
+        <div class="ix-avatar">{{ initials(thread.candidate.full_name or thread.candidate.email) }}</div>
+        <div class="flex-grow-1" style="min-width:0;">
+          <div class="d-flex justify-content-between gap-2">
+            <span class="ix-row-name text-truncate">{% if thread.unread %}<span class="ix-dot" title="New"></span>{% endif %}{{ thread.candidate.full_name or thread.candidate.email }}</span>
+            <span class="ix-row-time">{{ thread.last_message_at | ago }}</span>
+          </div>
+          <div class="ix-row-subject">{{ thread.subject or "No subject" }}</div>
+          <div class="ix-row-snippet">{{ thread.last_snippet or "" }}</div>
+          <div class="mt-1 d-flex flex-wrap gap-1">{{ thread_chip(thread) }}</div>
+        </div>
+      </a>
+      {% else %}
+      <div class="ix-empty">
+        <i class="bi bi-inbox"></i>
+        <div class="mt-2 fw-semibold">
+          {% if current_filter == "todo" %}Nothing is waiting for your answer.
+          {% elif search %}No discussion matches “{{ search }}”.
+          {% else %}No discussion here yet.{% endif %}
+        </div>
+        {% if not mailbox_ready and current_filter != "sent" %}
+        <div class="small mt-1">Connect the mailbox in Settings to receive candidates' emails here, or try the assistant with a sample email.</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <!-- ============ The open discussion ============ -->
+  <section class="ix-card">
+    {% if selected %}
+    <div class="ix-head">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div class="d-flex gap-3 align-items-center" style="min-width:0;">
+          <div class="ix-avatar">{{ initials(selected.candidate.full_name or selected.candidate.email) }}</div>
+          <div style="min-width:0;">
+            <a class="ix-head-name" href="/candidate/{{ selected.candidate.id }}">{{ selected.candidate.full_name or selected.candidate.email }}</a>
+            <div class="small text-muted text-truncate">{{ selected.candidate.email }}</div>
+          </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 align-items-center">
+          <span id="live-inbox-status" data-live-region>{{ thread_chip(selected) }}</span>
+          <div class="dropdown">
+            <button class="btn btn-sm btn-light border rounded-pill fw-semibold" data-bs-toggle="dropdown" aria-expanded="false">Actions <i class="bi bi-chevron-down small"></i></button>
+            <div class="dropdown-menu dropdown-menu-end rounded-4 border-0 shadow p-2">
+              <a class="dropdown-item rounded-3 small fw-semibold" href="/candidate/{{ selected.candidate.id }}"><i class="bi bi-person me-2"></i>Open the candidate's profile</a>
+              <a class="dropdown-item rounded-3 small fw-semibold" href="/inbox/compose?candidate={{ selected.candidate.id }}"><i class="bi bi-pencil-square me-2"></i>Write them a new email</a>
+              <form method="post" action="/inbox/thread/{{ selected.id }}/rerun"><button class="dropdown-item rounded-3 small fw-semibold"><i class="bi bi-arrow-repeat me-2"></i>Ask the assistant again</button></form>
+              <form method="post" action="/inbox/thread/{{ selected.id }}/no-reply"><button class="dropdown-item rounded-3 small fw-semibold"><i class="bi bi-check2 me-2"></i>No answer needed</button></form>
+              <form method="post" action="/inbox/thread/{{ selected.id }}/close"><button class="dropdown-item rounded-3 small fw-semibold"><i class="bi bi-archive me-2"></i>Close the discussion</button></form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <h5 class="mt-3 mb-0">{{ selected.subject or "No subject" }}</h5>
+      {% if history_count > selected.message_count or whole_history %}
+      {% set first_name = (selected.candidate.full_name or selected.candidate.email).split(" ")[0] %}
+      <div class="ix-views" role="group" aria-label="What to show">
+        <a class="ix-view {% if not whole_history %}active{% endif %}" href="/inbox?filter={{ current_filter }}&thread={{ selected.id }}{{ keep_filters }}">This discussion</a>
+        <a class="ix-view {% if whole_history %}active{% endif %}" href="/inbox?filter={{ current_filter }}&thread={{ selected.id }}{{ keep_filters }}&view=all"
+           title="Every email exchanged with this candidate: payments, class, reminders, quizzes, questions and answers">Everything with {{ first_name }}<span class="n">{{ history_count }}</span></a>
+      </div>
+      {% endif %}
+      {% if registrations %}
+      <div class="ix-context">
+        {% for registration in registrations %}
+        {% set paid = registration.payment_status.value if registration.payment_status else "unpaid" %}
+        <a href="/classes/registration/{{ registration.id }}" class="ix-chip {{ 'ok' if paid == 'paid' else 'todo' }}" title="Open this registration">
+          {{ registration.program.name if registration.program else registration.program_name or "Program" }}
+          · {{ "paid" if paid == "paid" else ("%.0f DT left" | format(registration.remaining_amount)) }}
+          {% if registration.class_group %}· {{ registration.class_group.name }}{% endif %}
+        </a>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="ix-messages" id="live-inbox-messages" data-live-region>
+      {% for item in conversation %}
+      {% set message = item.message %}
+      {% set sources = item.sources %}
+      {% if item.subject %}
+      <div class="ix-subject"><span>{{ item.subject }}</span></div>
+      {% endif %}
+      {% if message.direction == "inbound" %}
+      <div class="ix-msg in">
+        <div class="ix-msg-meta">
+          <span class="ix-msg-who">{{ selected.candidate.full_name or selected.candidate.email }}</span>
+          <span>{{ message.received_at | localdt }}</span>
+          {% if message.language %}<span class="ix-chip quiet">{{ language_labels.get(message.language, message.language) }}</span>{% endif %}
+          {% if message.intent and message.intent in intent_labels %}<span class="ix-chip quiet">{{ intent_labels[message.intent] }}</span>{% endif %}
+          {% if message.sentiment in ("concerned", "frustrated") %}<span class="ix-chip bad">{{ message.sentiment | capitalize }}</span>{% endif %}
+          {% if message.message_id and message.message_id.startswith("<test-") %}<span class="ix-chip berry">Test</span>{% endif %}
+        </div>
+        <div class="ix-bubble">{{ message.body }}</div>
+        {{ email_files.attachments(item.files) }}
+        <div class="ix-msg-foot">
+          {% if message.status == "processing" %}<span><i class="bi bi-hourglass-split"></i> The assistant is reading this email</span>
+          {% elif message.status == "no_reply" %}<span>No answer needed</span>
+          {% elif message.status == "needs_admin" %}<span class="text-warning-emphasis fw-semibold">Waiting for your answer</span>
+          {% elif message.status == "replied" %}<span>Answered {{ message.replied_at | localdt if message.replied_at else "" }}</span>{% endif %}
+        </div>
+      </div>
+      {% else %}
+      {% set by_admin = message.author == "admin" %}
+      <div class="ix-msg out {{ 'by-admin' if by_admin else 'by-system' }}">
+        <div class="ix-msg-meta">
+          <span class="ix-msg-who">
+            {% if by_admin %}You
+            {% elif message.intent == "reply" %}<i class="bi bi-robot"></i> 9antra assistant
+            {% else %}<i class="bi bi-envelope-check"></i> Automatic email{% endif %}
+          </span>
+          {% if message.intent in kind_labels and message.intent != "reply" %}<span class="ix-chip quiet">{{ kind_labels[message.intent] }}</span>{% endif %}
+          {% if message.confidence is not none and not by_admin %}<span class="ix-chip ok" title="Confidence KPI of this answer">{{ (message.confidence * 100) | round | int }}% confidence</span>{% endif %}
+          <span>{{ message.received_at | localdt }}</span>
+        </div>
+        <div class="ix-bubble">{{ message.body }}</div>
+        {{ email_files.attachments(item.files) }}
+        <div class="ix-msg-foot">
+          {% if message.status == "failed" %}
+            <span class="ix-chip bad"><i class="bi bi-x-circle-fill"></i>Not delivered</span>
+            <form method="post" action="/inbox/message/{{ message.id }}/resend"><button class="ix-linkbtn">Send again</button></form>
+          {% elif message.status == "test" %}
+            <span class="ix-chip berry">Test · not sent</span>
+          {% else %}
+            <span class="ix-chip ok"><i class="bi bi-check2"></i>Sent</span>
+          {% endif %}
+          {% if message.html_body %}<a href="/inbox/message/{{ message.id }}/html" target="_blank" rel="noopener">View as received</a>{% endif %}
+        </div>
+        {% if message.analysis and message.status != "sent" %}<div class="ix-msg-foot">{{ message.analysis }}</div>{% endif %}
+        {% if not by_admin and (sources.hits or sources.used_record) %}
+        <details class="ix-sources text-end">
+          <summary>What this answer is based on</summary>
+          <ul class="text-start">
+            {% if sources.used_record %}<li>The candidate's own registrations, payments and class, read from the database</li>{% endif %}
+            {% for hit in sources.hits %}<li>{{ hit.title }} <span class="text-muted">· {{ (hit.score * 100) | round | int }}% match{% if hit.origin != "system" %} · taught by you{% endif %}</span></li>{% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% else %}
+      <div class="ix-empty"><i class="bi bi-chat-dots"></i><div class="mt-2">No message in this discussion.</div></div>
+      {% endfor %}
+    </div>
+
+    <div class="ix-reply" id="live-inbox-reply" data-live-region>
+      {% if selected.status == "processing" %}
+      <div class="ix-reading">
+        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        The assistant is reading this email and looking for the answer. This page updates by itself.
+      </div>
+      {% endif %}
+
+      {% if pending %}
+      {% set sources = pending_sources %}
+      <div class="ix-ask">
+        <div class="ix-ask-title"><i class="bi bi-question-circle-fill me-1"></i>The system needs your answer</div>
+        {% if pending.question %}<div class="ix-ask-question">{{ pending.question }}</div>{% endif %}
+        {% if pending.escalation_reason %}<div class="ix-ask-why">{{ pending.escalation_reason }}</div>{% endif %}
+        {% if pending.confidence is not none and sources.method is defined %}
+        {% set percent = (pending.confidence * 100) | round | int %}
+        <div class="ix-meter" role="img" aria-label="Confidence {{ percent }} percent, {{ threshold }} percent needed">
+          <span style="width: {{ percent }}%;"></span><i style="left: {{ threshold }}%;"></i>
+        </div>
+        <div class="ix-meter-legend">
+          Confidence {{ percent }}% · it answers alone from {{ threshold }}%
+          {% if sources.method == "document" %}· the program's PDF, made from your programs, is attached
+          {% elif sources.method == "record" %}· based on the candidate's own record
+          {% elif sources.method == "taught" %}· based on an answer you taught{{ ", written again by the system (nothing added, nothing left out)" if sources.rewritten else ", in your own words" }}
+          {% elif sources.method == "composed" %}· phrased from the knowledge found
+          {% else %}· no solid basis found{% endif %}
+        </div>
+        {% endif %}
+        {% if sources.hits %}
+        <details class="ix-sources">
+          <summary>What the system looked at</summary>
+          <ul>
+            {% for hit in sources.hits %}<li>{{ hit.title }} <span class="text-muted">· {{ (hit.score * 100) | round | int }}% match{% if hit.origin != "system" %} · taught by you{% endif %}</span></li>{% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+        {% if not pending.suggested_reply %}
+        <div class="ix-ask-why"><a href="/inbox/knowledge?question={{ (pending.question or '') | urlencode }}#write" class="fw-bold" style="color:#7c4a03;">Add it to the knowledge base</a> instead if you would rather not answer by email now.</div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <form method="post" action="/inbox/thread/{{ selected.id }}/reply">
+        <label class="form-label fw-bold small mb-1" for="reply-body">
+          {% if pending and pending.suggested_reply %}Draft prepared by the system — edit it or replace it
+          {% elif pending %}Your answer
+          {% else %}Write to {{ selected.candidate.full_name or selected.candidate.email }}{% endif %}
+        </label>
+        <textarea class="form-control" id="reply-body" name="body" rows="{{ 8 if pending else 4 }}" required
+                  placeholder="Bonjour…">{{ pending.suggested_reply if pending and pending.suggested_reply else "" }}</textarea>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
+          <button type="button" class="btn btn-sm btn-light border rounded-pill fw-semibold" id="reformulate-btn" data-url="/inbox/thread/{{ selected.id }}/reformulate"
+                  {% if not model_ready %}disabled title="The assistant is not running right now"{% endif %}>
+            <i class="bi bi-stars me-1" style="color:var(--primary-berry);"></i>Reformulate
+          </button>
+          <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 d-none" id="reformulate-undo">Put my words back</button>
+          <span class="small text-muted" id="reformulate-status">Write your answer in a few words, the system turns it into a proper email. You read it before sending.</span>
+        </div>
+        <div class="form-text">Your signature is added automatically. An empty line starts a new paragraph; lines starting with “-” become a list.</div>
+
+        {{ email_files.picker(accept_documents, photo=False, attached=draft_files) }}
+
+        {% if pending and pending_sources.method != "document" %}
+        <div class="ix-learn">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="learn" id="reply-learn" value="true" {% if learn_default %}checked{% endif %}>
+            <label class="form-check-label" for="reply-learn">The system learns this answer</label>
+          </div>
+          <div class="small text-muted mt-1 mb-2">{% if pending_sources.taught_id %}You already taught this answer: sending it teaches the system that this is one more way of asking the same question.{% else %}It is added to the knowledge base by itself. Next time a candidate asks this, the system answers alone, in its own words.{% endif %} Untick it when the answer is only true for this candidate.</div>
+          <label class="form-label small fw-bold mb-1" for="reply-question">The question, as the system will remember it</label>
+          <input class="form-control form-control-sm" id="reply-question" name="question" value="{{ pending.question or '' }}" maxlength="300">
+        </div>
+        {% endif %}
+
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          <button class="btn btn-berry rounded-pill px-4"><i class="bi bi-send-fill me-1"></i>Send answer</button>
+          {% if pending %}
+          <button class="btn btn-light border rounded-pill fw-semibold" formaction="/inbox/thread/{{ selected.id }}/no-reply" formnovalidate>No answer needed</button>
+          {% endif %}
+        </div>
+      </form>
+    </div>
+    {% else %}
+    <div class="ix-empty">
+      <i class="bi bi-envelope-open"></i>
+      <div class="mt-2 fw-semibold">Choose a discussion to read it.</div>
+      <div class="small mt-1">Every email a candidate sends, and everything the system or you answered, is kept here.</div>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<!-- ============ Sample email ============ -->
+<div class="modal fade" id="simulateModal" tabindex="-1" aria-labelledby="simulateTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content border-0 rounded-4" method="post" action="/inbox/simulate">
+      <div class="modal-header border-0 pb-0">
+        <h5 class="modal-title fw-bold" id="simulateTitle">Try the assistant with a sample email</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p class="small text-muted">The email is handled as if the candidate had sent it. <strong>Nothing is sent to the candidate</strong>: the answer is only recorded here, marked “Test”.</p>
+        <label class="form-label small fw-bold" for="sim-candidate">As if sent by</label>
+        <select class="form-select mb-3" id="sim-candidate" name="candidate_id" required>
+          {% for candidate in candidates %}
+          <option value="{{ candidate.id }}" {% if selected and selected.candidate_id == candidate.id %}selected{% endif %}>{{ candidate.full_name or candidate.email }}</option>
+          {% endfor %}
+        </select>
+        <label class="form-label small fw-bold" for="sim-subject">Subject</label>
+        <input class="form-control mb-3" id="sim-subject" name="subject" value="Question sur ma formation" maxlength="200">
+        <label class="form-label small fw-bold" for="sim-body">Message</label>
+        <textarea class="form-control" id="sim-body" name="body" rows="5" required>Bonjour, à quelle heure commence ma première séance et qui est le formateur ? Merci.</textarea>
+      </div>
+      <div class="modal-footer border-0 pt-0">
+        <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-berry rounded-pill px-4">Receive this email</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{{ email_files.assets() }}
+<script>
+(() => {
+  // Show the latest message first, also after a live refresh.
+  const scrollToLatest = () => {
+    const box = document.getElementById("live-inbox-messages");
+    if (box) box.scrollTop = box.scrollHeight;
+  };
+  scrollToLatest();
+  document.addEventListener("live:refreshed", scrollToLatest);
+
+  // "Reformulate": the few words typed become a complete email, to read before sending.
+  // The reply form can be redrawn by a live refresh, so clicks are caught on the page.
+  let myWords = null;
+  const parts = () => ({
+    box: document.getElementById("reply-body"),
+    button: document.getElementById("reformulate-btn"),
+    undo: document.getElementById("reformulate-undo"),
+    status: document.getElementById("reformulate-status"),
+  });
+  const fill = (box, text) => {
+    box.value = text;
+    box.rows = Math.max(box.rows, Math.min(14, text.split("\n").length + 3));
+    box.dispatchEvent(new Event("input", { bubbles: true }));   // keeps this text through live refreshes
+  };
+  document.addEventListener("click", async event => {
+    const { box, button, undo, status } = parts();
+    if (!box || !button) return;
+    if (event.target.closest("#reformulate-undo")) {
+      if (myWords !== null) fill(box, myWords);
+      undo.classList.add("d-none");
+      status.textContent = "Your own words are back.";
+      return;
+    }
+    if (!event.target.closest("#reformulate-btn")) return;
+    const words = box.value.trim();
+    if (words.length < 2) {
+      status.textContent = "First write what you want to answer, even in a few words.";
+      box.focus();
+      return;
+    }
+    button.disabled = true;
+    const label = button.innerHTML;
+    button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Writing…';
+    status.textContent = "This takes about half a minute on this computer.";
+    try {
+      const response = await fetch(button.dataset.url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: words.slice(0, 2000) }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.detail && typeof data.detail === "string" ? data.detail : "The phrase could not be reformulated.");
+      myWords = words;
+      const current = parts();    // the form may have been redrawn while waiting
+      fill(current.box, data.reply);
+      current.undo.classList.remove("d-none");
+      current.status.textContent = data.warning || "Read it, change what you want, then send.";
+      current.status.classList.toggle("text-danger", Boolean(data.warning));
+    } catch (error) {
+      parts().status.textContent = error.message;
+    } finally {
+      const current = parts();
+      if (current.button) { current.button.disabled = false; current.button.innerHTML = label; }
+    }
+  });
+})();
+</script>
+{% endblock %}

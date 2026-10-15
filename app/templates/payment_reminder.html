@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Payment reminder · {{ name }}{% endblock %}
+{% block page_title %}Payment reminder{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .pr-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
+  .pr-back:hover { color:var(--primary-berry); }
+  .pr-grid { display:grid; grid-template-columns:minmax(0, 1.5fr) minmax(0, 1fr); gap:22px; align-items:start; }
+  .pr-rule { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:22px; }
+  .pr-step { background:#fff; border:1px solid var(--border-color); border-radius:16px; padding:14px 16px; display:flex; gap:12px; align-items:center; position:relative; }
+  .pr-step i { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:1.05rem; flex:none; background:#f4f1f9; color:#8d88a3; }
+  .pr-step b { display:block; font-size:.84rem; color:var(--ink-text); }
+  .pr-step span { font-size:.74rem; color:var(--muted); line-height:1.35; display:block; }
+  .pr-step.is-done i { background:var(--mint-subtle); color:var(--mint); }
+  .pr-step.is-now { border-color:var(--primary-berry); box-shadow:0 10px 24px -18px var(--primary-berry); }
+  .pr-step.is-now i { background:var(--primary-berry); color:#fff; animation:prPulse 2.2s ease-in-out infinite; }
+  @keyframes prPulse { 0%, 100% { box-shadow:0 0 0 0 color-mix(in srgb, var(--primary-berry) 35%, transparent); } 50% { box-shadow:0 0 0 9px transparent; } }
+  textarea.form-control.pr-text { min-height:270px; font-size:.9rem; line-height:1.6; }
+  .pr-closing { background:#faf8fd; border:1px dashed #ddd6ea; border-radius:12px; padding:10px 13px; font-size:.8rem; color:#5b5670; margin-top:10px; }
+  .pr-line { display:flex; justify-content:space-between; gap:12px; padding:10px 0; border-top:1px solid var(--border-color); font-size:.85rem; }
+  .pr-line:first-of-type { border-top:0; }
+  .pr-line b { color:var(--ink-text); }
+  .pr-total { display:flex; justify-content:space-between; align-items:baseline; margin-top:6px; padding-top:12px; border-top:2px solid var(--ink-text); font-weight:800; }
+  .pr-total span:last-child { font-size:1.25rem; color:var(--primary-berry); }
+  .pr-event { display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-top:1px solid var(--border-color); font-size:.82rem; }
+  .pr-event:first-of-type { border-top:0; }
+  .pr-event i { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; flex:none; background:#f4f1f9; color:#5b5670; }
+  .pr-event.in i { background:var(--sky-subtle); color:var(--sky); }
+  .pr-wa { background:#e7f8ee; border-color:transparent; color:#128c4b; }
+  .pr-wa:hover { border-color:#128c4b; color:#128c4b; }
+  @media (max-width: 1099px) { .pr-grid, .pr-rule { grid-template-columns:1fr; } }
+  @media (prefers-reduced-motion: reduce) { .pr-step.is-now i { animation:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3"><a href="{{ back }}" class="pr-back"><i class="bi bi-arrow-left me-1"></i>Back</a></div>
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div class="d-flex align-items-center gap-3">
+    {{ ui.avatar(name, 52) }}
+    <div>
+      <h2>Payment reminder for {{ name }}</h2>
+      <p>Read the message, change what you want, then send it. Nothing leaves before you press the button.</p>
+    </div>
+  </div>
+</div>
+
+{# Where this candidate stands in the one rule about payment reminders. #}
+{% set sent = story.reminders | length %}
+<div class="pr-rule">
+  <div class="pr-step {{ 'is-done' if sent else 'is-now' }}">
+    <i class="bi {{ 'bi-check-lg' if sent else 'bi-send' }}"></i>
+    <div><b>1 · One reminder by itself</b><span>{% if sent %}Sent {{ last_local.strftime('%d %b at %H:%M') if sent == 1 else sent ~ ' reminders so far, the last on ' ~ last_local.strftime('%d %b') }}.{% else %}24 hours after the registration, for everything owed.{% endif %}</span></div>
+  </div>
+  {% set waited = sent and not story.answers and waited_days is not none and waited_days >= 3 %}
+  <div class="pr-step {{ 'is-done' if story.answers or waited else ('is-now' if sent else '') }}">
+    <i class="bi {{ 'bi-chat-left-text' if story.answers else ('bi-check-lg' if waited else 'bi-hourglass-split') }}"></i>
+    <div><b>2 · Three days to answer</b><span>{% if story.answers %}{{ name.split()[0] }} wrote back: read it first.{% elif waited %}{{ waited_days }} days without payment or answer.{% elif sent %}Day {{ waited_days + 1 }} of 3: the system waits and never writes a second time by itself.{% else %}The system waits and never writes a second time by itself.{% endif %}</span></div>
+  </div>
+  <div class="pr-step {{ 'is-now' if story.answers or waited else '' }}">
+    <i class="bi bi-person-check"></i>
+    <div><b>3 · You decide</b><span>Send it again with your own words, by email or on WhatsApp.</span></div>
+  </div>
+</div>
+
+<div class="pr-grid">
+  <form class="ui-card" method="post" action="/candidate/{{ candidate.id }}/payment-reminder" id="reminderForm">
+    <input type="hidden" name="back" value="{{ back }}">
+    <div class="ui-card-head">
+      <div>
+        <div class="ui-card-title"><i class="bi bi-envelope-paper"></i>The message</div>
+        <div class="ui-card-sub">To {{ candidate.email or 'no email address' }}. The logo, colours and signature of your emails are added around it.</div>
+      </div>
+    </div>
+    {% if not smtp_ready %}
+    <div class="alert alert-warning page-flash mb-3"><i class="bi bi-exclamation-triangle-fill me-2"></i>Email is not set up yet: the reminder would be saved but not delivered. See Settings.</div>
+    {% endif %}
+    {% if story.answers %}
+    <div class="alert alert-info page-flash mb-3"><i class="bi bi-chat-left-text-fill me-2"></i>{{ name.split()[0] }} wrote to you after the last reminder. <a href="/inbox?candidate={{ candidate.id }}" class="ui-link">Read the message</a> before sending another one.</div>
+    {% endif %}
+    <div class="ui-field mb-3">
+      <label for="subject">Subject</label>
+      <input class="form-control" id="subject" name="subject" value="{{ draft.subject }}" maxlength="200" required>
+    </div>
+    <div class="ui-field">
+      <label for="body">Message</label>
+      <textarea class="form-control pr-text" id="body" name="body" required>{{ draft.body }}</textarea>
+      <div class="ui-hint">Two stars around words make them **bold**. <a href="/inbox/templates?key=payment_reminder" class="ui-link">Change the text for every candidate</a></div>
+    </div>
+    {% if draft.closing %}<div class="pr-closing"><b>Added under your message:</b> {{ draft.closing }}</div>{% endif %}
+    <div class="d-flex gap-2 flex-wrap align-items-center mt-3">
+      <button class="ui-btn primary" type="submit" {{ 'disabled' if not candidate.email }}><i class="bi bi-send"></i>Send by email</button>
+      {% if whatsapp_link %}
+      <a class="ui-btn pr-wa" href="{{ whatsapp_link }}" target="_blank" rel="noopener" id="whatsappButton" data-number="{{ whatsapp_number }}"><i class="bi bi-whatsapp"></i>Open in WhatsApp</a>
+      {% endif %}
+      <button class="ui-btn ghost" type="button" id="resetText"><i class="bi bi-arrow-counterclockwise"></i>Put the original text back</button>
+    </div>
+    <div class="ui-hint mt-2">
+      {% if whatsapp_link %}WhatsApp opens on {{ whatsapp_pretty }} with this message written; you press send there.{% if whatsapp_auto %} The email also goes on WhatsApp by itself.{% endif %}
+      {% elif candidate.phone %}The phone number “{{ candidate.phone }}” cannot be used on WhatsApp: correct it in the candidate's file.
+      {% else %}No phone number in the candidate's file, so WhatsApp is not offered.{% endif %}
+    </div>
+  </form>
+
+  <div>
+    <section class="ui-card mb-3">
+      <div class="ui-card-head"><div class="ui-card-title"><i class="bi bi-cash-coin"></i>What it is about</div></div>
+      {% for item in draft.registrations %}
+      <div class="pr-line">
+        <div><b>{{ item.program.name if item.program else (item.program_name or 'Program') }}</b>
+          <div class="ui-card-sub">{{ '%.0f' | format(item.paid_amount or 0) }} DT paid of {{ '%.0f' | format(item.total_amount or item.total_price or 0) }} DT</div></div>
+        <b>{{ '%.0f' | format(item.remaining_amount) }} DT</b>
+      </div>
+      {% endfor %}
+      <div class="pr-total"><span>Still to pay</span><span>{{ '%.0f' | format(draft.total) }} DT</span></div>
+    </section>
+
+    <section class="ui-card">
+      <div class="ui-card-head"><div class="ui-card-title"><i class="bi bi-clock-history"></i>What already happened</div></div>
+      {% for item in story.reminders %}
+      <div class="pr-event"><i class="bi bi-send"></i><div><b>Reminder sent</b><div class="ui-card-sub">{{ item.received_at.strftime('%d %b %Y') }} · {{ item.subject }}</div></div></div>
+      {% endfor %}
+      {% for item in story.answers %}
+      <div class="pr-event in"><i class="bi bi-reply"></i><div><b>{{ name.split()[0] }} answered</b><div class="ui-card-sub">{{ item.received_at.strftime('%d %b %Y') }} · {{ item.subject or 'No subject' }}</div></div></div>
+      {% endfor %}
+      {% for item in story.failed %}
+      <div class="pr-event"><i class="bi bi-send-x"></i><div><b>A reminder did not go out</b><div class="ui-card-sub">{{ item.received_at.strftime('%d %b %Y') }} · open the Inbox and use “Send again”</div></div></div>
+      {% endfor %}
+      {% if not story.reminders and not story.failed %}
+      <div class="ui-empty py-3"><i class="bi bi-envelope"></i>No payment reminder was sent to {{ name.split()[0] }} yet.</div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const body = document.getElementById("body");
+  const subject = document.getElementById("subject");
+  const original = { subject: subject.value, body: body.value };
+  document.getElementById("resetText").addEventListener("click", () => {
+    subject.value = original.subject;
+    body.value = original.body;
+    body.dispatchEvent(new Event("input"));
+  });
+  // The WhatsApp button always carries the words as they are now.
+  const whatsapp = document.getElementById("whatsappButton");
+  if (whatsapp) {
+    const closing = {{ (draft.closing or "") | tojson }};
+    const refresh = () => {
+      const text = (body.value.trim() + (closing ? "\n\n" + closing : "")).replace(/\*\*(.+?)\*\*/g, "*$1*");
+      whatsapp.href = "https://wa.me/" + whatsapp.dataset.number + "?text=" + encodeURIComponent(text);
+    };
+    body.addEventListener("input", refresh);
+    refresh();
+  }
+})();
+</script>
+{% endblock %}

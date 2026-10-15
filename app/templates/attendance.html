@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Presence · {{ cls.name }}{% endblock %}
+{% block page_title %}Presence{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .at-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
+  .at-back:hover { color:var(--primary-berry); }
+  .at-layout { display:grid; grid-template-columns:280px minmax(0, 1fr); gap:18px; align-items:start; }
+  .at-rail { position:sticky; top:calc(var(--stick-top, 0px) + 8px); max-height:calc(100vh - var(--stick-top, 0px) - 24px); overflow:auto; padding:10px; }
+  .at-session { display:flex; gap:10px; align-items:center; padding:9px 10px; border-radius:14px; text-decoration:none; color:inherit; border:1px solid transparent; }
+  .at-session:hover { background:#faf8fd; color:inherit; }
+  .at-session.is-selected { background:var(--berry-subtle); border-color:color-mix(in srgb, var(--primary-berry) 25%, #fff); }
+  .at-session.is-future { opacity:.5; }
+  .at-date { width:44px; flex:none; text-align:center; border-radius:12px; background:#f4f1f9; color:#5b5670; padding:5px 0; line-height:1.1; }
+  .at-date b { display:block; font-size:.98rem; font-weight:800; }
+  .at-date span { font-size:.58rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+  .at-session.is-today .at-date { background:var(--primary-berry); color:#fff; }
+  .at-topic { font-size:.78rem; font-weight:700; color:var(--ink-text); line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .at-meta { font-size:.68rem; color:var(--muted); margin-top:2px; }
+
+  .at-person { display:grid; grid-template-columns:minmax(0, 1.4fr) auto minmax(0, 1fr); gap:14px; align-items:center; padding:12px 0; border-top:1px solid var(--border-color); }
+  .at-person:first-of-type { border-top:0; }
+  .at-name { font-weight:700; font-size:.9rem; color:var(--ink-text); }
+  .at-choice { display:inline-flex; border:1.5px solid var(--border-color); border-radius:12px; overflow:hidden; background:#fff; }
+  .at-choice label { margin:0; cursor:pointer; }
+  .at-choice input { position:absolute; opacity:0; width:0; height:0; }
+  .at-choice span { display:inline-flex; align-items:center; gap:6px; padding:8px 13px; font-size:.8rem; font-weight:700; color:#6b6680; border-right:1.5px solid var(--border-color); }
+  .at-choice label:last-child span { border-right:0; }
+  .at-choice input:checked + span.present { background:var(--mint-subtle); color:var(--mint); }
+  .at-choice input:checked + span.late { background:var(--gold-subtle); color:var(--gold-dark); }
+  .at-choice input:checked + span.absent { background:#fff1f2; color:#be123c; }
+  .at-choice input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:-2px; }
+  .at-note { border-radius:10px; font-size:.8rem; border-color:var(--border-color); }
+  .at-meet { display:flex; gap:14px; align-items:flex-start; border-radius:18px; padding:14px 16px; margin-bottom:16px; background:linear-gradient(120deg, #fff, var(--sky-subtle)); border:1px solid var(--border-color); }
+  .at-meet-ico { width:42px; height:42px; border-radius:14px; background:var(--sky); color:#fff; display:grid; place-items:center; font-size:1.1rem; flex:none; }
+  .at-meet b { display:block; font-size:.92rem; color:var(--ink-text); } .at-meet span { display:block; font-size:.8rem; color:#5b5670; line-height:1.5; }
+  .at-meet-url { display:inline-block; font-size:.78rem; font-weight:700; color:var(--sky); overflow-wrap:anywhere; margin-top:4px; }
+  .at-meet-do { display:grid; gap:8px; margin-top:10px; } .at-meet-do form { margin:0; }
+  .at-seen { grid-column:1 / -1; display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; padding-top:2px; font-size:.78rem; color:#5b5670; }
+  .at-seen-label { font-weight:700; }
+  .at-part { display:inline-flex; border:1px solid var(--border-color); border-radius:10px; overflow:hidden; }
+  .at-part label { margin:0; cursor:pointer; } .at-part input { position:absolute; opacity:0; width:0; height:0; }
+  .at-part span { display:block; padding:5px 10px; font-size:.74rem; font-weight:700; color:#6b6680; background:#fff; }
+  .at-part label + label span { border-left:1px solid var(--border-color); }
+  .at-part input:checked + span { background:var(--berry-subtle); color:var(--primary-berry); }
+  .at-part input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:-2px; }
+  .at-asked { display:inline-flex; align-items:center; gap:6px; margin:0; font-size:.76rem; }
+  .at-asked input { width:58px; border:1px solid var(--border-color); border-radius:9px; padding:4px 6px; font:inherit; font-size:.78rem; }
+  @media (max-width: 991px) { .at-layout { grid-template-columns:1fr; } .at-rail { position:static; max-height:240px; } .at-person { grid-template-columns:1fr; gap:8px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-2">
+  {% if is_admin %}<a href="/classes/{{ cls.id }}" class="at-back"><i class="bi bi-arrow-left me-1"></i>{{ cls.name }}</a>
+  {% else %}<a href="/teacher" class="at-back"><i class="bi bi-arrow-left me-1"></i>My classes</a>{% endif %}
+</div>
+{% include "_flash.html" %}
+
+<div class="ui-head">
+  <div class="d-flex align-items-center gap-3">
+    <span style="width:54px; height:54px; border-radius:17px; display:grid; place-items:center; font-size:1.6rem; background:{{ look.soft }};">{{ look.symbol }}</span>
+    <div>
+      <h2>Presence · {{ cls.name }}</h2>
+      <p>{{ cls.program.name if cls.program else 'Class' }} · {{ class_info.enrolled }} candidate{{ 's' if class_info.enrolled != 1 }}{% if summary.rate is not none %} · {{ summary.rate }}% attendance over {{ summary.sessions_marked }} session{{ 's' if summary.sessions_marked != 1 }}{% endif %}</p>
+    </div>
+  </div>
+  <div class="ui-actions">
+    <a class="ui-btn" href="/classes/{{ cls.id }}/course"><i class="bi bi-folder2-open"></i>Course</a>
+  </div>
+</div>
+
+{% if not sessions %}
+<div class="ui-empty">
+  <i class="bi bi-calendar-x"></i><strong>This class has no session yet</strong>
+  Its weekly plan is created when the class gets a start date. You can still mark who is here today.
+  <form method="post" action="/classes/{{ cls.id }}/attendance/today" class="mt-3"><button class="ui-btn primary"><i class="bi bi-plus-lg"></i>Start today's session</button></form>
+</div>
+{% else %}
+<div class="at-layout">
+  <nav class="ui-card at-rail" aria-label="Sessions of the class">
+    {% for item in sessions %}
+    <a class="at-session {{ 'is-selected' if item.is_selected }} {{ 'is-future' if item.is_future }} {{ 'is-today' if item.is_today }}"
+       href="/classes/{{ cls.id }}/attendance?session={{ item.session.id }}" {% if item.is_selected %}aria-current="page"{% endif %}>
+      <span class="at-date"><b>{{ item.session.session_date.strftime('%d') }}</b><span>{{ item.session.session_date.strftime('%b') }}</span></span>
+      <span style="min-width:0;">
+        <span class="at-topic">{{ item.session.topic }}</span>
+        <span class="at-meta d-block">
+          Week {{ item.session.week_number }}
+          {% if item.counts %} · <span style="color:var(--mint); font-weight:700;">{{ item.counts.present + item.counts.late }} here</span>{% if item.counts.absent %} · <span style="color:#be123c; font-weight:700;">{{ item.counts.absent }} absent</span>{% endif %}
+          {% elif item.is_today %} · today{% elif item.is_future %} · to come{% else %} · not marked{% endif %}
+        </span>
+      </span>
+    </a>
+    {% endfor %}
+    <form method="post" action="/classes/{{ cls.id }}/attendance/today" class="mt-2 px-1">
+      <button class="ui-btn ghost sm w-100" title="For a session that is not in the weekly plan"><i class="bi bi-plus-lg"></i>Session today</button>
+    </form>
+  </nav>
+
+  <section class="ui-card">
+    <div class="ui-card-head">
+      <div>
+        <div class="ui-card-title"><i class="bi bi-person-check"></i>{{ selected.session_date.strftime('%A %d %B') }} · {{ selected.topic }}</div>
+        <div class="ui-card-sub">
+          {% if selected_is_future %}This session has not taken place yet.
+          {% elif already_marked %}Already marked. Change what is wrong and save again.
+          {% else %}Everyone is marked present to start with: change only those who are late or absent.{% endif %}
+        </div>
+      </div>
+      {% if not selected_is_future and sheet %}
+      <div class="ui-actions">
+        <button type="button" class="ui-btn sm" data-all="present"><i class="bi bi-check2-all"></i>All present</button>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- The online meeting of this session: one room, and a link of their own for each candidate -->
+    <div class="at-meet" id="meeting">
+      <span class="at-meet-ico"><i class="bi bi-camera-video-fill"></i></span>
+      <div style="min-width:0; flex:1;">
+        <b>The meeting of this session</b>
+        {% if meeting.url %}
+        <span>Candidates never see this address: each one gets a link of their own, which lets them in from 30 minutes before the session and notes when they arrive. {{ meeting.joined }} came in through it{% if meeting.sent %} · {{ meeting.sent }} received it by email{% endif %}.</span>
+        <a class="at-meet-url" href="{{ meeting.url }}" target="_blank" rel="noopener noreferrer">{{ meeting.url }}</a>
+        {% else %}
+        <span>Paste the address of your meeting (Google Meet, Zoom, Teams…), or let a private room be created. Each candidate then gets a link of their own, which lets them in and notes when they arrive.</span>
+        {% endif %}
+        <div class="at-meet-do">
+          <form method="post" action="/classes/{{ cls.id }}/attendance/{{ selected.id }}/room" class="d-flex gap-2 flex-wrap">
+            <input class="form-control form-control-sm at-note" name="meeting_url" value="{{ meeting.url or '' }}" placeholder="https://meet.google.com/… (empty = create a private room)" aria-label="Address of the meeting" style="min-width:240px; flex:1;">
+            <button class="ui-btn sm">{{ 'Change' if meeting.url else 'Set the meeting' }}</button>
+          </form>
+          {% if meeting.url and sheet %}
+          <form method="post" action="/classes/{{ cls.id }}/attendance/{{ selected.id }}/send-links" class="d-flex gap-2 align-items-center flex-wrap" data-confirm="Email each candidate of {{ cls.name }} their own link to this session?">
+            <button class="ui-btn primary sm" {{ 'disabled' if not meeting.email_ready }}><i class="bi bi-send"></i>Send each candidate their own link</button>
+            {% if meeting.sent %}<label class="at-meta" style="cursor:pointer;"><input type="checkbox" name="again" value="true"> send again to those who already have it</label>{% endif %}
+          </form>
+          {% endif %}
+        </div>
+        {% if meeting.url and meeting.local %}<span style="color:#7c4a03;">The links start with {{ meeting.base_url }}, which only opens on this computer: set the address candidates can reach in Settings before sending.</span>{% endif %}
+      </div>
+    </div>
+
+    {% if not sheet %}
+    <div class="ui-empty"><i class="bi bi-people"></i><strong>No candidate in this class yet</strong></div>
+    {% else %}
+    <form method="post" action="/classes/{{ cls.id }}/attendance/{{ selected.id }}" id="presenceForm">
+      {% for row in sheet %}
+      {% set current = row.status or 'present' %}
+      <div class="at-person">
+        <div class="d-flex align-items-center gap-3" style="min-width:0;">
+          {{ ui.avatar(row.name, 40) }}
+          <div style="min-width:0;">
+            <div class="at-name text-truncate">{{ row.name }}</div>
+            <div class="at-meta">
+              {% if row.rate is not none %}{{ row.rate }}% attendance{% else %}First session marked{% endif %}
+              {% if row.absent_in_a_row >= 2 %} · <span style="color:#be123c; font-weight:700;">absent {{ row.absent_in_a_row }} times in a row</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="at-choice" role="radiogroup" aria-label="Presence of {{ row.name }}">
+          {% for value, icon in [('present', 'bi-check-lg'), ('late', 'bi-clock'), ('absent', 'bi-x-lg')] %}
+          <label><input type="radio" name="status_{{ row.registration.id }}" value="{{ value }}" {{ 'checked' if current == value }} {{ 'disabled' if selected_is_future }}><span class="{{ value }}"><i class="bi {{ icon }}"></i>{{ labels[value] }}</span></label>
+          {% endfor %}
+        </div>
+        <input class="form-control form-control-sm at-note" name="note_{{ row.registration.id }}" value="{{ row.note or '' }}" placeholder="Note (optional)" aria-label="Note about {{ row.name }}" {{ 'disabled' if selected_is_future }}>
+        <div class="at-seen">
+          {% if row.join and row.join.joined %}<span class="ui-chip {{ 'warn' if row.join.late else 'ok' }}" title="By their own link{% if row.join.joins > 1 %}, used {{ row.join.joins }} times{% endif %}"><i class="bi bi-box-arrow-in-right"></i>Came in {{ row.join.joined.strftime('%H:%M') }}{% if row.join.late %} · {{ row.join.minutes_late }} min late{% endif %}</span>
+          {% elif row.join and row.join.sent %}<span class="ui-chip muted"><i class="bi bi-envelope"></i>Has their link · not come in</span>
+          {% elif meeting.url %}<span class="ui-chip muted">Link not sent yet</span>{% endif %}
+          {% if not selected_is_future %}
+          <span class="at-seen-label">In the session:</span>
+          <div class="at-part" role="radiogroup" aria-label="How {{ row.name }} took part">
+            {% for value in [1, 2, 3] %}<label><input type="radio" name="participation_{{ row.registration.id }}" value="{{ value }}" {{ 'checked' if row.participation == value }}><span>{{ participation_labels[value][0] }}</span></label>{% endfor %}
+          </div>
+          <label class="at-asked">asked <input type="number" min="0" max="50" name="questions_{{ row.registration.id }}" value="{{ row.questions if row.questions is not none else '' }}" aria-label="Questions {{ row.name }} asked"> question(s)</label>
+          {% endif %}
+          {% if row.behaviour and row.behaviour.score is not none %}<a class="ui-chip {{ row.behaviour.tone }} ms-auto" href="/candidate/{{ row.registration.candidate_id }}#behaviour" style="text-decoration:none;" title="{{ row.behaviour.headline }}: open the parameters behind this score"><i class="bi bi-activity"></i>{{ row.behaviour.score }}/100</a>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+      {% if not selected_is_future %}
+      <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
+        <button class="ui-btn primary" type="submit"><i class="bi bi-check2"></i>Save the presence</button>
+        <span class="ui-card-sub" id="presenceCount"></span>
+      </div>
+      {% endif %}
+    </form>
+    {% endif %}
+  </section>
+</div>
+{% endif %}
+
+<script>
+(() => {
+  const form = document.getElementById("presenceForm");
+  if (!form) return;
+  const count = document.getElementById("presenceCount");
+  const show = () => {
+    if (!count) return;
+    const marks = [...form.querySelectorAll('input[type="radio"][name^="status_"]:checked')].map(input => input.value);
+    const absent = marks.filter(value => value === "absent").length;
+    const late = marks.filter(value => value === "late").length;
+    count.textContent = `${marks.length - absent} here` + (late ? ` (${late} late)` : "") + (absent ? `, ${absent} absent` : "");
+  };
+  form.addEventListener("change", show);
+  document.addEventListener("click", event => {
+    const all = event.target.closest("[data-all]");
+    if (!all) return;
+    form.querySelectorAll(`input[type="radio"][value="${all.dataset.all}"]`).forEach(input => { input.checked = true; });
+    show();
+  });
+  show();
+})();
+</script>
+{% endblock %}

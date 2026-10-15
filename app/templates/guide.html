@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% import "_ui_art.html" as pictures %}
+
+{% block title %}How it works · {{ app_brand.name }}{% endblock %}
+{% block page_title %}How it works{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .jr-hero { text-align:center; max-width:720px; margin:6px auto 34px; }
+  .jr-hero img { width:76px; height:76px; border-radius:50%; border:1px solid var(--border-color); box-shadow:0 18px 34px -20px rgba(36,26,56,.6); margin-bottom:14px; }
+  .jr-hero h2 { font-weight:800; font-size:1.7rem; letter-spacing:-.02em; margin:0 0 8px; color:var(--ink-text); }
+  .jr-hero p { color:#5b5670; font-size:.95rem; line-height:1.6; margin:0; }
+  .jr-road { position:relative; max-width:980px; margin:0 auto; display:grid; gap:26px; }
+  .jr-road::before { content:""; position:absolute; left:50%; top:20px; bottom:20px; width:3px; margin-left:-1.5px; background:repeating-linear-gradient(180deg, #d5cde6 0 8px, transparent 8px 16px); }
+  .jr-road::after { content:""; position:absolute; left:50%; top:20px; width:13px; height:13px; margin-left:-6.5px; border-radius:50%; background:var(--primary-berry); box-shadow:0 0 0 6px color-mix(in srgb, var(--primary-berry) 18%, transparent); animation:jrTravel 14s linear infinite; }
+  @keyframes jrTravel { from { top:20px; } to { top:calc(100% - 34px); } }
+  .jr-stop { position:relative; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+  .jr-card { background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:22px 24px; border-top:4px solid var(--tone, var(--primary-berry)); }
+  .jr-card h3 { font-weight:800; font-size:1.05rem; margin:0 0 6px; color:var(--ink-text); }
+  .jr-card p { color:#5b5670; font-size:.87rem; line-height:1.6; margin:0 0 12px; }
+  .jr-art { max-width:230px; margin:0 auto; width:100%; }
+  .jr-stop:nth-child(even) .jr-card { order:2; }
+  .jr-stop:nth-child(even) .jr-art { order:1; }
+  .jr-end { text-align:center; margin:38px auto 0; max-width:560px; color:#5b5670; font-size:.9rem; }
+  @media (max-width: 860px) {
+    .jr-road::before, .jr-road::after { left:18px; }
+    .jr-stop { grid-template-columns:1fr; gap:10px; padding-left:44px; }
+    .jr-stop:nth-child(even) .jr-card, .jr-stop:nth-child(even) .jr-art { order:initial; }
+    .jr-art { max-width:170px; margin:0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .jr-road::after { animation:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="jr-hero">
+  {% if app_brand.logo %}<img src="{{ app_brand.icon_big or app_brand.logo }}" alt="">{% endif %}
+  <h2>{{ app_brand.name }}, from the first form to the last week</h2>
+  <p>Follow the dot: it is the road every candidate takes. At each stop, the application does the repetitive part by itself and brings you only what needs a person.</p>
+</div>
+
+<div class="jr-road">
+  {% for stop in journey %}
+  <div class="jr-stop">
+    <div class="jr-card tone-{{ stop.tone }}">
+      <h3>{{ stop.title }}</h3>
+      <p>{{ stop.text }}</p>
+      {% if for_admin %}<a class="ui-btn soft sm" href="{{ stop.link[0] }}">{{ stop.link[1] }}<i class="bi bi-arrow-right"></i></a>{% endif %}
+    </div>
+    <div class="jr-art">{{ pictures.scene(stop.art) }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+<p class="jr-end">Every page starts with its own short explanation. Close it once you know the page; the <b>?</b> at the top brings it back.</p>
+{% endblock %}

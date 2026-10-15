@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Translations · 9antra{% endblock %}
+{% block page_title %}Translations{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .tl-back { display:inline-flex; align-items:center; gap:6px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; margin-bottom:12px; }
+  .tl-tabs { display:inline-flex; border:1.5px solid var(--border-color); border-radius:99px; overflow:hidden; background:#fff; }
+  .tl-tabs a { padding:6px 16px; font-size:.82rem; font-weight:700; color:var(--muted); text-decoration:none; }
+  .tl-tabs a.is-on { background:var(--primary-berry); color:#fff; }
+  .tl-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:6px 18px; }
+  .tl-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr) auto; gap:12px; align-items:center; padding:10px 0; border-top:1px solid var(--border-color); }
+  .tl-row:first-child { border-top:0; }
+  .tl-row .src { font-size:.84rem; color:var(--ink-text); overflow-wrap:anywhere; } .tl-row .src small { display:block; color:var(--muted); font-size:.7rem; }
+  .tl-row input { border:1.5px solid var(--border-color); border-radius:11px; padding:7px 11px; font:inherit; font-size:.86rem; width:100%; }
+  .tl-row input:focus { outline:none; border-color:var(--primary-berry); }
+  @media (max-width: 767px) { .tl-row { grid-template-columns:minmax(0, 1fr); gap:6px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<a href="/settings#language" class="tl-back"><i class="bi bi-arrow-left"></i>Settings</a>
+<div class="ui-head">
+  <div>
+    <h2>Translations of the pages</h2>
+    <p>The assistant translates the application's own texts, once, and they are kept here. Read them and correct any of them: your wording is never changed again. Names and what people write are not translated.</p>
+  </div>
+  <div class="ui-actions">
+    <div class="tl-tabs" data-no-i18n>{% for code, state in progress.items() %}<a class="{{ 'is-on' if code == lang }}" href="/settings/translations?lang={{ code }}">{{ state.name }} · {{ state.done }}/{{ state.total }}</a>{% endfor %}</div>
+  </div>
+</div>
+
+<form method="get" action="/settings/translations" class="d-flex gap-2 flex-wrap mb-3">
+  <input type="hidden" name="lang" value="{{ lang }}">
+  <input class="form-control" name="q" value="{{ search }}" placeholder="Search a text or a translation" aria-label="Search" style="max-width:320px; border-radius:12px; font-size:.86rem;">
+  <select class="form-select" name="only" aria-label="Which ones" style="max-width:240px; border-radius:12px; font-size:.86rem;">
+    <option value="" {{ 'selected' if not only }}>All of them</option>
+    <option value="model" {{ 'selected' if only == 'model' }}>Made by the assistant</option>
+    <option value="seed" {{ 'selected' if only == 'seed' }}>Made by hand</option>
+    <option value="admin" {{ 'selected' if only == 'admin' }}>Corrected by you</option>
+    <option value="waiting" {{ 'selected' if only == 'waiting' }}>Not translated yet</option>
+  </select>
+  <button class="ui-btn">Show</button>
+</form>
+
+<div class="tl-box" data-no-i18n>
+  {% for row in rows %}
+  <form class="tl-row" method="post" action="/settings/translations/save">
+    <input type="hidden" name="lang" value="{{ lang }}"><input type="hidden" name="source" value="{{ row.source }}"><input type="hidden" name="q" value="{{ search }}"><input type="hidden" name="only" value="{{ only }}">
+    <div class="src">{{ row.source }}<small>{{ {'model': 'made by the assistant', 'seed': 'made by hand', 'admin': 'corrected by you'}.get(row.origin, 'not translated yet') }}</small></div>
+    <input name="text" value="{{ row.text or '' }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}" lang="{{ lang }}" aria-label="Translation" required>
+    <button class="ui-btn sm">Save</button>
+  </form>
+  {% else %}
+  <div class="ui-empty" style="border:0;"><i class="bi bi-translate"></i><strong>Nothing here</strong>Choose this language with the button at the top of a page: the texts you open are translated first.</div>
+  {% endfor %}
+</div>
+{% endblock %}

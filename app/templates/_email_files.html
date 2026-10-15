@@ -1,0 +1,214 @@
+{# The photo and the attached files of an email.
+   picker() draws the controls inside a form; assets() (once per page) makes
+   every picker on the page work, including ones redrawn by a live refresh. #}
+
+{% macro picker(accept, photo=True, files=True, image=None, image_position="top", attached=[]) %}
+<div class="ef" data-ef>
+  {% if photo %}
+  <div class="ef-block">
+    <div class="ef-label">Photo shown in the email</div>
+    <input type="hidden" name="image_id" value="{{ image.id if image else '' }}" data-ef-image-id>
+    <div class="ef-photo {% if not image %}d-none{% endif %}" data-ef-photo>
+      <img alt="" data-ef-photo-img {% if image %}src="{{ image.url }}"{% endif %}>
+      <div class="ef-photo-side">
+        <div class="ef-name" data-ef-photo-name>{{ image.name if image else "" }}</div>
+        <select class="form-select form-select-sm" name="image_position" data-ef-position aria-label="Where the photo goes">
+          <option value="top" {% if image_position != "bottom" %}selected{% endif %}>Above the text</option>
+          <option value="bottom" {% if image_position == "bottom" %}selected{% endif %}>Below the text</option>
+        </select>
+        <button type="button" class="ef-link" data-ef-remove-photo>Remove the photo</button>
+      </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-light border ef-add" data-ef-add="image"><i class="bi bi-image me-1"></i><span data-ef-add-label>{{ "Change the photo" if image else "Add a photo" }}</span></button>
+    <input type="file" class="d-none" accept="image/png,image/jpeg,image/gif,image/webp" data-ef-input="image" aria-label="Choose a photo">
+  </div>
+  {% endif %}
+  {% if files %}
+  <div class="ef-block">
+    <div class="ef-label">Attached files</div>
+    <div class="ef-files" data-ef-files>
+      {%- for file in attached -%}
+      <span class="ef-chip"><input type="hidden" name="attachment_ids" value="{{ file.id }}"><i class="bi bi-paperclip"></i><a href="{{ file.url }}" target="_blank" rel="noopener">{{ file.name }}</a><span class="ef-size">{{ file.size_label }}</span><button type="button" data-ef-remove-file aria-label="Remove {{ file.name }}">&times;</button></span>
+      {%- endfor -%}
+    </div>
+    <button type="button" class="btn btn-sm btn-light border ef-add" data-ef-add="attachment"><i class="bi bi-paperclip me-1"></i>Attach a file</button>
+    <input type="file" class="d-none" multiple accept="{{ accept }}" data-ef-input="attachment" aria-label="Choose files to attach">
+    <div class="ef-help">PDF, pictures, Word, Excel or PowerPoint. Up to 10 MB per file.</div>
+  </div>
+  {% endif %}
+  <div class="ef-status" data-ef-status role="status"></div>
+</div>
+{% endmacro %}
+
+
+{# The files that came with one stored email. #}
+{% macro attachments(files) %}
+{% if files %}
+<div class="ef-sent">
+  {% for file in files %}
+  <a class="ef-chip" href="{{ file.url }}" target="_blank" rel="noopener" title="Open {{ file.name }}">
+    <i class="bi {{ 'bi-image' if file.is_image else 'bi-paperclip' }}"></i><span>{{ file.name }}</span><span class="ef-size">{{ file.size_label }}</span>{% if file.inline %}<span class="ef-size">· in the email</span>{% endif %}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+
+
+{% macro assets() %}
+<style>
+  .ef-block { margin-top: 14px; }
+  .ef-label { font-size: .76rem; font-weight: 700; color: #5b5470; margin-bottom: 6px; }
+  .ef-help { font-size: .72rem; color: var(--muted); margin-top: 6px; }
+  .ef-add { font-size: .78rem; font-weight: 700; border-radius: 999px; }
+  .ef-photo { display: flex; gap: 12px; align-items: center; border: 1px solid var(--border-color); border-radius: 14px; padding: 10px; margin-bottom: 8px; background: #fcfafd; }
+  .ef-photo img { width: 112px; height: 76px; object-fit: cover; border-radius: 10px; background: var(--canvas); flex-shrink: 0; }
+  .ef-photo-side { min-width: 0; flex: 1; }
+  .ef-name { font-size: .8rem; font-weight: 700; color: var(--ink-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 6px; }
+  .ef-link { background: none; border: 0; padding: 0; margin-top: 6px; font-size: .74rem; font-weight: 700; color: #be123c; }
+  .ef-link:hover { text-decoration: underline; }
+  .ef-files, .ef-sent { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ef-files:not(:empty) { margin-bottom: 8px; }
+  .ef-sent { margin-top: 6px; }
+  .ix-msg.out .ef-sent { justify-content: flex-end; }
+  .ef-chip { display: inline-flex; align-items: center; gap: 6px; max-width: 100%; font-size: .76rem; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border-color); background: #fff; color: var(--ink-text); text-decoration: none; }
+  a.ef-chip:hover { border-color: var(--primary-berry); color: var(--primary-berry); }
+  .ef-chip a { color: inherit; text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .ef-chip a:hover { color: var(--primary-berry); text-decoration: underline; }
+  .ef-chip > span:not(.ef-size) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+  .ef-chip i { color: var(--primary-berry); }
+  .ef-size { color: var(--muted); font-weight: 600; white-space: nowrap; }
+  .ef-chip button { border: 0; background: none; color: var(--muted); font-size: 1rem; line-height: 1; padding: 0 0 0 2px; }
+  .ef-chip button:hover { color: #be123c; }
+  .ef-status { font-size: .76rem; font-weight: 600; color: var(--sky); margin-top: 8px; min-height: 1em; }
+  .ef-status.is-error { color: #be123c; }
+</style>
+<script>
+(() => {
+  if (window.EmailFiles) return;
+
+  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, character => (
+    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[character]
+  ));
+
+  function say(root, text, isError) {
+    const status = root.querySelector("[data-ef-status]");
+    if (!status) return;
+    status.textContent = text || "";
+    status.classList.toggle("is-error", Boolean(isError));
+  }
+
+  // Tell the page (preview) and the live refresh that this part now holds unsaved work.
+  function changed(root) {
+    const region = root.closest("[data-live-region]");
+    if (region) region.dataset.liveDirty = "1";
+    root.dispatchEvent(new CustomEvent("ef:change", { bubbles: true }));
+  }
+
+  function setPhoto(root, file, position) {
+    const box = root.querySelector("[data-ef-photo]");
+    if (!box) return;
+    root.querySelector("[data-ef-image-id]").value = file ? file.id : "";
+    box.classList.toggle("d-none", !file);
+    root.querySelector("[data-ef-photo-img]").src = file ? file.url : "";
+    root.querySelector("[data-ef-photo-name]").textContent = file ? file.name : "";
+    root.querySelector("[data-ef-add-label]").textContent = file ? "Change the photo" : "Add a photo";
+    if (position) root.querySelector("[data-ef-position]").value = position === "bottom" ? "bottom" : "top";
+  }
+
+  function addFile(root, file) {
+    const list = root.querySelector("[data-ef-files]");
+    if (!list || list.querySelector(`input[value="${CSS.escape(file.id)}"]`)) return;
+    const chip = document.createElement("span");
+    chip.className = "ef-chip";
+    chip.innerHTML =
+      `<input type="hidden" name="attachment_ids" value="${escapeHtml(file.id)}"><i class="bi bi-paperclip"></i>` +
+      `<a href="${escapeHtml(file.url)}" target="_blank" rel="noopener">${escapeHtml(file.name)}</a>` +
+      `<span class="ef-size">${escapeHtml(file.size_label)}</span>` +
+      `<button type="button" data-ef-remove-file aria-label="Remove ${escapeHtml(file.name)}">&times;</button>`;
+    list.appendChild(chip);
+  }
+
+  async function upload(file, purpose) {
+    const data = new FormData();
+    data.append("file", file);
+    data.append("purpose", purpose);
+    const response = await fetch("/inbox/files", { method: "POST", body: data });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(typeof result.detail === "string" ? result.detail : `“${file.name}” could not be added.`);
+    }
+    return result;
+  }
+
+  document.addEventListener("click", event => {
+    const target = event.target.closest ? event.target : null;
+    if (!target) return;
+    const add = target.closest("[data-ef-add]");
+    if (add) {
+      add.closest("[data-ef]").querySelector(`[data-ef-input="${add.dataset.efAdd}"]`).click();
+      return;
+    }
+    const removeFile = target.closest("[data-ef-remove-file]");
+    if (removeFile) {
+      const root = removeFile.closest("[data-ef]");
+      removeFile.closest(".ef-chip").remove();
+      say(root, "");
+      changed(root);
+      return;
+    }
+    const removePhoto = target.closest("[data-ef-remove-photo]");
+    if (removePhoto) {
+      const root = removePhoto.closest("[data-ef]");
+      setPhoto(root, null);
+      say(root, "");
+      changed(root);
+    }
+  });
+
+  document.addEventListener("change", async event => {
+    const target = event.target.closest ? event.target : null;
+    if (!target) return;
+    if (target.matches("[data-ef-position]")) { changed(target.closest("[data-ef]")); return; }
+    if (!target.matches("[data-ef-input]")) return;
+    const root = target.closest("[data-ef]");
+    const purpose = target.dataset.efInput;
+    const chosen = Array.from(target.files || []);
+    target.value = "";
+    if (!chosen.length) return;
+    const problems = [];
+    for (const [index, file] of chosen.entries()) {
+      say(root, chosen.length > 1 ? `Adding ${index + 1} of ${chosen.length}…` : `Adding “${file.name}”…`);
+      try {
+        const stored = await upload(file, purpose);
+        if (purpose === "image") setPhoto(root, stored);
+        else addFile(root, stored);
+      } catch (error) {
+        problems.push(error.message);
+      }
+    }
+    say(root, problems.join(" "), problems.length > 0);
+    changed(root);
+  });
+
+  window.EmailFiles = {
+    // Replace what a picker holds, for example when a template is chosen.
+    set(root, state) {
+      if (!root) return;
+      setPhoto(root, state.image || null, state.image_position);
+      const list = root.querySelector("[data-ef-files]");
+      if (list) {
+        list.innerHTML = "";
+        (state.files || []).forEach(file => addFile(root, file));
+      }
+      say(root, "");
+    },
+    imageId: root => (root && root.querySelector("[data-ef-image-id]") || {}).value || null,
+    imagePosition: root => (root && root.querySelector("[data-ef-position]") || {}).value || "top",
+    fileIds: root => root
+      ? Array.from(root.querySelectorAll('[data-ef-files] input[name="attachment_ids"]')).map(input => input.value)
+      : [],
+  };
+})();
+</script>
+{% endmacro %}

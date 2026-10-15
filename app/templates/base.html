@@ -1,0 +1,1733 @@
+<!DOCTYPE html>
+{% import "_ui_art.html" as art %}
+<html lang="{{ ui_lang or 'en' }}" dir="{{ 'rtl' if ui_lang == 'ar' else 'ltr' }}" class="{{ 'mode-' ~ ui_mode if ui_mode and ui_mode != 'soft' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() if csrf_token else '' }}">
+    <title>{% block title %}{{ app_brand.name if app_brand else "9antra" }}{% endblock %}</title>
+    {% if app_brand and app_brand.icon %}<link rel="icon" type="image/png" href="{{ app_brand.icon }}">{% endif %}
+    {# On a phone: its own icon on the home screen, and no browser bars once opened from there. #}
+    <link rel="manifest" href="/app.webmanifest">
+    <meta name="theme-color" content="#f6f3fb">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="{{ app_brand.name if app_brand else '9antra' }}">
+    {% if app_brand and app_brand.icon_big %}<link rel="apple-touch-icon" href="{{ app_brand.icon_big }}">{% endif %}
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
+
+    <style>
+      /* ============================================================
+         9ANTRA DESIGN SYSTEM — tokens shared across every screen.
+         Keeping --primary-berry / --berry-subtle names so inline
+         style="" and JS-generated markup elsewhere keep working.
+         ============================================================ */
+      :root {
+        --primary-berry: #a42c67;
+        --berry-dark: #8b2355;
+        --berry-subtle: #fdf2f7;
+        --accent-gold-dark: #d97706;
+        --gold-dark: #b45309;
+        --gold-subtle: #fef3c7;
+        --mint: #15803d;
+        --mint-subtle: #e9f9ef;
+        --sky: #1d4ed8;
+        --sky-subtle: #eef3ff;
+
+        --ink: #211433;
+        --ink-2: #2b1d49;
+        --ink-3: #3c2a60;
+        --canvas: #f6f3fb;
+        --card-bg: #ffffff;
+        --border-color: #eee9f5;
+        --ink-text: #241a38;
+        --muted: #85809c;
+
+        --radius-lg: 22px;
+        --radius-md: 16px;
+        --shadow-soft: 0 10px 30px -14px rgba(64, 42, 99, .18);
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        font-family: 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+        background: var(--canvas);
+        color: var(--ink-text);
+      }
+
+      .wrapper { display: flex; min-height: 100vh; }
+
+      /* ---------------- Sidebar ---------------- */
+      .sidebar {
+        width: 268px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 26px 16px 18px;
+        display: flex;
+        flex-direction: column;
+        background: linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 55%, var(--ink-3) 100%);
+        position: relative;
+        scrollbar-width: thin;
+      }
+      .sidebar::before, .sidebar::after {
+        content: ""; position: absolute; border-radius: 50%;
+        filter: blur(54px); opacity: .30; pointer-events: none; z-index: 0;
+      }
+      .sidebar::before { width: 190px; height: 190px; background: var(--primary-berry); top: -50px; right: -70px; }
+      .sidebar::after { width: 190px; height: 190px; background: var(--accent-gold-dark); bottom: 60px; left: -80px; opacity: .22; }
+
+      .sidebar .logo, .sidebar nav, .sidebar .sidebar-foot { position: relative; z-index: 1; }
+
+      .logo {
+        display: flex; align-items: center; gap: 12px;
+        padding: 4px 8px 22px; margin-bottom: 16px;
+        border-bottom: 1px solid rgba(255,255,255,.09);
+      }
+      .logo-badge {
+        width: 42px; height: 42px; border-radius: 13px; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--accent-gold-dark), var(--primary-berry));
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; box-shadow: 0 8px 18px -6px rgba(0,0,0,.5);
+        animation: logoPop .5s cubic-bezier(.2,.9,.3,1.3) both;
+      }
+      .logo h3 { color: #fff; font-size: 1.12rem; font-weight: 800; letter-spacing: -.01em; }
+      .logo p { color: rgba(255,255,255,.5); font-size: .7rem; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; }
+
+      /* ---- Load-in sequence: one orchestrated moment, not scattered per-element
+         fades. Logo pops first, nav items cascade in behind it, sync chip settles
+         last -- so the sidebar feels like it's assembling itself once, on entry. ---- */
+      @keyframes logoPop {
+        0%   { opacity: 0; transform: scale(.75) rotate(-8deg); }
+        100% { opacity: 1; transform: scale(1) rotate(0); }
+      }
+      @keyframes navSlideIn {
+        0%   { opacity: 0; transform: translateX(-12px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+      .sidebar nav ul > li { animation: navSlideIn .36s ease both; }
+      .sidebar nav ul > li:nth-child(1)  { animation-delay: .05s; }
+      .sidebar nav ul > li:nth-child(2)  { animation-delay: .09s; }
+      .sidebar nav ul > li:nth-child(3)  { animation-delay: .13s; }
+      .sidebar nav ul > li:nth-child(4)  { animation-delay: .17s; }
+      .sidebar nav ul > li:nth-child(5)  { animation-delay: .21s; }
+      .sidebar nav ul > li:nth-child(6)  { animation-delay: .25s; }
+      .sidebar nav ul > li:nth-child(7)  { animation-delay: .29s; }
+      .sidebar nav ul > li:nth-child(8)  { animation-delay: .33s; }
+      .sidebar nav ul > li:nth-child(9)  { animation-delay: .37s; }
+      .sidebar nav ul > li:nth-child(10) { animation-delay: .41s; }
+      .sidebar nav ul > li:nth-child(11) { animation-delay: .45s; }
+      .sidebar-foot { animation: navSlideIn .4s ease .5s both; }
+
+      @media (prefers-reduced-motion: reduce) {
+        .logo-badge, .sidebar nav ul > li, .sidebar-foot { animation: none; }
+      }
+
+      /* ---- Section labels: group the nav into scannable clusters ---- */
+      .nav-section-label {
+        padding: 16px 10px 6px;
+        font-size: .68rem;
+        font-weight: 700;
+        color: rgba(255,255,255,.3);
+      }
+      .nav-section-label:first-child { 
+        padding-top: 2px; }
+
+      /* ---- Courses group toggle + nested programs list ---- */
+      .nav-group-toggle { cursor: pointer; }
+      .nav-group-toggle .chevron {
+        margin-left: auto;
+        font-size: .68rem;
+        color: rgba(255,255,255,.38);
+        transition: transform .25s cubic-bezier(.2,.9,.3,1.3), color .16s ease;
+      }
+      .nav-group-toggle[aria-expanded="true"] .chevron { transform: rotate(90deg); color: rgba(255,255,255,.85); }
+
+      .program-sublist {
+        margin: 2px 0 8px 24px;
+        padding-left: 10px;
+        border-left: 1px solid rgba(255,255,255,.1);
+      }
+      .program-sublist .program-link {
+        display: flex; align-items: center; gap: 9px;
+        padding: .44rem .6rem;
+        border-radius: 10px;
+        color: rgba(255,255,255,.58);
+        font-size: .82rem; font-weight: 600;
+        text-decoration: none;
+        transition: background .15s ease, color .15s ease;
+      }
+      .program-sublist .program-link:hover { background: rgba(255,255,255,.07); color: #fff; }
+      .program-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin: 0 6px; }
+      .program-pic { width: 19px; height: 19px; border-radius: 6px; background: #fff; display: grid; place-items: center; flex-shrink: 0; }
+      .program-pic img { width: 13px; height: 13px; object-fit: contain; display: block; }
+      .program-count {
+        margin-left: auto;
+        font-size: .66rem; font-weight: 700;
+        color: rgba(255,255,255,.42);
+        background: rgba(255,255,255,.07);
+        padding: 1px 7px; border-radius: 999px;
+      }
+      .program-view-all {
+        display: block; text-align: center;
+        font-size: .73rem; font-weight: 700;
+        color: var(--accent-gold-dark);
+        padding: .5rem 0 .2rem;
+        text-decoration: none;
+        transition: color .15s ease;
+      }
+      .program-view-all:hover { color: #fff; }
+
+      .sidebar .nav-link {
+        color: rgba(255,255,255,.66);
+        font-weight: 600; font-size: .92rem;
+        padding: .58rem .7rem; border-radius: 14px;
+        display: flex; align-items: center; gap: .7rem;
+        margin-bottom: .22rem;
+        transition: background .16s ease, color .16s ease, box-shadow .16s ease, transform .16s ease;
+      }
+      .sidebar .nav-link:hover { color: #fff; background: rgba(255,255,255,.07); transform: translateX(3px); }
+      .sidebar .nav-link:active { transform: translateX(3px) scale(.98); }
+      .sidebar .nav-link.active {
+        color: #fff;
+        background: linear-gradient(135deg, var(--primary-berry) 0%, var(--berry-dark) 100%);
+        box-shadow: 0 10px 20px -8px rgba(164,44,103,.6);
+      }
+      .nav-ico {
+        width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(255,255,255,.07); font-size: .95rem;
+        transition: transform .2s cubic-bezier(.2,.9,.3,1.3), background .16s ease;
+      }
+      .sidebar .nav-link:hover .nav-ico { transform: scale(1.1) rotate(-6deg); }
+      .sidebar .nav-link.active .nav-ico { background: rgba(255,255,255,.22); }
+
+      .nav-count {
+        margin-left: auto; min-width: 22px; text-align: center;
+        font-size: .68rem; font-weight: 800; line-height: 1;
+        padding: 4px 7px; border-radius: 999px;
+        background: var(--accent-gold-dark); color: #fff;
+      }
+
+      .sidebar-foot { margin-top: auto; padding-top: 16px; }
+      .sync-chip {
+        display: flex; align-items: center; gap: 9px;
+        background: rgba(255,255,255,.06); border-radius: 14px; padding: 11px 13px;
+        border: 1px solid rgba(255,255,255,.08);
+      }
+      .sync-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex-shrink: 0; animation: syncPulse 1.8s infinite; }
+      @keyframes syncPulse {
+        0% { box-shadow: 0 0 0 0 rgba(34,197,94,.55); }
+        70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+        100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+      }
+      .sync-chip span { color: rgba(255,255,255,.78); font-size: .71rem; font-weight: 700; }
+
+      /* ---------------- Main / Topbar ---------------- */
+      .main { flex: 1; min-width: 0; padding: 26px 32px 44px; }
+
+      .topbar {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 14px 20px;
+        box-shadow: var(--shadow-soft);
+      }
+      .topbar-title h4 { color: var(--ink-text); }
+      .topbar-sub { display: block; font-size: .74rem; color: var(--muted); font-weight: 600; margin-top: 2px; }
+
+      .topbar-search {
+        background: var(--canvas);
+        border: 1px solid var(--border-color);
+        border-radius: 999px;
+        padding: .5rem 1rem;
+        gap: .6rem;
+        max-width: 380px;
+        flex: 1 1 260px;
+      }
+      .topbar-search i { color: var(--muted); }
+      .topbar-search input {
+        border: none; background: transparent; outline: none;
+        font-size: .84rem; width: 100%; color: var(--ink-text);
+      }
+
+      .profile-chip {
+        text-decoration: none;
+        display: flex; align-items: center; gap: 9px;
+        padding: .28rem .7rem .28rem .28rem;
+        border-radius: 999px; border: 1px solid var(--border-color); background: #fff;
+        transition: border-color .15s ease, box-shadow .15s ease;
+      }
+      .profile-chip:hover { border-color: var(--primary-berry); box-shadow: 0 6px 16px -6px rgba(164,44,103,.4); }
+      .profile-avatar {
+        width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+        background: linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark));
+        color: #fff; display: flex; align-items: center; justify-content: center;
+        font-weight: 800; font-size: .82rem;
+      }
+      .profile-name { font-size: .78rem; font-weight: 700; color: var(--ink-text); line-height: 1.15; }
+      .profile-role { font-size: .67rem; color: var(--muted); font-weight: 600; }
+
+      /* Dropdown sizing and shadow */
+      .notif-dropdown-menu {
+        width: 390px;
+        box-shadow: 0 20px 46px -16px rgba(33, 20, 51, .28);
+        border: 1px solid var(--border-color);
+      }
+
+      /* Scrollable list container */
+      .notif-scroll-container {
+        max-height: 380px;
+        overflow-y: auto;
+        scroll-behavior: smooth;
+      }
+      .notif-scroll-container::-webkit-scrollbar { width: 6px; }
+      .notif-scroll-container::-webkit-scrollbar-track { background: #f8f9fa; }
+      .notif-scroll-container::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+      .notif-scroll-container::-webkit-scrollbar-thumb:hover { background: var(--primary-berry, #a42c67); }
+
+      .notif-item { transition: background-color .2s ease, transform .1s ease; }
+      .notif-item:hover { background-color: var(--berry-subtle, #fdf2f7) !important; }
+      .notif-item.unread-item { border-left: 3px solid var(--primary-berry); background-color: var(--berry-subtle, #fdf2f7) !important; }
+
+      /* Messages dropdown (envelope) */
+      .msg-row { display: flex; gap: 11px; padding: 12px 16px; border-bottom: 1px solid var(--border-color); text-decoration: none; color: inherit; border-left: 3px solid transparent; }
+      .msg-row:last-child { border-bottom: 0; }
+      .msg-row:hover { background: var(--berry-subtle, #fdf2f7); color: inherit; }
+      .msg-row.is-todo { border-left-color: var(--accent-gold-dark, #d97706); background: var(--gold-subtle, #fff7e6); }
+      .msg-avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: .7rem; color: #fff; background: linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark)); }
+      .msg-main { min-width: 0; flex: 1; }
+      .msg-name { font-size: .82rem; font-weight: 700; color: var(--ink-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .msg-when { font-size: .68rem; color: var(--muted); font-weight: 600; white-space: nowrap; }
+      .msg-subject { font-size: .78rem; font-weight: 600; color: #4a4160; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .msg-snippet { font-size: .74rem; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .msg-tag { display: inline-flex; align-items: center; gap: 4px; font-size: .64rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; margin-top: 4px; background: #f1eff5; color: #6b6180; }
+      .msg-tag.in { background: var(--sky-subtle, #eef6ff); color: var(--sky, #0369a1); }
+      .msg-tag.todo { background: #fff; color: var(--gold-dark, #b45309); border: 1px solid #f3d9a4; }
+      .msg-tag.failed { background: #fff1f2; color: #be123c; }
+      .msg-tag.test { background: var(--berry-subtle, #fdf2f7); color: var(--primary-berry, #a42c67); }
+      .msg-waiting { font-size: .72rem; font-weight: 700; color: var(--gold-dark, #b45309); }
+      .msg-foot { flex: 1; text-align: center; font-size: .78rem; font-weight: 700; padding: 10px 8px; text-decoration: none; color: var(--primary-berry, #a42c67); }
+      .msg-foot:hover { background: var(--berry-subtle, #fdf2f7); color: var(--primary-berry, #a42c67); }
+
+      /* Animated pulse badge for new unread notifications */
+      .badge-pulse { animation: pulse-ring 1.5s infinite; }
+      @keyframes pulse-ring {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+        70% { box-shadow: 0 0 0 6px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+      }
+
+      @media (max-width: 991px) {
+        .sidebar { position: fixed; z-index: 20; transform: translateX(-100%); transition: transform .2s ease; }
+        .sidebar.open { transform: translateX(0); }
+        .main { padding: 18px 16px 36px; }
+      }
+
+      /* ---------------- Fixed sidebar, immune to ancestor overflow ----------------
+         position: sticky breaks the moment ANY ancestor (html/body/.wrapper) has
+         overflow set to something other than visible -- most commonly body {
+         overflow-x: hidden } without an explicit overflow-y, which the CSS spec
+         silently resolves to overflow-y: auto, turning body into a scroll
+         container that clips sticky descendants. Rather than hunt for that one
+         line in style.css, position: fixed sidesteps the whole problem: it's
+         anchored to the viewport regardless of ancestor overflow. */
+      body .wrapper > aside.sidebar {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 268px !important;
+        height: 100vh !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain;
+        margin: 0 !important;
+        z-index: 30;
+      }
+      body .wrapper > main.main {
+        margin-left: 268px !important;
+      }
+      @media (max-width: 991px) {
+        body .wrapper > main.main { margin-left: 0 !important; }
+      }
+
+      /* ---------------- Live updates ---------------- */
+      .sync-chip.is-offline .sync-dot { background: var(--accent-gold-dark); animation: none; }
+      [data-live-region].live-flash { animation: liveFlash 1.4s ease-out; }
+      @keyframes liveFlash {
+        0%   { box-shadow: 0 0 0 3px rgba(164, 44, 103, .28); }
+        100% { box-shadow: 0 0 0 3px rgba(164, 44, 103, 0); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        [data-live-region].live-flash { animation: none; }
+      }
+      .page-flash { border: 0; border-radius: var(--radius-md); font-weight: 600; font-size: .88rem; }
+    </style>
+    {% include "_base_look.html" %}
+    {# The colour chosen in Settings replaces the original one on every page. #}
+    {% if theme_css %}<style id="theme-colour">{{ theme_css | safe }}</style>{% endif %}
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="first-paint{{ ' menu-right' if ui_menu_side == 'right' }}">
+{% if ui_background != 'plain' %}
+<div class="it-bg" aria-hidden="true">
+  <i class="bi bi-code-slash" style="--x:31%; --y:9%; --s:46px; --d:27s; --w:-3s;"></i>
+  <i class="bi bi-braces" style="--x:88%; --y:22%; --s:54px; --d:31s; --w:-11s;"></i>
+  <i class="bi bi-cpu" style="--x:58%; --y:44%; --s:42px; --d:24s; --w:-7s;"></i>
+  <i class="bi bi-cloud" style="--x:24%; --y:62%; --s:58px; --d:34s; --w:-15s;"></i>
+  <i class="bi bi-database" style="--x:79%; --y:70%; --s:44px; --d:29s; --w:-5s;"></i>
+  <i class="bi bi-terminal" style="--x:46%; --y:86%; --s:50px; --d:26s; --w:-19s;"></i>
+  <i class="bi bi-git" style="--x:68%; --y:8%; --s:38px; --d:33s; --w:-9s;"></i>
+  <i class="bi bi-hdd-network" style="--x:94%; --y:50%; --s:40px; --d:28s; --w:-13s;"></i>
+  <i class="bi bi-shield-lock" style="--x:38%; --y:34%; --s:36px; --d:30s; --w:-21s;"></i>
+  <i class="bi bi-robot" style="--x:21%; --y:90%; --s:42px; --d:25s; --w:-2s;"></i>
+  <i class="bi bi-bar-chart-line" style="--x:62%; --y:92%; --s:38px; --d:32s; --w:-17s;"></i>
+  <i class="bi bi-phone" style="--x:50%; --y:18%; --s:34px; --d:36s; --w:-8s;"></i>
+</div>
+{% endif %}
+
+<div class="wrapper">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a class="logo mb-2" href="{{ current_user.home if current_user else '/' }}" title="{{ app_brand.name if app_brand else '9antra' }}">
+            {% if app_brand and app_brand.logo %}<img class="brand-logo" src="{{ app_brand.icon_big or app_brand.logo }}" alt="">
+            {% else %}<div class="logo-badge">🎓</div>{% endif %}
+            <div>
+                <h3 class="mb-0">{{ app_brand.name if app_brand else "9antra" }}</h3>
+                <p class="mb-0">Training centre</p>
+            </div>
+        </a>
+
+        <nav>
+            <ul class="nav nav-pills flex-column mb-auto list-unstyled">
+                {% if is_admin %}
+
+                <li class="nav-section-label">Overview</li>
+                <li class="nav-item tone-brand">
+                    <a href="/" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-compass-fill"></i></span>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-sky">
+                    <a href="/candidate/all" class="nav-link {% if active_page == 'candidates' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-people-fill"></i></span>
+                        <span>Candidates</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-gold">
+                    <a href="/classes/" class="nav-link {% if active_page == 'classes' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-easel2-fill"></i></span>
+                        <span>Classes</span>
+                    </a>
+                </li>
+
+                <li class="nav-section-label">Learning</li>
+                <li class="nav-item tone-violet">
+                    {# One click opens the list of programs; the most chosen ones show under it while you are there. #}
+                    <a href="/programs/all" class="nav-link {% if active_page == 'courses' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-journal-bookmark-fill"></i></span>
+                        <span>Programs</span>
+                    </a>
+                    <div class="collapse {% if active_page == 'courses' %}show{% endif %}" id="programsCollapse">
+                        <div class="program-sublist">
+                            {# The most chosen programs, with their picture. #}
+                            {% for program in sidebar_programs or [] %}
+                            <a href="/programs/{{ program.id }}" class="program-link" title="{{ program.name }}">
+                                {% if program.icon.url %}
+                                <span class="program-pic"><img src="{{ program.icon.url }}" alt="" loading="lazy"></span>
+                                {% else %}
+                                <span class="program-dot" style="background: {{ program.icon.colour }};"></span>
+                                {% endif %}
+                                <span class="text-truncate">{{ program.name }}</span>
+                                <span class="program-count">{{ program.candidate_count }}</span>
+                            </a>
+                            {% endfor %}
+                            <a href="/programs/all" class="program-view-all">{{ 'All programs' if sidebar_programs else 'Add your programs' }}</a>
+                        </div>
+                    </div>
+                </li>
+                <li class="nav-item tone-teal">
+                    <a href="/quiz/all" class="nav-link {% if active_page == 'quizzes' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-signpost-split-fill"></i></span>
+                        <span>Level checks</span>
+                    </a>
+                </li>
+
+                <li class="nav-section-label">Operations</li>
+                <li class="nav-item tone-rose">
+                    <a href="/inbox" class="nav-link {% if active_page == 'inbox' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-envelope-paper-fill"></i></span>
+                        <span>Inbox</span>
+                        <span class="nav-count {% if not inbox_pending %}d-none{% endif %}" id="nav-inbox-count" title="Questions waiting for your answer">{{ inbox_pending or 0 }}</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-mint">
+                    <a href="/payments" class="nav-link {% if active_page == 'payments' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-cash-coin"></i></span>
+                        <span>Payments</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-rose">
+                    <a href="/reminders" class="nav-link {% if active_page == 'reminders' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-alarm-fill"></i></span>
+                        <span>Reminders</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-gold">
+                    <a href="/programs/documents" class="nav-link {% if active_page == 'documents' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-file-earmark-pdf-fill"></i></span>
+                        <span>PDF documents</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-sky">
+                    <a href="/website" class="nav-link {% if active_page == 'website' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-globe2"></i></span>
+                        <span>Website</span>
+                    </a>
+                </li>
+
+                <li class="nav-section-label">System</li>
+                <li class="nav-item tone-mint">
+                    <a href="/system" class="nav-link {% if active_page == 'system' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-activity"></i></span>
+                        <span>How it is working</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-slate">
+                    <a href="/settings" class="nav-link {% if active_page == 'settings' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-gear-fill"></i></span>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-slate">
+                    <a href="/data" class="nav-link {% if active_page == 'data' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-table"></i></span>
+                        <span>All the data</span>
+                    </a>
+                </li>
+                {% elif staff_menu %}
+                {# A team member: the parts the admin opened to them. #}
+                <li class="nav-section-label">Your space</li>
+                {% for part in staff_menu %}
+                <li class="nav-item tone-violet">
+                    <a href="{{ part.url }}" class="nav-link {% if request.url.path.startswith(part.url.rstrip('/')) and part.url != '/' or (part.url == '/' and request.url.path == '/') %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi {{ part.icon }}"></i></span>
+                        <span>{{ part.name }}</span>
+                        {% if part.level == 'view' %}<i class="bi bi-eye ms-auto" title="You can look, not change" style="font-size:.8rem; opacity:.55;"></i>{% endif %}
+                    </a>
+                </li>
+                {% endfor %}
+                <li class="nav-section-label">Account</li>
+                <li class="nav-item tone-slate">
+                    <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-lock-fill"></i></span>
+                        <span>Password</span>
+                    </a>
+                </li>
+                {% else %}
+                {# A professor's own space. #}
+                <li class="nav-section-label">My space</li>
+                <li class="nav-item tone-gold">
+                    <a href="/teacher" class="nav-link {% if active_page == 'teacher' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-collection-play-fill"></i></span>
+                        <span>My classes</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-sky">
+                    <a href="/teacher/profile" class="nav-link {% if active_page == 'teacher-profile' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-person-badge-fill"></i></span>
+                        <span>My profile</span>
+                    </a>
+                </li>
+                <li class="nav-section-label">Account</li>
+                <li class="nav-item tone-slate">
+                    <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-lock-fill"></i></span>
+                        <span>Password</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+
+        <div class="sidebar-foot">
+            <a class="sidebar-help" href="/guide"><i class="bi bi-signpost-split-fill"></i><span>How it works<small>The whole application in one picture</small></span></a>
+            {% if is_admin %}
+            <div class="sync-chip" id="live-chip">
+                <span class="sync-dot"></span>
+                <span id="live-label">Realtime sync active</span>
+            </div>
+            {% endif %}
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    {# Pages list the data they show here; they refresh when any of it changes. #}
+    <main class="main" data-live-topics="{% block live_topics %}{% endblock %}">
+        <!-- Top Navigation Header -->
+        <header class="topbar d-flex align-items-center gap-3 mb-4 flex-wrap">
+            <div class="topbar-title">
+                <h4 class="fw-bold mb-0">{% block page_title %}Dashboard{% endblock %}</h4>
+                <span class="topbar-sub">{{ (page_guide.title if page_guide else "Everything about your training centre") if is_admin else "Your classes, their course and who was there" }}</span>
+            </div>
+
+            {% if is_admin or staff_menu %}
+            {# One search for everything: pages, settings, actions and records. Ctrl+K from anywhere. #}
+            <form action="/find" method="get" class="topbar-search d-none d-lg-flex align-items-center" id="find-form" role="search" autocomplete="off">
+                <i class="bi bi-search"></i>
+                <input type="text" name="q" id="find-input" placeholder="Find anything: a name, a page, a setting… (Ctrl+K)" aria-label="Find anything" aria-controls="find-drop">
+                <div class="find-drop" id="find-drop" hidden></div>
+            </form>
+            <a class="topbar-help d-lg-none" href="/find" aria-label="Find anything" title="Find anything"><i class="bi bi-search"></i></a>
+            {% endif %}
+
+            <div class="user-profile d-flex align-items-center gap-2 ms-auto">
+                {% if page_guide %}
+                <button type="button" class="topbar-help" data-guide-show title="How this page works" aria-label="How this page works"><i class="bi bi-question-lg"></i></button>
+                {% endif %}
+                {# The language of the pages, for whoever is signed in; remembered on this browser. #}
+                <div class="dropdown" data-no-i18n>
+                    <button type="button" class="topbar-help" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language · Langue · اللغة"><i class="bi bi-translate"></i></button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 p-2 lang-menu" style="min-width:170px; font-size:.86rem;">
+                        {% for code, name in (ui_languages or {}).items() %}
+                        <li><form method="post" action="/language" class="m-0"><input type="hidden" name="lang" value="{{ code }}"><input type="hidden" name="next" value="{{ request.url.path }}">
+                            <button class="dropdown-item rounded-3 {{ 'active' if code == ui_lang }}" lang="{{ code }}">{{ name }}</button></form></li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% if is_admin %}
+
+                <!-- Messages with candidates: the latest emails, sent and received -->
+                <div class="dropdown">
+                    <button class="btn btn-light border position-relative rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center"
+                            type="button"
+                            id="messagesDropdown"
+                            data-bs-toggle="dropdown"
+                            data-bs-auto-close="outside"
+                            aria-expanded="false"
+                            aria-label="Messages with candidates"
+                            title="Messages with candidates"
+                            style="width: 40px; height: 40px;">
+                        <i class="bi bi-envelope-fill fs-5" style="color: var(--primary-berry, #a42c67);"></i>
+                        <span id="nav-messages-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill border border-light {% if not inbox_pending %}d-none{% endif %}"
+                              style="background: var(--accent-gold-dark, #d97706);" title="Questions waiting for your answer">{{ inbox_pending or 0 }}</span>
+                    </button>
+
+                    <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu border-0 rounded-4 p-0 mt-2" aria-labelledby="messagesDropdown">
+                        <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-light rounded-top-4">
+                            <div>
+                                <h6 class="fw-bold mb-0 text-dark">Messages</h6>
+                                <div class="msg-waiting" id="messages-waiting"></div>
+                            </div>
+                            <a href="/inbox/compose" class="btn btn-sm rounded-pill fw-bold" style="background: var(--primary-berry, #a42c67); color: #fff; font-size: .74rem;"><i class="bi bi-pencil-square me-1"></i>Write</a>
+                        </div>
+                        <div id="messages-dropdown-list" class="notif-scroll-container">
+                            <div class="p-4 text-center text-muted small">Loading…</div>
+                        </div>
+                        <div class="d-flex border-top">
+                            <a href="/inbox?filter=all" class="msg-foot">All messages</a>
+                            <a href="/inbox/templates" class="msg-foot border-start">Email templates</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notification Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-light border position-relative rounded-circle p-2 shadow-sm d-flex align-items-center justify-content-center"
+                            type="button"
+                            id="notifBellDropdown"
+                            data-bs-toggle="dropdown" 
+                            data-bs-auto-close="outside"
+                            aria-expanded="false"
+                            aria-label="Notifications"
+                            style="width: 40px; height: 40px;">
+                        <i class="bi bi-bell-fill fs-5" style="color: var(--primary-berry, #a42c67);"></i>
+                        
+                        <!-- Unread Badge Counter -->
+                        {% set unread_count = notifications | selectattr('is_read', 'eq', False) | list | length if notifications else 0 %}
+                        <span id="nav-notif-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-light {% if unread_count > 0 %}badge-pulse{% endif %}">
+                            {{ unread_count }}
+                        </span>
+                    </button>
+
+                    <!-- Popover Dropdown Menu -->
+                    <div class="dropdown-menu dropdown-menu-end notif-dropdown-menu border-0 rounded-4 p-0 mt-2" 
+                         aria-labelledby="notifBellDropdown">
+                        
+                        <div class="d-flex align-items-center justify-content-between p-3 border-bottom bg-light rounded-top-4">
+                            <h6 class="fw-bold mb-0 text-dark">Notifications</h6>
+                            <button class="btn btn-sm btn-link text-decoration-none p-0 fs-7" style="color: var(--primary-berry, #a42c67);" onclick="markAllNotificationsRead()">
+                                Mark all as read
+                            </button>
+                        </div>
+
+                        <!-- Infinite Scrollable Notification List -->
+                        <div id="notif-dropdown-list" class="list-group list-group-flush notif-scroll-container">
+                            {% if notifications %}
+                                {% for notif in notifications %}
+                                <a href="{{ notif.action_url or ('/candidate/' ~ notif.candidate_id if notif.candidate_id else '#') }}"
+                                   data-spot="{{ notif.category }}"
+                                   onclick="markNotificationReadFromBell('{{ notif.id }}', event)"
+                                   class="list-group-item list-group-item-action border-0 p-3 notif-item {% if not notif.is_read %}bg-light-subtle fw-semibold unread-item{% endif %}"
+                                   id="dropdown-notif-{{ notif.id }}">
+                                    <div class="d-flex gap-3 align-items-start">
+                                        
+                                        <!-- Category Icon -->
+                                        <div class="p-2 rounded-circle flex-shrink-0" style="background-color: var(--berry-subtle, #fdf2f7);">
+                                            {% if notif.category in ('BIAS_ALERT', 'EMAIL_CONFIG', 'EMAIL_FAILED', 'ASSIGNMENT_PENDING') %}
+                                                <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                                            {% elif notif.category == 'PROGRAM_MATCH' %}
+                                                <i class="bi bi-cpu-fill" style="color: var(--primary-berry, #a42c67);"></i>
+                                            {% elif notif.category == 'PAYMENT' %}
+                                                <i class="bi bi-cash-coin" style="color: var(--mint, #15803d);"></i>
+                                            {% elif notif.category in ('ASSIGNMENT', 'CLASS') %}
+                                                <i class="bi bi-mortarboard-fill" style="color: var(--primary-berry, #a42c67);"></i>
+                                            {% elif notif.category == 'REMINDER' %}
+                                                <i class="bi bi-alarm-fill" style="color: var(--accent-gold-dark, #d97706);"></i>
+                                            {% elif notif.category == 'EMAIL_QUESTION' %}
+                                                <i class="bi bi-question-circle-fill" style="color: var(--accent-gold-dark, #d97706);"></i>
+                                            {% elif notif.category == 'EMAIL_ANSWERED' %}
+                                                <i class="bi bi-robot" style="color: var(--mint, #15803d);"></i>
+                                            {% elif notif.category == 'CANDIDATE_EMAIL' %}
+                                                <i class="bi bi-envelope-fill" style="color: var(--primary-berry, #a42c67);"></i>
+                                            {% else %}
+                                                <i class="bi bi-person-plus-fill" style="color: var(--primary-berry, #a42c67);"></i>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="flex-grow-1">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="small text-dark fw-bold">{{ notif.title or 'New Activity' }}</span>
+                                                
+                                                <!-- Match Score Badge -->
+                                                {% if notif.payload and notif.payload.get('similarity_score') %}
+                                                    {% set score_percent = (notif.payload.similarity_score * 100) | round | int %}
+                                                    <span class="badge bg-info">{{ score_percent }}% Match</span>
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="small text-muted mb-1">{{ notif.message or notif.details or notif.category }}</div>
+                                            
+                                            <small class="text-muted fs-7 d-block">
+                                                {{ notif.created_at.strftime('%m-%d %H:%M') if notif.created_at else 'Just now' }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </a>
+{% if notif.fix %}
+<div class="notif-fix" data-fix-for="{{ notif.id }}">
+  {% if notif.fix.method == "post" %}
+  <form method="post" action="{{ notif.fix.url }}" data-notif="{{ notif.id }}"{% if notif.fix.confirm %} data-confirm="{{ notif.fix.confirm }}"{% endif %}>
+    {% for field_name, field_value in notif.fix.fields.items() %}<input type="hidden" name="{{ field_name }}" value="{{ field_value }}">{% endfor %}
+    <button class="notif-fix-btn" type="submit"><i class="bi bi-lightning-charge-fill"></i>{{ notif.fix.label }}</button>
+  </form>
+  {% else %}<a class="notif-fix-btn" href="{{ notif.fix.url }}"><i class="bi bi-lightning-charge-fill"></i>{{ notif.fix.label }}</a>{% endif %}
+  <span>solves it from here</span>
+</div>
+{% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="p-4 text-center text-muted small" id="no-notif-msg">No notifications available.</div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Scroll Loading Spinner -->
+                        <div id="notif-scroll-loader" class="text-center py-2 d-none border-top">
+                            <div class="spinner-border spinner-border-sm text-secondary" role="status">
+                                <span class="visually-hidden">Loading older notifications...</span>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {% endif %}
+
+                <!-- Who is signed in -->
+                <div class="dropdown">
+                    <button class="profile-chip" type="button" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Your account" style="cursor:pointer;">
+                        <div class="profile-avatar">{{ current_user.initials }}</div>
+                        <div class="d-none d-xl-block text-start">
+                            <div class="profile-name">{{ current_user.name }}</div>
+                            <div class="profile-role">{{ "Admin" if is_admin else "Professor" }}</div>
+                        </div>
+                        <i class="bi bi-chevron-down d-none d-sm-inline" style="font-size:.6rem; color:var(--muted);"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 p-2 mt-2" style="font-size:.86rem; min-width:210px;">
+                        <li><a class="dropdown-item rounded-3" href="/account"><i class="bi bi-person-gear me-2"></i>My account</a></li>
+                        {% if is_admin %}
+                        <li><a class="dropdown-item rounded-3" href="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                        {% else %}
+                        <li><a class="dropdown-item rounded-3" href="/teacher/profile"><i class="bi bi-person-badge me-2"></i>My profile</a></li>
+                        {% endif %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><form method="post" action="/logout" class="m-0"><button class="dropdown-item rounded-3" type="submit"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button></form></li>
+                    </ul>
+                </div>
+            </div>
+        </header>
+
+        {% if page_guide %}{{ art.intro(page_guide) }}{% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+
+{# On a phone the side menu is out of the way: the pages used most sit in a bar at
+   the bottom, and "More" slides the whole menu in. #}
+<nav class="tabbar" aria-label="Main pages">
+    {% if is_admin %}
+    <a class="tab {{ 'active' if active_page == 'dashboard' or request.url.path == '/' }}" href="/"><i class="bi bi-compass-fill"></i><span>Home</span></a>
+    <a class="tab {{ 'active' if active_page == 'candidates' }}" href="/candidate/all"><i class="bi bi-people-fill"></i><span>Candidates</span></a>
+    <a class="tab {{ 'active' if active_page == 'classes' }}" href="/classes/"><i class="bi bi-easel2-fill"></i><span>Classes</span></a>
+    <a class="tab {{ 'active' if active_page == 'inbox' }}" href="/inbox"><i class="bi bi-envelope-paper-fill"></i><span>Inbox</span><b class="tab-count {{ 'd-none' if not inbox_pending }}" id="tab-inbox-count">{{ inbox_pending or 0 }}</b></a>
+    {% else %}
+    <a class="tab {{ 'active' if active_page == 'teacher' }}" href="/teacher"><i class="bi bi-collection-play-fill"></i><span>My classes</span></a>
+    <a class="tab {{ 'active' if active_page == 'teacher-profile' }}" href="/teacher/profile"><i class="bi bi-person-badge-fill"></i><span>My profile</span></a>
+    {% endif %}
+    <button type="button" class="tab" id="tabMore" aria-expanded="false"><i class="bi bi-grid-fill"></i><span>More</span></button>
+</nav>
+<div class="sidebar-backdrop" id="sidebarBackdrop" hidden></div>
+<script>
+  (() => {
+    const more = document.getElementById("tabMore"), side = document.querySelector("aside.sidebar"), backdrop = document.getElementById("sidebarBackdrop");
+    if (!more || !side || !backdrop) return;
+    const set = open => {
+      side.classList.toggle("open", open);
+      backdrop.hidden = !open;
+      more.classList.toggle("active", open);
+      more.setAttribute("aria-expanded", open ? "true" : "false");
+      document.body.style.overflow = open ? "hidden" : "";
+    };
+    more.addEventListener("click", () => set(!side.classList.contains("open")));
+    backdrop.addEventListener("click", () => set(false));
+    document.addEventListener("keydown", event => { if (event.key === "Escape") set(false); });
+    side.addEventListener("click", event => { if (event.target.closest("a[href]:not([data-bs-toggle])")) set(false); });
+  })();
+</script>
+
+<script>
+  // The page arrives once; what refreshes afterwards does not move again.
+  window.setTimeout(() => document.body.classList.remove("first-paint"), 1400);
+  // The top bar stays in view; once the page has moved it gets smaller and casts a shadow.
+  (() => {
+    const bar = document.querySelector(".topbar");
+    if (!bar) return;
+    const room = () => document.documentElement.style.setProperty("--stick-top", (bar.offsetHeight + 20) + "px");
+    const mark = () => { bar.classList.toggle("is-stuck", window.scrollY > 24); };
+    window.addEventListener("scroll", mark, { passive: true });
+    window.addEventListener("resize", room);
+    bar.addEventListener("transitionend", room);
+    mark(); room();
+  })();
+  // A notification leads to the page it is about, and to the very block to look at:
+  // its link carries "spot" (what kind of news), the page scrolls there and the block glows.
+  function withSpot(url, category) {
+    if (!url || url === "#" || !category || url.includes("spot=")) return url;
+    const [path, hash] = url.split("#");
+    return path + (path.includes("?") ? "&" : "?") + "spot=" + encodeURIComponent(category) + (hash ? "#" + hash : "");
+  }
+  document.querySelectorAll("a[data-spot]").forEach(link => link.setAttribute("href", withSpot(link.getAttribute("href"), link.dataset.spot)));
+  (() => {
+    const params = new URLSearchParams(window.location.search);
+    const spot = params.get("spot");
+    if (!spot) return;
+    params.delete("spot");
+    try { history.replaceState(null, "", window.location.pathname + (params.toString() ? "?" + params : "") + window.location.hash); } catch (error) {}
+    // What to look at for each kind of news, most precise first. "last:" takes the last one of its kind.
+    const WHERE = {
+      PAYMENT: ["#live-candidate-figures", "#live-candidate-programs"],
+      NEW_REGISTRATION: ["#live-candidate-programs"], REGISTRATION: ["#live-candidate-programs"], PROGRAM_MATCH: ["#live-candidate-programs"],
+      ASSIGNMENT_PENDING: ["#live-decisions", "#live-candidate-programs"],
+      CANDIDATE_STATUS: ["#live-candidate-hero"],
+      EMAIL_QUESTION: [".ix-ask", "#live-inbox-reply"],
+      CANDIDATE_EMAIL: ["last:.ix-msg.in .ix-bubble", "#live-inbox-reply"],
+      EMAIL_ANSWERED: ["last:.ix-msg.out .ix-bubble"], EMAIL_FAILED: ["last:.ix-msg.out .ix-bubble"],
+      EMAIL_CONFIG: ["#email"],
+      CLASS: ["#live-class-hero"], REMINDER: ["#live-class-hero"],
+      ASSIGNMENT: ["#live-class-focus", "tr.is-focus", "#live-class-members", "#live-decisions"],
+      PROGRAM_PROPOSAL: ["#reviewModal.show .modal-content", "#live-program-grid"],
+      WEEK_QUESTIONS: ["#questions"], WEBSITE: ["#formation"], FEEDBACK: ["#feedback"],
+      LEVEL: [".lv-row.is-focus", "#live-levels"],
+    };
+    const SAYS = {
+      PAYMENT: "The payment is here", NEW_REGISTRATION: "The new registration", REGISTRATION: "This registration", PROGRAM_MATCH: "The program to confirm",
+      ASSIGNMENT_PENDING: "Waiting for your decision", CANDIDATE_STATUS: "Their status changed", EMAIL_QUESTION: "The question waiting for you",
+      CANDIDATE_EMAIL: "The email received", EMAIL_ANSWERED: "The answer that was sent", EMAIL_FAILED: "This email did not go out", EMAIL_CONFIG: "Set this up",
+      CLASS: "This class", REMINDER: "This class was reminded", ASSIGNMENT: "The candidate placed here", PROGRAM_PROPOSAL: "Read and confirm",
+      WEEK_QUESTIONS: "The questions of the week", WEBSITE: "What changed on the website", FEEDBACK: "The new feedback",
+      LEVEL: "Where they start from",
+    };
+    const find = () => {
+      for (const rule of WHERE[spot] || []) {
+        const last = rule.startsWith("last:");
+        const found = document.querySelectorAll(last ? rule.slice(5) : rule);
+        const element = last ? found[found.length - 1] : found[0];
+        if (element) return element;
+      }
+      return null;
+    };
+    const show = () => {
+      const element = find();
+      if (!element) return;
+      // Inside a tab that is not open: open it first.
+      const pane = element.closest(".tab-pane");
+      if (pane && !pane.classList.contains("active") && window.bootstrap) {
+        const tab = document.querySelector(`[data-bs-target="#${pane.id}"], [href="#${pane.id}"]`);
+        if (tab) bootstrap.Tab.getOrCreateInstance(tab).show();
+      }
+      // A page's own parts (the candidate's file): ask the page to open the part first.
+      const part = element.closest("[data-pane]");
+      if (part && !part.classList.contains("is-on")) document.dispatchEvent(new CustomEvent("pane:open", { detail: part.dataset.pane }));
+      element.classList.add("spot-on");
+      const flag = document.createElement("span");
+      flag.className = "spot-flag";
+      flag.innerHTML = '<i class="bi bi-hand-index-thumb-fill"></i>';
+      flag.append(SAYS[spot] || "Look here");
+      if (element.tagName !== "TR") element.append(flag);
+      element.scrollIntoView({ behavior: "smooth", block: element.offsetHeight > window.innerHeight * 0.7 ? "start" : "center" });
+      window.setTimeout(() => { element.classList.add("spot-fade"); flag.remove(); }, 9000);
+      window.setTimeout(() => element.classList.remove("spot-on", "spot-fade"), 10200);
+    };
+    // After the page has settled (pictures, the first live refresh).
+    window.addEventListener("load", () => window.setTimeout(show, 450));
+  })();
+  // The explanation at the top of a page: closed and opened again, remembered on this browser.
+  document.addEventListener("click", event => {
+    const guide = document.getElementById("pageGuide");
+    if (!guide) return;
+    const hide = event.target.closest("[data-guide-hide]"), show = event.target.closest("[data-guide-show]");
+    if (!hide && !show) return;
+    guide.hidden = hide ? true : !guide.hidden;
+    try { localStorage.setItem("guide:" + guide.dataset.guide, guide.hidden ? "hidden" : "shown"); } catch (error) {}
+    if (!guide.hidden) guide.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  });
+  // Where this person was, so signing in again brings them back to it.
+  {% if current_user and current_user.id %}
+  try {
+    const here = window.location.pathname + window.location.search;
+    document.cookie = "nantra_last=" + encodeURIComponent({{ current_user.id | tojson }} + "|" + here) + "; path=/; max-age=2592000; samesite=lax";
+  } catch (error) {}
+  {% endif %}
+</script>
+
+<style>
+  .assistant-launcher { position:fixed; right:24px; bottom:24px; z-index:1080; width:54px; height:54px; border:0; border-radius:50%; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); box-shadow:0 12px 30px -10px rgba(80,20,70,.65); }
+  .assistant-panel { position:fixed; right:24px; bottom:88px; z-index:1079; width:min(390px,calc(100vw - 32px)); height:540px; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--border-color); border-radius:22px; background:#fff; box-shadow:0 20px 60px -20px rgba(40,20,60,.4); }
+  .assistant-panel.open { display:flex; animation:assistantIn .2s ease both; }
+  .assistant-head { display:flex; align-items:center; gap:10px; padding:14px 16px; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); }
+  .assistant-avatar { display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.2); font-size:1.1rem; }
+  .assistant-messages { flex:1; overflow-y:auto; padding:14px; background:#fcfafd; }
+  .assistant-msg { max-width:88%; margin-bottom:10px; padding:9px 12px; border-radius:14px; white-space:pre-wrap; font-size:.82rem; line-height:1.45; }
+  .assistant-msg.user { margin-left:auto; color:#fff; background:var(--primary-berry); border-bottom-right-radius:4px; }
+  .assistant-msg.bot { background:#fff; border:1px solid var(--border-color); border-bottom-left-radius:4px; }
+  .assistant-compose { padding:12px; border-top:1px solid var(--border-color); background:#fff; }
+  .assistant-compose textarea { resize:none; min-height:44px; max-height:110px; }
+  .assistant-links { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .assistant-links a { font-size:.74rem; font-weight:800; text-decoration:none; color:var(--primary-berry); background:var(--berry-subtle); border-radius:999px; padding:4px 11px; }
+  .assistant-links a:hover { background:var(--primary-berry); color:#fff; }
+  .assistant-suggest { display:flex; flex-wrap:wrap; gap:6px; margin:0 0 10px; }
+  .assistant-suggest button { border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 11px; font-size:.74rem; font-weight:700; color:#4d4863; cursor:pointer; }
+  .assistant-suggest button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .assistant-working { display:flex; align-items:center; gap:8px; color:#75677f; font-size:.75rem; }
+  .assistant-working i { animation:assistantPulse 1s ease-in-out infinite; }
+  @keyframes assistantIn { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+  @keyframes assistantPulse { 50% { transform:translateY(-3px); opacity:.45; } }
+</style>
+{% if is_admin %}
+<button class="assistant-launcher" id="assistant-launcher" type="button" aria-label="Open assistant"><i class="bi bi-chat-dots-fill fs-5"></i></button>
+<section class="assistant-panel" id="assistant-panel" aria-label="9antra assistant">
+  <header class="assistant-head">
+    <div class="assistant-avatar"><i class="bi bi-robot"></i></div>
+    <div class="flex-grow-1"><strong>9antra Assistant</strong><div class="small opacity-75">Ask anything about the system</div></div>
+    <button class="btn btn-sm text-white" id="assistant-close" type="button" aria-label="Close assistant"><i class="bi bi-x-lg"></i></button>
+  </header>
+  <div class="assistant-messages" id="assistant-messages"><div class="assistant-msg bot">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, or what 9antra.tn says. I answer from what is in the application right now, in English or in French.</div></div>
+  <form class="assistant-compose" id="assistant-form">
+    <div class="input-group">
+      <textarea class="form-control" id="assistant-input" placeholder="Who has not paid? Which classes cannot start?"></textarea>
+      <button class="btn btn-primary" type="submit" aria-label="Send"><i class="bi bi-send-fill"></i></button>
+    </div>
+  </form>
+</section>
+{% endif %}
+
+<!-- Real-Time Toast Popup -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1090;">
+    <div id="fbRealtimeToast" class="toast border-0 shadow-lg rounded-4" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="6000">
+        <div class="toast-header border-0 text-white rounded-top-4" style="background-color: var(--primary-berry, #a42c67);">
+            <i class="bi bi-bell-fill me-2"></i>
+            <strong class="me-auto" id="toast-title">Notification</strong>
+            <small class="text-white-50" id="toast-time">Just now</small>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body bg-white rounded-bottom-4 p-3" id="toast-body">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS Bundle -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Notification & Infinite Scroll Engine -->
+<script>
+{% if is_admin %}
+let currentPage = 1;
+let isLoadingMore = false;
+let hasMoreNotifications = true;
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    // 1. Trigger Toast on load if unread items exist
+    const badgeElem = document.getElementById("nav-notif-badge");
+    const unreadCount = parseInt(badgeElem ? badgeElem.innerText : "0", 10) || 0;
+    
+    if (unreadCount > 0) {
+        showFacebookToast(
+            "Unread Notifications", 
+            `You have <strong>${unreadCount} unread notification(s)</strong> awaiting your review.`
+        );
+    }
+
+    // Infinite Scroll Listener for Notification Dropdown
+    const notifContainer = document.getElementById("notif-dropdown-list");
+    if (notifContainer) {
+        notifContainer.addEventListener("scroll", function () {
+            if (notifContainer.scrollTop + notifContainer.clientHeight >= notifContainer.scrollHeight - 10) {
+                loadMoreNotifications();
+            }
+        });
+    }
+});
+
+function showFacebookToast(title, bodyHtml) {
+    const toastTitle = document.getElementById("toast-title");
+    const toastBody = document.getElementById("toast-body");
+    const toastElement = document.getElementById("fbRealtimeToast");
+
+    if (toastTitle && toastBody && toastElement) {
+        toastTitle.innerText = title;
+        toastBody.innerHTML = bodyHtml;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+    }
+}
+
+function getNotificationIcon(category) {
+    if (['BIAS_ALERT', 'EMAIL_CONFIG', 'EMAIL_FAILED', 'ASSIGNMENT_PENDING'].includes(category)) {
+        return '<i class="bi bi-exclamation-triangle-fill text-warning"></i>';
+    } else if (category === 'PROGRAM_MATCH') {
+        return '<i class="bi bi-cpu-fill" style="color: var(--primary-berry, #a42c67);"></i>';
+    } else if (category === 'PAYMENT') {
+        return '<i class="bi bi-cash-coin" style="color: var(--mint, #15803d);"></i>';
+    } else if (category === 'ASSIGNMENT' || category === 'CLASS') {
+        return '<i class="bi bi-mortarboard-fill" style="color: var(--primary-berry, #a42c67);"></i>';
+    } else if (category === 'REMINDER') {
+        return '<i class="bi bi-alarm-fill" style="color: var(--accent-gold-dark, #d97706);"></i>';
+    } else if (category === 'EMAIL_QUESTION') {
+        return '<i class="bi bi-question-circle-fill" style="color: var(--accent-gold-dark, #d97706);"></i>';
+    } else if (category === 'EMAIL_ANSWERED') {
+        return '<i class="bi bi-robot" style="color: var(--mint, #15803d);"></i>';
+    } else if (category === 'CANDIDATE_EMAIL') {
+        return '<i class="bi bi-envelope-fill" style="color: var(--primary-berry, #a42c67);"></i>';
+    }
+    return '<i class="bi bi-person-plus-fill" style="color: var(--primary-berry, #a42c67);"></i>';
+}
+
+// Notification text contains names typed by candidates: never insert it as HTML.
+function escapeNotifText(value) {
+    return String(value ?? '').replace(/[&<>"']/g, character => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[character]));
+}
+
+function notificationHref(data) {
+    // "spot" tells the page which block this news is about, so it can be shown at once.
+    if (data.action_url && data.action_url.startsWith('/')) return withSpot(data.action_url, data.category);
+    return data.candidate_id ? withSpot(`/candidate/${data.candidate_id}`, data.category) : "#";
+}
+
+// What a notification lets the admin do at once: one button under it (see notification_fixes).
+function notifFixHtml(id, fix) {
+    if (!fix || !fix.url) return "";
+    const button = `<i class="bi bi-lightning-charge-fill"></i>${escapeNotifText(fix.label)}`;
+    const fields = Object.entries(fix.fields || {}).map(([name, value]) => `<input type="hidden" name="${escapeNotifText(name)}" value="${escapeNotifText(value)}">`).join("");
+    const inner = fix.method === "post"
+        ? `<form method="post" action="${escapeNotifText(fix.url)}" data-notif="${escapeNotifText(id)}"${fix.confirm ? ` data-confirm="${escapeNotifText(fix.confirm)}"` : ""}>${fields}<button class="notif-fix-btn" type="submit">${button}</button></form>`
+        : `<a class="notif-fix-btn" href="${escapeNotifText(fix.url)}">${button}</a>`;
+    return `<div class="notif-fix" data-fix-for="${escapeNotifText(id)}">${inner}<span>solves it from here</span></div>`;
+}
+async function attachNotifFix(item, data) {
+    let fix = data.fix;
+    if (fix === undefined && data.id) {
+        try { const response = await fetch(`/admin/api/notifications/${data.id}/fix`); if (response.ok) fix = (await response.json()).fix; } catch (error) {}
+    }
+    if (fix && item.isConnected && !document.querySelector(`.notif-fix[data-fix-for="${data.id}"]`)) item.insertAdjacentHTML("afterend", notifFixHtml(data.id, fix));
+}
+// Solving it from the notification also marks it as read.
+document.addEventListener("submit", event => {
+    const form = event.target.closest && event.target.closest("form[data-notif]");
+    if (form && navigator.sendBeacon) window.setTimeout(() => { if (!event.defaultPrevented) navigator.sendBeacon(`/admin/api/notifications/${form.dataset.notif}/read`); }, 0);
+});
+
+function prependNotificationToList(data) {
+    const list = document.getElementById("notif-dropdown-list");
+    const noMsg = document.getElementById("no-notif-msg");
+    if (noMsg) noMsg.remove();
+
+    if (list) {
+        const newItem = document.createElement("a");
+        newItem.href = notificationHref(data);
+        newItem.className = "list-group-item list-group-item-action border-0 p-3 notif-item bg-light-subtle fw-semibold unread-item";
+        newItem.id = `dropdown-notif-${data.id}`;
+        newItem.onclick = (event) => markNotificationReadFromBell(data.id, event);
+        
+        let scoreBadgeHtml = '';
+        if (data.similarity_score !== undefined && data.similarity_score !== null) {
+            const scorePercent = Math.round(data.similarity_score * 100);
+            const badgeClass = scorePercent >= 85 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis';
+            scoreBadgeHtml = `<span class="badge ${badgeClass} border rounded-pill fs-8">⚡ ${scorePercent}% match</span>`;
+        }
+
+        newItem.innerHTML = `
+            <div class="d-flex gap-3 align-items-start">
+                <div class="p-2 rounded-circle flex-shrink-0" style="background-color: var(--berry-subtle, #fdf2f7);">
+                    ${getNotificationIcon(data.category)}
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="small text-dark fw-bold">${escapeNotifText(data.title || 'New Activity')}</span>
+                        ${scoreBadgeHtml}
+                    </div>
+                    <div class="small text-muted mb-1">${escapeNotifText(data.message || data.details || '')}</div>
+                    <small class="text-muted fs-7 d-block">${escapeNotifText(data.created_at || 'Just now')}</small>
+                </div>
+            </div>
+        `;
+
+        list.insertBefore(newItem, list.firstChild);
+        attachNotifFix(newItem, data);
+    }
+}
+
+async function pollUnreadNotifications() {
+    try {
+        const response = await fetch("/admin/api/notifications?unread_only=true");
+        if (!response.ok) return;
+        const data = await response.json();
+        const badge = document.getElementById("nav-notif-badge");
+        if (badge) {
+            badge.innerText = data.unread_count || 0;
+            badge.classList.toggle("badge-pulse", (data.unread_count || 0) > 0);
+        }
+        (data.notifications || []).reverse().forEach(notification => {
+            if (!document.getElementById(`dropdown-notif-${notification.id}`)) {
+                prependNotificationToList(notification);
+            }
+        });
+    } catch (error) {
+        console.error("Unable to refresh notifications:", error);
+    }
+}
+
+// Notifications arrive instantly over /events/stream (see "Live updates" below).
+// This slow poll only covers a dropped connection.
+window.setInterval(pollUnreadNotifications, 60000);
+pollUnreadNotifications();
+
+async function loadMoreNotifications() {
+    if (isLoadingMore || !hasMoreNotifications) return;
+
+    isLoadingMore = true;
+    const loader = document.getElementById("notif-scroll-loader");
+    if (loader) loader.classList.remove("d-none");
+
+    try {
+        currentPage++;
+        const response = await fetch(`/admin/api/notifications?page=${currentPage}`);
+        
+        if (response.ok) {
+            const data = await response.json();
+            
+            if (data.notifications && data.notifications.length > 0) {
+                const list = document.getElementById("notif-dropdown-list");
+                
+                data.notifications.forEach(notif => {
+                    const item = document.createElement("a");
+                    item.href = notificationHref(notif);
+                    item.className = `list-group-item list-group-item-action border-0 p-3 notif-item ${!notif.is_read ? 'bg-light-subtle fw-semibold unread-item' : ''}`;
+                    
+                    let scoreBadgeHtml = '';
+                    if (notif.similarity_score !== undefined && notif.similarity_score !== null) {
+                        const scorePercent = Math.round(notif.similarity_score * 100);
+                        const badgeClass = scorePercent >= 85 ? 'bg-success-subtle text-success' : 'bg-warning-subtle text-warning-emphasis';
+                        scoreBadgeHtml = `<span class="badge ${badgeClass} border rounded-pill fs-8">⚡ ${scorePercent}% match</span>`;
+                    }
+
+                    item.innerHTML = `
+                        <div class="d-flex gap-3 align-items-start">
+                            <div class="p-2 rounded-circle flex-shrink-0" style="background-color: var(--berry-subtle, #fdf2f7);">
+                                ${getNotificationIcon(notif.category)}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="small text-dark fw-bold">${escapeNotifText(notif.title || 'Notification')}</span>
+                                    ${scoreBadgeHtml}
+                                </div>
+                                <div class="small text-muted mb-1">${escapeNotifText(notif.message || notif.details || notif.category)}</div>
+                                <small class="text-muted fs-7 d-block">${escapeNotifText(notif.created_at || 'Earlier')}</small>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                    attachNotifFix(item, notif);
+                });
+            } else {
+                hasMoreNotifications = false;
+            }
+        }
+    } catch (err) {
+        console.error("Failed to load older notifications:", err);
+    } finally {
+        isLoadingMore = false;
+        if (loader) loader.classList.add("d-none");
+    }
+}
+
+function updateBadgeCount(amount) {
+    const badge = document.getElementById("nav-notif-badge");
+    if (badge) {
+        let current = parseInt(badge.innerText, 10) || 0;
+        current += amount;
+        badge.innerText = current > 0 ? current : 0;
+        if (current > 0) {
+            badge.classList.add("badge-pulse");
+        } else {
+            badge.classList.remove("badge-pulse");
+        }
+    }
+}
+
+async function markAllNotificationsRead() {
+    const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+    const headers = { 'Content-Type': 'application/json' };
+    if (csrfMeta && csrfMeta.content) {
+        headers['X-CSRF-Token'] = csrfMeta.content;
+    }
+
+    try {
+        const response = await fetch('/admin/api/notifications/read-all', { 
+            method: 'POST',
+            headers: headers
+        });
+
+        if (response.ok) {
+            const badge = document.getElementById("nav-notif-badge");
+            if (badge) {
+                badge.innerText = "0";
+                badge.classList.remove("badge-pulse");
+            }
+            document.querySelectorAll("#notif-dropdown-list .notif-item, #notif-dropdown-list .notif-fix").forEach(el => el.remove());
+            const list = document.getElementById("notif-dropdown-list");
+            if (list) list.innerHTML = '<div class="p-4 text-center text-muted small">You are all caught up.</div>';
+            const dashboardList = document.getElementById("notification-list");
+            if (dashboardList) {
+                dashboardList.querySelectorAll(".notif-item").forEach(el => el.remove());
+                const empty = document.getElementById("no-notif-msg");
+                if (empty) empty.classList.remove("d-none");
+            }
+        }
+    } catch (err) {
+        console.error("Error marking notifications as read:", err);
+    }
+
+    async function markNotificationReadFromBell(notificationId, event) {
+        event.preventDefault();
+        const item = document.getElementById(`dropdown-notif-${notificationId}`);
+        try {
+            const response = await fetch(`/admin/api/notifications/${notificationId}/read`, { method: "POST" });
+            if (response.ok) {
+                if (item) item.remove();
+                updateBadgeCount(-1);
+                const href = event.currentTarget.getAttribute("href");
+                if (href && href !== "#") window.location.href = href;
+            }
+        } catch (error) {
+            console.error("Error marking notification as read:", error);
+        }
+    }
+}
+
+async function markNotificationReadFromBell(notificationId, event) {
+    event.preventDefault();
+    const item = document.getElementById(`dropdown-notif-${notificationId}`);
+    try {
+        const response = await fetch(`/admin/api/notifications/${notificationId}/read`, { method: "POST" });
+        if (!response.ok) return;
+        if (item) item.remove();
+        updateBadgeCount(-1);
+        const href = event.currentTarget.getAttribute("href");
+        if (href && href !== "#") window.location.href = href;
+    } catch (error) {
+        console.error("Error marking notification as read:", error);
+    }
+}
+
+{% endif %}
+// Forms and buttons marked data-confirm="…" ask before submitting. The text is
+// read from the attribute, so names are never interpolated into script.
+document.addEventListener("submit", event => {
+    const message = (event.submitter && event.submitter.dataset.confirm) || event.target.dataset.confirm;
+    if (message && !window.confirm(message)) event.preventDefault();
+});
+
+{% if is_admin %}
+// ---------- Live updates (server-sent events) ----------
+// The server pushes two events over /events/stream:
+//   notification -> shown at once in the bell, the badge and a toast
+//   change       -> topics whose data changed; if this page shows one of them,
+//                   every [data-live-region] is re-rendered in place
+(() => {
+    if (!window.EventSource) return;
+    const main = document.querySelector("main.main");
+    const pageTopics = new Set(
+        ((main && main.dataset.liveTopics) || "").split(",").map(topic => topic.trim()).filter(Boolean)
+    );
+    const chip = document.getElementById("live-chip");
+    const label = document.getElementById("live-label");
+    let refreshTimer = null;
+    let refreshQueued = false;
+    let refreshing = false;
+
+    const setOnline = online => {
+        if (chip) chip.classList.toggle("is-offline", !online);
+        if (label) label.textContent = online ? "Realtime sync active" : "Reconnecting…";
+    };
+
+    // Never swap content under an open dialog...
+    const userIsBusy = () => Boolean(document.querySelector(".modal.show"));
+    // ...or the part of the page holding the field being typed in; the rest stays live.
+    const regionInUse = region => {
+        const active = document.activeElement;
+        return Boolean(active && /^(INPUT|SELECT|TEXTAREA)$/.test(active.tagName) && region.contains(active));
+    };
+
+    async function refreshRegions() {
+        if (refreshing || userIsBusy()) { refreshQueued = true; return; }
+        refreshing = true;
+        refreshQueued = false;
+        try {
+            const response = await fetch(window.location.pathname + window.location.search, {
+                headers: { "X-Live-Refresh": "1" }
+            });
+            if (!response.ok) return;
+            const fresh = new DOMParser().parseFromString(await response.text(), "text/html");
+            document.querySelectorAll("[data-live-region]").forEach(region => {
+                // A region with unsaved input keeps what the admin typed.
+                if (!region.id || region.dataset.liveDirty) return;
+                if (regionInUse(region)) { refreshQueued = true; return; }
+                const next = fresh.getElementById(region.id);
+                if (!next || next.innerHTML === region.innerHTML) return;
+                region.innerHTML = next.innerHTML;
+                region.classList.remove("live-flash");
+                void region.offsetWidth;
+                region.classList.add("live-flash");
+            });
+            document.dispatchEvent(new CustomEvent("live:refreshed"));
+        } catch (error) {
+            console.error("Live refresh failed:", error);
+        } finally {
+            refreshing = false;
+            // Regions skipped because a field was in use are retried when it loses focus.
+            if (refreshQueued && !document.querySelector("[data-live-region] :focus")) scheduleRefresh();
+        }
+    }
+
+    function scheduleRefresh() {
+        window.clearTimeout(refreshTimer);
+        refreshTimer = window.setTimeout(refreshRegions, 400);
+    }
+
+    document.addEventListener("input", event => {
+        const region = event.target.closest && event.target.closest("[data-live-region]");
+        if (region) region.dataset.liveDirty = "1";
+    });
+    document.addEventListener("focusout", () => { if (refreshQueued) scheduleRefresh(); });
+    document.addEventListener("hidden.bs.modal", () => { if (refreshQueued) scheduleRefresh(); });
+
+    function onNotification(event) {
+        const data = JSON.parse(event.data);
+        if (document.getElementById(`dropdown-notif-${data.id}`)) return;
+        prependNotificationToList(data);
+        updateBadgeCount(1);
+        const href = notificationHref(data);
+        const link = href !== "#" ? ` <a href="${escapeNotifText(href)}" class="fw-semibold text-decoration-none">Open</a>` : "";
+        showFacebookToast(data.title || "Notification", escapeNotifText(data.message || "") + link);
+    }
+
+    function showInboxCount(count) {
+        ["nav-inbox-count", "nav-messages-badge", "tab-inbox-count"].forEach(id => {
+            const badge = document.getElementById(id);
+            if (!badge) return;
+            badge.textContent = count;
+            badge.classList.toggle("d-none", count === 0);
+        });
+        const waiting = document.getElementById("messages-waiting");
+        if (waiting) waiting.textContent = count ? `${count} waiting for your answer` : "";
+    }
+
+    async function refreshInboxCount() {
+        try {
+            const response = await fetch("/inbox/pending-count");
+            if (!response.ok) return;
+            showInboxCount((await response.json()).count || 0);
+        } catch (error) {
+            console.error("Inbox count refresh failed:", error);
+        }
+    }
+
+    // ---------- Messages (envelope in the top bar) ----------
+    const messagesButton = document.getElementById("messagesDropdown");
+    const messagesList = document.getElementById("messages-dropdown-list");
+    const MESSAGE_ICONS = { in: "bi-arrow-down-left", todo: "bi-question-circle-fill", failed: "bi-x-circle-fill", test: "bi-magic", out: "bi-arrow-up-right" };
+
+    function messageRow(message) {
+        const clip = message.files ? ` <i class="bi bi-paperclip" title="${message.files} attached file(s)"></i>` : "";
+        return `<a class="msg-row ${message.state === "todo" ? "is-todo" : ""}" href="/inbox?filter=all&thread=${encodeURIComponent(message.thread_id)}">` +
+            `<div class="msg-avatar">${escapeNotifText(message.initials)}</div>` +
+            `<div class="msg-main">` +
+            `<div class="d-flex justify-content-between gap-2"><span class="msg-name">${escapeNotifText(message.name)}</span><span class="msg-when">${escapeNotifText(message.when)}</span></div>` +
+            `<div class="msg-subject">${escapeNotifText(message.subject)}${clip}</div>` +
+            `<div class="msg-snippet">${escapeNotifText(message.snippet)}</div>` +
+            `<span class="msg-tag ${escapeNotifText(message.state)}"><i class="bi ${MESSAGE_ICONS[message.state] || MESSAGE_ICONS.out}"></i>${escapeNotifText(message.label)}</span>` +
+            `</div></a>`;
+    }
+
+    async function loadRecentMessages() {
+        if (!messagesList) return;
+        try {
+            const response = await fetch("/inbox/recent");
+            if (!response.ok) return;
+            const data = await response.json();
+            showInboxCount(data.waiting || 0);
+            messagesList.innerHTML = data.messages.length
+                ? data.messages.map(messageRow).join("")
+                : '<div class="p-4 text-center text-muted small">No email has been sent or received yet.</div>';
+        } catch (error) {
+            console.error("Messages could not be loaded:", error);
+        }
+    }
+    if (messagesButton) messagesButton.addEventListener("show.bs.dropdown", loadRecentMessages);
+
+    function onChange(event) {
+        const topics = JSON.parse(event.data).topics || [];
+        document.dispatchEvent(new CustomEvent("live:change", { detail: { topics } }));
+        if (topics.includes("inbox")) {
+            // An open list stays current; a closed one is loaded when it opens.
+            if (messagesButton && messagesButton.getAttribute("aria-expanded") === "true") loadRecentMessages();
+            else refreshInboxCount();
+        }
+        if (topics.some(topic => pageTopics.has(topic))) scheduleRefresh();
+    }
+
+    // One stream per visible page. A page the browser keeps in memory after
+    // you leave it (to make "Back" instant) must give its stream up: browsers
+    // allow six connections to a site, and every kept page would hold one
+    // until nothing else on the site could load.
+    let source = null;
+    function openStream() {
+        if (source) return;
+        source = new EventSource("/events/stream");
+        source.onopen = () => setOnline(true);
+        source.onerror = () => setOnline(false);
+        source.addEventListener("notification", onNotification);
+        source.addEventListener("change", onChange);
+    }
+    function closeStream() {
+        if (!source) return;
+        source.close();
+        source = null;
+    }
+    window.addEventListener("pagehide", closeStream);
+    window.addEventListener("pageshow", event => {
+        if (!event.persisted) return;
+        // Back on a kept page: reconnect and catch up with what changed meanwhile.
+        openStream();
+        refreshInboxCount();
+        if (pageTopics.size) scheduleRefresh();
+    });
+    openStream();
+})();
+
+(() => {
+    const launcher = document.getElementById("assistant-launcher");
+    const panel = document.getElementById("assistant-panel");
+    const close = document.getElementById("assistant-close");
+    const form = document.getElementById("assistant-form");
+    const input = document.getElementById("assistant-input");
+    const messages = document.getElementById("assistant-messages");
+    if (!launcher || !panel || !form || !input || !messages) return;
+
+    const history = [];
+    const addMessage = (text, role, links) => {
+        const item = document.createElement("div");
+        item.className = `assistant-msg ${role}`;
+        item.textContent = text;
+        // Where the answer leads: the pages to open, as buttons under it.
+        if (links && links.length) {
+            const row = document.createElement("div");
+            row.className = "assistant-links";
+            // Other sites and PDFs open in a new tab, so the conversation stays where it is.
+            links.forEach(link => { const a = document.createElement("a"); a.href = link.url; a.textContent = link.label; if (link.tab || /^https?:/.test(link.url)) { a.target = "_blank"; a.rel = "noopener noreferrer"; } row.appendChild(a); });
+            item.appendChild(row);
+        }
+        messages.appendChild(item);
+        messages.scrollTop = messages.scrollHeight;
+        if (role !== "working") history.push({ role: role === "user" ? "user" : "assistant", content: text });
+        return item;
+    };
+    // Questions to start from: one tap asks it.
+    const showSuggestions = list => {
+        const row = document.createElement("div");
+        row.className = "assistant-suggest";
+        list.forEach(text => { const b = document.createElement("button"); b.type = "button"; b.textContent = text; b.addEventListener("click", () => { input.value = text; form.requestSubmit(); }); row.appendChild(b); });
+        messages.appendChild(row);
+        messages.scrollTop = messages.scrollHeight;
+    };
+    let greeted = false;
+    launcher.addEventListener("click", () => {
+        if (!greeted) { greeted = true; fetch("/assistant/suggestions").then(r => r.ok ? r.json() : null).then(d => { if (d && d.suggestions) showSuggestions(d.suggestions); }).catch(() => {}); }
+        panel.classList.toggle("open");
+        if (panel.classList.contains("open")) input.focus();
+    });
+    close?.addEventListener("click", () => panel.classList.remove("open"));
+    input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+    form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const text = input.value.trim();
+        if (!text) return;
+        addMessage(text, "user");
+        input.value = "";
+        const working = document.createElement("div");
+        working.className = "assistant-msg bot assistant-working";
+        working.innerHTML = '<i class="bi bi-robot"></i><span>Looking it up…</span>';
+        messages.appendChild(working);
+        messages.scrollTop = messages.scrollHeight;
+        try {
+            const response = await fetch("/assistant/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: text, history })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || "Assistant request failed");
+            working.remove();
+            addMessage(data.reply, "bot", data.links);
+            if (data.suggestions && data.suggestions.length) showSuggestions(data.suggestions);
+        } catch (error) {
+            working.remove();
+            addMessage("Something went wrong while looking that up. Try again in a moment.", "bot");
+            console.error("Assistant error:", error);
+        }
+    });
+})();
+{% endif %}
+</script>
+
+{% block extra_scripts %}{% endblock %}
+
+{% if ui_lang != 'en' %}
+<script>
+/* The pages are written in English; here their texts are swapped for the chosen language.
+   Only the application's own words are in the dictionary: names and what people typed stay as they are. */
+(function () {
+  var lang = "{{ ui_lang }}", version = "{{ i18n_version }}", store = "i18n:" + lang;
+  var SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, IFRAME: 1, NOSCRIPT: 1 };
+  var dict = null, reported = {}, timer = null;
+  function prepare(data) {
+    var pending = {};
+    (data.p || []).forEach(function (text) { pending[text] = 1; });
+    var parts = Object.keys(data.t).concat(data.p || []).filter(function (text) { return text.length >= 10 && text.indexOf(" ") > 0; });
+    parts.sort(function (a, b) { return b.length - a.length; });
+    return { t: data.t, p: pending, parts: parts };
+  }
+  function letter(char) { return !!char && /[A-Za-z\u00C0-\u00FF0-9]/.test(char); }
+  function swap(value, seen) {
+    var core = value.replace(/\s+/g, " ").trim();
+    if (core.length < 2 || !/[A-Za-z]{2}/.test(core)) return null;
+    var bare = core.replace(/^[\s·:,;()\[\]–\-|]+|[\s·:,;()\[\]–\-|]+$/g, "");
+    if (Object.prototype.hasOwnProperty.call(dict.t, bare)) return core.replace(bare, dict.t[bare]);
+    if (dict.p[bare] && !reported[bare]) { reported[bare] = 1; seen.push(bare); }
+    if (core.length < 10) return null;
+    var out = core, changed = 0;
+    for (var index = 0; index < dict.parts.length && changed < 4; index++) {
+      var part = dict.parts[index];
+      if (part.length > out.length) continue;
+      var at = out.indexOf(part);
+      if (at < 0 || letter(out.charAt(at - 1)) || letter(out.charAt(at + part.length))) continue;
+      if (Object.prototype.hasOwnProperty.call(dict.t, part)) { out = out.slice(0, at) + dict.t[part] + out.slice(at + part.length); changed++; }
+      else if (!reported[part]) { reported[part] = 1; seen.push(part); }
+    }
+    return changed ? out : null;
+  }
+  function walk(root, seen) {
+    if (!root || (root.nodeType !== 1 && root.nodeType !== 9)) return;
+    var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (node) {
+      var parent = node.parentNode;
+      if (!parent || SKIP[parent.nodeName] || (parent.closest && parent.closest("[data-no-i18n], [contenteditable], .it-bg"))) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    } });
+    var nodes = [], node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    nodes.forEach(function (item) {
+      var value = item.nodeValue, result = swap(value, seen);
+      if (result !== null) item.nodeValue = value.match(/^\s*/)[0] + result + value.match(/\s*$/)[0];
+    });
+    var marked = root.querySelectorAll ? root.querySelectorAll("[placeholder], [title], [aria-label]") : [];
+    for (var index = 0; index < marked.length; index++) {
+      if (marked[index].closest("[data-no-i18n]")) continue;
+      ["placeholder", "title", "aria-label"].forEach(function (name) {
+        var value = marked[index].getAttribute(name);
+        if (!value) return;
+        var result = swap(value, seen);
+        if (result !== null) marked[index].setAttribute(name, result);
+      });
+    }
+  }
+  function report(seen) {
+    if (!seen.length) return;
+    fetch("/i18n/seen", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ lang: lang, texts: seen.slice(0, 250) }) }).catch(function () {});
+  }
+  function start(data) {
+    dict = prepare(data);
+    var seen = [];
+    walk(document.body, seen);
+    document.documentElement.classList.add("is-translated");
+    report(seen);
+    new MutationObserver(function (changes) {
+      var added = [];
+      changes.forEach(function (change) { change.addedNodes.forEach(function (node) { if (node.nodeType === 1) added.push(node); }); });
+      if (!added.length) return;
+      clearTimeout(timer);
+      timer = setTimeout(function () { var more = []; added.forEach(function (node) { if (node.isConnected) walk(node, more); }); report(more); }, 120);
+    }).observe(document.body, { childList: true, subtree: true });
+  }
+  function load() {
+    try {
+      var kept = JSON.parse(localStorage.getItem(store) || "null");
+      if (kept && kept.v === version) { start(kept.d); return; }
+    } catch (error) {}
+    fetch("/i18n/" + lang + ".json?v=" + encodeURIComponent(version), { credentials: "same-origin" })
+      .then(function (answer) { return answer.json(); })
+      .then(function (data) { try { localStorage.setItem(store, JSON.stringify({ v: version, d: data })); } catch (error) {} start(data); })
+      .catch(function () {});
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", load); else load();
+})();
+</script>
+{% endif %}
+
+{% if is_admin or staff_menu %}
+<script>
+/* The search at the top: results while typing, arrows to move, Enter to open, Ctrl+K from anywhere. */
+(function () {
+  var form = document.getElementById("find-form"), input = document.getElementById("find-input"), drop = document.getElementById("find-drop");
+  if (!form || !input || !drop) return;
+  var timer = null, links = [], chosen = -1, asked = 0;
+  function close() { drop.hidden = true; chosen = -1; }
+  function mark() { links.forEach(function (link, index) { link.classList.toggle("is-on", index === chosen); }); if (links[chosen]) links[chosen].scrollIntoView({ block: "nearest" }); }
+  function show(groups, query) {
+    drop.innerHTML = "";
+    links = [];
+    groups.forEach(function (group) {
+      var title = document.createElement("div"); title.className = "find-group"; title.textContent = group.group; drop.appendChild(title);
+      group.items.slice(0, 6).forEach(function (item) {
+        var link = document.createElement("a"); link.className = "find-item"; link.href = item.url;
+        var icon = document.createElement("i"); icon.className = "bi " + item.icon;
+        var words = document.createElement("span"); var bold = document.createElement("b"); bold.textContent = item.title; words.appendChild(bold);
+        if (item.detail) { var small = document.createElement("small"); small.textContent = item.detail; words.appendChild(small); }
+        link.appendChild(icon); link.appendChild(words); drop.appendChild(link); links.push(link);
+      });
+    });
+    var all = document.createElement("a"); all.className = "find-all"; all.href = "/find?q=" + encodeURIComponent(query);
+    all.textContent = groups.length ? "See everything found" : "Nothing found yet: search the whole application"; drop.appendChild(all); links.push(all);
+    chosen = links.length > 1 ? 0 : -1; mark(); drop.hidden = false;
+  }
+  input.addEventListener("input", function () {
+    clearTimeout(timer);
+    var query = input.value.trim();
+    if (query.length < 2) { close(); return; }
+    timer = setTimeout(function () {
+      var mine = ++asked;
+      fetch("/find?format=json&q=" + encodeURIComponent(query), { credentials: "same-origin" }).then(function (answer) { return answer.json(); })
+        .then(function (data) { if (mine === asked) show(data.groups || [], query); }).catch(function () {});
+    }, 160);
+  });
+  input.addEventListener("keydown", function (event) {
+    if (drop.hidden) return;
+    if (event.key === "ArrowDown") { chosen = Math.min(links.length - 1, chosen + 1); mark(); event.preventDefault(); }
+    else if (event.key === "ArrowUp") { chosen = Math.max(0, chosen - 1); mark(); event.preventDefault(); }
+    else if (event.key === "Enter" && links[chosen]) { window.location.href = links[chosen].href; event.preventDefault(); }
+    else if (event.key === "Escape") { close(); }
+  });
+  document.addEventListener("click", function (event) { if (!form.contains(event.target)) close(); });
+  document.addEventListener("keydown", function (event) {
+    if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") {
+      event.preventDefault();
+      if (form.offsetParent === null) { window.location.href = "/find"; return; }
+      input.focus(); input.select();
+    }
+  });
+})();
+</script>
+{% endif %}
+
+<script>
+/* Numbers marked data-count count up the first time they are seen. */
+(function () {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  function run(node) {
+    var target = parseFloat(node.getAttribute("data-count")), start = performance.now(), length = 900;
+    if (!isFinite(target) || target <= 0) return;
+    var whole = Math.round(target) === target;
+    function step(now) {
+      var share = Math.min(1, (now - start) / length), eased = 1 - Math.pow(1 - share, 3), value = target * eased;
+      node.firstChild.nodeValue = whole ? String(Math.round(value)) : value.toFixed(1);
+      if (share < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  function watch() {
+    var nodes = Array.prototype.slice.call(document.querySelectorAll("[data-count]:not([data-counted])"));
+    nodes.forEach(function (node) {
+      node.setAttribute("data-counted", "1");
+      if (!node.firstChild || node.firstChild.nodeType !== 3) return;
+      if (!("IntersectionObserver" in window)) { run(node); return; }
+      var seen = new IntersectionObserver(function (entries) { entries.forEach(function (entry) { if (entry.isIntersecting) { run(node); seen.disconnect(); } }); });
+      seen.observe(node);
+    });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", watch); else watch();
+})();
+</script>
+</body>
+</html>

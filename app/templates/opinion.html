@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Votre avis · {{ app_name or '9antra' }}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; --gold:#f5b301; --gold-soft:#fef3c7; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:620px; margin:0 auto; padding:22px 16px 48px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:18px; }
+    .brand span { width:34px; height:34px; border-radius:11px; background:var(--berry); color:#fff; display:grid; place-items:center; font-size:1rem; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:24px; padding:30px clamp(18px, 5vw, 36px); box-shadow:0 22px 44px -30px rgba(36,26,56,.35); text-align:center; }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 11px; border-radius:999px; }
+    h1 { font-size:1.5rem; line-height:1.25; margin:14px 0 6px; letter-spacing:-.01em; }
+    .lead { color:var(--muted); font-size:.95rem; margin:0 auto; max-width:440px; }
+    .art { width:150px; margin:0 auto 6px; display:block; }
+    .art .bob { animation:bob 3.6s ease-in-out infinite; transform-origin:center; }
+    .art .tw { animation:twinkle 2.4s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+    .art .tw.d1 { animation-delay:.6s; } .art .tw.d2 { animation-delay:1.2s; }
+    @keyframes bob { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-5px); } }
+    @keyframes twinkle { 0%, 100% { transform:scale(.7); opacity:.5; } 50% { transform:scale(1.15); opacity:1; } }
+
+    /* Five stars, picked with a click, a tap or the arrow keys. */
+    .stars { display:inline-flex; flex-direction:row-reverse; gap:6px; margin:26px 0 4px; border:0; padding:0; }
+    .stars input { position:absolute; opacity:0; width:0; height:0; }
+    .stars label { cursor:pointer; font-size:2.9rem; line-height:1; color:#e3ddee; transition:color .12s ease, transform .12s ease; padding:2px; }
+    .stars label:hover, .stars label:hover ~ label, .stars input:checked ~ label { color:var(--gold); }
+    .stars label:hover { transform:scale(1.14); }
+    .stars input:focus-visible + label { outline:2px solid var(--berry); outline-offset:3px; border-radius:10px; }
+    .said { min-height:1.5em; font-weight:700; color:var(--berry); font-size:.95rem; }
+    .field { text-align:left; margin-top:20px; }
+    .field label.q { display:block; font-weight:700; font-size:.95rem; margin-bottom:8px; }
+    textarea { width:100%; border:1.5px solid var(--line); border-radius:14px; padding:12px 14px; font:inherit; font-size:.95rem; min-height:110px; resize:vertical; color:inherit; background:#fff; }
+    textarea:focus { outline:none; border-color:var(--berry); }
+    .check { display:flex; gap:10px; align-items:flex-start; text-align:left; margin-top:14px; font-size:.88rem; color:#4a445e; cursor:pointer; }
+    .check input { margin-top:3px; width:17px; height:17px; accent-color:var(--berry); flex:none; }
+    .submit { margin-top:24px; width:100%; border:0; border-radius:14px; padding:14px 20px; font:inherit; font-weight:700; font-size:1rem; color:#fff; background:var(--berry); cursor:pointer; }
+    .submit:hover { background:var(--berry-dark); }
+    .submit:focus-visible { outline:2px solid var(--berry); outline-offset:3px; }
+    .problem { margin-top:16px; background:var(--gold-soft); color:#7c4a03; border-radius:13px; padding:11px 14px; font-size:.9rem; font-weight:600; text-align:left; }
+    .given { font-size:2.2rem; color:var(--gold); letter-spacing:4px; margin:16px 0 4px; }
+    .given .off { color:#e3ddee; }
+    .quote { margin:14px auto 0; max-width:460px; font-style:italic; color:#4a445e; background:#faf8fd; border-radius:16px; padding:14px 16px; text-align:left; }
+    .more { display:inline-flex; align-items:center; gap:8px; margin-top:22px; padding:12px 20px; border-radius:999px; background:#1877f2; color:#fff; font-weight:700; text-decoration:none; font-size:.95rem; }
+    .more:hover { background:#0f63d6; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+    @media (max-width: 420px) { .stars label { font-size:2.4rem; } }
+    @media (prefers-reduced-motion: reduce) { .art .bob, .art .tw { animation:none; } .stars label { transition:none; } }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><img src="/static/brand/icon-64.png" alt="" width="34" height="34" style="border-radius:50%;" data-fallback="9" onerror="this.outerHTML='<span>'+this.dataset.fallback+'</span>'">{{ app_name or '9antra' }}</div>
+
+  {% if not row %}
+  <div class="card">
+    <span class="eyebrow">Lien introuvable</span>
+    <h1>Ce lien n'est plus valable</h1>
+    <p class="lead">Utilisez le lien reçu dans votre dernier email, ou répondez simplement à cet email : nous lirons votre avis.</p>
+  </div>
+
+  {% elif row.status == "received" %}
+  <div class="card">
+    <svg class="art" viewBox="0 0 200 130" role="img" aria-hidden="true">
+      <ellipse cx="100" cy="72" rx="92" ry="52" fill="#fdf2f7"/>
+      <g class="bob"><circle cx="100" cy="66" r="34" fill="#a42c67"/><path d="M85 66l11 11 21-23" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></g>
+      <path class="tw" d="M40 40l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#f5b301"/><path class="tw d1" d="M160 30l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#f5b301"/><path class="tw d2" d="M166 96l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f5b301"/>
+    </svg>
+    <span class="eyebrow">{{ row.program_name or 'Votre formation' }}</span>
+    <h1>Merci {{ first_name }} !</h1>
+    <p class="lead">Votre avis est bien arrivé. Il nous aide à améliorer la formation pour les suivants.</p>
+    {% if row.rating %}<div class="given" role="img" aria-label="{{ row.rating }} étoiles sur 5">{% for n in range(5) %}<span class="{{ '' if n < row.rating else 'off' }}">★</span>{% endfor %}</div>{% endif %}
+    {% if row.comment %}<div class="quote">“{{ row.comment }}”</div>{% endif %}
+    <div><a class="more" href="{{ facebook }}" target="_blank" rel="noopener">Partager aussi mon avis sur Facebook</a></div>
+    <p class="foot" style="margin-top:14px;">Vous souhaitez le modifier ? <a href="?edit=1" style="color:var(--berry); font-weight:700;">Changer mon avis</a></p>
+  </div>
+
+  {% else %}
+  <form class="card" method="post" action="/opinion/{{ row.external_id }}">
+    <svg class="art" viewBox="0 0 200 130" role="img" aria-hidden="true">
+      <ellipse cx="100" cy="72" rx="92" ry="52" fill="#fdf2f7"/>
+      <g class="bob"><rect x="58" y="34" width="84" height="64" rx="14" fill="#fff" stroke="#ebe5f3" stroke-width="2"/><rect x="70" y="48" width="44" height="6" rx="3" fill="#ddd7ea"/><rect x="70" y="62" width="60" height="6" rx="3" fill="#ddd7ea"/>
+        <path d="M76 86l3-7 3 7 7 1-5 5 1 7-6-4-6 4 1-7-5-5z" fill="#f5b301" transform="translate(0,-8) scale(.9) translate(8,6)"/></g>
+      <path class="tw" d="M40 44l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#f5b301"/><path class="tw d1" d="M162 34l3 7 7 3-7 3-3 7-3-7-7-3 7-3z" fill="#a42c67"/><path class="tw d2" d="M164 98l2 5 5 2-5 2-2 5-2-5-5-2 5-2z" fill="#f5b301"/>
+    </svg>
+    <span class="eyebrow">{{ row.program_name or 'Votre formation' }}</span>
+    <h1>{{ first_name }}, comment s'est passée votre formation ?</h1>
+    <p class="lead">Une minute suffit : des étoiles, et quelques mots si vous le voulez.</p>
+
+    <fieldset class="stars" aria-label="Combien d'étoiles donnez-vous à cette formation ?">
+      {% for value, label in [(5, 'Excellent'), (4, 'Très bien'), (3, 'Correct'), (2, 'Décevant'), (1, 'Mauvais')] %}
+      <input type="radio" name="stars" id="star{{ value }}" value="{{ value }}" data-says="{{ label }}" {% if row.rating == value %}checked{% endif %} required>
+      <label for="star{{ value }}" title="{{ value }} sur 5 · {{ label }}" aria-label="{{ value }} étoile{{ 's' if value > 1 }} : {{ label }}">★</label>
+      {% endfor %}
+    </fieldset>
+    <div class="said" id="said" aria-live="polite"></div>
+
+    <div class="field">
+      <label class="q" for="words">Qu'avez-vous le plus apprécié, et que faudrait-il améliorer ?</label>
+      <textarea id="words" name="words" maxlength="2000" placeholder="Le formateur, le contenu, le rythme, l'ambiance, l'organisation…">{{ row.comment or '' }}</textarea>
+    </div>
+    <label class="check"><input type="checkbox" name="publish" value="true" {% if may_publish %}checked{% endif %}><span>J'accepte que mon avis soit publié avec mon prénom (site, page Facebook).</span></label>
+    {% if problem %}<div class="problem">{{ problem }}</div>{% endif %}
+    <button class="submit" type="submit">Envoyer mon avis</button>
+  </form>
+  <script>
+    const said = document.getElementById("said");
+    const show = () => { const chosen = document.querySelector('.stars input:checked'); said.textContent = chosen ? chosen.dataset.says : ""; };
+    document.querySelectorAll(".stars input").forEach(input => input.addEventListener("change", show));
+    show();
+  </script>
+  {% endif %}
+
+  <p class="foot">{{ app_name or '9antra' }} · votre avis reste entre vous et l'équipe, sauf si vous acceptez sa publication.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,86 @@
+{# Look and behaviour of the class parameters form (_class_parameters.html).
+   Include once on a page that shows the form, wherever it is put later. #}
+<style>
+  .cp-form { font-size:.84rem; }
+  .cp-group { border:1px solid var(--border-color); border-radius:16px; padding:14px; margin-bottom:12px; background:#fff; }
+  .cp-group-title { font-weight:800; font-size:.82rem; color:var(--ink-text); display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .cp-group-title i { color:var(--primary-berry); }
+  .cp-label { font-size:.72rem; font-weight:700; color:#5b5670; margin-bottom:4px; display:block; }
+  .cp-hint { font-size:.72rem; color:var(--muted); margin-top:4px; }
+  .cp-form .form-control, .cp-form .form-select { border-radius:10px; border-color:var(--border-color); font-size:.84rem; }
+  .cp-form .form-control:focus, .cp-form .form-select:focus { border-color:var(--primary-berry); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary-berry) 14%, transparent); }
+  .cp-look { display:flex; gap:12px; align-items:flex-end; }
+  .cp-look-now { width:54px; height:54px; border-radius:16px; display:grid; place-items:center; font-size:1.6rem; flex:none; }
+  .cp-symbols { display:flex; flex-wrap:wrap; gap:5px; }
+  .cp-symbol input, .cp-colour input, .cp-day input { position:absolute; opacity:0; width:0; height:0; }
+  .cp-symbol span { min-width:36px; height:36px; padding:0 6px; border-radius:11px; border:1.5px solid var(--border-color); display:grid; place-items:center; font-size:1.1rem; cursor:pointer; background:#fff; transition:border-color .12s ease, transform .12s ease; }
+  .cp-symbol:first-child span { font-size:.68rem; font-weight:800; color:#5b5670; }
+  .cp-symbol span:hover { transform:scale(1.08); }
+  .cp-symbol input:checked + span { border-color:var(--primary-berry); background:var(--berry-subtle); box-shadow:0 0 0 2px color-mix(in srgb, var(--primary-berry) 22%, transparent); }
+  .cp-symbol input:focus-visible + span, .cp-colour input:focus-visible + span, .cp-day input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .cp-colours { display:flex; flex-wrap:wrap; gap:7px; }
+  .cp-colour span { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; cursor:pointer; border:3px solid #fff; box-shadow:0 0 0 1px var(--border-color); font-size:.62rem; font-weight:800; color:#5b5670; }
+  .cp-colour span.is-auto { background:#f4f1f9; }
+  .cp-colour input:checked + span { box-shadow:0 0 0 2px var(--ink-text); }
+  .cp-days { display:flex; flex-wrap:wrap; gap:6px; }
+  .cp-day span { display:inline-block; padding:6px 12px; border-radius:999px; border:1.5px solid var(--border-color); font-weight:700; font-size:.76rem; color:#5b5670; cursor:pointer; background:#fff; }
+  .cp-day input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .cp-rule { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border:1.5px solid var(--border-color); border-radius:13px; margin-bottom:7px; cursor:pointer; }
+  .cp-rule:last-child { margin-bottom:0; }
+  .cp-rule.is-chosen { border-color:var(--primary-berry); background:var(--berry-subtle); }
+  .cp-rule-body { flex:1 1 auto; min-width:0; }
+  .cp-rule-title { font-weight:700; color:var(--ink-text); display:block; }
+  .cp-rule-fields { display:none; margin-top:8px; color:#5b5670; line-height:2.2; }
+  .cp-rule.is-chosen .cp-rule-fields { display:block; }
+  .cp-small { display:inline-block; width:74px; }
+  .cp-save { background:var(--primary-berry); border:0; color:#fff; font-weight:800; border-radius:12px; padding:11px 16px; font-size:.88rem; }
+  .cp-save:hover { background:var(--berry-dark); color:#fff; }
+</style>
+<script>
+// Every class parameters form on the page, including one loaded later into a dialog.
+window.initClassParameters = function (root) {
+  (root || document).querySelectorAll("form[data-class-parameters]").forEach(form => {
+    if (form.dataset.ready) return;
+    form.dataset.ready = "1";
+    const DAY_INDEX = { sun: 0, mon: 1, tue: 2, wed: 3, thu: 4, fri: 5, sat: 6 };
+    const created = new Date(form.dataset.created + "T00:00:00");
+    const preview = form.querySelector("[data-delay-preview]");
+    const lookNow = form.querySelector("[data-look-preview]");
+    const startingSymbol = lookNow ? lookNow.textContent : "";
+    const startingStyle = lookNow ? [lookNow.style.background, lookNow.style.color] : [];
+
+    function markRule() {
+      form.querySelectorAll(".cp-rule").forEach(rule => {
+        rule.classList.toggle("is-chosen", rule.querySelector('input[type="radio"]').checked);
+      });
+    }
+    function showDelay() {
+      if (!preview) return;
+      const delay = parseInt(form.elements["start_delay_days"].value, 10);
+      if (Number.isNaN(delay) || delay < 0) { preview.textContent = ""; return; }
+      const days = [...form.querySelectorAll('input[name="days"]:checked')].map(input => DAY_INDEX[input.value]);
+      const first = new Date(created);
+      first.setDate(first.getDate() + delay);
+      for (let step = 0; step < 7 && days.length && !days.includes(first.getDay()); step++) first.setDate(first.getDate() + 1);
+      const when = first.toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
+      preview.textContent = `Created ${created.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })} → first session ${when}`;
+    }
+    function showLook() {
+      if (!lookNow) return;
+      const symbol = form.querySelector('input[name="symbol"]:checked');
+      const colour = form.querySelector('input[name="color"]:checked');
+      lookNow.textContent = symbol && symbol.value ? symbol.value : startingSymbol;
+      if (colour && colour.value) {
+        lookNow.style.color = colour.value;
+        lookNow.style.background = `color-mix(in srgb, ${colour.value} 12%, #fff)`;
+      } else {
+        [lookNow.style.background, lookNow.style.color] = startingStyle;
+      }
+    }
+    form.addEventListener("input", showDelay);
+    form.addEventListener("change", () => { markRule(); showLook(); });
+    markRule(); showDelay();
+  });
+};
+document.addEventListener("DOMContentLoaded", () => window.initClassParameters());
+</script>

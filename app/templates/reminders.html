@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Reminders · 9antra{% endblock %}
+{% block page_title %}Reminders{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .rm-h { font-weight:800; font-size:1.12rem; color:var(--ink-text); margin:0 0 3px; display:flex; align-items:center; gap:9px; }
+  .rm-h i { color:var(--primary-berry); }
+  .rm-p { font-size:.84rem; color:var(--muted); margin:0 0 14px; max-width:760px; }
+  .rm-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px 20px; min-width:0; }
+  .rm-sugs { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:12px; margin-bottom:26px; }
+  .rm-sug { display:flex; gap:12px; align-items:flex-start; background:#fff; border:1px solid var(--border-color); border-left:4px solid var(--accent-gold-dark, #b45309); border-radius:16px; padding:13px 14px; text-decoration:none; color:inherit; transition:transform .16s ease, box-shadow .16s ease; }
+  .rm-sug:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+  .rm-sug i { font-size:1.15rem; color:var(--accent-gold-dark, #b45309); }
+  .rm-sug b { display:block; font-size:.86rem; color:var(--ink-text); } .rm-sug span { font-size:.78rem; color:var(--muted); line-height:1.4; display:block; }
+  .rm-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:18px; align-items:start; margin-bottom:28px; }
+  .rm-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:14px 0 6px; }
+  .rm-ideas, .rm-tools { display:flex; flex-wrap:wrap; gap:6px; }
+  .rm-idea { border:1.5px solid var(--border-color); background:#fff; border-radius:99px; padding:5px 12px; font-size:.78rem; font-weight:700; color:var(--ink-text); cursor:pointer; display:inline-flex; gap:6px; align-items:center; transition:border-color .15s ease, background .15s ease; }
+  .rm-idea:hover, .rm-idea.is-on { border-color:var(--primary-berry); background:var(--berry-subtle, #fbf1f6); }
+  .rm-sq { width:13px; height:13px; border-radius:4px; display:inline-block; }
+  .rm-box textarea { width:100%; min-height:230px; border:1.5px solid var(--border-color); border-radius:14px; padding:11px 13px; font:inherit; font-size:.86rem; resize:vertical; }
+  .rm-box textarea:focus, .rm-box .form-control:focus, .rm-box .form-select:focus { outline:none; border-color:var(--primary-berry); box-shadow:none; }
+  .rm-box .form-control, .rm-box .form-select { border-radius:12px; font-size:.86rem; }
+  .rm-when { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .rm-preview { width:100%; height:640px; border:1px solid var(--border-color); border-radius:14px; background:#f6f3fb; }
+  .rm-row { display:flex; gap:12px; align-items:center; padding:11px 0; border-top:1px solid var(--border-color); min-width:0; }
+  .rm-row:first-of-type { border-top:0; }
+  .rm-row b { display:block; font-size:.86rem; color:var(--ink-text); overflow-wrap:anywhere; } .rm-row span.meta { font-size:.76rem; color:var(--muted); }
+  .rm-row form { margin:0; }
+  .rm-how { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:10px; margin-bottom:24px; }
+  .rm-how div { background:#fff; border:1px solid var(--border-color); border-radius:16px; padding:12px 14px; font-size:.8rem; color:#4a445e; line-height:1.45; }
+  .rm-how b { display:flex; gap:7px; align-items:center; color:var(--ink-text); font-size:.84rem; margin-bottom:3px; } .rm-how b i { color:var(--primary-berry); }
+  @media (max-width: 991px) { .rm-two { grid-template-columns:minmax(0, 1fr); } .rm-preview { height:520px; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Your own reminders</h2>
+    <p>Remind one candidate, a class, a program or everyone about anything, now or at the time you choose. The automatic reminders (payment, first session, level check) keep working by themselves; these are the ones you decide.</p>
+  </div>
+  <div class="ui-actions"><a class="ui-btn primary" href="#new"><i class="bi bi-plus-lg"></i>New reminder</a></div>
+</div>
+
+<div class="rm-how">
+  <div><b><i class="bi bi-1-circle-fill"></i>Choose who</b>One person, a class, everyone of a program, those who still owe something, or everybody.</div>
+  <div><b><i class="bi bi-2-circle-fill"></i>Write, or start from an idea</b>{first_name} and the other words in braces are replaced for each candidate.</div>
+  <div><b><i class="bi bi-3-circle-fill"></i>Shape it</b>Pick a look, and add coloured squares for what must be seen: a date, a place, a list.</div>
+  <div><b><i class="bi bi-4-circle-fill"></i>Choose when</b>It goes once, at that time, and stays in each candidate's discussion.</div>
+</div>
+
+{% if suggestions %}
+<h3 class="rm-h"><i class="bi bi-lightbulb-fill"></i>Reminders worth sending</h3>
+<p class="rm-p">Proposed from how your classes stand. Nothing is sent until you have read it and chosen a time.</p>
+<div class="rm-sugs">
+  {% for item in suggestions %}
+  <a class="rm-sug" href="{{ item.href }}"><i class="bi {{ item.icon }}"></i><div><b>{{ item.text }}</b><span>{{ item.why }}</span></div></a>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="rm-two" id="new">
+  <section class="rm-box">
+    <h3 class="rm-h"><i class="bi bi-pencil-square"></i>New reminder</h3>
+    {% if not smtp_ready %}<div class="ui-chip warn mb-2" style="white-space:normal;">Sending email is not set up yet: a reminder would be kept in the discussions but not delivered.</div>{% endif %}
+    <form method="post" action="/reminders/create" id="rm-form">
+      <div class="rm-label" style="margin-top:6px;">Who receives it</div>
+      <div class="d-flex gap-2 flex-wrap">
+        <select class="form-select" name="audience" id="rm-audience" style="max-width:240px;" aria-label="Who receives it">
+          {% for key, name in audiences.items() %}<option value="{{ key }}" {{ 'selected' if key == audience }}>{{ name }}</option>{% endfor %}
+        </select>
+        <select class="form-select" name="to_candidate" data-for="candidate" style="flex:1; min-width:200px;" aria-label="Candidate"><option value="">Choose a candidate…</option>{% for person in people %}<option value="{{ person.id }}" {{ 'selected' if person.id == to }}>{{ person.name }}</option>{% endfor %}</select>
+        <select class="form-select" name="to_class" data-for="class" style="flex:1; min-width:200px;" aria-label="Class"><option value="">Choose a class…</option>{% for group in classes %}<option value="{{ group.id }}" {{ 'selected' if group.id == to }}>{{ group.name }}</option>{% endfor %}</select>
+        <select class="form-select" name="to_program" data-for="program" style="flex:1; min-width:200px;" aria-label="Program"><option value="">Choose a program…</option>{% for program in programs %}<option value="{{ program.id }}" {{ 'selected' if program.id == to }}>{{ program.name }}</option>{% endfor %}</select>
+      </div>
+      <div class="ui-link-text mt-1" id="rm-count" style="font-size:.76rem; color:var(--muted);"></div>
+
+      <div class="rm-label">Start from an idea</div>
+      <div class="rm-ideas">{% for idea in ideas %}<button type="button" class="rm-idea {{ 'is-on' if chosen and chosen.key == idea.key }}" data-idea="{{ idea.key }}"><i class="bi {{ idea.icon }}"></i>{{ idea.name }}</button>{% endfor %}</div>
+
+      <div class="rm-label">Subject</div>
+      <input class="form-control" name="subject" id="rm-subject" maxlength="200" required value="{{ chosen.subject if chosen else '' }}" placeholder="Une date à retenir">
+      <div class="rm-label">Title inside the email</div>
+      <input class="form-control" name="title" id="rm-title" maxlength="120" value="{{ chosen.title if chosen else '' }}" placeholder="Leave empty to use the subject">
+      <div class="rm-label">Message</div>
+      <div class="rm-tools mb-2">
+        <button type="button" class="rm-idea" data-insert="[box]\n**Titre**\nVotre texte"><span class="rm-sq" style="background:var(--primary-berry);"></span>Square</button>
+        <button type="button" class="rm-idea" data-insert="[box gold]\n**À retenir**\nVotre texte"><span class="rm-sq" style="background:#d97706;"></span>Gold square</button>
+        <button type="button" class="rm-idea" data-insert="[box green]\n**Bonne nouvelle**\nVotre texte"><span class="rm-sq" style="background:#16a34a;"></span>Green square</button>
+        <button type="button" class="rm-idea" data-insert="[box grey]\nVotre texte"><span class="rm-sq" style="background:#8a84a0;"></span>Grey square</button>
+        <button type="button" class="rm-idea" data-insert="- premier point\n- deuxième point"><i class="bi bi-list-ul"></i>List</button>
+        <button type="button" class="rm-idea" data-wrap="**"><i class="bi bi-type-bold"></i>Bold</button>
+        <button type="button" class="rm-idea" data-insert="{first_name}"><i class="bi bi-person"></i>First name</button>
+      </div>
+      <textarea name="body" id="rm-body" required placeholder="Bonjour {first_name},&#10;&#10;…">{{ chosen.body if chosen else '' }}</textarea>
+      <div style="font-size:.74rem; color:var(--muted);" class="mt-1">Replaced for each candidate: {% for name, label, sample in variables[:7] %}<code>{{ '{' ~ name ~ '}' }}</code>{{ ', ' if not loop.last }}{% endfor %}. A paragraph that starts with <code>[box]</code> becomes a coloured square.</div>
+
+      <div class="rm-label">Look</div>
+      <div class="d-flex gap-3 flex-wrap">{% for key, style in styles.items() %}<label style="font-size:.84rem;" title="{{ style[1] }}"><input type="radio" name="style" value="{{ key }}" {{ 'checked' if (chosen.style if chosen else 'brand') == key }}> {{ style[0] }}</label>{% endfor %}</div>
+
+      <div class="rm-label">When</div>
+      <div class="rm-when">
+        <label style="font-size:.84rem;"><input type="radio" name="when" value="later" checked> On</label>
+        <input class="form-control" type="date" name="date" value="{{ default_date }}" style="max-width:170px;" aria-label="Day">
+        <input class="form-control" type="time" name="time" value="{{ default_time }}" style="max-width:120px;" aria-label="Hour">
+        <label style="font-size:.84rem;"><input type="radio" name="when" value="now"> Now</label>
+      </div>
+      <button class="ui-btn primary mt-3"><i class="bi bi-alarm"></i>Plan this reminder</button>
+    </form>
+  </section>
+
+  <section class="rm-box">
+    <div class="d-flex justify-content-between align-items-center gap-2 flex-wrap mb-2">
+      <h3 class="rm-h mb-0"><i class="bi bi-eye"></i>What they will receive</h3>
+      <span id="rm-problem" class="ui-chip bad" hidden></span>
+    </div>
+    <iframe class="rm-preview" id="rm-preview" title="The reminder as the candidate sees it" sandbox=""></iframe>
+  </section>
+</div>
+
+<div class="rm-two">
+  <section class="rm-box" id="planned">
+    <h3 class="rm-h"><i class="bi bi-alarm"></i>Planned</h3>
+    {% for row in upcoming %}
+    <div class="rm-row">
+      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b><span class="meta">{{ row.when.strftime('%a %d %b, %H:%M') }} · {{ row.reminder.audience_label }} · {{ row.people }} candidate{{ 's' if row.people != 1 }}</span></div>
+      <form method="post" action="/reminders/{{ row.reminder.id }}/send-now" data-confirm="Send this reminder now to {{ row.people }} candidate{{ 's' if row.people != 1 }}?"><button class="ui-btn sm">Send now</button></form>
+      <form method="post" action="/reminders/{{ row.reminder.id }}/cancel" data-confirm="Cancel this reminder? Nothing will be sent."><button class="ui-btn ghost sm icon danger" aria-label="Cancel this reminder"><i class="bi bi-x-lg"></i></button></form>
+    </div>
+    {% else %}
+    <div class="ui-empty" style="border:0;"><i class="bi bi-alarm"></i><strong>Nothing planned</strong>A reminder you plan shows here until it goes.</div>
+    {% endfor %}
+  </section>
+  <section class="rm-box" id="sent">
+    <h3 class="rm-h"><i class="bi bi-check2-all"></i>Gone</h3>
+    {% for row in history %}
+    <div class="rm-row">
+      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b><span class="meta">{{ row.reminder.audience_label }} · {% if row.reminder.status == 'cancelled' %}cancelled, nothing sent{% else %}{{ (row.sent or row.when).strftime('%a %d %b, %H:%M') }} · delivered to {{ row.reminder.sent_count }}{% if row.reminder.failed_count %}, not delivered to {{ row.reminder.failed_count }}{% endif %}{% endif %}</span></div>
+      <span class="ui-chip {{ 'muted' if row.reminder.status == 'cancelled' else 'warn' if row.reminder.failed_count else 'ok' }}">{{ 'Cancelled' if row.reminder.status == 'cancelled' else 'Sent' }}</span>
+    </div>
+    {% else %}
+    <div class="ui-empty" style="border:0;"><i class="bi bi-check2-all"></i><strong>Nothing sent yet</strong>Reminders that went, or that you cancelled, are listed here.</div>
+    {% endfor %}
+  </section>
+</div>
+
+<script>
+(function () {
+  const ideas = {{ ideas | tojson }};
+  const form = document.getElementById("rm-form"), body = document.getElementById("rm-body");
+  const audience = document.getElementById("rm-audience");
+  function showTarget() {
+    form.querySelectorAll("select[data-for]").forEach(function (select) { select.hidden = select.dataset.for !== audience.value; });
+  }
+  let timer = null;
+  function preview() {
+    clearTimeout(timer);
+    timer = setTimeout(function () {
+      const target = form.querySelector('select[data-for="' + audience.value + '"]');
+      fetch("/reminders/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+        subject: form.subject.value, title: form.title.value, body: body.value, style: form.style.value,
+        audience: audience.value, to: target ? target.value : "" }) })
+        .then(function (answer) { return answer.ok ? answer.json() : null; })
+        .then(function (data) {
+          if (!data) return;
+          document.getElementById("rm-preview").srcdoc = data.html;
+          const problem = document.getElementById("rm-problem");
+          problem.hidden = !data.unknown.length;
+          problem.textContent = data.unknown.length ? "Unknown: {" + data.unknown.join("}, {") + "}" : "";
+          document.getElementById("rm-count").textContent = data.people ? data.people + " candidate" + (data.people === 1 ? "" : "s") + " would receive it. The preview shows the first one." : "Choose who receives it: the preview shows a sample person.";
+        }).catch(function () {});
+    }, 350);
+  }
+  form.addEventListener("input", preview);
+  form.addEventListener("change", function () { showTarget(); preview(); });
+  document.querySelectorAll("[data-idea]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const idea = ideas.find(function (item) { return item.key === button.dataset.idea; });
+      if (!idea) return;
+      form.subject.value = idea.subject; form.title.value = idea.title; body.value = idea.body;
+      form.querySelectorAll('input[name="style"]').forEach(function (radio) { radio.checked = radio.value === idea.style; });
+      document.querySelectorAll("[data-idea]").forEach(function (other) { other.classList.toggle("is-on", other === button); });
+      preview();
+    });
+  });
+  document.querySelectorAll("[data-insert]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const text = button.dataset.insert.replace(/\\n/g, "\n"), block = text.indexOf("\n") >= 0 || text.indexOf("[box") === 0;
+      const start = body.selectionStart, before = body.value.slice(0, start), after = body.value.slice(body.selectionEnd);
+      const piece = block ? (before && !before.endsWith("\n\n") ? (before.endsWith("\n") ? "\n" : "\n\n") : "") + text + "\n\n" : text;
+      body.value = before + piece + after;
+      body.focus(); body.selectionStart = body.selectionEnd = (before + piece).length;
+      preview();
+    });
+  });
+  document.querySelectorAll("[data-wrap]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      const mark = button.dataset.wrap, start = body.selectionStart, end = body.selectionEnd, chosen = body.value.slice(start, end) || "texte";
+      body.value = body.value.slice(0, start) + mark + chosen + mark + body.value.slice(end);
+      body.focus(); preview();
+    });
+  });
+  showTarget(); preview();
+})();
+</script>
+{% endblock %}

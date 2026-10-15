@@ -1,0 +1,578 @@
+{% extends "base.html" %}
+{% import "_ui_art.html" as art %}
+{% block title %}Settings · 9antra{% endblock %}
+{% block page_title %}Settings{% endblock %}
+
+{% block content %}
+<style>
+  .st-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; }
+  .st-title { font-weight: 800; font-size: 1.05rem; color: var(--ink-text); }
+  .st-sub { font-size: .82rem; color: var(--muted); }
+  .st-section { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 22px 0 10px; padding-top: 18px; border-top: 1px solid var(--border-color); }
+  .st-section:first-of-type { border-top: 0; padding-top: 0; margin-top: 16px; }
+  .st-card .form-label { font-size: .78rem; font-weight: 700; color: #5b5470; margin-bottom: 4px; }
+  .st-option { border: 1px solid var(--border-color); border-radius: 14px; padding: 14px 16px; margin-bottom: 8px; cursor: pointer; display: block; transition: border-color .15s ease, background .15s ease; }
+  .st-option.is-selected { border-color: var(--primary-berry); background: var(--berry-subtle); }
+  .st-option .opt-title { font-weight: 700; font-size: .9rem; color: var(--ink-text); }
+  .st-option .opt-help { font-size: .8rem; color: #5b5470; margin-top: 2px; }
+  .st-option .opt-fields { display: none; margin-top: 10px; font-size: .84rem; color: #5b5470; }
+  .st-option.is-selected .opt-fields { display: block; }
+  .st-option .opt-fields input[type=number] { width: 84px; display: inline-block; }
+  .st-day { position: relative; }
+  .st-day input { position: absolute; opacity: 0; pointer-events: none; }
+  .st-day span { display: inline-block; padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border-color); font-size: .78rem; font-weight: 700; color: #6b6180; cursor: pointer; }
+  .st-day input:checked + span { background: var(--primary-berry); border-color: var(--primary-berry); color: #fff; }
+  .st-day input:focus-visible + span { outline: 2px solid var(--primary-berry); outline-offset: 2px; }
+  .st-switch { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; }
+  .st-switch .form-check-input { width: 2.4em; height: 1.3em; margin-top: 2px; flex-shrink: 0; }
+  .st-switch .form-check-input:checked { background-color: var(--primary-berry); border-color: var(--primary-berry); }
+  .st-switch-title { font-weight: 700; font-size: .88rem; color: var(--ink-text); }
+  .st-switch-help { font-size: .79rem; color: var(--muted); }
+  .btn-berry { background: var(--primary-berry); color: #fff; font-weight: 700; border: 0; }
+  .btn-berry:hover { background: var(--berry-dark); color: #fff; }
+  .st-state { display: inline-flex; align-items: center; gap: 6px; font-size: .74rem; font-weight: 800; padding: 4px 11px; border-radius: 999px; }
+  .st-state.ok { background: var(--mint-subtle); color: var(--mint); }
+  .st-state.off { background: #fff1f2; color: #be123c; }
+  .st-swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; background: var(--swatch); box-shadow: 0 0 0 1px var(--border-color); cursor: pointer; padding: 0; transition: transform .12s ease; }
+  .st-swatch:hover, .st-swatch:focus-visible { transform: scale(1.12); outline: none; }
+  .st-swatch.is-chosen { box-shadow: 0 0 0 2px var(--swatch); }
+  .st-code { background: var(--canvas); border: 1px solid var(--border-color); border-radius: 12px; padding: 12px 14px; font-family: Consolas, 'Courier New', monospace; font-size: .8rem; color: var(--ink-text); white-space: pre; overflow-x: auto; }
+  /* The map of the settings, in pictures. */
+  .st-map { background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:20px 22px; margin-bottom:22px; }
+  .st-map-head { display:flex; gap:16px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .st-map-pic { width:110px; flex:none; }
+  .st-map-title { font-size:1.15rem; font-weight:800; color:var(--ink-text); margin:0 0 3px; }
+  .st-find { display:flex; align-items:center; gap:8px; border:1.5px solid var(--border-color); border-radius:99px; padding:7px 14px; min-width:min(320px, 100%); background:#fff; }
+  .st-find:focus-within { border-color:var(--primary-berry); }
+  .st-find input { border:0; outline:none; font:inherit; font-size:.86rem; width:100%; background:transparent; }
+  .st-tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(178px, 1fr)); gap:12px; }
+  .st-tile { display:flex; flex-direction:column; gap:3px; padding:12px 14px 14px; border:1px solid var(--border-color); border-radius:18px; text-decoration:none; color:inherit; background:linear-gradient(180deg, #fff, #fbf9fe); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .st-tile:hover, .st-tile:focus-visible { transform:translateY(-3px); box-shadow:0 16px 34px -20px rgba(80,20,70,.45); border-color:var(--primary-berry); outline:none; }
+  .st-tile-pic { width:84px; margin:-4px 0 2px -6px; transition:transform .25s ease; } .st-tile:hover .st-tile-pic { transform:scale(1.06); }
+  .st-tile b { font-size:.9rem; color:var(--ink-text); } .st-tile span:last-child { font-size:.76rem; color:var(--muted); line-height:1.35; }
+  .st-tile[hidden] { display:none; }
+  .st-card { position:relative; scroll-margin-top:90px; container-type:inline-size; }
+  @container (max-width: 520px) { .st-art { display:none; } }
+  .st-art { float:right; width:84px; margin:-8px -6px 4px 12px; }
+  .st-card:target { animation:stGlow 1.8s ease; }
+  @keyframes stGlow { 0% { box-shadow:0 0 0 0 rgba(164,44,103,.5); } 40% { box-shadow:0 0 0 8px rgba(164,44,103,.18); } 100% { box-shadow:0 0 0 0 rgba(164,44,103,0); } }
+  @media (prefers-reduced-motion: no-preference) { .st-tile { animation:rowIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 45ms + .1s); } }
+  @media (max-width: 575px) { .st-art { width:64px; } .st-map-pic { display:none; } }
+</style>
+
+{% include "_flash.html" %}
+
+<section class="st-map" id="map">
+  <div class="st-map-head">
+    <div class="st-map-pic" aria-hidden="true">{{ art.scene("settings") }}</div>
+    <div style="min-width:0; flex:1;"><h2 class="st-map-title">Everything you can set, in pictures</h2>
+      <p class="st-sub mb-0">Choose a picture to go straight to it. Each part says in one sentence what it changes.</p></div>
+    <div class="st-find"><i class="bi bi-search"></i><input type="search" id="st-find" placeholder="Find a setting: colour, password, language…" aria-label="Find a setting"></div>
+  </div>
+  <div class="st-tiles">
+    <a class="st-tile" href="#classes" data-words="classes how new classes are made, filled and started" style="--i:0;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("classes") }}</span><b>Classes</b><span>How new classes are made, filled and started</span></a>
+    <a class="st-tile" href="#email" data-words="email the address emails come from, and its password" style="--i:1;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("inbox") }}</span><b>Email</b><span>The address emails come from, and its password</span></a>
+    <a class="st-tile" href="#assistant" data-words="email assistant what it answers by itself, what it leaves to you" style="--i:2;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("assistant") }}</span><b>Email assistant</b><span>What it answers by itself, what it leaves to you</span></a>
+    <a class="st-tile" href="#appearance" data-words="look colours, menu side, day or night" style="--i:3;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("look") }}</span><b>Look</b><span>Colours, menu side, day or night</span></a>
+    <a class="st-tile" href="#language" data-words="language english, french or arabic, and the translations" style="--i:4;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("language") }}</span><b>Language</b><span>English, French or Arabic, and the translations</span></a>
+    <a class="st-tile" href="/settings/team" data-words="team and access who signs in, and what each one sees" style="--i:5;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("team") }}</span><b>Team and access</b><span>Who signs in, and what each one sees</span></a>
+    <a class="st-tile" href="#identity" data-words="name and icon what the application is called" style="--i:6;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("identity") }}</span><b>Name and icon</b><span>What the application is called</span></a>
+    <a class="st-tile" href="#address" data-words="address for candidates the link candidates open from their emails" style="--i:7;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("link") }}</span><b>Address for candidates</b><span>The link candidates open from their emails</span></a>
+    <a class="st-tile" href="#whatsapp" data-words="whatsapp reminders sent on whatsapp" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span><b>WhatsApp</b><span>Reminders sent on WhatsApp</span></a>
+    <a class="st-tile" href="#google" data-words="weekly answers google form and firebase" style="--i:9;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("quiz") }}</span><b>Weekly answers</b><span>Google Form and Firebase</span></a>
+    <a class="st-tile" href="/data" data-words="all the data change any value, add or remove a record" style="--i:10;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("data") }}</span><b>All the data</b><span>Change any value, add or remove a record</span></a>
+    <a class="st-tile" href="/system#safety" data-words="your data is safe daily copies, and where they go" style="--i:11;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("safety") }}</span><b>Your data is safe</b><span>Daily copies, and where they go</span></a>
+  </div>
+  <div class="st-sub mt-2" id="st-none" hidden>No setting has that word. Try another, or use the search at the top of the page.</div>
+</section>
+
+
+<div class="row g-4">
+  <!-- ============ Class parameters ============ -->
+  <div class="col-xl-8">
+    <section class="st-card" id="classes">
+      <div class="st-art st-art-classes" aria-hidden="true">{{ art.scene("classes") }}</div>
+      <div class="st-title">Class parameters</div>
+      <div class="st-sub">Defaults for every class created from now on. Each class can still be adjusted on its own page.</div>
+
+      <form method="post" action="/settings/classes" id="class-settings-form">
+
+        <div class="st-section">When a candidate pays</div>
+        <label class="st-switch form-check form-switch ps-0 mb-0">
+          <input class="form-check-input ms-0" type="checkbox" role="switch" name="auto_create_class_on_payment" {% if settings.auto_create_class_on_payment %}checked{% endif %}>
+          <span>
+            <span class="st-switch-title d-block">Create a class automatically when none is open</span>
+            <span class="st-switch-help">The candidate always joins a class of their program that has not started yet. With this on, a new class is created when there is none. With it off, they wait in “Pending decisions”.</span>
+          </span>
+        </label>
+        <label class="st-switch form-check form-switch ps-0 mb-0">
+          <input class="form-check-input ms-0" type="checkbox" role="switch" name="auto_assign_professor" {% if settings.auto_assign_professor %}checked{% endif %}>
+          <span>
+            <span class="st-switch-title d-block">Assign an available professor to new classes</span>
+            <span class="st-switch-help">Picks a professor whose specialty matches the program and who is free on the class schedule. If nobody is available the class is still created, without a professor.</span>
+          </span>
+        </label>
+
+        <div class="st-section">When a new class starts</div>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="radio" name="class_start_mode" value="{{ modes.after_days }}" {% if settings.class_start_mode != modes.min_enrollment %}checked{% endif %}>
+          <span class="opt-title">A number of days after it is created</span>
+          <div class="opt-help">The start date is known at once, so the candidate receives it in the payment email.</div>
+          <div class="opt-fields">
+            Start <input name="default_class_start_days" type="number" min="0" max="365" value="{{ settings.default_class_start_days }}" class="form-control form-control-sm" aria-label="Days after creation" required> days after the class is created, on the first session day.
+          </div>
+        </label>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="radio" name="class_start_mode" value="{{ modes.min_enrollment }}" {% if settings.class_start_mode == modes.min_enrollment %}checked{% endif %}>
+          <span class="opt-title">When the class has enough candidates</span>
+          <div class="opt-help">The class waits without a date. Once the minimum is reached the date is set and everyone enrolled is emailed.</div>
+          <div class="opt-fields">
+            Start once at least <input name="min_students_to_start" type="number" min="1" value="{{ settings.min_students_to_start }}" class="form-control form-control-sm" aria-label="Minimum candidates" required> candidates are enrolled,
+            <input name="min_start_notice_days" type="number" min="0" max="60" value="{{ settings.min_start_notice_days }}" class="form-control form-control-sm" aria-label="Notice days" required> days later, on the first session day.
+            <div class="form-text">The notice leaves time for reminders: with 3 days, the 3-day and 1-day reminders are sent; a 7-day reminder would be skipped.</div>
+          </div>
+        </label>
+
+        <div class="st-section">Size and schedule of a new class</div>
+        <div class="row g-3">
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="st-capacity">Capacity</label>
+            <input name="default_class_capacity" id="st-capacity" type="number" min="1" value="{{ settings.default_class_capacity }}" class="form-control" required>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="st-weeks">Duration (weeks)</label>
+            <input name="default_program_weeks" id="st-weeks" type="number" min="1" max="104" value="{{ settings.default_program_weeks }}" class="form-control" required>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="st-start">Session starts</label>
+            <input name="default_session_start_time" id="st-start" type="time" value="{{ settings.default_session_start_time or '' }}" class="form-control" required>
+          </div>
+          <div class="col-6 col-md-3">
+            <label class="form-label" for="st-end">Session ends</label>
+            <input name="default_session_end_time" id="st-end" type="time" value="{{ settings.default_session_end_time or '' }}" class="form-control">
+          </div>
+          <div class="col-12">
+            <div class="form-label">Session days</div>
+            <div class="d-flex flex-wrap gap-2">
+              {% for key, label in day_options %}
+              <label class="st-day"><input type="checkbox" name="days" value="{{ key }}" {% if key in selected_days %}checked{% endif %}><span>{{ label }}</span></label>
+              {% endfor %}
+            </div>
+            <div class="form-text">Used when the program has no schedule of its own. A program schedule such as “Saturday from 9:00 until 13:00” takes priority, and the duration comes from the program curriculum when it has one.</div>
+          </div>
+        </div>
+
+        <div class="st-section">Reminders before the first session</div>
+        <label class="st-switch form-check form-switch ps-0 mb-2">
+          <input class="form-check-input ms-0" type="checkbox" role="switch" name="enable_automated_reminders" {% if settings.enable_automated_reminders %}checked{% endif %}>
+          <span>
+            <span class="st-switch-title d-block">Send reminders automatically</span>
+            <span class="st-switch-help">Each reminder tells the candidate the exact date and time of the session they must attend.</span>
+          </span>
+        </label>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="st-reminders">Days before the first session</label>
+            <input name="training_reminder_days" id="st-reminders" value="{{ reminder_days | replace(',', ', ') }}" class="form-control" placeholder="7, 3, 1">
+            <div class="form-text">Separate the days with commas.</div>
+          </div>
+        </div>
+
+        <div class="st-section">Apply</div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" name="apply_to_open_classes" id="st-apply">
+          <label class="form-check-label small" for="st-apply">
+            Also apply the start rule and reminder days to the {{ open_classes }} class(es) that have not started yet.
+            <span class="text-muted d-block">Classes with a fixed start date keep it. Candidates are emailed if their date changes.</span>
+          </label>
+        </div>
+        <button class="btn btn-berry px-4">Save class parameters</button>
+      </form>
+    </section>
+  </div>
+
+  <!-- ============ Email ============ -->
+  <div class="col-xl-4">
+    <section class="st-card" id="email">
+      <div class="st-art st-art-email" aria-hidden="true">{{ art.scene("inbox") }}</div>
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="st-title">Email delivery</div>
+        {% if smtp_ready %}
+        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Ready</span>
+        {% else %}
+        <span class="st-state off"><i class="bi bi-x-circle-fill"></i>Not configured</span>
+        {% endif %}
+      </div>
+      {% if smtp_ready %}
+      <div class="st-sub mb-3">Emails are sent from <strong>{{ smtp_sender }}</strong>.</div>
+      {% else %}
+      <div class="st-sub mb-3">
+        Candidates are <strong>not receiving</strong> payment emails or session reminders. Every message is still recorded on the
+        candidate’s profile, and reminders that come due are sent as soon as email works.
+      </div>
+      <div class="st-sub mb-2">Add these two lines to the <code>.env</code> file at the project root, then restart the server:</div>
+      <div class="st-code mb-2">SMTP_EMAIL=your.address@gmail.com
+SMTP_PASSWORD=your-app-password</div>
+      <div class="st-sub mb-3">For Gmail, use an app password (Google Account → Security → 2-Step Verification → App passwords), not the account password.</div>
+      {% endif %}
+
+      <div class="st-section" style="margin-top:0;">The address emails are sent from</div>
+      <form method="post" action="/settings/email-account" class="mb-2" id="email-account-form" autocomplete="off">
+        <div class="d-flex gap-2 flex-wrap">
+          <input name="smtp_email" type="email" class="form-control form-control-sm" value="{{ smtp_sender }}" placeholder="contact@9antra.tn" aria-label="Address emails are sent from" style="flex:1; min-width:210px;" required>
+          <input name="smtp_password" type="password" class="form-control form-control-sm" placeholder="{{ 'App password: leave empty to keep it' if smtp_ready else 'App password (16 letters)' }}" aria-label="App password" style="flex:1; min-width:210px;" autocomplete="new-password">
+          <button class="btn btn-sm btn-outline-secondary text-nowrap">Check and save</button>
+        </div>
+        <div class="st-sub mt-1">The mail server is asked whether it accepts them before anything changes. The password is kept on this computer only and never shown again.</div>
+      </form>
+      <details class="mb-3" {{ 'open' if not smtp_ready }}>
+        <summary class="st-sub" style="cursor:pointer;"><strong>Where to get the app password (Gmail)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          {% for title, text, link in gmail_steps %}
+          <li><strong>{{ title }}.</strong> {{ text }}{% if link %} <a href="{{ link }}" target="_blank" rel="noopener noreferrer">Open</a>{% endif %}</li>
+          {% endfor %}
+        </ol>
+        <div class="st-sub mt-2">With another mail provider, use the address and the password it gives for mail programs (SMTP), and set <code>SMTP_HOST</code> in the <code>.env</code> file.</div>
+      </details>
+      <div class="st-section">Try it</div>
+      <form method="post" action="/settings/test-email" class="d-flex gap-2">
+        <input name="recipient" type="email" class="form-control form-control-sm" placeholder="you@example.com" aria-label="Send a test email to" required>
+        <button class="btn btn-sm btn-outline-secondary text-nowrap">Send test</button>
+      </form>
+
+      <div class="st-section">Reading candidates' emails</div>
+      <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+        <div class="st-switch-title">Mailbox</div>
+        {% if mailbox_ready and not mailbox_state.last_error %}
+        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>
+        {% elif mailbox_ready %}
+        <span class="st-state off"><i class="bi bi-exclamation-triangle-fill"></i>Error</span>
+        {% else %}
+        <span class="st-state off"><i class="bi bi-x-circle-fill"></i>Not connected</span>
+        {% endif %}
+      </div>
+      {% if mailbox_ready %}
+      <div class="st-sub">
+        Reading <strong>{{ mailbox.email }}</strong> ({{ mailbox.folder }}) every minute, read-only: nothing is marked as read, moved or deleted.
+        {% if mailbox_state.last_error %}<span class="d-block mt-1" style="color:#be123c;">{{ mailbox_state.last_error }}</span>{% endif %}
+        Only emails from your candidates' addresses are tracked, and only those arriving after the mailbox was connected.
+      </div>
+      {% else %}
+      <div class="st-sub">
+        The same two lines above also connect the mailbox: the system then reads the emails candidates send to that address.
+        For Gmail, IMAP must be enabled (Gmail → Settings → Forwarding and POP/IMAP).
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="st-card mt-4" id="identity">
+      <div class="st-art st-art-identity" aria-hidden="true">{{ art.scene("identity") }}</div>
+      <div class="st-title">Name and icon</div>
+      <div class="st-sub mb-3">The icon is the picture of your Facebook page (facebook.com/9antra.tn). It is looked at again every day, so a new picture there becomes the icon here.</div>
+      <form method="post" action="/settings/identity" enctype="multipart/form-data" class="d-flex gap-3 align-items-start flex-wrap">
+        {% if app_brand.logo %}<img src="{{ app_brand.icon_big }}" alt="The application's icon" style="width:76px; height:76px; border-radius:50%; border:1px solid var(--border-color); flex:none;">{% endif %}
+        <div style="flex:1 1 280px;">
+          <label class="form-label fw-bold small mb-1" for="app-name">Name of the application</label>
+          <input class="form-control" id="app-name" name="name" value="{{ app_brand.name }}" maxlength="40" list="name-ideas" style="border-radius:11px;">
+          <datalist id="name-ideas">{% for idea, why in name_ideas %}<option value="{{ idea }}">{{ why }}</option>{% endfor %}</datalist>
+          <div class="st-sub mt-2">Ideas:
+            {% for idea, why in name_ideas %}<button type="button" class="btn btn-sm btn-light border rounded-pill me-1 mb-1" data-name-idea="{{ idea }}" title="{{ why }}">{{ idea }}</button>{% endfor %}
+          </div>
+          <label class="form-label fw-bold small mb-1 mt-2" for="app-picture">Use a picture of your own instead (optional)</label>
+          <input class="form-control form-control-sm" id="app-picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" style="border-radius:11px;">
+          <div class="d-flex gap-2 flex-wrap mt-3">
+            <button class="btn btn-primary btn-sm rounded-pill px-3" style="background:var(--primary-berry); border-color:var(--primary-berry);">Save</button>
+            <button class="btn btn-light border btn-sm rounded-pill px-3" formaction="/settings/identity/facebook" formnovalidate><i class="bi bi-facebook me-1"></i>Take the icon from Facebook now</button>
+          </div>
+          <div class="st-sub mt-2">{{ 'You are using a picture of your own: it is kept until you take the Facebook one again.' if app_brand.source == 'upload' else 'Currently: the picture of the Facebook page.' if app_brand.source else 'No icon yet.' }}</div>
+        </div>
+      </form>
+    </section>
+
+    <section class="st-card mt-4" id="whatsapp">
+      <div class="st-art st-art-whatsapp" aria-hidden="true">{{ art.scene("whatsapp") }}</div>
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="st-title">WhatsApp</div>
+        {% if whatsapp_ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Sends by itself</span>
+        {% else %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>One click per message</span>{% endif %}
+      </div>
+      <div class="st-sub mb-2">Phone numbers get <strong>+216</strong> in front by themselves, unless the candidate wrote another country code (+33…, 0033…).</div>
+      {% if whatsapp_ready %}
+      <div class="st-sub">A WhatsApp Business number is connected: every reminder that is emailed (payment, first session, weekly questions, quiz) is also sent on WhatsApp{{ ', with the approved message “' ~ whatsapp_template ~ '”' if whatsapp_template else '. Without an approved message, WhatsApp only delivers to people who wrote to you in the last 24 hours' }}.</div>
+      {% else %}
+      <div class="st-sub mb-2"><strong>Today:</strong> every reminder page has a WhatsApp button. It opens WhatsApp on the candidate's number with the message already written; you press send. Nothing to set up.</div>
+      <div class="st-sub mb-2"><strong>To have reminders go out on WhatsApp by themselves</strong>, WhatsApp requires a business number (Meta → WhatsApp Business Platform). Add these lines to the <code>.env</code> file, then restart:</div>
+      <div class="st-code mb-2">WHATSAPP_TOKEN=the permanent token of your WhatsApp Business app
+WHATSAPP_PHONE_ID=the identifier of your business phone number
+WHATSAPP_TEMPLATE=the name of a message WhatsApp approved (one variable: the text)</div>
+      <div class="st-sub">This is WhatsApp's own rule: a business may only write first with a message it approved beforehand.</div>
+      {% endif %}
+    </section>
+
+    <section class="st-card mt-4" id="google">
+      <div class="st-art st-art-google" aria-hidden="true">{{ art.scene("quiz") }}</div>
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="st-title">Weekly answers: Google Form → Firebase → here</div>
+        {% if forms.ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>
+        {% else %}<span class="st-state off"><i class="bi bi-hourglass-split"></i>Two clicks missing</span>{% endif %}
+      </div>
+      <div class="st-sub mb-3">Each week's questions can be a Google Form: the answers go to your Firebase database (<code>weekly_answers</code>), then arrive here by themselves, the same road as registrations. Until it is connected, candidates answer on this application's own private page and nothing is lost.</div>
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-3" style="font-size:.8rem; font-weight:700;">
+        <span class="st-state {{ 'ok' if forms.google.forms == 'on' else 'off' }}"><i class="bi bi-ui-checks"></i>Google Forms {{ 'on' if forms.google.forms == 'on' else 'off' if forms.google.forms == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state {{ 'ok' if forms.google.drive == 'on' else 'off' }}"><i class="bi bi-share"></i>Sharing (Google Drive) {{ 'on' if forms.google.drive == 'on' else 'off' if forms.google.drive == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state {{ 'ok' if forms.firebase else 'off' }}"><i class="bi bi-fire"></i>Firebase {{ 'connected' if forms.firebase else 'not connected' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state ok"><i class="bi bi-house-check"></i>Here</span>
+      </div>
+      {% if not forms.ready %}
+      <div class="st-sub mb-2">Your Firebase project <strong>{{ forms.google.project or 'is not found (app/firebase_key.json is missing)' }}</strong> has to allow two Google services. Sign in to Google as the owner of the project, open each link, press <strong>Enable</strong>:</div>
+      <ol class="st-sub mb-3">
+        <li><a href="{{ forms.google.forms_link }}" target="_blank" rel="noopener">Switch on Google Forms for the project</a></li>
+        <li><a href="{{ forms.google.drive_link }}" target="_blank" rel="noopener">Switch on Google Drive for the project</a> (it is what lets anyone with the link answer the form)</li>
+      </ol>
+      {% endif %}
+      <form method="post" action="/settings/google/test" id="google-test">
+        <button class="btn btn-light border btn-sm rounded-pill px-3"><i class="bi bi-plug me-1"></i>Test the connection</button>
+        <span class="st-sub ms-2">Creates a small form, opens it, reads it, removes it. Takes about ten seconds.</span>
+      </form>
+      {% if forms_trial %}
+      <div class="mt-3">
+        {% for step in forms_trial %}
+        <div class="st-sub mb-1"><i class="bi {{ 'bi-check-circle-fill text-success' if step.ok else 'bi-x-circle-fill text-danger' }} me-1"></i><strong>{{ step.label }}</strong>{% if step.detail %}: {{ step.detail }}{% endif %}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+
+    <section class="st-card mt-4" id="appearance">
+      <div class="st-art st-art-appearance" aria-hidden="true">{{ art.scene("look") }}</div>
+      <div class="st-title">Colour of the design</div>
+      <div class="st-sub mb-3">Choose the main colour, where the menu sits, and whether the background moves. Buttons, the side menu and the sign-in page all follow the colour.</div>
+      <form method="post" action="/settings/appearance" id="appearance-form">
+        <div class="d-flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Colour">
+          {% for name, value in colour_presets %}
+          <button type="button" class="st-swatch {{ 'is-chosen' if value == ui_colour }}" data-colour="{{ value }}" style="--swatch:{{ value }};" title="{{ name }}" aria-label="{{ name }}"></button>
+          {% endfor %}
+        </div>
+        <div class="d-flex flex-wrap gap-4 mb-3" style="font-size:.86rem;">
+          <div><div class="st-sub mb-1"><strong>Menu</strong></div>
+            <label class="me-3"><input type="radio" name="ui_menu_side" value="left" {{ 'checked' if ui_menu_side != 'right' }}> On the left</label>
+            <label><input type="radio" name="ui_menu_side" value="right" {{ 'checked' if ui_menu_side == 'right' }}> On the right</label></div>
+          <div><div class="st-sub mb-1"><strong>Day or night</strong></div>
+            <label class="me-3"><input type="radio" name="ui_mode" value="soft" {{ 'checked' if ui_mode == 'soft' }}> Day, soft</label>
+            <label class="me-3"><input type="radio" name="ui_mode" value="colours" {{ 'checked' if ui_mode == 'colours' }}> Day, with colours</label>
+            <label class="me-3"><input type="radio" name="ui_mode" value="night" {{ 'checked' if ui_mode == 'night' }}> Night, black</label>
+            <label><input type="radio" name="ui_mode" value="night-blue" {{ 'checked' if ui_mode == 'night-blue' }}> Night, blue</label></div>
+          <div><div class="st-sub mb-1"><strong>Background</strong></div>
+            <label class="me-3"><input type="radio" name="ui_background" value="animated" {{ 'checked' if ui_background != 'plain' }}> Moving, softly</label>
+            <label><input type="radio" name="ui_background" value="plain" {{ 'checked' if ui_background == 'plain' }}> Still</label></div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <input type="color" class="form-control form-control-color" id="appearance-colour" name="ui_color" value="{{ ui_colour }}" title="Any other colour" aria-label="Any other colour">
+          <span class="st-sub" id="appearance-value">{{ ui_colour }}</span>
+          <button class="btn btn-sm btn-outline-secondary text-nowrap ms-auto">Save the colour</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="st-card mt-4" id="language">
+      <div class="st-art st-art-language" aria-hidden="true">{{ art.scene("language") }}</div>
+      <div class="st-title">Language of the pages</div>
+      <div class="st-sub mb-2">Each person chooses English, French or Arabic with the <i class="bi bi-translate"></i> button at the top of every page; the choice is remembered on their browser. The most common words were translated by hand. The assistant translates the rest a little at a time, starting with what you actually open, and every translation is kept.</div>
+      {% for code, state in languages_progress.items() %}
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="font-size:.84rem;">
+        <strong style="min-width:76px;" data-no-i18n>{{ state.name }}</strong>
+        <div class="progress flex-grow-1" style="height:8px;" role="progressbar" aria-label="{{ state.name }}" aria-valuenow="{{ state.done }}" aria-valuemin="0" aria-valuemax="{{ state.total }}"><div class="progress-bar" style="width:{{ (state.done / state.total * 100) | round(1) if state.total else 0 }}%; background:var(--primary-berry);"></div></div>
+        <span class="st-sub" style="flex-basis:100%;">{{ state.done }} of {{ state.total }} texts{{ '' if state.used else ' · starts when someone chooses it' }}</span>
+      </div>
+      {% endfor %}
+      <a class="btn btn-sm btn-outline-secondary mt-2" href="/settings/translations">Read and correct the translations</a>
+    </section>
+
+    <section class="st-card mt-4" id="access">
+      <div class="st-art st-art-access" aria-hidden="true">{{ art.scene("team") }}</div>
+      <div class="st-title">Who can sign in</div>
+      <div class="st-sub mb-3">
+        You are signed in as <strong>{{ current_user.name }}</strong>{% if current_user.email %} ({{ current_user.email }}){% endif %}.
+        Professors get their own access from the Professors page: each one then sees only their classes.
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/account" class="btn btn-sm btn-outline-secondary">Change my password</a>
+        <a href="/settings/team" class="btn btn-sm btn-primary fw-semibold" style="background:var(--primary-berry); border-color:var(--primary-berry);">Team and access: who sees what</a>
+        <a href="/classes/?tab=professors" class="btn btn-sm btn-light fw-semibold">Professors' access</a>
+        <a href="/data" class="btn btn-sm btn-light fw-semibold">All the data: change any value</a>
+      </div>
+    </section>
+
+    <section class="st-card mt-4" id="address">
+      <div class="st-art st-art-address" aria-hidden="true">{{ art.scene("link") }}</div>
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div class="st-title">Address for candidates</div>
+        {% if public_url_local %}
+        <span class="st-state off"><i class="bi bi-exclamation-triangle-fill"></i>This computer only</span>
+        {% else %}
+        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Set</span>
+        {% endif %}
+      </div>
+      <div class="st-sub mb-3">
+        Emails with a link (weekly questions, quizzes) send candidates to this address.
+        {% if public_url_local %}
+        Right now links start with <strong>{{ public_url }}</strong>, which only opens on this computer:
+        candidates cannot answer their questions until the application has an address they can reach.
+        {% else %}
+        Links start with <strong>{{ public_url }}</strong>.
+        {% endif %}
+      </div>
+      <form method="post" action="/settings/address" class="d-flex gap-2">
+        <input name="public_base_url" type="text" class="form-control form-control-sm" value="{{ settings.public_base_url or '' }}"
+               placeholder="https://app.9antra.tn" aria-label="Address candidates use to reach the application">
+        <button class="btn btn-sm btn-outline-secondary text-nowrap">Save</button>
+      </form>
+    </section>
+
+    <section class="st-card mt-4">
+      <div class="st-title mb-1">What the candidate receives</div>
+      <ul class="st-sub ps-3 mb-0">
+        <li class="mb-1"><strong>On payment:</strong> program, class, professor, exact start date and time, weekly schedule, duration and curriculum.</li>
+        <li class="mb-1"><strong>Before the first session:</strong> a reminder on each of the days set here ({{ reminder_days | replace(',', ', ') }}).</li>
+        <li class="mb-1"><strong>On any change:</strong> a new class, a new date or a new schedule.</li>
+        <li class="mb-1"><strong>When they write:</strong> an answer from the assistant, or from you.</li>
+      </ul>
+      <a href="/inbox/compose" class="btn btn-sm btn-light fw-semibold mt-3">Write a personalized email</a>
+    </section>
+  </div>
+
+  <!-- ============ Email assistant ============ -->
+  <div class="col-xl-8">
+    <section class="st-card" id="assistant">
+      <div class="st-art st-art-assistant" aria-hidden="true">{{ art.scene("assistant") }}</div>
+      <div class="d-flex justify-content-between align-items-start gap-2">
+        <div>
+          <div class="st-title">Email assistant</div>
+          <div class="st-sub">How the system answers candidates who write, and how every email looks.</div>
+        </div>
+        {% if model_ready %}
+        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>AI model ready</span>
+        {% else %}
+        <span class="st-state off" title="Start Ollama and make sure the {{ assistant_model }} model is installed"><i class="bi bi-x-circle-fill"></i>AI model not reachable</span>
+        {% endif %}
+      </div>
+
+      <form method="post" action="/settings/assistant" id="assistant-settings-form">
+        <div class="st-section">When a candidate writes</div>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="radio" name="email_auto_reply_mode" value="auto" {% if assistant_mode == "auto" %}checked{% endif %}>
+          <span class="opt-title">Answer alone when it is confident, ask me otherwise</span>
+          <div class="opt-help">The system answers from your programs, classes, the candidate's record and the answers you taught it. When it does not know, it asks you and keeps your answer for next time.</div>
+          <div class="opt-fields">
+            Answer alone from
+            <input name="email_confidence_threshold" type="number" min="50" max="95" step="5" value="{{ assistant_threshold }}" class="form-control form-control-sm" aria-label="Confidence needed, in percent" required>
+            % confidence.
+            <div class="form-text">Higher means fewer automatic answers and more questions for you. Cancellations, refunds and complaints always come to you, whatever the confidence.</div>
+          </div>
+        </label>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="radio" name="email_auto_reply_mode" value="review" {% if assistant_mode == "review" %}checked{% endif %}>
+          <span class="opt-title">Always ask me before sending</span>
+          <div class="opt-help">The system writes a draft for every question; nothing leaves until you approve it.</div>
+        </label>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="radio" name="email_auto_reply_mode" value="off" {% if assistant_mode == "off" %}checked{% endif %}>
+          <span class="opt-title">Off</span>
+          <div class="opt-help">Emails are only stored in the inbox. You write every answer yourself.</div>
+        </label>
+
+        <div class="st-section">The answers you taught</div>
+        <label class="st-option">
+          <input class="form-check-input me-2" type="checkbox" name="email_rewrite_taught" value="true" {% if assistant_rewrites %}checked{% endif %}>
+          <span class="opt-title">Write my answer again for each candidate</span>
+          <div class="opt-help">You teach an answer in a few words; the system writes it as a full, friendly email, in the candidate's language and in other words each time. It keeps its text only when every figure, name and link of yours is there and nothing was added; otherwise, and always when your answer holds an amount of money, your own words go out between a friendly first and last sentence. Untick to always send your own words.</div>
+        </label>
+
+        <div class="st-section">Design of every email</div>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label" for="st-signature">Signature</label>
+            <textarea name="email_signature" id="st-signature" rows="3" class="form-control" maxlength="400" placeholder="{{ default_signature }}">{{ settings.email_signature or '' }}</textarea>
+            <div class="form-text">The last line is shown in bold. Leave empty for the default.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="st-footer">Contact line under the email</label>
+            <textarea name="email_footer_note" id="st-footer" rows="3" class="form-control" maxlength="400" placeholder="9antra · Tunis · +216 … · contact@…">{{ settings.email_footer_note or '' }}</textarea>
+            <div class="form-text">Address, phone or website. Optional.</div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label" for="st-accent">Accent colour</label>
+            <div class="d-flex align-items-center gap-2">
+              <input name="email_accent_color" id="st-accent" type="color" class="form-control form-control-color" value="{{ brand.accent }}" title="Accent colour of the emails">
+              <span class="st-sub">Used for the title band, links and buttons.</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-berry px-4 mt-4">Save email assistant settings</button>
+        <a href="/inbox/compose" class="btn btn-light fw-semibold mt-4 ms-1">Preview the design</a>
+      </form>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  ['class-settings-form', 'assistant-settings-form'].forEach(id => {
+    const form = document.getElementById(id);
+    if (!form) return;
+    function markSelected() {
+      form.querySelectorAll('.st-option').forEach(option => {
+        option.classList.toggle('is-selected', option.querySelector('input[type="radio"]').checked);
+      });
+    }
+    form.addEventListener('change', markSelected);
+    markSelected();
+  });
+
+  // Colour of the design: a swatch fills the colour field; the page shows it at once.
+  const colour = document.getElementById('appearance-colour');
+  const value = document.getElementById('appearance-value');
+  const swatches = document.querySelectorAll('#appearance-form .st-swatch');
+  if (colour) {
+    const show = () => {
+      value.textContent = colour.value;
+      swatches.forEach(swatch => swatch.classList.toggle('is-chosen', swatch.dataset.colour === colour.value));
+    };
+    swatches.forEach(swatch => swatch.addEventListener('click', () => { colour.value = swatch.dataset.colour; show(); }));
+    colour.addEventListener('input', show);
+  }
+})();
+</script>
+<script>
+  document.querySelectorAll("[data-name-idea]").forEach(button => button.addEventListener("click", () => {
+    document.getElementById("app-name").value = button.dataset.nameIdea;
+  }));
+  document.getElementById("google-test")?.addEventListener("submit", event => {
+    const button = event.target.querySelector("button");
+    button.disabled = true;
+    button.textContent = "Testing with Google…";
+  });
+</script>
+
+<script>
+/* Find a setting: only the pictures that match stay; Enter opens the first one. */
+(function () {
+  var box = document.getElementById("st-find"); if (!box) return;
+  var tiles = Array.prototype.slice.call(document.querySelectorAll(".st-tile")), none = document.getElementById("st-none");
+  box.addEventListener("input", function () {
+    var words = box.value.toLowerCase().trim().split(/\s+/).filter(Boolean), shown = 0;
+    tiles.forEach(function (tile) {
+      var fits = words.every(function (word) { return tile.getAttribute("data-words").indexOf(word) >= 0; });
+      tile.hidden = !fits; if (fits) shown++;
+    });
+    none.hidden = shown > 0;
+  });
+  box.addEventListener("keydown", function (event) {
+    if (event.key !== "Enter") return;
+    var first = tiles.filter(function (tile) { return !tile.hidden; })[0];
+    if (first) { event.preventDefault(); window.location.href = first.getAttribute("href"); }
+  });
+})();
+</script>
+{% endblock %}
