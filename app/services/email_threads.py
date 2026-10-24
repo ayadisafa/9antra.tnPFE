@@ -311,6 +311,25 @@ def deliver(
     always see what was sent, what failed, and why. `files` are attached;
     `inline` are the photos the HTML shows (see `email_files.cid_src`).
     """
+    if thread is not None and getattr(thread, "channel", None) == "whatsapp":
+        # A WhatsApp discussion: the answer goes back on WhatsApp; a document it carries goes by email.
+        from app.services import whatsapp_inbox
+
+        message = whatsapp_inbox.send(db, candidate, text, kind=kind, author=author, thread=thread, registration=registration,
+                                      confidence=confidence, sources=sources, note=note, language=language, dry_run=dry_run)
+        if message is not None and files and not dry_run:
+            whatsapp_inbox.deliver_files_by_email(db, candidate, files, language)
+        return message
+    if thread is not None and getattr(thread, "channel", None) == "sms":
+        # An SMS discussion: the answer goes back by SMS (from the Android phone, or the admin's phone); a document by email.
+        from app.services import whatsapp_inbox
+
+        message = whatsapp_inbox.send_sms(db, candidate, text, kind=kind, author=author, thread=thread, registration=registration,
+                                          dry_run=dry_run, note=note)
+        if message is not None and files and not dry_run:
+            whatsapp_inbox.deliver_files_by_email(db, candidate, files, language)
+        return message
+
     if not candidate or not candidate.email:
         logger.warning("No email address for candidate %s.", getattr(candidate, "id", None))
         return None

@@ -253,7 +253,7 @@ es.assign_pending_paid_registrations(db); es.assign_pending_paid_registrations(d
 db.expire_all()
 check("they are not asked again every minute", not any("après DevOps" in s for s in subjects()) and db.query(Notification).filter(Notification.registration_id == second.id, Notification.category == "ASSIGNMENT_PENDING").count() == 1)
 answer = admin.post(f"/classes/registration/{second.id}/decision", data={"decision": "auto"})
-check("“place automatically” explains why it waits", "already follow another class on the same hours" in where(answer), where(answer))
+check("“place automatically” explains why it waits", "one program at a time" in where(answer), where(answer))
 fix = nf.fix_for(db, note[0])
 check("the notification offers to start them now anyway", fix and fix["label"] == "Start them now anyway" and fix["fields"] == {"decision": "create_new"} and fix["confirm"])
 group = db.get(ClassGroup, group.id)
@@ -270,7 +270,7 @@ other = Registration(candidate_id=five.id, program_id=python.id, program_name=py
                      payment_status=PaymentStatus.PAID, status=RegistrationStatus.PENDING, registration_date=datetime.utcnow())
 db.add(other); db.commit()
 placed = es.enroll_paid_registration(db, other)
-check("a second program on other hours starts at once", placed.class_group is not None and placed.class_group.id == evening.id, placed.reason)
+check("a second program waits too, even on other hours (one program at a time)", placed.class_group is None and placed.reason == "busy", placed.reason)
 
 # ======================================================================
 # E. Notifications that carry their remedy

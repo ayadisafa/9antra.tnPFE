@@ -31,6 +31,12 @@ ollama==0.6.3
 sentence-transformers==5.7.0
 RapidFuzz==3.14.5
 
+# Reading payment proofs (photos and PDFs of receipts) on this computer
+rapidocr-onnxruntime==1.4.4
+onnxruntime==1.27.0
+opencv-python==5.0.0.93
+pypdfium2==5.12.1
+
 # Outside services: website, job boards, icons, Firebase, Google Forms
 requests==2.33.1
 httpx==0.28.1

@@ -129,7 +129,7 @@
 {# The top of a page: what it is for, in a picture and three steps.
    guide = {"key", "art", "title", "text", "steps": [(icon, title, text)]} #}
 {% macro intro(guide) -%}
-<section class="guide" id="pageGuide" data-guide="{{ guide.key }}" aria-label="How this page works">
+<section class="guide" id="pageGuide" data-guide="{{ guide.key }}" aria-label="How this page works" hidden>
   <div class="guide-art">{{ scene(guide.art) }}</div>
   <div class="guide-body">
     <div class="guide-kicker"><i class="bi bi-signpost-2"></i>How this page works</div>
@@ -148,10 +148,10 @@
   <button type="button" class="guide-close" data-guide-hide title="Hide this explanation. The “?” at the top of the page brings it back." aria-label="Hide this explanation"><i class="bi bi-x-lg"></i></button>
 </section>
 <script>
-  // Hidden before it is painted when the admin closed it on this browser.
+  // Out of the way unless asked for: the "?" at the top opens it (Yasmine explains the page too). Kept open when opened.
   (() => {
     const guide = document.getElementById("pageGuide");
-    try { if (localStorage.getItem("guide:" + guide.dataset.guide) === "hidden") guide.hidden = true; } catch (error) {}
+    try { if (localStorage.getItem("guide:" + guide.dataset.guide) === "shown") guide.hidden = false; } catch (error) {}
   })();
 </script>
 {%- endmacro %}

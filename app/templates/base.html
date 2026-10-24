@@ -474,6 +474,13 @@
                         <span class="nav-count {% if not inbox_pending %}d-none{% endif %}" id="nav-inbox-count" title="Questions waiting for your answer">{{ inbox_pending or 0 }}</span>
                     </a>
                 </li>
+                <li class="nav-item tone-violet">
+                    <a href="/inbox/team" class="nav-link {% if request.url.path.startswith('/inbox/team') %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-person-workspace"></i></span>
+                        <span>Team chat</span>
+                        <span class="nav-count {% if not team_unread %}d-none{% endif %}" id="nav-team-count" title="Messages from professors and the team">{{ team_unread or 0 }}</span>
+                    </a>
+                </li>
                 <li class="nav-item tone-mint">
                     <a href="/payments" class="nav-link {% if active_page == 'payments' %}active{% endif %}">
                         <span class="nav-ico"><i class="bi bi-cash-coin"></i></span>
@@ -530,6 +537,13 @@
                     </a>
                 </li>
                 {% endfor %}
+                <li class="nav-item tone-rose">
+                    <a href="/account/messages" class="nav-link {% if active_page == 'messages' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-chat-heart-fill"></i></span>
+                        <span>Messages</span>
+                        <span class="nav-count {% if not member_unread %}d-none{% endif %}" data-member-count title="New messages from the centre">{{ member_unread or 0 }}</span>
+                    </a>
+                </li>
                 <li class="nav-section-label">Account</li>
                 <li class="nav-item tone-slate">
                     <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
@@ -550,6 +564,13 @@
                     <a href="/teacher/profile" class="nav-link {% if active_page == 'teacher-profile' %}active{% endif %}">
                         <span class="nav-ico"><i class="bi bi-person-badge-fill"></i></span>
                         <span>My profile</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-rose">
+                    <a href="/account/messages" class="nav-link {% if active_page == 'messages' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-chat-heart-fill"></i></span>
+                        <span>Messages</span>
+                        <span class="nav-count {% if not member_unread %}d-none{% endif %}" data-member-count title="New messages from the centre">{{ member_unread or 0 }}</span>
                     </a>
                 </li>
                 <li class="nav-section-label">Account</li>
@@ -595,6 +616,26 @@
             {% endif %}
 
             <div class="user-profile d-flex align-items-center gap-2 ms-auto">
+                {% if page_pdf %}
+                {# This page as a PDF, designed to be read, printed or sent; and the reports that go with it. #}
+                <div class="dropdown">
+                    <button type="button" class="topbar-pdf" data-bs-toggle="dropdown" aria-expanded="false" title="This page as a PDF" aria-label="This page as a PDF">
+                        <i class="bi bi-file-earmark-pdf-fill"></i><span class="d-none d-md-inline">PDF</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end border-0 shadow rounded-4 p-2 pdf-menu">
+                        <li class="pdf-menu-head">This page</li>
+                        <li><a class="dropdown-item rounded-3" href="{{ page_pdf }}" target="_blank" rel="noopener"><i class="bi bi-eye"></i>See it as a PDF</a></li>
+                        <li><a class="dropdown-item rounded-3" href="{{ page_pdf }}?download=1"><i class="bi bi-download"></i>Download the PDF</a></li>
+                        {% if page_pdf_more %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="pdf-menu-head">More reports</li>
+                        {% for item in page_pdf_more %}
+                        <li><a class="dropdown-item rounded-3" href="{{ item.url }}" target="_blank" rel="noopener"><i class="bi {{ item.icon }}"></i>{{ item.label }}</a></li>
+                        {% endfor %}
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
                 {% if page_guide %}
                 <button type="button" class="topbar-help" data-guide-show title="How this page works" aria-label="How this page works"><i class="bi bi-question-lg"></i></button>
                 {% endif %}
@@ -780,6 +821,19 @@
             </div>
         </header>
 
+        {% if current_user and current_user.viewing_as %}
+        <div class="view-as" role="status">
+          <span class="emo emo-tilt">&#128064;</span>
+          <div><b>You are seeing the application as {{ current_user.name }}</b> ({{ {'professor': 'professor', 'staff': 'team member'}.get(current_user.role, current_user.role) }}): exactly their menu and their pages. Nothing can be changed here.</div>
+          <a class="ui-btn sm" href="/account/view-as/stop?next=/settings/team%23person-{{ current_user.id }}"><i class="bi bi-sliders"></i>Change what they can do</a>
+          <a class="ui-btn primary sm" href="/account/view-as/stop?next=/settings/team"><i class="bi bi-box-arrow-left"></i>Back to my view</a>
+        </div>
+        <style>
+          .view-as { display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:linear-gradient(90deg, #fef3c7, #fff7ed); border:1px solid #fcd34d; border-radius:16px;
+                     padding:10px 14px; margin-bottom:14px; font-size:.84rem; color:#78350f; position:sticky; top:8px; z-index:20; box-shadow:0 10px 24px -18px rgba(120,53,15,.6); }
+          .view-as .emo { font-size:1.4rem; } .view-as div { flex:1 1 280px; } .view-as b { color:#451a03; }
+        </style>
+        {% endif %}
         {% if page_guide %}{{ art.intro(page_guide) }}{% endif %}
         {% block content %}{% endblock %}
     </main>
@@ -792,10 +846,11 @@
     <a class="tab {{ 'active' if active_page == 'dashboard' or request.url.path == '/' }}" href="/"><i class="bi bi-compass-fill"></i><span>Home</span></a>
     <a class="tab {{ 'active' if active_page == 'candidates' }}" href="/candidate/all"><i class="bi bi-people-fill"></i><span>Candidates</span></a>
     <a class="tab {{ 'active' if active_page == 'classes' }}" href="/classes/"><i class="bi bi-easel2-fill"></i><span>Classes</span></a>
-    <a class="tab {{ 'active' if active_page == 'inbox' }}" href="/inbox"><i class="bi bi-envelope-paper-fill"></i><span>Inbox</span><b class="tab-count {{ 'd-none' if not inbox_pending }}" id="tab-inbox-count">{{ inbox_pending or 0 }}</b></a>
+    <a class="tab {{ 'active' if active_page == 'inbox' }}" href="/inbox"><i class="bi bi-envelope-paper-fill"></i><span>Inbox</span><b class="tab-count {{ 'd-none' if not inbox_pending }}" id="tab-inbox-count">{{ inbox_pending or 0 }}</b>{% if team_unread %}<b class="tab-dot" title="Messages from the team"></b>{% endif %}</a>
     {% else %}
     <a class="tab {{ 'active' if active_page == 'teacher' }}" href="/teacher"><i class="bi bi-collection-play-fill"></i><span>My classes</span></a>
     <a class="tab {{ 'active' if active_page == 'teacher-profile' }}" href="/teacher/profile"><i class="bi bi-person-badge-fill"></i><span>My profile</span></a>
+    <a class="tab {{ 'active' if active_page == 'messages' }}" href="/account/messages"><i class="bi bi-chat-heart-fill"></i><span>Messages</span><b class="tab-count {{ 'd-none' if not member_unread }}" data-member-count>{{ member_unread or 0 }}</b></a>
     {% endif %}
     <button type="button" class="tab" id="tabMore" aria-expanded="false"><i class="bi bi-grid-fill"></i><span>More</span></button>
 </nav>
@@ -920,6 +975,18 @@
     const here = window.location.pathname + window.location.search;
     document.cookie = "nantra_last=" + encodeURIComponent({{ current_user.id | tojson }} + "|" + here) + "; path=/; max-age=2592000; samesite=lax";
   } catch (error) {}
+  {% if not is_admin %}
+  // A professor or a team member: the count of new messages from the centre stays current, on a computer and a phone.
+  setInterval(async () => {
+    if (document.hidden) return;
+    try {
+      const response = await fetch("/account/messages/count");
+      if (!response.ok) return;
+      const count = (await response.json()).count || 0;
+      document.querySelectorAll("[data-member-count]").forEach(badge => { badge.textContent = count; badge.classList.toggle("d-none", count === 0); });
+    } catch (error) {}
+  }, 45000);
+  {% endif %}
   {% endif %}
 </script>
 
@@ -928,6 +995,8 @@
   .assistant-panel { position:fixed; right:24px; bottom:88px; z-index:1079; width:min(390px,calc(100vw - 32px)); height:540px; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--border-color); border-radius:22px; background:#fff; box-shadow:0 20px 60px -20px rgba(40,20,60,.4); }
   .assistant-panel.open { display:flex; animation:assistantIn .2s ease both; }
   .assistant-head { display:flex; align-items:center; gap:10px; padding:14px 16px; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); }
+  .assistant-lang { border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.14); color:#fff; border-radius:999px; font-size:.72rem; font-weight:700; padding:3px 8px; max-width:96px; cursor:pointer; }
+  .assistant-lang option { color:#241a38; }
   .assistant-avatar { display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.2); font-size:1.1rem; }
   .assistant-messages { flex:1; overflow-y:auto; padding:14px; background:#fcfafd; }
   .assistant-msg { max-width:88%; margin-bottom:10px; padding:9px 12px; border-radius:14px; white-space:pre-wrap; font-size:.82rem; line-height:1.45; }
@@ -944,17 +1013,27 @@
   .assistant-working { display:flex; align-items:center; gap:8px; color:#75677f; font-size:.75rem; }
   .assistant-working i { animation:assistantPulse 1s ease-in-out infinite; }
   @keyframes assistantIn { from { opacity:0; transform:translateY(8px) scale(.98); } to { opacity:1; transform:none; } }
+  .assistant-auto { display:inline-flex; gap:5px; align-items:center; font-size:.7rem; font-weight:700; color:#fff; opacity:.9; margin-right:6px; white-space:nowrap; cursor:pointer; }
+  .assistant-auto input { accent-color:#fff; }
+  .assistant-sources { margin-top:8px; padding-top:6px; border-top:1px dashed rgba(0,0,0,.12); font-size:.72rem; color:#6b6480; line-height:1.5; }
+  .assistant-sources a { color:var(--primary-berry); font-weight:700; text-decoration:none; } .assistant-sources a:hover { text-decoration:underline; }
   @keyframes assistantPulse { 50% { transform:translateY(-3px); opacity:.45; } }
 </style>
-{% if is_admin %}
+{% if is_admin or can_use_assistant %}
 <button class="assistant-launcher" id="assistant-launcher" type="button" aria-label="Open assistant"><i class="bi bi-chat-dots-fill fs-5"></i></button>
 <section class="assistant-panel" id="assistant-panel" aria-label="9antra assistant">
   <header class="assistant-head">
     <div class="assistant-avatar"><i class="bi bi-robot"></i></div>
-    <div class="flex-grow-1"><strong>9antra Assistant</strong><div class="small opacity-75">Ask anything about the system</div></div>
+    <div class="flex-grow-1"><strong>9antra Assistant</strong><div class="small opacity-75">Ask anything, or ask it to send a message</div></div>
+    <select class="assistant-lang" id="assistant-lang" data-no-i18n aria-label="Language of the answers" title="The language they guide you in. Automatic: the language of your question.">
+      <option value="">Auto</option><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option><option value="tn">Tounsi</option>
+    </select>
+    <label class="assistant-auto" title="On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.">
+      <input type="checkbox" id="assistant-auto" {{ 'checked' if assistant_auto_send }}> Send at once</label>
     <button class="btn btn-sm text-white" id="assistant-close" type="button" aria-label="Close assistant"><i class="bi bi-x-lg"></i></button>
   </header>
-  <div class="assistant-messages" id="assistant-messages"><div class="assistant-msg bot">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, or what 9antra.tn says. I answer from what is in the application right now, in English or in French.</div></div>
+  <div class="assistant-messages" id="assistant-messages"><div class="assistant-msg bot">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, or what 9antra.tn says. I answer from what is in the application right now, in English or in French, and I show my sources and resources.
+<span>You can also ask me to send:</span> <span data-no-i18n>“envoie un email à Fares pour lui dire que la séance de samedi est annulée”, “send a WhatsApp to Nour saying …”, “sms au 98 123 456 : …”</span>. <span>I reword it (add</span> <span data-no-i18n>“tel quel”</span> <span>to keep your words) and tell you, for each person, what went and why not.</span></div></div>
   <form class="assistant-compose" id="assistant-form">
     <div class="input-group">
       <textarea class="form-control" id="assistant-input" placeholder="Who has not paid? Which classes cannot start?"></textarea>
@@ -998,7 +1077,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (unreadCount > 0) {
         showFacebookToast(
             "Unread Notifications", 
-            `You have <strong>${unreadCount} unread notification(s)</strong> awaiting your review.`
+            `<strong>${unreadCount}</strong> <span>${unreadCount === 1 ? "unread notification waits for you." : "unread notifications wait for you."}</span>`
         );
     }
 
@@ -1294,8 +1373,8 @@ document.addEventListener("submit", event => {
     if (message && !window.confirm(message)) event.preventDefault();
 });
 
-{% if is_admin %}
-// ---------- Live updates (server-sent events) ----------
+{% if current_user and current_user.id %}
+// ---------- Live updates (server-sent events): every page of everyone who is signed in redraws what changed ----------
 // The server pushes two events over /events/stream:
 //   notification -> shown at once in the bell, the badge and a toast
 //   change       -> topics whose data changed; if this page shows one of them,
@@ -1369,6 +1448,7 @@ document.addEventListener("submit", event => {
     document.addEventListener("hidden.bs.modal", () => { if (refreshQueued) scheduleRefresh(); });
 
     function onNotification(event) {
+        if (typeof prependNotificationToList !== "function") return;     // the bell is the admin's
         const data = JSON.parse(event.data);
         if (document.getElementById(`dropdown-notif-${data.id}`)) return;
         prependNotificationToList(data);
@@ -1376,6 +1456,7 @@ document.addEventListener("submit", event => {
         const href = notificationHref(data);
         const link = href !== "#" ? ` <a href="${escapeNotifText(href)}" class="fw-semibold text-decoration-none">Open</a>` : "";
         showFacebookToast(data.title || "Notification", escapeNotifText(data.message || "") + link);
+        document.dispatchEvent(new CustomEvent("friend:news", { detail: { title: data.title || "", message: data.message || "", href: href } }));
     }
 
     function showInboxCount(count) {
@@ -1440,7 +1521,20 @@ document.addEventListener("submit", event => {
             if (messagesButton && messagesButton.getAttribute("aria-expanded") === "true") loadRecentMessages();
             else refreshInboxCount();
         }
+        if (topics.includes("team")) refreshTeamCount();
         if (topics.some(topic => pageTopics.has(topic))) scheduleRefresh();
+    }
+
+    async function refreshTeamCount() {
+        const badge = document.getElementById("nav-team-count");
+        if (!badge) return;
+        try {
+            const response = await fetch("/inbox/team/count");
+            if (!response.ok) return;
+            const count = (await response.json()).count || 0;
+            badge.textContent = count;
+            badge.classList.toggle("d-none", count === 0);
+        } catch (error) {}
     }
 
     // One stream per visible page. A page the browser keeps in memory after
@@ -1471,21 +1565,75 @@ document.addEventListener("submit", event => {
     });
     openStream();
 })();
-
+{% endif %}
+</script>
+<script>
+{% if is_admin or can_use_assistant %}
 (() => {
     const launcher = document.getElementById("assistant-launcher");
     const panel = document.getElementById("assistant-panel");
+    // The language the assistant and Yasmine guide in: chosen in either window, kept on this browser.
+    const languageChoice = document.getElementById("assistant-lang");
+    function guideLanguage() { try { return localStorage.getItem("guide-lang") || ""; } catch (error) { return ""; } }
+    window.guideLanguage = guideLanguage;
+    if (languageChoice) {
+        languageChoice.value = guideLanguage();
+        languageChoice.addEventListener("change", function () {
+            try { localStorage.setItem("guide-lang", languageChoice.value); } catch (error) {}
+            document.dispatchEvent(new CustomEvent("guide:language", { detail: languageChoice.value }));
+        });
+        document.addEventListener("guide:language", function (event) { if (languageChoice.value !== event.detail) languageChoice.value = event.detail; });
+    }
     const close = document.getElementById("assistant-close");
     const form = document.getElementById("assistant-form");
     const input = document.getElementById("assistant-input");
     const messages = document.getElementById("assistant-messages");
     if (!launcher || !panel || !form || !input || !messages) return;
+    // "Send at once": remembered for everyone who asks the assistant to send (it can be switched back at any time).
+    const auto = document.getElementById("assistant-auto");
+    if (auto) auto.addEventListener("change", () => {
+        const body = new FormData(); body.append("on", auto.checked ? "1" : "0");
+        fetch("/assistant/auto-send", { method: "POST", body }).then(response => { if (!response.ok) auto.checked = !auto.checked; }).catch(() => {});
+    });
 
     const history = [];
-    const addMessage = (text, role, links) => {
+    const addMessage = (text, role, links, sources, resources, schema) => {
         const item = document.createElement("div");
         item.className = `assistant-msg ${role}`;
-        item.textContent = text;
+        item.textContent = schema && window.drawSchema ? "" : text;
+        // A how-to, or what is still missing: drawn as a diagram.
+        if (schema && window.drawSchema) item.appendChild(window.drawSchema(schema));
+        // What you typed, and the assistant's answer in the language you asked in: never swapped word by word.
+        item.setAttribute("data-no-i18n", "");
+        // What to read, watch or download about it: programs, videos, 9antra.tn pages, PDFs.
+        if (resources && resources.length) {
+            const found = document.createElement("div");
+            found.className = "assistant-sources";
+            found.append(document.createTextNode("Resources: "));
+            resources.forEach((resource, index) => {
+                const one = document.createElement("a");
+                one.textContent = ({video: "▶ ", pdf: "📄 ", program: "📘 ", page: "🔗 "}[resource.kind] || "") + resource.label;
+                one.href = resource.url;
+                if (/^https?:/.test(resource.url)) { one.target = "_blank"; one.rel = "noopener noreferrer"; }
+                found.appendChild(one);
+                if (index < resources.length - 1) found.append(document.createTextNode(" · "));
+            });
+            item.appendChild(found);
+        }
+        // Where the answer comes from, always: the records, a program, 9antra.tn, a guide, an answer you taught.
+        if (sources && sources.length) {
+            const said = document.createElement("div");
+            said.className = "assistant-sources";
+            said.append(document.createTextNode("Sources: "));
+            sources.forEach((source, index) => {
+                const one = document.createElement(source.url ? "a" : "span");
+                one.textContent = source.label;
+                if (source.url) { one.href = source.url; if (/^https?:/.test(source.url)) { one.target = "_blank"; one.rel = "noopener noreferrer"; } }
+                said.appendChild(one);
+                if (index < sources.length - 1) said.append(document.createTextNode(" · "));
+            });
+            item.appendChild(said);
+        }
         // Where the answer leads: the pages to open, as buttons under it.
         if (links && links.length) {
             const row = document.createElement("div");
@@ -1535,12 +1683,12 @@ document.addEventListener("submit", event => {
             const response = await fetch("/assistant/chat", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text, history })
+                body: JSON.stringify({ message: text, history, lang: guideLanguage() || null })
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || "Assistant request failed");
             working.remove();
-            addMessage(data.reply, "bot", data.links);
+            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema);
             if (data.suggestions && data.suggestions.length) showSuggestions(data.suggestions);
         } catch (error) {
             working.remove();
@@ -1552,7 +1700,48 @@ document.addEventListener("submit", event => {
 {% endif %}
 </script>
 
+
+<script>
+/* Motion that helps reading: numbers count up once when a page opens, and the blocks further down
+   rise as they come into view. Nothing is hidden when this cannot run, or when the computer asks for less motion. */
+(function () {
+  if (!window.matchMedia || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  var counted = document.querySelectorAll(".ui-stat-num, .db-tile-num > span, .cd-stat-value, .db-part b");
+  Array.prototype.forEach.call(counted, function (element) {
+    var node = element.firstChild;
+    if (!node || node.nodeType !== 3) return;
+    var match = /^\s*(\d{1,6})(\s*)$/.exec(node.nodeValue) || /^\s*(\d{1,6})(\s.*)$/.exec(node.nodeValue);
+    if (!match) return;
+    var target = parseInt(match[1], 10), rest = match[2] || "";
+    if (target < 2) return;
+    var start = null;
+    function step(time) {
+      if (start === null) start = time;
+      var share = Math.min(1, (time - start) / 750);
+      node.nodeValue = Math.round(target * (1 - Math.pow(1 - share, 3))) + rest;
+      if (share < 1) requestAnimationFrame(step);
+    }
+    node.nodeValue = "0" + rest;
+    requestAnimationFrame(step);
+  });
+  if (!("IntersectionObserver" in window)) return;
+  var main = document.querySelector("main.main");
+  if (!main) return;
+  var blocks = main.querySelectorAll(":scope > section, :scope > details, :scope > .row > [class*='col'] > section, .db-card, .cd-card, .st-card, .ui-card");
+  var below = Array.prototype.filter.call(blocks, function (block) { return block.getBoundingClientRect().top > window.innerHeight * 0.95; });
+  if (!below.length) return;
+  var watcher = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) { entry.target.classList.add("is-in"); watcher.unobserve(entry.target); }
+    });
+  }, { rootMargin: "0px 0px -6% 0px" });
+  below.forEach(function (block) { block.classList.add("reveal"); watcher.observe(block); });
+  // Never leave a block hidden: whatever was not reached after a while shows anyway.
+  setTimeout(function () { below.forEach(function (block) { block.classList.add("is-in"); }); }, 6000);
+})();
+</script>
 {% block extra_scripts %}{% endblock %}
+{% if current_user and current_user.id %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
 
 {% if ui_lang != 'en' %}
 <script>
@@ -1561,35 +1750,73 @@ document.addEventListener("submit", event => {
 (function () {
   var lang = "{{ ui_lang }}", version = "{{ i18n_version }}", store = "i18n:" + lang;
   var SKIP = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, IFRAME: 1, NOSCRIPT: 1 };
-  var dict = null, reported = {}, timer = null;
+  var dict = null, reported = {}, timer = null, waiting = new Set(), mine = new WeakMap(), TIME = {};
+  ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun", "January", "February", "March", "April", "June", "July", "August", "September", "October", "November", "December", "Jan", "Feb", "Mar", "Apr", "Jun",
+   "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", "day", "days", "week", "weeks", "month", "months", "year", "years", "hour", "hours", "minute", "minutes", "min", "today", "Today", "tomorrow", "Tomorrow", "yesterday", "Yesterday"].forEach(function (word) { TIME[word] = 1; });
   function prepare(data) {
     var pending = {};
     (data.p || []).forEach(function (text) { pending[text] = 1; });
-    var parts = Object.keys(data.t).concat(data.p || []).filter(function (text) { return text.length >= 10 && text.indexOf(" ") > 0; });
+    var parts = Object.keys(data.t).concat(data.p || []).filter(function (text) { return text.length >= 6 && text.indexOf(" ") > 0; });
     parts.sort(function (a, b) { return b.length - a.length; });
     return { t: data.t, p: pending, parts: parts };
   }
-  function letter(char) { return !!char && /[A-Za-z\u00C0-\u00FF0-9]/.test(char); }
+  function letter(char) { return !!char && /[A-Za-z\u00C0-\u00FF]/.test(char); }      // a number may touch a phrase: “56% is already…”
+  var EDGE = /^[\s\d·:,;()\[\]–\-|%\/.#+×]*$/;
+  var JOIN = { fr: { of: "sur", at: "à", ago: "il y a", "in": "dans" }, ar: { of: "من", at: "على الساعة", ago: "منذ", "in": "بعد" } }[lang];
   function swap(value, seen) {
     var core = value.replace(/\s+/g, " ").trim();
     if (core.length < 2 || !/[A-Za-z]{2}/.test(core)) return null;
     var bare = core.replace(/^[\s·:,;()\[\]–\-|]+|[\s·:,;()\[\]–\-|]+$/g, "");
     if (Object.prototype.hasOwnProperty.call(dict.t, bare)) return core.replace(bare, dict.t[bare]);
     if (dict.p[bare] && !reported[bare]) { reported[bare] = 1; seen.push(bare); }
-    if (core.length < 10) return null;
+    // A known phrase with numbers around it: “3 to name”, “of 3”, “7 days”, “41 % received”.
+    var inner = bare.replace(/^[\d\s+×·%/.,:#()-]+|[\d\s+×·%/.,:#()-]+$/g, "");
+    if (inner !== bare && inner.length >= 2 && Object.prototype.hasOwnProperty.call(dict.t, inner)) return core.replace(inner, dict.t[inner]);
     var out = core, changed = 0;
-    for (var index = 0; index < dict.parts.length && changed < 4; index++) {
+    for (var index = 0; core.length >= 6 && index < dict.parts.length && changed < 4; index++) {
       var part = dict.parts[index];
       if (part.length > out.length) continue;
       var at = out.indexOf(part);
       if (at < 0 || letter(out.charAt(at - 1)) || letter(out.charAt(at + part.length))) continue;
+      // A short phrase only next to a value (“Write to fares”, “390 DT left”), never inside somebody's sentence.
+      if (part.length < 10 && !EDGE.test(out.slice(0, at)) && !EDGE.test(out.slice(at + part.length))) continue;
       if (Object.prototype.hasOwnProperty.call(dict.t, part)) { out = out.slice(0, at) + dict.t[part] + out.slice(at + part.length); changed++; }
       else if (!reported[part]) { reported[part] = 1; seen.push(part); }
     }
+    // Dates and durations: “Wednesday 21 October”, “Sat 17 Oct”, “3 weeks”: their words, next to numbers only.
+    if (/\d/.test(out)) {
+      out = out.replace(/[A-Za-z]{2,}/g, function (word) {
+        if (!TIME[word] || !Object.prototype.hasOwnProperty.call(dict.t, word)) return word;
+        changed++;
+        return dict.t[word];
+      });
+      // What is counted, right after its number: “4 candidates”, “8 programs”.
+      out = out.replace(/(\d\s+)([a-z]{3,})\b/g, function (all, number, word) {
+        if (!Object.prototype.hasOwnProperty.call(dict.t, word)) return all;
+        changed++;
+        return number + dict.t[word];
+      });
+      // Little words around numbers, in the language's own order: “3 of 8”, “at 09:00”, “9 days ago”, “in 2 days”.
+      if (JOIN) {
+        out = out.replace(/(\d)\s+of\s+(\d)/g, function (all, a, b) { changed++; return a + " " + JOIN.of + " " + b; });
+        out = out.replace(/\bat\s+(\d{1,2}:\d{2})/g, function (all, hour) { changed++; return JOIN.at + " " + hour; });
+        out = out.replace(/(\d+\s+[^\s\d.,;:!?]+)\s+ago\b/g, function (all, span) { changed++; return JOIN.ago + " " + span; });
+        out = out.replace(/\bin\s+(\d+\s+(?:jours?|semaines?|heures?|minutes?|mois|days?|weeks?|hours?|months?|أيام|يوم|أسابيع|أسبوع|ساعات|ساعة|دقائق|أشهر))/g,
+                          function (all, span) { changed++; return JOIN["in"] + " " + span; });
+      }
+    }
     return changed ? out : null;
+  }
+  function title(seen) {
+    var pieces = document.title.split(" · ").map(function (piece) {
+      var bare = piece.trim();
+      return Object.prototype.hasOwnProperty.call(dict.t, bare) ? dict.t[bare] : (swap(piece, seen) || piece);
+    });
+    if (pieces.join(" · ") !== document.title) document.title = pieces.join(" · ");
   }
   function walk(root, seen) {
     if (!root || (root.nodeType !== 1 && root.nodeType !== 9)) return;
+    if (root === document || root === document.body) title(seen);
     var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, { acceptNode: function (node) {
       var parent = node.parentNode;
       if (!parent || SKIP[parent.nodeName] || (parent.closest && parent.closest("[data-no-i18n], [contenteditable], .it-bg"))) return NodeFilter.FILTER_REJECT;
@@ -1599,7 +1826,7 @@ document.addEventListener("submit", event => {
     while ((node = walker.nextNode())) nodes.push(node);
     nodes.forEach(function (item) {
       var value = item.nodeValue, result = swap(value, seen);
-      if (result !== null) item.nodeValue = value.match(/^\s*/)[0] + result + value.match(/\s*$/)[0];
+      if (result !== null) { item.nodeValue = value.match(/^\s*/)[0] + result + value.match(/\s*$/)[0]; mine.set(item, item.nodeValue); }
     });
     var marked = root.querySelectorAll ? root.querySelectorAll("[placeholder], [title], [aria-label]") : [];
     for (var index = 0; index < marked.length; index++) {
@@ -1623,13 +1850,43 @@ document.addEventListener("submit", event => {
     walk(document.body, seen);
     document.documentElement.classList.add("is-translated");
     report(seen);
+    // What the page changes afterwards (live refresh, Yasmine, a script writing "Reconnecting…") is translated too:
+    // new elements, and text written into an element that was already there. What this script wrote itself is left alone.
     new MutationObserver(function (changes) {
-      var added = [];
-      changes.forEach(function (change) { change.addedNodes.forEach(function (node) { if (node.nodeType === 1) added.push(node); }); });
-      if (!added.length) return;
+      changes.forEach(function (change) {
+        if (change.type === "characterData") {
+          if (mine.get(change.target) !== change.target.nodeValue && change.target.parentNode) waiting.add(change.target.parentNode);
+          return;
+        }
+        change.addedNodes.forEach(function (node) {
+          if (node.nodeType === 1) waiting.add(node);
+          else if (node.nodeType === 3 && node.parentNode) waiting.add(node.parentNode);
+        });
+      });
+      if (!waiting.size) return;
       clearTimeout(timer);
-      timer = setTimeout(function () { var more = []; added.forEach(function (node) { if (node.isConnected) walk(node, more); }); report(more); }, 120);
-    }).observe(document.body, { childList: true, subtree: true });
+      timer = setTimeout(function () {
+        var more = [], batch = Array.from(waiting);
+        waiting.clear();
+        batch.forEach(function (node) { if (node.isConnected) walk(node, more); });
+        report(more);
+      }, 120);
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    // A translation saved (by hand, or a correction on the translations page): open pages take it at once.
+    document.addEventListener("live:change", function (event) {
+      var topics = (event.detail && event.detail.topics) || [];
+      if (topics.indexOf("i18n") < 0) return;
+      fetch("/i18n/" + lang + ".json?fresh=" + Date.now(), { credentials: "same-origin" })
+        .then(function (answer) { return answer.json(); })
+        .then(function (fresh) {
+          try { localStorage.removeItem(store); } catch (error) {}
+          dict = prepare(fresh);
+          var more = [];
+          walk(document.body, more);
+          report(more);
+        })
+        .catch(function () {});
+    });
   }
   function load() {
     try {

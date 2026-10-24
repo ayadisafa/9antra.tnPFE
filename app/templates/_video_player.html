@@ -1,0 +1,60 @@
+{# The video player of the whole application: any link with data-video="<player address>" opens here, inside the page
+   (see services/videos.py for the addresses). Drive, YouTube and Vimeo play in their own player; a video file plays here. #}
+<style id="video-player-look">
+  .vp { position:fixed; inset:0; z-index:1090; background:rgba(20,10,30,.78); display:grid; place-items:center; padding:16px; }
+  .vp[hidden] { display:none; }
+  .vp-box { width:min(1000px, 100%); background:#0f0b16; border-radius:20px; overflow:hidden; box-shadow:0 30px 80px -20px rgba(0,0,0,.7); }
+  .vp-head { display:flex; gap:10px; align-items:center; padding:10px 14px; color:#fff; }
+  .vp-head b { font-size:.9rem; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .vp-head a, .vp-head button { color:#e9e3f3; background:rgba(255,255,255,.1); border:0; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:700; text-decoration:none; }
+  .vp-head a:hover, .vp-head button:hover { background:rgba(255,255,255,.2); color:#fff; }
+  .vp-screen { position:relative; aspect-ratio:16 / 9; background:#000; }
+  .vp-screen iframe, .vp-screen video { position:absolute; inset:0; width:100%; height:100%; border:0; }
+  .vp-help { color:#bdb3cf; font-size:.74rem; padding:8px 14px 12px; }
+  a[data-video] { cursor:pointer; }
+  @media print { .vp { display:none !important; } }
+</style>
+<div class="vp" id="videoPlayer" hidden role="dialog" aria-modal="true" aria-labelledby="vp-title">
+  <div class="vp-box">
+    <div class="vp-head">
+      <i class="bi bi-play-circle-fill"></i><b id="vp-title">Video</b>
+      <a id="vp-out" href="#" target="_blank" rel="noopener" title="Open it on its own site"><i class="bi bi-box-arrow-up-right"></i> Open outside</a>
+      <button type="button" id="vp-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    </div>
+    <div class="vp-screen" id="vp-screen"></div>
+    <div class="vp-help">If the video stays black, it is not shared publicly on Google Drive: “Open outside”, or ask for it to be shared with “anyone with the link”.</div>
+  </div>
+</div>
+<script>
+(() => {
+  const box = document.getElementById("videoPlayer"), screen = document.getElementById("vp-screen");
+  if (!box) return;
+  let back = null;
+  const close = () => { screen.innerHTML = ""; box.hidden = true; document.body.style.overflow = ""; if (back) back.focus(); };
+  const open = link => {
+    const address = link.dataset.video, file = link.dataset.videoKind === "file";
+    if (!address) return;
+    back = link;
+    document.getElementById("vp-title").textContent = link.dataset.videoTitle || link.getAttribute("title") || link.textContent.trim() || "Video";
+    document.getElementById("vp-out").href = link.getAttribute("href") && link.getAttribute("href") !== "#" ? link.getAttribute("href") : address;
+    screen.innerHTML = "";
+    const player = document.createElement(file ? "video" : "iframe");
+    if (file) { player.controls = true; player.autoplay = true; player.playsInline = true; }
+    else { player.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen"; player.allowFullscreen = true; player.referrerPolicy = "strict-origin-when-cross-origin"; }
+    player.src = address;
+    screen.appendChild(player);
+    box.hidden = false;
+    document.body.style.overflow = "hidden";
+    document.getElementById("vp-close").focus();
+  };
+  document.addEventListener("click", event => {
+    const link = event.target.closest("a[data-video], button[data-video]");
+    if (!link || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    event.preventDefault();
+    open(link);
+  });
+  document.getElementById("vp-close").addEventListener("click", close);
+  box.addEventListener("click", event => { if (event.target === box) close(); });
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && !box.hidden) close(); });
+})();
+</script>

@@ -3,7 +3,7 @@
 
 {% block title %}{{ program.name }} · Programs{% endblock %}
 {% block page_title %}Program{% endblock %}
-{% block live_topics %}programs{% endblock %}
+{% block live_topics %}programs,reviews,classes,market{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -226,7 +226,7 @@
   <!-- ============ The journey ============ -->
   <div>
     <h2 class="pd-h"><i class="bi bi-map-fill"></i>The journey, week by week</h2>
-    <p class="pd-sub">What a candidate learns, in the order it is taught.{% if story.videos %} A play button opens the video the website gives for that week.{% endif %}</p>
+    <p class="pd-sub">What a candidate learns, in the order it is taught.{% if story.videos %} A play button plays the week's video here. <a href="/programs/videos#p-{{ program.id }}">All its videos</a>{% endif %}</p>
 
     {% if not story.journey %}
     <div class="ui-empty"><i class="bi bi-map"></i><strong>No weekly plan yet</strong>{% if missing %}Ask for a proposal at the top of this page: the assistant writes one for you to confirm.{% else %}Import the program's PDF, or add its weeks.{% endif %}</div>
@@ -251,7 +251,9 @@
             <div class="pd-week-title">{{ item.week.topic_title }}</div>
             {% if item.week.learning_objectives %}<div class="pd-week-text">{{ item.week.learning_objectives }}</div>{% endif %}
             {% if item.video %}
-            <a class="pd-video" href="{{ item.video.url }}" target="_blank" rel="noopener" title="{{ item.video.title }}">
+            {% set embed = video_embed(item.video.url) %}
+            <a class="pd-video" href="{{ item.video.url }}" target="_blank" rel="noopener" title="{{ item.video.title }}"
+               {% if embed %}data-video="{{ embed }}" data-video-kind="{{ video_kind(embed) }}" data-video-title="Week {{ item.number }} · {{ item.video.title }}"{% endif %}>
               <span class="pd-video-play"><i class="bi bi-play-fill"></i></span>
               <span>{{ item.video.title }}</span>
               {% if item.video.length %}<em>{{ item.video.length }}</em>{% endif %}
@@ -270,7 +272,27 @@
   </div>
 
   <!-- ============ Around it ============ -->
-  <aside class="pd-side">
+  <aside class="pd-side" id="pd-side" data-live-region>
+    <div class="pd-box" id="reviews">
+      <div class="pd-box-title"><i class="bi bi-star-fill"></i>What learners said</div>
+      {% if reviews.answered %}
+      <div class="pd-big">{{ reviews.stars or '–' }}{% if reviews.stars %} <small>/ 5 · {{ reviews.answered }} review{{ 's' if reviews.answered != 1 }}</small>{% endif %}</div>
+      <div class="small mt-1" style="line-height:1.6;">
+        {% import "_emoji.html" as emo %}
+        {% if reviews.happy_pct is not none %}<span class="ui-chip ok">{{ emo.happy(reviews.happy_pct) }} Happy {{ reviews.happy_pct }}%</span>{% endif %}
+        {% if reviews.recommend_pct is not none %}<span class="ui-chip">Recommend {{ reviews.recommend_pct }}%</span>{% endif %}
+      </div>
+      {% for professor in reviews.professors %}<div class="small mt-1"><i class="bi bi-person-video3"></i> {{ professor.name }}: <b>{{ professor.stars }}</b>/5 ({{ professor.count }})</div>{% endfor %}
+      {% if reviews.to_improve %}<div class="small mt-2"><b>To improve, they say:</b> {% for label, count in reviews.to_improve %}{{ label }} ({{ count }}){{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+      {% for text in reviews.improve_words[:2] %}<div class="small text-muted mt-1">“{{ text[:150] }}{{ '…' if text | length > 150 }}”</div>{% endfor %}
+      <details class="small mt-2"><summary class="text-muted">How this is counted</summary><div class="text-muted mt-1">{{ reviews.how }}</div></details>
+      {% for item in reviews.rows if item.answered %}{% if loop.index <= 4 %}
+      <div class="small mt-2" style="line-height:1.45;"><b>{{ item.name }}</b>{% if item.stars %} · {{ '★' * item.stars }}{% endif %}<br><span class="text-muted">{{ item.words[:160] }}{{ '…' if item.words | length > 160 }}</span></div>
+      {% endif %}{% endfor %}
+      {% else %}
+      <div class="small text-muted">No review yet. Each candidate is asked once when their class finishes{% if reviews.asked %} ({{ reviews.asked }} asked){% endif %}.</div>
+      {% endif %}
+    </div>
     <div class="pd-box">
       <div class="pd-box-title"><i class="bi bi-people-fill"></i>Who follows it</div>
       <div class="pd-big">{{ story.people.total }} <small>registered · {{ story.people.paid }} paid</small></div>
@@ -320,6 +342,8 @@
 </div>
 
 <!-- ============ What the market asks ============ -->
+{% import "_recommendations.html" as recommendations %}
+{{ recommendations.card(reco, program) }}
 <section class="pd-market" id="market">
   <div class="d-flex justify-content-between align-items-end gap-3 flex-wrap">
     <div>

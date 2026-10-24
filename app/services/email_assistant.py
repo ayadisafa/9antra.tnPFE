@@ -49,6 +49,7 @@ from app.services import class_emails, email_files, email_threads, knowledge_ser
 from app.services.email_layout import branding, render_email, render_plain, text_to_html
 from app.services.email_threads import utcnow
 from app.services.schedule_utils import (
+    class_end_dt,
     class_start_dt,
     describe_schedule_en,
     describe_schedule_fr,
@@ -248,6 +249,16 @@ def analyse(subject: str, body: str) -> dict:
     misjudged the language and the subject too often to be trusted with a
     decision that controls whether an answer is sent.
     """
+    from app.services import derja
+
+    # Tunisian in Latin letters ("9adech soum formation python"): its derja words are read in French (from a list written
+    # by hand), so the rules and the search understand it; the answer is written in French.
+    understood = None
+    arabic = bool(_ARABIC.search(f"{subject}\n{body}"))
+    if (not arabic and derja.is_tunisian(f"{subject}\n{body}")) or (arabic and derja.arabic_coverage(body) >= 0.4):
+        # Tunisian in Latin letters, or Arabic letters the list knows well enough: read in French by the rules and the search.
+        understood = derja.to_french(body)
+        subject, body = derja.to_french(subject), understood
     text = f"{subject}\n{body}"
     tokens = knowledge_service.tokenize(text)
     lowered = text.lower()
@@ -291,7 +302,8 @@ def analyse(subject: str, body: str) -> dict:
     else:
         sentiment = "neutral"
     return {
-        "language": _detect_language(text),
+        "language": "fr" if understood and not arabic else _detect_language(f"{subject}\n{body}") if not arabic else "ar",
+        "derja": understood,
         "intent": "greeting" if thanks_only else intent,
         # Everything except a plain thank-you is handled: answered, or shown to the admin.
         "needs_reply": not thanks_only,
@@ -412,6 +424,23 @@ def _schedule_line(db: Session, registration: Registration, english: bool, asked
     at = "at" if english else "à"
 
     if class_group is None:
+        from app.services import enrollment_service
+
+        current = enrollment_service.class_in_the_way(db, registration) if registration.payment_status == PaymentStatus.PAID else None
+        if current is not None:
+            ends = class_end_dt(current)
+            gap = enrollment_service.gap_days(get_settings(db))
+            name = current.program.name if current.program else current.name
+            until = (f" until {date_of(ends)}" if english else f" jusqu'au {date_of(ends)}") if ends else ""
+            return (
+                f"« {program} »: you cannot be placed in a class yet, because you follow « {name} »{until}: one program at a time. "
+                f"As soon as it is over, you will be placed in a class of « {program} » that starts about {gap} days after, "
+                "with a professor available at that time; you will receive its date and hours by email." if english else
+                f"« {program} » : vous ne pouvez pas encore être placé(e) dans une classe, car vous suivez « {name} »{until} : "
+                f"une formation à la fois. Dès qu'elle sera terminée, vous serez placé(e) dans une classe de « {program} » qui "
+                f"démarre environ {gap} jours après, avec un formateur disponible à ce moment-là ; vous recevrez sa date et son "
+                "horaire par email."
+            ), True
         if registration.payment_status == PaymentStatus.PAID:
             return (
                 f"« {program} »: your class is being assigned; you will receive the details by email." if english
@@ -562,7 +591,7 @@ def clean_answer(text: str) -> str:
     return value[:1].upper() + value[1:]
 
 
-def generate_answer(*, subject: str, body: str, question: str, language: str, hits: list[dict]) -> dict | None:
+def generate_answer(*, subject: str, body: str, question: str, language: str, hits: list[dict], notes: str = "") -> dict | None:
     """Let the model phrase an answer from the passages retrieved. None if it is unavailable."""
     knowledge = "\n\n".join(
         f"[{index}] {hit['title']}\n{hit['content'][:900]}" for index, hit in enumerate(hits, start=1)
@@ -578,7 +607,7 @@ The question: {question or "(see the email)"}
 
 Write the reply in {reply_language}. Be warm, clear and short (1 to 5 sentences). Answer only what is asked.
 Do not write a greeting line or a signature: both are added automatically.
-
+{("What the centre wants you to know or say (never contradict it):" + chr(10) + notes + chr(10)) if notes else ""}
 Return a JSON object with exactly these keys:
 "can_answer": true only if KNOWLEDGE contains everything needed to answer the question
 "answer": the reply text (empty if can_answer is false)
@@ -645,6 +674,33 @@ def threshold_of(settings) -> float:
 def mode_of(settings) -> str:
     mode = (settings.email_auto_reply_mode or "auto").lower()
     return mode if mode in MODES else "auto"
+
+
+def whatsapp_mode_of(settings) -> str:
+    """How the assistant answers on WhatsApp: auto | review | off (the admin can change it at any time)."""
+    mode = (getattr(settings, "whatsapp_auto_reply", None) or "auto").lower()
+    return mode if mode in MODES else "auto"
+
+
+def _rule_lines(value: str | None) -> list[str]:
+    return [line.strip(" -•\t") for line in (value or "").splitlines() if len(line.strip(" -•\t")) >= 3][:40]
+
+
+def never_alone(settings, text: str) -> str | None:
+    """The subject of the admin's "never answer this alone" list that a message is about, or None.
+    A line is a subject in a few words; the message is about it when it holds all of its words."""
+    asked = knowledge_service._fold(text or "")
+    words_asked = set(asked.split())
+    for line in _rule_lines(getattr(settings, "assistant_never", None)):
+        words = [word for word in knowledge_service._fold(line).split() if len(word) >= 3]
+        if words and all(word in words_asked or (len(word) >= 5 and word in asked) for word in words):
+            return line
+    return None
+
+
+def assistant_notes(settings) -> str:
+    """What the admin wants the assistant to know or say, given to the model when it writes."""
+    return "\n".join(f"- {line}" for line in _rule_lines(getattr(settings, "assistant_notes", None)))[:1500]
 
 
 # ------------------------------------------------------------------
@@ -852,7 +908,7 @@ def _from_knowledge(db: Session, message: CandidateEmail, analysis: dict, hits: 
 
     result = generate_answer(
         subject=analysis.get("subject") or "", body=message.body, question=analysis["question"],
-        language=analysis["language"], hits=hits,
+        language=analysis["language"], hits=hits, notes=assistant_notes(get_settings(db)),
     )
     if result is None:
         return {"confidence": min(quality, 0.45), "blocker": "The assistant did not respond, so this email comes to you."}
@@ -889,7 +945,9 @@ def document_answer(db: Session, candidate: Candidate, thread: EmailThread, mess
     from app.services import program_documents, program_pdf
 
     asked = f"{analysis.get('subject') or ''}\n{message.body or ''}"
-    if not program_documents.asks_for_program(asked) or not program_pdf.available():
+    # Asked for a PDF; or asked what one program teaches (“qu'est-ce qu'on apprend en DevOps ?”): its PDF answers that.
+    about_one = program_documents.asks_about_content(asked) and len(program_documents.named_programs(db, asked)) == 1
+    if not (program_documents.asks_for_program(asked) or about_one) or not program_pdf.available():
         return None
     linked = _linked_registration(db, thread)
     registration = db.get(Registration, linked) if linked else None
@@ -920,6 +978,23 @@ def document_answer(db: Session, candidate: Candidate, thread: EmailThread, mess
     return found
 
 
+def taught_by_meaning(db: Session, question: str, asked_programs: set[str]) -> dict | None:
+    """The answer the admin taught for a question that means the same as this one, in other words or another
+    language (services/meaning.py), shaped like a search hit; None when none is clearly the closest."""
+    from app.services import meaning
+
+    entries = {entry.id: entry for entry in db.query(KnowledgeEntry).filter(KnowledgeEntry.is_active.is_(True),
+                                                                            KnowledgeEntry.origin != "system").all()}
+    bank = {key: [item["q"] for item in knowledge_service.wordings_of(entry) if item["q"]] for key, entry in entries.items()}
+    found = meaning.closest(question, bank, floor=0.55, margin=0.05)
+    if found is None:
+        return None
+    entry = entries[found["key"]]
+    if _names_another_program(db, found["example"], asked_programs):
+        return None
+    return {"id": entry.id, "content": entry.content, "wording": found["example"], "quality": round(found["score"], 3), "origin": entry.origin}
+
+
 def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message: CandidateEmail,
                 analysis: dict) -> dict:
     """Where the answer comes from, the answer, its confidence, and what blocks it.
@@ -943,6 +1018,27 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
         found.update(document)
         return found
 
+    from app.services import prospects, registration_form
+
+    # The language they wrote in: French, English, Arabic or Tunisian (what is built from facts is answered in it).
+    asked_language = prospects.language_of(message.body or "")
+    if asked_language not in ("ar", "tn"):
+        asked_language = "en" if analysis["language"] == "en" else "fr"
+    if registration_form.asks_how(analysis.get("subject") or "", message.body or "") and asked_language in ("ar", "tn"):
+        facts = prospects.reply_for(db, message.body or "", asked_language, registered=True)
+        if facts is not None:
+            found.update(method="register", answer=facts["text"], evidence=1.0, confidence=RECORD_CONFIDENCE, language=asked_language)
+            return found
+    if registration_form.asks_how(analysis.get("subject") or "", message.body or ""):
+        language = "en" if analysis["language"] == "en" else "fr"
+        found.update(method="register", answer=registration_form.reply(db, language), evidence=1.0, confidence=RECORD_CONFIDENCE)
+        extra = {token for token in analysis["tokens"] if token.startswith("_")} - {"_register"}
+        if extra:
+            names = ", ".join(_CONCEPT_NAMES.get(token, token.strip("_")) for token in sorted(extra))
+            found.update(confidence=0.6, blocker=f"The message also asks about {names}, which the registration form does not answer. "
+                                                 "The draft gives the form's link: add the rest before sending.")
+        return found
+
     record = record_answer(db, candidate, thread, analysis)
     if record is not None:
         found.update(method="record", answer=record["text"], evidence=1.0)
@@ -961,6 +1057,18 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
             )
         else:
             found["confidence"] = RECORD_CONFIDENCE
+        return found
+
+    # A question about the programs (prices, start, length, content, online or on site, where): the facts, in their language.
+    facts = prospects.reply_for(db, message.body or "", asked_language, registered=True)
+    if facts is not None and set(facts["asks"]) - {"register"}:
+        found.update(method="facts", answer=facts["text"], evidence=1.0, confidence=RECORD_CONFIDENCE,
+                     programs=facts["program_ids"], language=facts["lang"])
+        others = prospects.uncovered(message.body or "")
+        if others:
+            names = ", ".join(_CONCEPT_NAMES.get(token, token.strip("_")) for token in others)
+            found.update(confidence=0.6, blocker=f"The message also asks about {names}, which the program's facts do not answer. "
+                                                 "The draft gives the facts: add the rest before sending.")
         return found
 
     knowledge_service.ensure_fresh(db)
@@ -1025,7 +1133,40 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
             blocker="The system is not sure, but an answer you taught for a related question may fit. "
                     "Check the draft before sending.",
         )
+        return found
+
+    # Said in other words, or in another language: the taught question closest in meaning, as a draft only. Once
+    # the admin sends it, this wording is learnt and answered alone next time (admin_reply).
+    close = taught_by_meaning(db, question, asked_programs)
+    if close is not None:
+        text, rewritten = taught_answer(close, analysis, message, rewrite=rewrite)
+        found.update(
+            method="taught", answer=text, used=[close["id"]], taught_id=close["id"], wording=close["wording"], rewritten=rewritten,
+            evidence=close["quality"], confidence=min(close["quality"], GUESS_CAP),
+            blocker=f"Understood by its meaning (other words or another language): it looks like the question you taught "
+                    f"(“{email_threads.snippet(close['wording'], 90)}”). Check the draft: once you send it, this wording is answered alone next time.",
+        )
     return found
+
+
+def source_line(found: dict, language: str = "fr") -> str:
+    """One line saying where an answer to a candidate comes from: their own file, the team, or 9antra.tn."""
+    english = language == "en"
+    method = found.get("method")
+    if method == "record":
+        return "Source: your file at 9antra." if english else "Source : votre dossier chez 9antra."
+    if method == "register":
+        return "Source: 9antra's registration form." if english else "Source : le formulaire d'inscription de 9antra."
+    if method == "facts":
+        return "Source: 9antra's information about its programs." if english else "Source : les informations de 9antra sur ses formations."
+    if method == "taught":
+        return "Source: the 9antra team." if english else "Source : l'équipe 9antra."
+    if method == "composed":
+        titles = " ".join(str(hit.get("title") or "") for hit in (found.get("hits") or [])[:3])
+        if "9antra.tn" in titles:
+            return "Source: 9antra.tn, our website." if english else "Source : 9antra.tn, notre site."
+        return "Source: 9antra's information about its programs." if english else "Source : les informations de 9antra sur ses formations."
+    return ""
 
 
 def process_inbound(db: Session, message: CandidateEmail) -> str:
@@ -1033,7 +1174,10 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     thread = db.get(EmailThread, message.thread_id)
     candidate = message.candidate
     settings = get_settings(db)
-    mode = mode_of(settings)
+    on_sms = getattr(thread, "channel", None) == "sms"
+    on_whatsapp = getattr(thread, "channel", None) == "whatsapp" or on_sms     # SMS are answered like WhatsApp messages
+    mode = whatsapp_mode_of(settings) if on_whatsapp else mode_of(settings)
+    where = "SMS" if on_sms else "WhatsApp message" if on_whatsapp else "email"
     threshold = threshold_of(settings)
     name = candidate.full_name or candidate.email
 
@@ -1044,14 +1188,52 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     message.intent = analysis["intent"]
     message.sentiment = analysis["sentiment"]
     message.analysis = analysis["summary"]
+    from app.services import emotions
+
+    feelings = emotions.read(f"{subject}\n{message.body or ''}")
+    message.emotions = json.dumps(feelings, ensure_ascii=False) if feelings["emotions"] else None
+    if analysis.get("derja"):
+        message.analysis = "Written in Tunisian; understood as: " + email_threads.snippet(analysis["derja"], 150)
     message.question = analysis["question"] if analysis["needs_reply"] else None
 
+    from app.services import payment_proofs      # here: it reads pictures, which most messages do not need
+
     if email_threads.message_files(message):
-        # A receipt, a photo, a document: only a person can look at it.
+        # A payment proof (receipt, transfer, invoice) is read and checked; the admin confirms it. Anything else: a person looks.
+        files = email_files.load(db, [item["id"] for item in email_threads.message_files(message)])
+        proofs = payment_proofs.from_message(db, message, candidate, files)
+        if proofs:
+            reason = " ".join(payment_proofs.summary(proof) for proof in proofs) + " Confirm or refuse it on the Payments page."
+            draft = None
+            if any(payment_proofs.needs_program(db, proof) for proof in proofs):
+                question = payment_proofs.program_question(candidate, "en" if analysis["language"] == "en" else "fr")
+                if mode == "auto" and not is_test(message):
+                    text, html_body = compose_reply(db, candidate, question, language="en" if analysis["language"] == "en" else "fr")
+                    sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                                 thread=thread, note="Asked which program the payment is for.")
+                    if sent is not None and sent.status in ("sent", "to_send"):
+                        for proof in proofs:
+                            proof.asked_program_at = utcnow()
+                        reason += " The candidate was asked which program it pays."
+                    else:
+                        draft = question
+                else:
+                    draft = question
+                    reason += " Which program it pays is not said: the question to ask is ready below."
+            return _ask_admin(db, thread, message, candidate, reason, draft)
         return _ask_admin(
             db, thread, message, candidate,
-            "The candidate attached a file. The system cannot read attachments, so this email comes to you.", None,
+            "The candidate attached a file that is not a payment proof. The system does not read other files, so this email comes to you.", None,
         )
+    named = payment_proofs.program_answer(db, candidate, message.body)
+    if named is not None:
+        # They answer "which program does your payment pay?": the proof now knows it, the admin confirms.
+        message.status = "no_reply"
+        message.requires_admin = False
+        message.analysis = f"The payment proof is for {named.program_name}: it waits for you on the Payments page."
+        thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
+        _notify(db, thread, "PAYMENT_PROOF", f"{name}: the payment is for {named.program_name}", "Confirm it on the Payments page.")
+        return "no_reply"
 
     asked_opinion = (
         db.query(CandidateEmail)
@@ -1088,7 +1270,10 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
         return "no_reply"
 
     if mode == "off":
-        return _ask_admin(db, thread, message, candidate, "The assistant is turned off, so every email comes to you.", None)
+        return _ask_admin(db, thread, message, candidate, f"The assistant is turned off{' on WhatsApp' if on_whatsapp else ''}, so every {where} comes to you.", None)
+    rule = never_alone(settings, f"{subject}\n{message.body}")
+    if rule:
+        return _ask_admin(db, thread, message, candidate, f"You asked the assistant never to answer this alone: “{rule}”.", None)
     if analysis["intent"] in SENSITIVE_INTENTS:
         # No draft either: a model's guess at a refund or a complaint is worse than none.
         return _ask_admin(
@@ -1096,9 +1281,71 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
             f"Sensitive subject ({INTENT_LABELS[analysis['intent']].lower()}): these always come to you.", None,
         )
 
-    found = find_answer(db, candidate, thread, message, analysis)
+    from app.services import course_questions      # here: it reads the classes and the team
+
     reply_language = "en" if analysis["language"] == "en" else "fr"
-    answer_text = f"{greeting_for(candidate, reply_language)}\n\n{found['answer']}" if found["answer"] else None
+    asked_text = analysis.get("derja") or message.body or ""
+    if course_questions.is_learning_question(f"{subject}\n{asked_text}"):
+        # About the learning itself: only for a candidate who paid that program, and their professor answers.
+        registration, class_group = course_questions.class_of(db, candidate, asked_text)
+        if registration is None:
+            owed = course_questions.unpaid_registration(candidate, asked_text)
+            pay_first = f"{greeting_for(candidate, reply_language)}\n\n{course_questions.pay_first_text(owed, reply_language)}"
+            if mode != "auto" or is_test(message):
+                return _ask_admin(db, thread, message, candidate,
+                                  "A question about a course's content from someone who has not paid for it: the answer is that they pay first.", pay_first)
+            text, html_body = compose_reply(db, candidate, pay_first, language=reply_language, quote=message.body)
+            sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                         thread=thread, language=reply_language, note="Course question before paying: told to pay first.")
+            if sent is None or sent.status == "failed":
+                return _ask_admin(db, thread, message, candidate, "The answer could not be delivered. You can send it again from here.", pay_first)
+            message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+            _notify(db, thread, "EMAIL_ANSWERED", "Told to pay before asking about the course", f"{name}: {message.question or ''}")
+            return "replied"
+        professor = course_questions.professor_of(db, class_group)
+        if professor is None:
+            return _ask_admin(db, thread, message, candidate,
+                              f"A question about the course ({registration.program_name}), but the class {class_group.name} has no professor yet: you answer it.", None)
+        if is_test(message):
+            return _ask_admin(db, thread, message, candidate, f"Test: this question would go to the professor, {professor.name}.", None)
+        course_questions.forward(db, candidate=candidate, message=message, registration=registration, class_group=class_group, professor=professor)
+        message.status, message.requires_admin = "no_reply", False
+        message.analysis = f"Sent to the professor, {professor.name}, who answers in the application; the answer goes back to {name}."
+        thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
+        if mode == "auto":
+            acknowledged = f"{greeting_for(candidate, reply_language)}\n\n{course_questions.forwarded_text(professor, reply_language)}"
+            text, html_body = compose_reply(db, candidate, acknowledged, language=reply_language)
+            email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                  thread=thread, language=reply_language, note=f"Question sent to the professor, {professor.name}.")
+        _notify(db, thread, "CANDIDATE_EMAIL", f"{name}'s question went to {professor.name}", message.question or "")
+        return "no_reply"
+
+    found = find_answer(db, candidate, thread, message, analysis)
+    written_in = found.get("language")
+    if written_in in ("ar", "tn") and found["answer"]:
+        from app.services import prospects
+
+        # Built from facts in Arabic or Tunisian: greeted and closed in the same language, not in French.
+        name = _first_name(candidate)
+        hello = {"ar": f"مرحبا {name}،" if name else "مرحبا،", "tn": f"Aslema {name}," if name else "Aslema,"}[written_in]
+        answer_text = f"{hello}\n\n{found['answer']}\n\n{prospects.SOURCE[written_in]}"
+        written_in = True
+    else:
+        written_in = False
+    # The tone first: a worried or confused candidate is reassured before the answer (fixed sentences, by emotion).
+    tone_first = emotions.opening(feelings["main"], reply_language)
+    if not written_in:
+        answer_text = (f"{greeting_for(candidate, reply_language)}\n\n" + (f"{tone_first}\n\n" if tone_first else "") + found["answer"]
+                       if found["answer"] else None)
+    if answer_text and not written_in:
+        # A paid candidate is always told they can also ask their professor (with the email, when known).
+        professor_note = course_questions.professor_line(db, candidate, reply_language)
+        if professor_note and professor_note not in answer_text:
+            answer_text = f"{answer_text}\n\n{professor_note}"
+        # Where the answer comes from, said to the candidate too.
+        said_source = source_line(found, reply_language)
+        if said_source and said_source not in answer_text:
+            answer_text = f"{answer_text}\n\n{said_source}"
     message.confidence = round(found["confidence"], 3)
     message.sources = json.dumps({
         "threshold": threshold,
@@ -1121,8 +1368,15 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     in_thread, today = _auto_replies(db, thread)
     percent = round(found["confidence"] * 100)
     reason = found["blocker"]
+    if reason is None and feelings["main"] == "frustrated":
+        reason = ("The candidate seems frustrated (" + ", ".join(feelings["emotions"][0]["words"][:3])
+                  + "): a person should answer. The draft is ready.")
     if reason is None:
-        if analysis["language"] not in AUTO_LANGUAGES:
+        if found.get("language") in ("ar", "tn") and found["method"] in ("facts", "register"):
+            pass        # built from facts and written in their own language (Arabic or Tunisian): it goes as it is
+        elif analysis["language"] == "ar" and analysis.get("derja") and found["method"] in ("record", "taught", "document", "register", "facts"):
+            pass        # written in Arabic letters, read with the list, and the answer is a sure one: it goes, in French
+        elif analysis["language"] not in AUTO_LANGUAGES:
             reason = (
                 f"The email is in {LANGUAGE_LABELS.get(analysis['language'], analysis['language'])}: "
                 "the system reads that language less reliably, so it asks you. The draft is in French."
@@ -1133,11 +1387,18 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
             reason = f"Confidence {percent}% is below the {round(threshold * 100)}% needed to answer alone."
         elif in_thread >= MAX_AUTO_REPLIES_PER_THREAD or today >= MAX_AUTO_REPLIES_PER_DAY:
             reason = "Several automatic replies were already sent to this candidate; a person should take over."
-        elif not is_test(message) and not email_threads.smtp_configured():
+        elif not is_test(message) and on_sms and not __import__("app.services.sms", fromlist=["configured"]).configured():
+            reason = "The answer is ready, but no Android phone is connected for SMS, so it was not sent (Settings, SMS)."
+        elif not is_test(message) and on_whatsapp and not on_sms and not __import__("app.services.whatsapp", fromlist=["configured"]).configured():
+            reason = "The answer is ready, but no WhatsApp Business number is connected, so it was not sent."
+        elif not is_test(message) and not on_whatsapp and not email_threads.smtp_configured():
             reason = "The answer is ready, but email delivery is not configured, so it was not sent."
     if reason:
         return _ask_admin(db, thread, message, candidate, reason, answer_text)
 
+    if analysis["language"] == "ar" and answer_text and found.get("language") != "ar":
+        # A fixed sentence in Arabic first (written by hand): the answer itself is in French.
+        answer_text = "شكرًا على رسالتك. إليك الإجابة بالفرنسية:\n\n" + answer_text
     text, html_body = compose_reply(
         db, candidate, answer_text, language=reply_language, quote=message.body,
         links=related_links(db, found.get("programs"), reply_language),
@@ -1253,6 +1514,22 @@ def ingest_inbound(db: Session, *, sender: str, subject: str, body: str,
     if not address or not (body or "").strip():
         return {"status": "ignored", "reason": "Sender or body is missing"}
     candidate = db.query(Candidate).filter(Candidate.email.ilike(address)).first()
+    if not candidate and not test:
+        from app.services import team_messages               # a professor or a team member: into their conversation
+
+        if team_messages.find_by_email(db, address) is not None:
+            kept = team_messages.from_email(db, sender=address, subject=subject, body=body, message_id=message_id,
+                                            received_at=received_at)
+            if kept is None:
+                return {"status": "duplicate", "reason": "Already kept in the team chat"}
+            return {"status": "stored", "team_message": kept.id}
+    if not candidate and not test and not automatic and not re.search(r"no-?reply|newsletter|mailer-daemon|notification", address):
+        from app.services import prospects, registration_form    # a stranger asking about the programs gets the facts and the form
+
+        answered = (prospects.answer_stranger(db, channel="email", to=address, text=body, subject=subject)
+                    or registration_form.answer_stranger(db, channel="email", to=address, text=body, subject=subject))
+        if answered is not None:
+            registration_form.tell_admin(db, channel="email", who=address, text=body, answered=answered)
     if not candidate:
         from app.services import registration_requests       # a stranger who asks for a place is told to the admin
 
@@ -1391,6 +1668,22 @@ def admin_reply(db: Session, thread: EmailThread, body: str, *, learn: bool = Fa
         thread.status = "needs_admin" if pending else thread.status
 
     learned_question = " ".join((question or "").split())
+    # A draft that came from an answer learnt by itself, sent by the admin: confirmed, it answers alone from now on.
+    confirmed = db.get(KnowledgeEntry, drafted_from.get("taught_id") or "") if from_draft else None
+    if confirmed is not None and confirmed.origin == "auto" and reply.status != "failed":
+        confirmed.origin = "learned"
+        if inbound is not None:
+            knowledge_service.add_wording(confirmed, question_sentence(inbound.body or "") or inbound.body)
+    # The admin answered a general question in their own words (not about the candidate's own class or money): kept as
+    # learnt by itself, to confirm. It only ever gives a draft until the admin sends that draft once.
+    if not learn and not from_draft and inbound is not None and reply.status != "failed":
+        asked = " ".join((question or question_sentence(inbound.body or "") or "").split())
+        personal = record_topics(knowledge_service.tokenize(asked)) or (candidate and _first_name(candidate) and _first_name(candidate).lower() in text.lower())
+        if len(asked) >= 12 and not personal and not knowledge_service.same_question(db, asked):
+            try:
+                knowledge_service.save_entry(db, title=asked, content=clean_answer(text) or text, origin="auto", source_email_id=inbound.id)
+            except ValueError:
+                pass
     if learn and learned_question and reply.status != "failed":
         # The email has already gone out: a problem saving the lesson must not undo that.
         try:

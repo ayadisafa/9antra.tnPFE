@@ -19,6 +19,12 @@
   .tm-actions form { margin:0; display:flex; gap:6px; }
   .tm-actions input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 9px; }
   .tm-new .form-control, .tm-new .form-select { border-radius:12px; font-size:.86rem; }
+  .tm-rights { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .tm-right { display:inline-flex; gap:7px; align-items:center; border:1px dashed #e7c98f; background:var(--gold-subtle); border-radius:12px; padding:6px 10px; font-size:.78rem; font-weight:700; color:#6b4a0b; cursor:pointer; }
+  .tm-right input { accent-color:var(--primary-berry); }
+  .tm-rights-title { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:12px; }
+  .tm-details { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .tm-details input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 9px; min-width:150px; }
 </style>
 {% endblock %}
 
@@ -28,10 +34,109 @@
 <div class="ui-head">
   <div>
     <h2>Who signs in, and what each one sees</h2>
-    <p>An <b>admin</b> sees and changes everything. A <b>team member</b> sees only the parts you choose, and for each part either looks or can also change. Professors have their own space and get their access from the Professors page. Changes apply at once.</p>
+    <p>An <b>admin</b> sees and changes everything. A <b>team member</b> sees only the parts you choose (for each: looks, or can also change), plus the special rights you tick, or <b>everything</b> in one click. A <b>professor</b> has their own space: their classes and their messages. Changes apply at once.</p>
   </div>
   <div class="ui-actions"><a class="ui-btn primary" href="#add"><i class="bi bi-person-plus"></i>Add a person</a></div>
 </div>
+
+<!-- Who can do what: everyone at a glance; a click on a team member's cell changes it at once -->
+<section class="mx-card" id="matrix">
+  <div class="mx-head">
+    <div><b><i class="bi bi-grid-3x3-gap"></i> Who can do what</b><span>Every person and every part of the application. Click a team member's cell: Not shown → Can look → Can change. It is saved at once.</span></div>
+    <div class="mx-legend"><span class="mx-cell is-none">—</span>Not shown <span class="mx-cell is-view"><i class="bi bi-eye"></i></span>Can look <span class="mx-cell is-edit"><i class="bi bi-pencil"></i></span>Can change</div>
+  </div>
+  <div class="mx-scroll">
+    <table class="mx-table">
+      <thead><tr><th class="mx-who">Person</th>
+        {% for key, name, icon, start, prefixes in sections %}<th title="{{ name }}"><i class="bi {{ icon }}"></i><span>{{ name.split(' (')[0] }}</span></th>{% endfor %}
+        {% for key, name, icon, prefixes in rights %}<th class="mx-right" title="{{ name }}"><i class="bi {{ icon }}"></i><span>{{ name.split(' (')[0] }}</span></th>{% endfor %}
+        <th></th></tr></thead>
+      <tbody>
+      {% for row in people %}
+      {% set person = row.user %}
+      <tr class="{{ 'is-off' if not person.is_active }}">
+        <td class="mx-who"><a href="#person-{{ person.id }}" data-no-i18n>{{ person.name }}</a>
+          <small>{{ {'admin': 'Admin', 'staff': 'Team member', 'professor': 'Professor'}.get(person.role, person.role) }}{{ ' · cannot sign in' if not person.is_active }}</small></td>
+        {% if person.role == 'admin' %}
+        <td colspan="{{ sections | length + rights | length }}" class="mx-all"><i class="bi bi-shield-check"></i> Everything: sees and changes all</td>
+        {% elif person.role == 'professor' %}
+        <td colspan="{{ sections | length + rights | length }}" class="mx-own"><i class="bi bi-easel2"></i> Their own space: their classes, the course, the presence and their messages</td>
+        {% else %}
+        {% for key, name, icon, start, prefixes in sections %}
+        {% set level = row.permissions.get(key, 'none') %}
+        <td><button type="button" class="mx-cell is-{{ level }}" data-user="{{ person.id }}" data-part="{{ key }}" data-level="{{ level }}" title="{{ name }}: {{ levels[level] }}">
+          {% if level == 'edit' %}<i class="bi bi-pencil"></i>{% elif level == 'view' %}<i class="bi bi-eye"></i>{% else %}—{% endif %}</button></td>
+        {% endfor %}
+        {% for key, name, icon, prefixes in rights %}
+        {% set level = row.permissions.get(key, 'none') %}
+        <td><button type="button" class="mx-cell is-{{ level }}" data-user="{{ person.id }}" data-part="{{ key }}" data-level="{{ level }}" data-right="1" title="{{ name }}">
+          {% if level == 'edit' %}<i class="bi bi-check-lg"></i>{% else %}—{% endif %}</button></td>
+        {% endfor %}
+        {% endif %}
+        <td class="mx-act">
+          {% if person.id != me.id and (me.is_admin or person.role != 'admin') %}
+          {% if me.is_admin and person.role != 'admin' and person.is_active %}<form method="post" action="/settings/team/{{ person.id }}/view-as"><button class="mx-btn" title="See the application as {{ person.name }}"><i class="bi bi-eye"></i></button></form>{% endif %}
+          <form method="post" action="/settings/team/{{ person.id }}/delete" data-confirm="Remove {{ person.name }}'s account for good? They can no longer sign in; what they did stays recorded."><button class="mx-btn danger" title="Remove the account"><i class="bi bi-trash3"></i></button></form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<style>
+  .mx-card { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:14px; margin-bottom:18px; }
+  .mx-head { display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; align-items:flex-start; margin-bottom:10px; }
+  .mx-head b { display:block; font-size:.95rem; } .mx-head b i { color:var(--primary-berry); } .mx-head span { font-size:.78rem; color:var(--muted); }
+  .mx-legend { display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--muted); font-weight:700; }
+  .mx-scroll { overflow-x:auto; border-radius:14px; border:1px solid var(--border-color); }
+  .mx-table { border-collapse:separate; border-spacing:0; width:100%; font-size:.78rem; }
+  .mx-table th { position:sticky; top:0; background:#faf8fd; padding:8px 6px; font-size:.64rem; font-weight:800; color:#6b6480; text-align:center; vertical-align:bottom; min-width:66px; }
+  .mx-table th i { display:block; font-size:1rem; color:var(--primary-berry); margin-bottom:3px; } .mx-table th span { display:block; line-height:1.15; }
+  .mx-table th.mx-right i { color:#b45309; }
+  .mx-table td { padding:6px; border-top:1px solid var(--border-color); text-align:center; }
+  .mx-table tr:hover td { background:#fcfaff; }
+  .mx-who { position:sticky; inset-inline-start:0; background:#fff; text-align:start !important; min-width:170px; z-index:1; }
+  th.mx-who { background:#faf8fd; z-index:2; }
+  .mx-who a { font-weight:800; color:var(--ink-text); text-decoration:none; } .mx-who small { display:block; color:var(--muted); font-size:.68rem; }
+  tr.is-off .mx-who a { color:var(--muted); text-decoration:line-through; }
+  .mx-cell { width:34px; height:30px; border-radius:10px; border:1px solid var(--border-color); background:#f6f4f9; color:#a59fb8; font-weight:800; cursor:pointer;
+             display:inline-grid; place-items:center; transition:transform .15s ease, background .2s ease, color .2s ease; }
+  .mx-legend .mx-cell { width:26px; height:22px; cursor:default; }
+  .mx-cell:hover { transform:scale(1.1); } .mx-cell.is-view { background:#e8f1ff; border-color:#bfdbfe; color:#1d4ed8; }
+  .mx-cell.is-edit { background:#dcfce7; border-color:#86efac; color:#15803d; } .mx-cell.is-saving { opacity:.5; } .mx-cell.is-saved { animation:mxPop .45s ease; }
+  .mx-all, .mx-own { text-align:start !important; font-weight:700; color:#15803d; } .mx-own { color:#6d28d9; }
+  .mx-act { white-space:nowrap; } .mx-act form { display:inline; }
+  .mx-btn { border:1px solid var(--border-color); background:#fff; border-radius:10px; width:30px; height:30px; color:#6b6480; }
+  .mx-btn:hover { border-color:var(--primary-berry); color:var(--primary-berry); } .mx-btn.danger:hover { border-color:#dc2626; color:#dc2626; }
+  @keyframes mxPop { 40% { transform:scale(1.25); } }
+  @media (prefers-reduced-motion: reduce) { .mx-cell.is-saved { animation:none; } }
+</style>
+<script>
+(function () {
+  var ORDER = ["none", "view", "edit"];
+  var ICONS = { none: "—", view: '<i class="bi bi-eye"></i>', edit: '<i class="bi bi-pencil"></i>' };
+  document.querySelectorAll(".mx-table .mx-cell[data-user]").forEach(function (cell) {
+    cell.addEventListener("click", function () {
+      var right = cell.dataset.right === "1";
+      var next = right ? (cell.dataset.level === "edit" ? "none" : "edit") : ORDER[(ORDER.indexOf(cell.dataset.level) + 1) % 3];
+      var body = new FormData(); body.append("part", cell.dataset.part); body.append("level", next);
+      cell.classList.add("is-saving");
+      fetch("/settings/team/" + encodeURIComponent(cell.dataset.user) + "/cell", { method: "POST", body: body, credentials: "same-origin" })
+        .then(function (response) { return response.json(); })
+        .then(function (answer) {
+          cell.classList.remove("is-saving");
+          if (!answer.ok) { alert(answer.error || "Not saved."); return; }
+          cell.dataset.level = answer.level;
+          cell.className = "mx-cell is-" + answer.level + " is-saved";
+          cell.innerHTML = right ? (answer.level === "edit" ? '<i class="bi bi-check-lg"></i>' : "—") : ICONS[answer.level];
+        })
+        .catch(function () { cell.classList.remove("is-saving"); alert("Not saved: the connection was lost."); });
+    });
+  });
+})();
+</script>
 
 {% for row in people %}
 {% set person = row.user %}
@@ -52,18 +157,40 @@
         <select name="perm_{{ key }}" aria-label="{{ name }}">{% for level, said in levels.items() %}<option value="{{ level }}" {{ 'selected' if row.permissions[key] == level }}>{{ said }}</option>{% endfor %}</select></div>
       {% endfor %}
     </div>
-    <div class="tm-actions"><button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save what {{ person.name.split()[0] }} sees</button></div>
+    <div class="tm-rights-title">Special rights</div>
+    <div class="tm-rights">
+      {% for key, name, icon, prefixes in rights %}
+      <label class="tm-right"><input type="checkbox" name="right_{{ key }}" value="1" {{ 'checked' if row.permissions[key] == 'edit' }}><i class="bi {{ icon }}"></i>{{ name }}</label>
+      {% endfor %}
+    </div>
+    <div class="tm-actions"><button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save what {{ person.name.split()[0] }} sees</button>
+      <button class="ui-btn sm" name="preset" value="all" data-confirm="Give {{ person.name }} access to everything, with every special right? They stay a team member: you can take it back."><i class="bi bi-unlock"></i>Give everything</button></div>
   </form>
   {% elif person.role == 'professor' %}
   <div class="tm-actions"><a class="ui-btn sm" href="/classes/?tab=professors">Managed on the Professors page</a></div>
   {% endif %}
 
-  {% if person.id != me.id and person.role != 'professor' %}
+  {% if me.is_admin or person.role != 'admin' %}
+  <form class="tm-details" method="post" action="/settings/team/{{ person.id }}/details">
+    <input name="name" value="{{ person.name }}" aria-label="Name" required>
+    <input name="email" type="email" value="{{ person.email }}" aria-label="Email they sign in with" required>
+    <input name="phone" value="{{ person.phone or '' }}" placeholder="Phone (WhatsApp, SMS)" aria-label="Phone">
+    <button class="ui-btn ghost sm"><i class="bi bi-pencil"></i>Save details</button>
+  </form>
+  {% endif %}
+
+  {% if me.is_admin and person.role != 'admin' and person.is_active %}
+  <form method="post" action="/settings/team/{{ person.id }}/view-as" class="mt-2"><button class="ui-btn sm"><i class="bi bi-eye"></i>See the application as {{ person.name.split()[0] }}</button></form>
+  {% endif %}
+  {% if person.id != me.id and person.role != 'professor' and (me.is_admin or person.role != 'admin') %}
   <div class="tm-actions">
+    {% if me.is_admin %}
     <form method="post" action="/settings/team/{{ person.id }}/role"><input type="hidden" name="role" value="{{ 'staff' if person.role == 'admin' else 'admin' }}">
       <button class="ui-btn ghost sm" data-confirm="{{ 'Make ' ~ person.name ~ ' a team member with chosen access?' if person.role == 'admin' else 'Make ' ~ person.name ~ ' an admin? They will see and change everything.' }}">{{ 'Make a team member' if person.role == 'admin' else 'Make an admin' }}</button></form>
+    {% endif %}
     <form method="post" action="/settings/team/{{ person.id }}/password"><input type="password" name="password" placeholder="New password" aria-label="New password" autocomplete="new-password" minlength="8" required><button class="ui-btn ghost sm">Set password</button></form>
     <form method="post" action="/settings/team/{{ person.id }}/active"><button class="ui-btn ghost sm {{ 'danger' if person.is_active }}">{{ 'Stop their access' if person.is_active else 'Let them sign in again' }}</button></form>
+    <form method="post" action="/settings/team/{{ person.id }}/delete" data-confirm="Remove {{ person.name }}'s account for good? They can no longer sign in; what they did stays recorded."><button class="ui-btn ghost sm danger"><i class="bi bi-trash3"></i>Remove the account</button></form>
   </div>
   {% endif %}
 </section>
@@ -78,16 +205,42 @@
       <div class="col-md-4"><input class="form-control" name="password" type="password" placeholder="A first password (8 characters at least)" aria-label="Password" minlength="8" autocomplete="new-password" required></div>
     </div>
     <div class="d-flex gap-3 mt-3 flex-wrap" style="font-size:.86rem;">
-      <label><input type="radio" name="role" value="staff" checked onchange="document.getElementById('new-perms').hidden = false"> Team member, with the access below</label>
-      <label><input type="radio" name="role" value="admin" onchange="document.getElementById('new-perms').hidden = true"> Admin, sees and changes everything</label>
+      <label><input type="radio" name="role" value="staff" checked data-new-role> Team member, with the access below</label>
+      {% if me.is_admin %}<label><input type="radio" name="role" value="admin" data-new-role> Admin, sees and changes everything</label>{% endif %}
+      {% if free_professors %}<label><input type="radio" name="role" value="professor" data-new-role> Professor: their classes and their messages</label>{% endif %}
     </div>
+    {% if free_professors %}
+    <div class="mt-2" id="new-prof" hidden>
+      <select class="form-select" name="professor_id" aria-label="Which professor" style="max-width:360px;">
+        {% for professor in free_professors %}<option value="{{ professor.id }}">{{ professor.name }}{% if professor.email %} · {{ professor.email }}{% endif %}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
     <div class="tm-grid" id="new-perms">
       {% for key, name, icon, start, prefixes in sections %}
       <div class="tm-perm"><b><i class="bi {{ icon }}"></i>{{ name }}</b>
         <select name="perm_{{ key }}" aria-label="{{ name }}">{% for level, said in levels.items() %}<option value="{{ level }}" {{ 'selected' if (level == 'view' and key in ('dashboard', 'candidates', 'classes', 'programs')) or (level == 'none' and key not in ('dashboard', 'candidates', 'classes', 'programs')) }}>{{ said }}</option>{% endfor %}</select></div>
       {% endfor %}
     </div>
-    <button class="ui-btn primary mt-3"><i class="bi bi-person-plus"></i>Add this person</button>
+    <div id="new-rights">
+      <div class="tm-rights-title">Special rights</div>
+      <div class="tm-rights">
+        {% for key, name, icon, prefixes in rights %}<label class="tm-right"><input type="checkbox" name="right_{{ key }}" value="1"><i class="bi {{ icon }}"></i>{{ name }}</label>{% endfor %}
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap mt-3">
+      <button class="ui-btn primary"><i class="bi bi-person-plus"></i>Add this person</button>
+      <button class="ui-btn" name="preset" value="all" id="new-all"><i class="bi bi-unlock"></i>Add with access to everything</button>
+    </div>
   </form>
 </section>
+<script>
+  document.querySelectorAll("[data-new-role]").forEach(radio => radio.addEventListener("change", () => {
+    const role = document.querySelector("[data-new-role]:checked").value;
+    document.getElementById("new-perms").hidden = role !== "staff";
+    document.getElementById("new-rights").hidden = role !== "staff";
+    document.getElementById("new-all").hidden = role !== "staff";
+    const prof = document.getElementById("new-prof"); if (prof) prof.hidden = role !== "professor";
+  }));
+</script>
 {% endblock %}

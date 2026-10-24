@@ -1,0 +1,37 @@
+{% import "_ui_macros.html" as ui %}
+{# What deleting a professor will do, shown in the Classes page's dialog before anything is changed. #}
+<form method="post" action="/classes/professors/{{ professor.id }}/delete">
+  <div class="modal-body">
+    <div class="pd-who">
+      {{ ui.avatar(professor.name, 52) }}
+      <div><b data-no-i18n>{{ professor.name }}</b><small>{{ professor.specialties or 'No specialty set' }}</small></div>
+    </div>
+    {% if rows %}
+    <div class="pd-label">{{ 'Their class: who teaches it now?' if rows | length == 1 else 'Their classes: who teaches them now?' }}</div>
+    {% for row in rows %}
+    {% set group = row.class %}
+    <div class="pd-class">
+      <span><b data-no-i18n>{{ group.name }}</b><small>{{ group.program.name if group.program else 'No program' }}{% if group.status.value == 'ongoing' %} · <span>running</span>{% endif %}</small></span>
+      <select name="give_{{ group.id }}" class="form-select form-select-sm" aria-label="Who teaches it now">
+        <option value="">Nobody for now: it waits for a professor</option>
+        {% for other in row.successors %}<option value="{{ other.id }}" data-no-i18n>{{ other.name }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if not row.successors %}<div class="pd-warn">No other professor teaches this program and is free at its hours: it will wait for one.</div>{% endif %}
+    {% endfor %}
+    <div class="ui-hint">Only professors who teach the program and are free at its hours are offered.</div>
+    {% else %}
+    <div class="pd-quiet"><i class="bi bi-check2-circle"></i><span>No class to hand over: they teach none at the moment.</span></div>
+    {% endif %}
+    <ul class="pd-goes">
+      {% if account %}<li><i class="bi bi-key"></i><span>Their access is removed: they can no longer sign in.</span></li>{% endif %}
+      {% if questions %}<li><i class="bi bi-inbox"></i><span>{{ questions }} <span>candidate question(s) waiting for their answer come back to your inbox.</span></span></li>{% endif %}
+      <li><i class="bi bi-trash3"></i><span>Their absences, availabilities and conversation in the team chat are deleted.</span></li>
+      <li><i class="bi bi-star"></i><span>Finished classes keep their name, and the reviews about them stay.</span></li>
+    </ul>
+  </div>
+  <div class="modal-footer">
+    <button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button>
+    <button class="ui-btn primary pd-go"><i class="bi bi-trash3"></i>Delete for good</button>
+  </div>
+</form>

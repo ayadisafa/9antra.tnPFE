@@ -459,25 +459,136 @@ def send(db: Session, quiz: Quiz, base_url: str, *, manual: bool = True):
     return message
 
 
+# ------------------------------------------------------------------
+# When it goes: some days before the first session (7 unless the admin changed it), or as soon as they paid
+# ------------------------------------------------------------------
+
+DAYS_BEFORE = 7
+MOST_DAYS_BEFORE = 30
+
+
+def timing(db: Session) -> dict:
+    """{"when": "before" | "paid", "days": how many days before the first session}."""
+    from app.services.settings_service import get_settings
+
+    settings = get_settings(db)
+    when = getattr(settings, "level_check_when", None) or "before"
+    days = getattr(settings, "level_check_days_before", None) or DAYS_BEFORE
+    return {"when": when if when in ("before", "paid") else "before", "days": max(1, min(MOST_DAYS_BEFORE, int(days)))}
+
+
+def set_timing(db: Session, when: str, days) -> dict:
+    from app.services.settings_service import get_settings
+
+    try:
+        days = int(days)
+    except (TypeError, ValueError):
+        days = DAYS_BEFORE
+    settings = get_settings(db)
+    settings.level_check_when = when if when in ("before", "paid") else "before"
+    settings.level_check_days_before = max(1, min(MOST_DAYS_BEFORE, days))
+    db.commit()
+    return timing(db)
+
+
+def goes_on(registration: Registration, plan: dict) -> datetime | None:
+    """The day (local time) this candidate's level check goes by itself; None while their class has no date."""
+    if plan["when"] == "paid":
+        return registration.registration_date or datetime.utcnow()
+    class_group = registration.class_group
+    if class_group is None or class_group.start_date is None:
+        return None
+    return class_group.start_date - timedelta(days=plan["days"])
+
+
+def _can_send_alone(db: Session) -> str | None:
+    """The public address when a level check can go by itself; None when it cannot."""
+    from app.services import email_threads, settings_service, weekly_questions     # here: they import a lot
+
+    base_url = settings_service.public_base_url(db)
+    if (email_templates.is_on(db, "quiz_invitation") and email_threads.smtp_configured()
+            and not weekly_questions.is_local_address(base_url)):
+        return base_url
+    return None
+
+
 def after_payment(db: Session, registration: Registration) -> Quiz | None:
-    """A candidate has just paid in full: their level check is prepared and,
-    when that email is switched on and the link can be opened from outside
-    this computer, sent to them at once."""
+    """A candidate has just paid in full: their level check is prepared. It goes at once when the admin chose
+    "as soon as they paid", or when their class starts within the chosen days; otherwise send_due sends it on its day.
+    It only goes by itself when that email is switched on and the link can be opened from outside this computer."""
     if not can_have_one(registration) or not before_start(registration):
         return None
     quiz = prepare(db, registration)
     if quiz.sent_at is not None or quiz.completed_at is not None:
         return quiz
-    from app.services import email_threads, settings_service, weekly_questions     # here: they import a lot
+    from app.services.schedule_utils import local_now
 
-    base_url = settings_service.public_base_url(db)
-    if (
-        email_templates.is_on(db, "quiz_invitation")
-        and email_threads.smtp_configured()
-        and not weekly_questions.is_local_address(base_url)
-    ):
+    day = goes_on(registration, timing(db))
+    base_url = _can_send_alone(db)
+    if base_url and day is not None and day <= local_now():
         send(db, quiz, base_url, manual=False)
     return quiz
+
+
+def send_due(db: Session, now_local: datetime | None = None, limit: int = 20) -> int:
+    """The level checks whose day has come (some days before the class starts): sent, once. Returns how many went."""
+    from app.services.schedule_utils import local_now
+
+    base_url = _can_send_alone(db)
+    if not base_url:
+        return 0
+    now_local = now_local or local_now()
+    plan = timing(db)
+    sent = 0
+    query = db.query(Registration).filter(Registration.payment_status == PaymentStatus.PAID)
+    if plan["when"] == "before":
+        query = query.filter(Registration.class_group_id.isnot(None))
+    for registration in query.all():
+        if sent >= limit:
+            break
+        if not can_have_one(registration) or not before_start(registration):
+            continue
+        day = goes_on(registration, plan)
+        if day is None or day > now_local:
+            continue
+        quiz = prepare(db, registration)
+        if quiz.sent_at is not None or quiz.completed_at is not None:
+            continue
+        candidate = registration.candidate
+        if candidate is None or not candidate.email:
+            continue
+        tried = _TRIED.get(quiz.id)
+        if tried and tried > datetime.utcnow() - timedelta(hours=6):
+            continue                    # it failed a moment ago (email not working): tried again later, not every 10 minutes
+        _TRIED[quiz.id] = datetime.utcnow()
+        sent += email_templates.delivered(send(db, quiz, base_url, manual=False))
+    return sent
+
+
+_TRIED: dict[str, datetime] = {}
+
+
+def timing_view(db: Session, now_local: datetime | None = None) -> dict:
+    """What the level checks page says about when they go, with the next ones to go."""
+    from app.services.schedule_utils import local_now
+
+    plan = timing(db)
+    now_local = now_local or local_now()
+    coming = []
+    if plan["when"] == "before":
+        for registration in (db.query(Registration).filter(Registration.payment_status == PaymentStatus.PAID,
+                                                           Registration.class_group_id.isnot(None)).all()):
+            if not can_have_one(registration) or not before_start(registration):
+                continue
+            quiz = current(db, registration.id)
+            if quiz is not None and (quiz.sent_at is not None or quiz.completed_at is not None):
+                continue
+            day = goes_on(registration, plan)
+            if day is not None and day > now_local:
+                coming.append({"day": day, "name": registration.candidate.full_name if registration.candidate else "",
+                               "class": registration.class_group.name})
+    coming.sort(key=lambda item: item["day"])
+    return {**plan, "coming": coming[:5], "coming_count": len(coming), "can_send": _can_send_alone(db) is not None}
 
 
 def after_payment_task(registration_id: str) -> None:

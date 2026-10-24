@@ -49,7 +49,16 @@ def _has(text: str, words: str) -> bool:
     return re.search(r"(?<![a-z0-9])(?:" + words + r")(?![a-z0-9])", text) is not None
 
 
+from contextvars import ContextVar
+
+# The language chosen in the assistant's window for this answer (en, fr, ar, tn), or None: the question's own.
+_CHOSEN: ContextVar[str | None] = ContextVar("assistant_language", default=None)
+
+
 def _french(message: str) -> bool:
+    chosen = _CHOSEN.get()
+    if chosen:
+        return chosen != "en"         # Arabic and Tunisian: the guide answers in them; the figures come in French
     words = set(re.findall(r"[a-zàâçéèêëîïôûùüÿœ]+", (message or "").lower()))
     return len(words & _FRENCH) >= 2 or _has(_plain(message), "combien|comment|quels?|quelles?|paiement|classes? en attente|formateurs?|"
                                                               "envoie\\w*|envoyer|toutes|formations|svp|stp|bonjour|merci|donne moi|montre moi")
@@ -372,6 +381,43 @@ def _candidate(db: Session, fr: bool, candidate: Candidate) -> dict:
 
 # How to do something here: (words that ask for it, the answer, the page).
 _HOW = [
+    (r"(add|ajouter|create|creer) (a |an |un |une )?(person|user|team member|membre|utilisateur|staff|admin|account|compte|professor|prof)\w*|access|acces|permissions?|droits?|give (him|her|them) (access|everything)|grant",
+     "Settings → Team and access: “Add a person” (team member, admin, or a professor's own account). For a team member, choose for each part "
+     "Not shown / Can look / Can change, tick special rights (manage the team, the email/WhatsApp/SMS accounts, backups), or “Give everything”. "
+     "Their name, email and phone can be changed there too; it applies at once.", ("Team and access", "/settings/team")),
+    (r"team chat|messages? (to|with) (the )?(professors?|team)|ecrire (a|aux) (profs?|formateurs?|equipe)|write to (a |the )?(professor|team)",
+     "Inbox → Team: choose someone, write once, tick how it goes (in the application, email, WhatsApp, SMS). Their answers come back into the same "
+     "conversation; the assistant shows the answer it found.", ("Team chat", "/inbox/team")),
+    (r"payment proofs?|preuves? de paiement|receipts?|recus?|factures?|virements?|rib",
+     "Receipts candidates send (email, WhatsApp) are read on the Payments page under “Payment proofs to check”: amount, bank, RIB, date, reference "
+     "and checks. You confirm (the payment is recorded) or refuse. Write the centre's RIB in Settings (WhatsApp card) so it is checked against it.",
+     ("Payment proofs", "/payments#proofs")),
+    (r"videos?|watch|regarder|voir les videos",
+     "Programs → Videos: every week's video of the programs and the website's videos, played here. A program's page plays its own.",
+     ("Videos", "/programs/videos")),
+    (r"(how|which way|par ou|comment) (do )?(messages?|reminders?|emails?) (go|are sent|partent)|sms or whatsapp|whatsapp or (email|sms)|channel|canal",
+     "At the top of the Inbox: “Messages go by” (let the system choose, email, WhatsApp or SMS) and “If it does not work, the next way”.",
+     ("Inbox", "/inbox#ways")),
+    (r"sms",
+     "SMS go from an Android phone with the free app SMS Gateway for Android (Settings → SMS). Without it, each SMS waits in the inbox with a button "
+     "that opens your phone's messages, written.", ("SMS settings", "/settings#sms")),
+    (r"welcome|bienvenue|message (after|apres) (registration|inscription)",
+     "Inbox → Email templates → “Welcome, just registered”: its words, and its switch. It goes once, as soon as someone registers.",
+     ("Email templates", "/inbox/templates?key=welcome")),
+    (r"(payment )?reminder (after|delay|timing|hours)|rappel de paiement|24 ?h",
+     "Inbox → Email templates → “Payment reminder”: change its words and “Goes … hours after registering”.",
+     ("Payment reminder", "/inbox/templates?key=payment_reminder")),
+    (r"reword|reformul\w*|tunisian|tounsi|derja",
+     "In the inbox reply box: write a few words, even in Tunisian, choose “in French / in English” and press Reformulate; or tick “Reword and send at once”.",
+     ("Inbox", "/inbox")),
+    (r"reviews?|avis|opinion|feedback (of|from) (the )?candidates",
+     "When a class finishes, each candidate is asked once what they thought (email, WhatsApp or SMS). Their reviews are on the class page, the program's "
+     "page and their file; “Ask for reviews” sends it again to a class.", ("Classes", "/classes/")),
+    (r"iphone|android|home screen|ecran d accueil|phone app|application mobile|mobile app",
+     "On How it is working → On your phone: start the application for the phone, open the address in Safari (iPhone) or Chrome, then Share → "
+     "“Add to Home Screen”.", ("On your phone", "/system#phone")),
+    (r"level check (timing|when)|test de niveau (quand|timing)|days before",
+     "Level checks page → “It goes … days before the first session” (or as soon as they pay).", ("Level checks", "/quiz/all#timing")),
     (r"backups?|sauvegardes?|data (is )?(safe|lost|loss|security|protected)|securite des donnees|perdre (les|mes) donnees|copies? of the data",
      "The whole database and the uploaded files are copied once a day, each copy is checked, and two weeks of them are kept. "
      "On “How it is working”, under “Your data is protected”: copy now, download a copy, and give a second folder on another disk.", ("Your data", "/system#safety")),
@@ -452,10 +498,13 @@ def _knowledge(db: Session, message: str) -> dict | None:
         website = (entry.source_key or "").startswith("website:")
         text = entry.content.strip()
         text = text if len(text) <= 900 else text[:900].rsplit(" ", 1)[0] + "…"
+        from app.services import chatbot_sources
+
         return {
             "reply": (f"{entry.title}\n" if not taught else "") + text,
             "links": [_link("9antra.tn", WEBSITE)] if website else [_link("What the assistant knows", "/inbox/knowledge")],
             "source": "taught" if taught else "website" if website else "knowledge",
+            "sources": [chatbot_sources.of_entry(db, entry)],
         }
     return None
 
@@ -467,6 +516,11 @@ def _model(db: Session, message: str, fr: bool) -> dict | None:
     if not email_assistant.model_available():
         return None
     facts = _counts(db, False)["reply"]
+    from app.services import chatbot_sources
+
+    found = chatbot_sources.grounded(db, message, fr, facts)    # from the closest extracts, saying which it used
+    if found:
+        return found
     data = email_assistant.llm_json(
         "You are the assistant of a training centre's management application. Answer in one or two short sentences, in "
         + ("French" if fr else "English") + ". Use only the facts given. If they do not answer the question, reply exactly: UNKNOWN. "
@@ -477,7 +531,8 @@ def _model(db: Session, message: str, fr: bool) -> dict | None:
     reply = str((data or {}).get("reply") or "").strip()
     if not reply or "UNKNOWN" in reply.upper() or len(reply) < 8:
         return None
-    return {"reply": reply, "links": [], "source": "model"}
+    return {"reply": reply, "links": [], "source": "model",
+            "sources": [{"label": "The application's figures"}, {"label": "Written by the local model: check it"}]}
 
 
 SUGGESTIONS = [
@@ -494,8 +549,86 @@ def _earlier_questions(message: str, history: list[dict] | None) -> list[str]:
     return asked[-6:]
 
 
-def answer(db: Session, message: str, history: list[dict] | None = None) -> dict:
+def answer(db: Session, message: str, history: list[dict] | None = None, *, user=None, lang: str | None = None) -> dict:
+    """The assistant's answer, in the language chosen in its window (`lang`) or else the language of the question."""
+    token = _CHOSEN.set(lang if lang in ("en", "fr", "ar", "tn") else None)
+    try:
+        return _answer_now(db, message, history, user=user)
+    finally:
+        _CHOSEN.reset(token)
+
+
+def _answer_now(db: Session, message: str, history: list[dict] | None = None, *, user=None) -> dict:
+    """The assistant's answer to one message, always with where it comes from (`sources`), and the resources about it."""
+    from app.services import chatbot_send, chatbot_sources
+
+    may_send = user is None or getattr(user, "is_admin", False) or (getattr(user, "permissions", None) or {}).get("assistant") == "edit"
+    from app.services import chatbot_actions
+
+    chatbot_actions.may_send.set(bool(may_send) and user is not None)          # a program's PDF goes at once only for them
+    found = None
+    # “Renvoie le message de bienvenue à Fares demain à 9h”, “3awed ab3ath el rappel l Fares ghodwa”: something the
+    # application sends by itself, sent again (asks what, whom or when when it is missing).
+    from app.services import resends
+
+    again = resends.from_words(db, message)
+    if again is None and history and any(text in (history[-1].get("content") or "") for text in resends.ASK_WHEN):
+        earlier = next((item.get("content") for item in reversed(history[:-1]) if item.get("role") == "user"), "")
+        again = resends.from_words(db, f"{earlier} {message}") if earlier else None
+    if again is not None and may_send and user is not None:
+        from app.services.settings_service import public_base_url
+
+        found = resends.answer(db, again, resends.in_french(message),
+                               author=getattr(user, "name", None) or "Admin", base_url=public_base_url(db))
+    if found is None and not re.match(r"\s*(how|comment|where|ou)\b", _plain(message)) and not re.search(r"\bpdf\b", _plain(message)):
+        found = chatbot_send.handle(db, message, _french(message), author=getattr(user, "name", None) or "Admin", allowed=may_send)
+    if found is None and re.match(r"\s*(resources?|ressources?|liens?|links?|documents?|videos?)\b", _plain(message)):
+        found = {"reply": ("Voici ce que j'ai trouvé à lire, regarder ou télécharger :" if _french(message)
+                           else "Here is what I found to read, watch or download:"), "links": [], "source": "system",
+                 "sources": [{"label": "The programs, the videos, 9antra.tn and what the assistant knows"}]}
+        found["resources"] = chatbot_sources.resources_for(db, message, found, limit=10)
+        if not found["resources"]:
+            found["reply"] = "Je n'ai rien trouvé à ce sujet." if _french(message) else "I found nothing about that."
+    from app.services import completeness, howto
+
+    # Tunisian and Arabic: their words are also read in French (“kifech nzid prof” = “comment ajouter prof”).
+    understood = howto.understood(message)
+    if found is None and completeness.asks(understood):
+        found = completeness.answer(db, user, _CHOSEN.get() or howto.language_of(message))     # what is still missing, and where
+    if found is None:
+        from app.services import registration_form
+
+        # “How does someone register?”, “the registration link”: the form (not “I want to register Ali…”, an order).
+        if registration_form.asks_how(understood) and not re.search(r"\b(je veux|je voudrais|i want|i would like)\b", _plain(message)):
+            found = howto.answer(db, message, user, lang=_CHOSEN.get())
+    asked = r"\s*(how|comment|where|ou|can i|puis je|je veux|i want|what do i do|que faire|kifech|kifeh|kifach|kif|win|chnowa|chnoua)\b"
+    from app.services import derja
+
+    if found is None and (re.match(asked, _plain(understood)) or re.match(asked, _plain(derja.to_french(message)))):
+        if howto.task_for(message, user, by_meaning=False) is not None:      # the word rules: “how much …” is about the records
+            found = howto.answer(db, message, user, lang=_CHOSEN.get())       # the steps, for what this person may do, in the language asked
+    if found is None:
+        # Asked in Arabic or Tunisian (or chosen so): a question about the programs gets their facts in that language.
+        from app.services import prospects
+
+        spoken = _CHOSEN.get() or howto.language_of(message)
+        if spoken in ("ar", "tn"):
+            facts = prospects.reply_for(db, message, spoken, registered=True)
+            if facts is not None:
+                found = {"reply": facts["text"], "links": [], "source": "knowledge", "lang": spoken,
+                         "sources": [{"label": "The programs in the application"}]}
+    found = found or _answer(db, understood, history, user=user)
+    if not found.get("sources"):
+        found["sources"] = chatbot_sources.for_answer(db, found)
+    if "resources" not in found:
+        found["resources"] = chatbot_sources.resources_for(db, message, found)
+    return found
+
+
+def _answer(db: Session, message: str, history: list[dict] | None = None, user=None) -> dict:
     """The assistant's answer to one message; `history` lets it go on from the question before ("send it to Fares")."""
+    from app.services import chatbot_sources
+
     text = _plain(message)
     fr = _french(message)
     if not text:
@@ -547,6 +680,9 @@ def answer(db: Session, message: str, history: list[dict] | None = None) -> dict
         return _safety(db, fr)
     if _has(text, "reminders? (planned|scheduled|to come|waiting)|(planned|scheduled|which|what) reminders?|rappels? (prevus|programmes|planifies)|quels rappels"):
         return data.planned_reminders(db)
+    found = chatbot_sources.about(db, message, fr)      # who 9antra is, where, how to reach it
+    if found:
+        return found
     found = _how(text)
     if found:
         return found
@@ -590,6 +726,9 @@ def answer(db: Session, message: str, history: list[dict] | None = None) -> dict
         return _inbox(db, fr)
     if _has(text, "classes?"):
         return _classes(db, fr)
+    found = chatbot_sources.program_content(db, message, program, fr)      # what a program teaches, week by week
+    if found:
+        return found
     if program is not None and _has(text, "price|prix|cost\\w*|combien|tarif|how much|how long|long|length|combien de temps|duration|duree|weeks?|semaines?|about|tell me|c est quoi|what is"):
         return _programs(db, fr, program)
     if program is None and _has(text, "price list|prices list|liste des prix|liste des tarifs|all (the |our )?prices|tous les (prix|tarifs)|tarifs (des|de nos) formations"):
@@ -603,6 +742,12 @@ def answer(db: Session, message: str, history: list[dict] | None = None) -> dict
         return _programs(db, fr, None)
     if _has(text, "how many|combien|number of|nombre|overview|summary|resume"):
         return _counts(db, fr)
+    from app.services import howto
+
+    task = howto.meaning_task(message, user, margin=0.08)       # a how-to said in other words or another language
+    if task is not None:
+        title, steps = howto.in_language(task, _CHOSEN.get() or howto.language_of(message))
+        return howto.as_steps(title, steps, task["page"], _CHOSEN.get() or howto.language_of(message))
     found = data.search(db, text)          # anything the records mention, before asking the model
     if found:
         return found

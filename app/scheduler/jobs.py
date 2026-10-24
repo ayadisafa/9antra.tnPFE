@@ -328,8 +328,14 @@ def weekly_questions_tick():
     try:
         if email_threads.smtp_configured():
             weekly_questions.send_due(db, settings_service.public_base_url(db))
+            # Each session that ended some hours ago: its candidates are asked what they learnt in it.
+            from app.services import session_check
+
+            session_check.send_due(db, settings_service.public_base_url(db))
             # Classes that just finished: their candidates are asked what they thought.
             program_feedback.send_due(db)
+            # Level checks whose day has come (7 days before the class starts, unless the admin changed it).
+            level_check.send_due(db)
             # A level check left unanswered for two days: one reminder, never a second.
             level_check.remind_due(db, settings_service.public_base_url(db))
             # A session starts within the hour: each candidate gets their own link to its meeting, once.
@@ -436,6 +442,54 @@ def reminders_tick():
         db.rollback()
         logger.exception("Sending the planned reminders failed.")
         system_status.problem("reminders", exc)
+    try:
+        # Professors reminded to add the resources of a week before it is taught (once per class and week).
+        from app.services import resource_reminders
+
+        resource_reminders.send_due(db, base_url=settings_service.public_base_url(db))
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Reminding the professors of their resources failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # A professor given a class is told to prepare it (once per class and professor).
+        from app.services import resends
+
+        resends.run_due(db, settings_service.public_base_url(db))      # what the admin reset, at the time they chose
+        from app.services import professor_announcements
+
+        professor_announcements.send_due(db, base_url=settings_service.public_base_url(db))
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Telling the professors of their new classes failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # Candidates' questions their professor has not answered: the professor after a day, the admin after two.
+        from app.services import course_questions
+
+        course_questions.remind_due(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Reminding the professors failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # The welcome message to those who just registered (see welcome).
+        from app.services import welcome
+
+        welcome.send_due(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Sending the welcome messages failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # The progress report by email, on the rhythm the admin chose (see report_email).
+        from app.services import report_email
+
+        report_email.send_if_due(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Sending the progress report failed.")
+        system_status.problem("reminders", exc)
     finally:
         db.close()
 
@@ -484,6 +538,10 @@ def market_tick():
         outcome = market.read_if_due(db)
         if outcome is not None and outcome["state"] == "unreachable":
             system_status.problem("market", "The job boards could not be reached. It will be tried again in an hour.")
+        # The programs' recommendations, from the offers just read and the developers' community: once a day.
+        from app.services import recommender
+
+        recommender.refresh_if_due(db)
     except Exception as exc:
         db.rollback()
         logger.exception("Reading the job market failed.")
@@ -558,7 +616,30 @@ WATCHED = {
 RUN_NOW = {"mailbox": mailbox_tick, "classes": class_lifecycle_tick, "website": website_now, "answers": answers_tick,
            "market": market_now, "backup": backup_now, "translations": translations_tick}
 
+def knowledge_tick():
+    """What the assistant knows, rebuilt from the records (programs, classes, website, posts, course files): only what
+    changed is written again. The assistant keeps up to date by itself."""
+    db: Session = SessionLocal()
+    try:
+        knowledge_service.sync_knowledge(db)
+    except Exception:
+        db.rollback()
+        logger.exception("Knowledge refresh failed.")
+    finally:
+        db.close()
+
+
 def start():
+    scheduler.add_job(
+        knowledge_tick,
+        "interval",
+        minutes=30,
+        next_run_time=datetime.now() + timedelta(minutes=3),
+        max_instances=1,
+        coalesce=True,
+        id="knowledge_tick",
+        replace_existing=True,
+    )
     scheduler.add_job(
         check_payments,
         "interval",

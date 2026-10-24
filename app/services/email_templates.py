@@ -37,6 +37,8 @@ logger = logging.getLogger(__name__)
 
 # (variable, what it shows, sample used when there is no candidate to preview)
 VARIABLES = [
+    ("professor_contact", "“You can also ask your professor…” with their email (paid candidates in a class)",
+     "Vous pouvez aussi poser vos questions à votre formateur, Nour Ben Youssef (nour@example.com)."),
     ("first_name", "First name", "Amira"),
     ("candidate_name", "Full name", "Amira Ben Salem"),
     ("program_name", "Program", "DevOps"),
@@ -155,13 +157,15 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
           closing: str | None = None, style: str = "brand", rows=None, topics=None,
           image: EmailFile | None = None, image_position: str = "top", attachments=(),
           cta_label: str | None = None, cta_url: str | None = None,
-          lang: str = "fr", browser: bool = False) -> dict:
+          lang: str = "fr", browser: bool = False, signed: bool = True) -> dict:
     """One candidate's email from a template: subject, plain text, HTML and files.
 
     `browser=True` makes the photo point at this server, for previews; an
     email that is sent carries the photo inside itself instead.
     """
     brand = branding(get_settings(db), lang)
+    if not signed:
+        brand = {**brand, "signature": ""}      # the text signs itself (the welcome written by the admin)
     final_subject = _one_line(personalize(subject, context))
     # A detail with no value must not leave "Bonjour ," or a double space behind.
     final_body = _SPACES.sub(" ", _LONELY_COMMA.sub(r"\1,", personalize(body, context))).strip()
@@ -190,6 +194,8 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
     )
     return {
         "subject": final_subject,
+        "title": final_title,
+        "signature": brand["signature"],
         "text": text,
         "html": html_body,
         "inline": [image] if image is not None else [],
@@ -245,6 +251,7 @@ class AutoEmail:
     cta_label: str = ""
     cta_url: str = ""
     extra: tuple = ()           # (variable, what it shows, sample) known only to this email
+    signed: bool = True         # False: the text carries its own sign-off, the usual signature is not added
 
 
 _CLASS_CLOSING = (
@@ -252,6 +259,28 @@ _CLASS_CLOSING = (
 )
 
 AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
+    AutoEmail(
+        key="welcome", group="Registration and class",
+        name="Welcome, just registered",
+        when="Sent as soon as someone registers (the form or added by you), once per candidate.",
+        subject="Bienvenue chez 9antra — {program_name}",
+        title="Bienvenue chez 9antra",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Summer Camp (Formation + Stage + Encadrement)\n\n"
+            "Contact: 58840064 (Call or WhatsApp)\n\n"
+            "Notre équipe est là pour vous assister à chaque étape du processus.\n\n"
+            "Pour plus d'information:\n"
+            "https://drive.google.com/file/d/1pfE6BrUoRndWB4hRuulPIQ1lDQ-MyJ9P/view?usp=sharing"
+        ),
+        closing=(
+            "Cordialement,\n\n"
+            "L'équipe 9antra.tn - The Bridge\n"
+            "Les Berges du Lac, Tunis & Sahloul Sousse\n"
+            "Mobile: +216 58 840 064"
+        ),
+        signed=False,
+    ),
     AutoEmail(
         key="enrollment", group="Registration and class",
         name="Registration confirmed",
@@ -309,25 +338,32 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         name="Reminder before the first session",
         when="Sent 7, 3 and 1 day before the first session (each class sets its own days), "
              "and when you click “Remind now”.",
-        subject="Rappel J-{days_left} : « {program_name} » démarre {when}",
-        title="Votre formation démarre {countdown}",
+        subject="J-{days_left} · {hype_title} — {program_name}",
+        title="{hype_title}",
         body=(
             "Bonjour {candidate_name},\n\n"
-            "Votre formation « {program_name} » démarre {countdown}.\n\n"
-            "Votre première séance a lieu {when}. Votre présence est attendue."
+            "{hype_line}\n\n"
+            "**Votre première séance : {when}.**\n\n"
+            "[box gold]\n"
+            "Le conseil du jour : {prep_tip}"
         ),
-        closing="Merci de vous connecter ou de vous présenter 10 minutes avant le début de la séance.",
+        closing="Toute l'équipe a hâte de vous accueillir. À très vite !",
         details=True,
         extra=(
             ("days_left", "Days left before the first session", "3"),
             ("countdown", "The same, in words", "dans 3 jours"),
             ("when", "Date and time of the first session, in words", "le samedi 24 octobre 2026 à 18:00"),
+            ("hype_title", "A headline that changes with the days left", "J-3 : on se prépare ensemble !"),
+            ("hype_line", "An opening line that changes with the days left",
+             "Plus que trois jours avant votre première séance de « DevOps ». C'est le moment de préparer le terrain !"),
+            ("prep_tip", "A tip that changes with the days left",
+             "préparez votre ordinateur (bien chargé), un cahier et deux ou trois questions : la première séance passe vite !"),
         ),
     ),
     AutoEmail(
         key="payment_reminder", group="Payment",
         name="Payment reminder",
-        when="Sent by itself once, 24 hours after a registration that is still unpaid: one email for "
+        when="Sent by itself once, 24 hours (or what you chose) after a registration that is still unpaid: one email for "
              "everything the candidate owes. It is never repeated by itself. After three days without "
              "payment or answer, the dashboard suggests sending it again, and you can change the text first.",
         subject="Rappel de paiement — {program_name}",
@@ -441,23 +477,26 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
     AutoEmail(
         key="next_program_wait", group="Registration and class",
         name="A second program, after the first",
-        when="Sent once to a candidate who pays for a program while they follow another class on the same "
-             "hours: they start the new program when their class ends, and are asked whether that suits them. "
-             "Their answer arrives in the Inbox.",
+        when="Sent once to a candidate who pays for a program while they follow another class: one program at a "
+             "time, so they start the new one in a class some days after their class ends (Settings, Classes), and are "
+             "asked whether that suits them. Their answer arrives in the Inbox.",
         subject="{first_name}, votre formation {program_name} après {current_program} ?",
         title="Une formation après l'autre",
         body=(
             "Bonjour {candidate_name},\n\n"
             "Merci pour votre inscription à « {program_name} ». Vous suivez déjà « {current_program} » "
-            "{current_end}, et les deux formations ont lieu au même horaire.\n\n"
-            "Pour que vous puissiez suivre chacune entièrement, nous vous proposons de commencer "
-            "« {program_name} » dès la fin de « {current_program} ».\n\n"
+            "{current_end}.\n\n"
+            "Pour que vous puissiez suivre chacune entièrement, nos candidats suivent une formation à la fois : "
+            "« {program_name} » commencera dans une classe qui démarre environ {gap_days} jours après la fin de "
+            "« {current_program} », avec un formateur disponible à ce moment-là. Vous recevrez sa date et ses "
+            "horaires dès que vous y serez inscrit(e).\n\n"
             "Cela vous convient-il ? Répondez simplement à cet email : oui, ou dites-nous ce que vous préférez."
         ),
         closing="Sans réponse de votre part, votre place est réservée pour la prochaine classe après la fin de votre formation en cours.",
         extra=(
             ("current_program", "The program they follow now", "DevOps"),
             ("current_end", "Until when", "jusqu'au 28 novembre"),
+            ("gap_days", "Days between the two programs", "10"),
         ),
     ),
     AutoEmail(
@@ -481,6 +520,29 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
             ("week_number", "Number of the week", "3"),
             ("week_topic", "What the week was about", "Conteneurs avec Docker"),
             ("questions_count", "How many questions the candidate gets", "5"),
+            ("questions_link", "The candidate's private link to the questions", "https://9antra.tn/learn"),
+        ),
+    ),
+    AutoEmail(
+        key="session_check", group="Quiz",
+        name="After each session: what was learnt",
+        when="Sent to each candidate of a class some hours after each session (24 by default: Settings, Classes), with a few "
+             "questions about what the session covered. Their answers show next to their presence.",
+        subject="{first_name}, qu'avez-vous retenu de la séance du {session_date} ?",
+        title="Votre séance en quelques questions",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "La séance du {session_date} de votre formation « {program_name} » portait sur : **{session_topic}**.\n\n"
+            "Voici {questions_count} questions courtes sur ce qui a été vu. Elles prennent deux minutes et nous aident à "
+            "savoir ce qui est acquis et ce qu'il faut revoir avec votre formateur."
+        ),
+        closing="Ce n'est pas un examen : répondez sans vos notes, le résultat et les explications s'affichent dès l'envoi.",
+        switchable=False,
+        cta_label="Répondre aux questions", cta_url="{questions_link}",
+        extra=(
+            ("session_date", "Day of the session", "24/10"),
+            ("session_topic", "What the session was about", "Conteneurs avec Docker"),
+            ("questions_count", "How many questions the candidate gets", "4"),
             ("questions_link", "The candidate's private link to the questions", "https://9antra.tn/learn"),
         ),
     ),
@@ -527,6 +589,7 @@ class Template:
     cta_url: str = ""
     customized: bool = False
     updated_at: object = None
+    channel: str = "auto"           # auto (as chosen above the inbox) | both (email and WhatsApp) | whatsapp (first)
 
     @property
     def key(self) -> str:
@@ -551,6 +614,7 @@ def _from_row(spec: AutoEmail, row: EmailTemplate | None) -> Template:
         attachment_ids=email_files.parse_ids(row.attachment_ids),
         cta_label=row.cta_label or "", cta_url=row.cta_url or "",
         customized=True, updated_at=row.updated_at,
+        channel=row.channel if row.channel in ("both", "whatsapp") else "auto",     # "email" before 19 Oct meant the same
     )
 
 
@@ -576,7 +640,7 @@ def variables_for(key: str) -> list[tuple[str, str, str]]:
 def save(db: Session, key: str, *, subject: str, body: str, title: str = "", closing: str = "",
          style: str = "brand", show_details: bool = True, is_active: bool = True,
          image_id: str | None = None, image_position: str = "top", attachment_ids=None,
-         cta_label: str = "", cta_url: str = "") -> EmailTemplate:
+         cta_label: str = "", cta_url: str = "", channel: str = "auto") -> EmailTemplate:
     """Keep the admin's version of an automatic email."""
     spec = AUTO_EMAILS[key]
     if not (subject or "").strip() or not (body or "").strip():
@@ -608,6 +672,7 @@ def save(db: Session, key: str, *, subject: str, body: str, title: str = "", clo
     row.attachment_ids = json.dumps([file.id for file in attachments]) if attachments else None
     row.cta_label = (cta_label or "").strip()[:80] or None
     row.cta_url = (cta_url or "").strip()[:500] or None
+    row.channel = channel if channel in ("auto", "both", "whatsapp") else "auto"
     db.flush()
     return row
 
@@ -711,7 +776,31 @@ def _countdown(class_group) -> dict | None:
         when, countdown = f"demain{at_time}", "demain"
     else:
         when, countdown = f"le {format_date_fr(start)}{at_time}", f"dans {days_left} jours"
-    return {"days_left": str(days_left), "when": when, "countdown": countdown}
+    return {"days_left": str(days_left), "when": when, "countdown": countdown, **hype(days_left, class_group)}
+
+
+def hype(days_left: int, class_group=None) -> dict:
+    """What makes a reminder before the first session lively: a headline, a line and a tip for this very day."""
+    program = class_group.program.name if class_group is not None and getattr(class_group, "program", None) else "votre formation"
+    if days_left <= 0:
+        return {"hype_title": "C'est aujourd'hui, on y va !",
+                "hype_line": f"Le grand jour est arrivé : votre aventure « {program} » commence aujourd'hui. Toute l'équipe vous attend !",
+                "prep_tip": "connectez-vous ou arrivez dix minutes avant le début : le premier pas est le plus beau."}
+    if days_left == 1:
+        return {"hype_title": "C'est demain !",
+                "hype_line": f"Demain, vous écrivez la première page de « {program} ». On a tout préparé pour que ce soit un super départ.",
+                "prep_tip": "ce soir, vérifiez votre connexion (ou votre trajet), posez votre matériel près de la porte et dormez bien : demain, on commence fort !"}
+    if days_left <= 3:
+        return {"hype_title": f"J-{days_left} : on se prépare ensemble !",
+                "hype_line": f"Plus que {days_left} jours avant votre première séance de « {program} ». C'est le moment de préparer le terrain !",
+                "prep_tip": "préparez votre ordinateur (bien chargé), un cahier et deux ou trois questions : la première séance passe vite !"}
+    if days_left <= 7:
+        return {"hype_title": "Plus qu'une semaine avant le grand départ !",
+                "hype_line": f"Dans {days_left} jours, votre aventure « {program} » commence. Nous avons hâte de vous rencontrer !",
+                "prep_tip": "bloquez dès maintenant le créneau dans votre agenda et parlez-en autour de vous : on apprend mieux quand on est attendu."}
+    return {"hype_title": f"Plus que {days_left} jours !",
+            "hype_line": f"Votre formation « {program} » approche à grands pas. Gardez la date en tête !",
+            "prep_tip": "notez la date de la première séance dans votre agenda, avec une alarme la veille."}
 
 
 def _likely_registration(key: str, candidate: Candidate) -> Registration | None:
@@ -742,6 +831,10 @@ def computed_values(key: str, registration: Registration | None) -> dict | None:
 # ------------------------------------------------------------------
 # Rendering and sending
 # ------------------------------------------------------------------
+
+# The registration and class emails: a paid candidate is told there that they can ask their professor.
+_PROFESSOR_KEYS = {"enrollment", "class_scheduled", "class_rescheduled", "class_moved", "training_reminder", "session_link"}
+
 
 def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
                 registration: Registration | None = None, values: dict | None = None,
@@ -789,13 +882,24 @@ def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
         "cta_label": template.cta_label, "cta_url": template.cta_url,
     }
     fields.update({name: value for name, value in (overrides or {}).items() if name in fields})
+    closing = template.closing
+    if candidate is not None:
+        context["professor_contact"] = ""
+    if candidate is not None and key in _PROFESSOR_KEYS:
+        # In the registration and class emails, a paid candidate is told they can ask their professor (and the email).
+        from app.services import course_questions
+
+        line = course_questions.professor_line(db, candidate)
+        context["professor_contact"] = line
+        if line and line not in (closing or "") and "{professor_contact}" not in (closing or "") + (template.body or ""):
+            closing = f"{closing}\n\n{line}".strip() if closing else line
     return build(
-        db, context=context, closing=template.closing, style=template.style,
+        db, context=context, closing=closing, style=template.style,
         rows=rows if show_details else None,
         topics=topics if show_details and spec.topics else None,
         image=find_image(db, template.image_id), image_position=template.image_position,
         attachments=email_files.load(db, template.attachment_ids),
-        browser=browser, **fields,
+        browser=browser, signed=spec.signed, **fields,
     )
 
 
@@ -821,16 +925,42 @@ def send(db: Session, key: str, *, registration: Registration | None = None,
     )
     if rendered is None:
         return None
-    message = email_threads.deliver(
-        db, candidate, rendered["subject"], rendered["text"], rendered["html"],
-        kind=key, author="system", registration=registration,
-        files=rendered["files"], inline=rendered["inline"],
-    )
-    if delivered(message):
-        from app.services import whatsapp       # here: whatsapp is not needed to write an email
+    from app.services import channels, whatsapp, whatsapp_inbox     # here: WhatsApp is not needed to write an email
 
-        whatsapp.after_email(db, candidate, key, rendered["text"])
+    channel = template.channel
+    if channel in ("auto", "whatsapp"):
+        # The way chosen above the inbox (or WhatsApp first), and the next one when it does not work.
+        message = channels.deliver(db, candidate, {**rendered, "short": whatsapp_text(rendered)}, kind=key, registration=registration,
+                                   first="whatsapp" if channel == "whatsapp" else None)
+        if channel == "auto" and message is not None and message.channel == "email" and delivered(message):
+            whatsapp.after_email(db, candidate, key, rendered["text"])    # the reminders also on WhatsApp, once a Business number is connected
+        return message
+    has_phone = whatsapp.normalise(candidate.phone) is not None
+    message = None
+    if channel in ("email", "both") or not has_phone:
+        # WhatsApp only, for someone without a usable number: the email still goes, so nobody is left out.
+        message = email_threads.deliver(
+            db, candidate, rendered["subject"], rendered["text"], rendered["html"],
+            kind=key, author="system", registration=registration,
+            files=rendered["files"], inline=rendered["inline"],
+        )
+    if channel in ("both", "whatsapp") and has_phone:
+        texted = whatsapp_inbox.send(db, candidate, whatsapp_text(rendered), kind=key, registration=registration)
+        message = message or texted
+    elif channel == "email" and delivered(message):
+        whatsapp.after_email(db, candidate, key, rendered["text"])    # also on WhatsApp by itself, once a Business number is connected
     return message
+
+
+def whatsapp_text(rendered: dict) -> str:
+    """An automatic email as a WhatsApp message: its title in bold, its text, its button as a link; no signature."""
+    lines = [f"*{rendered.get('title')}*"] if rendered.get("title") else []
+    text = (rendered.get("text") or "").strip()
+    signature = (rendered.get("signature") or "").strip()
+    if signature and text.endswith(signature):
+        text = text[: -len(signature)].rstrip()
+    lines.append(text)
+    return "\n\n".join(line for line in lines if line)
 
 
 def delivered(message: CandidateEmail | None) -> bool:

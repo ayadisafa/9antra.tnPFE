@@ -183,12 +183,15 @@ check("professor: signing in leads to their own space, whatever was asked", resp
 response = prof.get("/teacher")
 check("professor: their space lists their classes only", response.status_code == 200 and "A-DEVOPS-1" in response.text and "A-PYTHON-1" not in response.text and "Hello Rami" in response.text, response.status_code)
 check("professor: the menu is theirs, not the admin's", "My classes" in response.text and "My profile" in response.text and 'href="/candidate/all"' not in response.text and 'href="/inbox"' not in response.text
-      and "messagesDropdown" not in response.text and "assistant-launcher\" id" not in response.text and "/events/stream" not in response.text)
+      and 'id="messagesDropdown"' not in response.text and "assistant-launcher\" id" not in response.text,      # their page is live too (/events/stream, changes only)
+      [name for name, bad in (("my classes", "My classes" not in response.text), ("my profile", "My profile" not in response.text),
+                              ("candidates", 'href="/candidate/all"' in response.text), ("inbox", 'href="/inbox"' in response.text),
+                              ("messages", 'id="messagesDropdown"' in response.text), ("assistant", "assistant-launcher\" id" in response.text)) if bad])
 for path in ("/", "/candidate/all", f"/candidate/{nour.id}", "/programs/all", "/inbox", "/settings", "/classes/", f"/classes/{mine_id}", "/quiz/all"):
     response = prof.get(path, follow_redirects=False)
     check(f"professor: {path.split('/')[1] or 'dashboard'} is closed to them", response.status_code == 303 and response.headers["location"] == "/teacher", (path, response.status_code))
 api = TestClient(main.app, base_url="http://127.0.0.1:8000", cookies={auth.COOKIE: prof.cookies.get(auth.COOKIE)})
-check("professor: the admin's data cannot be fetched either", api.get("/inbox/recent").status_code == 403 and api.get("/admin/api/notifications").status_code == 403 and api.get("/events/stream").status_code == 403
+check("professor: the admin's data cannot be fetched either", api.get("/inbox/recent").status_code == 403 and api.get("/admin/api/notifications").status_code == 403
       and api.post(f"/candidate/{nour.id}/notes", data={"admin_notes": "x"}).status_code == 403 and api.post(f"/classes/{mine_id}/parameters", data={}).status_code == 403)
 check("professor: the course of their class opens", prof.get(f"/classes/{mine_id}/course").status_code == 200 and "My classes" in prof.get(f"/classes/{mine_id}/course").text)
 check("professor: the course of another professor's class does not", prof.get(f"/classes/{other_id}/course", follow_redirects=False).status_code == 303 and api.post(f"/classes/{other_id}/course/1/notes", data={"notes": "x" * 200}).status_code == 403)
@@ -271,7 +274,7 @@ response = admin.post(f"/classes/{mine_id}/parameters", data={**base_form, "capa
 check("parameters: a mistake comes back with the class's name and the reason", "error=A-DEVOPS-1" in response.headers["location"] and "enrolled" in response.headers["location"])
 admin.post(f"/classes/{mine_id}/parameters", data={**base_form, "symbol": "🚀", "color": "#1d4ed8"})
 page = admin.get("/classes/")
-check("classes: the page shows each class with its symbol, places and buttons", page.status_code == 200 and "🚀" in page.text and "cg-seat taken" in page.text and "Parameters" in page.text and f"/classes/{mine_id}/attendance" in page.text and "3 of 24 taken" in page.text)
+check("classes: the page shows each class with its symbol, places and buttons", page.status_code == 200 and "🚀" in page.text and 'class="cg-meter"' in page.text and 'aria-label="Parameters"' in page.text and f"/classes/{mine_id}/attendance" in page.text and "3 of 24 taken" in page.text)
 check("classes: professors show what they teach and how much", "pf-card" in page.text and "Hours / week" in page.text and "98 765 432" in page.text)
 check("classes: the class page shows its symbol and the same form", "🚀" in admin.get(f"/classes/{mine_id}").text and "data-class-parameters" in admin.get(f"/classes/{mine_id}").text)
 

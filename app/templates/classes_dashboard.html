@@ -85,6 +85,23 @@
   .pf-access.off { background:#f4f1f9; color:#5b5670; }
   .pf-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; }
   .pf-foot form { margin:0; }
+  .pf-foot .pf-delete { margin-inline-start:auto; }
+  /* Deleting a professor: who they are, each class and who takes it, what goes with them. */
+  .pd-who { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .pd-who b { display:block; font-size:1rem; color:var(--ink-text); } .pd-who small { display:block; font-size:.76rem; color:var(--muted); }
+  .pd-label { font-size:.72rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#6b6480; margin:4px 0 8px; }
+  .pd-class { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr); gap:10px; align-items:center; padding:9px 12px; border:1px solid var(--border-color); border-radius:14px; margin-bottom:6px; }
+  .pd-class b { display:block; font-size:.86rem; color:var(--ink-text); } .pd-class small { display:block; font-size:.72rem; color:var(--muted); }
+  .pd-class select { border-radius:10px; }
+  .pd-warn { font-size:.74rem; color:#9a3412; background:var(--gold-subtle); border-radius:10px; padding:6px 10px; margin:-2px 0 8px; }
+  .pd-quiet { display:flex; gap:8px; align-items:center; font-size:.82rem; color:#4d4863; background:#faf8fd; border-radius:12px; padding:10px 12px; }
+  .pd-quiet i { color:var(--mint); }
+  .pd-goes { list-style:none; padding:0; margin:14px 0 0; display:grid; gap:6px; }
+  .pd-goes li { display:flex; gap:9px; align-items:flex-start; font-size:.8rem; color:#4d4863; }
+  .pd-goes i { color:#a79fbd; margin-top:1px; }
+  .pd-go { background:#be123c !important; border-color:#be123c !important; color:#fff !important; }
+  .pd-go:hover { background:#9f1239 !important; }
+  @media (max-width: 575px) { .pd-class { grid-template-columns:1fr; } }
 
   .wk-grid { display:grid; grid-template-columns:repeat(7, minmax(118px, 1fr)); gap:8px; overflow-x:auto; padding-bottom:4px; }
   .wk-day { background:#faf8fd; border-radius:14px; padding:8px; min-height:120px; }
@@ -101,6 +118,25 @@
   .dc-card { border:1px solid var(--border-color); border-radius:16px; padding:14px; margin-bottom:10px; background:#fff; }
   .dc-card .form-select, .dc-card .form-control { border-radius:10px; font-size:.82rem; border-color:var(--border-color); }
   @media (max-width: 575px) { .cg-grid, .pf-grid { grid-template-columns:1fr; } }
+
+  /* Clearer class cards */
+  .cg-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; overflow-wrap:normal; font-size:1rem; }
+  .cg-top .cg-status { margin:0 0 5px; align-self:auto; font-size:.64rem; padding:3px 9px; }
+  .cg-prof { display:inline-flex; align-items:center; gap:8px; }
+  .cg-prof .ui-avatar { flex:none; }
+  .cg-noprof { display:inline-flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .cg-noprof .ui-chip { background:#ffe4e6; color:#be123c; }
+  .cg-noprof button { border:0; background:none; color:var(--primary-berry); font-weight:700; font-size:.76rem; padding:0; text-decoration:underline; text-underline-offset:2px; }
+  .cg-meter { height:9px; border-radius:99px; background:#ece8f3; overflow:hidden; }
+  .cg-meter span { display:block; height:100%; border-radius:99px; background:linear-gradient(90deg, var(--tone), color-mix(in srgb, var(--tone) 65%, #fff)); transform-origin:left; animation:cgFill .8s ease both; }
+  @keyframes cgFill { from { transform:scaleX(0); } }
+  .cg-foot { gap:6px; }
+  .cg-icon { width:34px; height:34px; border-radius:11px; display:inline-grid; place-items:center; border:1px solid var(--border-color); background:#fff; color:#5b5670; text-decoration:none; transition:border-color .15s ease, color .15s ease, background-color .15s ease; }
+  .cg-icon:hover { border-color:var(--tone); color:var(--tone); }
+  .cg-icon.danger:hover { border-color:#e11d48; color:#e11d48; background:#fff1f2; }
+  .cg-card { border-top:4px solid var(--tone); }
+  .cg-card.is-hold { border-top-color:var(--gold-dark); }
+  @media (prefers-reduced-motion: reduce) { .cg-meter span { animation:none; } }
 </style>
 {% endblock %}
 
@@ -124,11 +160,13 @@
   </div>
 </div>
 
+{% set nobody_teaches = coverage | selectattr('nobody') | list %}
 <div class="ui-stats mb-3" id="live-classes-kpis" data-live-region>
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-play-circle-fill"></i></div><div><div class="ui-stat-num">{{ counts.ongoing }}</div><div class="ui-stat-label">Running</div></div></div>
   <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ counts.not_started }}</div><div class="ui-stat-label">Not started</div></div></div>
   <div class="ui-stat {{ 't-red' if counts.on_hold else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-pause-circle-fill"></i></div><div><div class="ui-stat-num">{{ counts.on_hold }}</div><div class="ui-stat-label">On hold: cannot start</div></div></div>
   <div class="ui-stat {{ 't-gold' if pending_registrations else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-person-plus"></i></div><div><div class="ui-stat-num">{{ pending_registrations | length }}</div><div class="ui-stat-label">Paid, waiting for a class</div></div></div>
+  <a class="ui-stat {{ 't-red' if nobody_teaches else 't-mint' }}" href="/classes/?tab=professors#coverage" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-person-exclamation"></i></div><div><div class="ui-stat-num">{{ nobody_teaches | length }}</div><div class="ui-stat-label">Programs without a teacher</div></div></a>
 </div>
 
 <div class="cl-tabs" id="classesTabs" role="tablist">
@@ -163,15 +201,15 @@
                  data-search="{{ (cls.name ~ ' ' ~ (cls.program.name if cls.program else '') ~ ' ' ~ (cls.professor_name or '') ~ ' ' ~ (cls.room or '')) | lower }}">
           <div class="cg-top">
             <div class="cg-symbol" aria-hidden="true">{{ look.symbol }}</div>
-            <div style="min-width:0;">
-              <a class="cg-name" href="/classes/{{ cls.id }}">{{ cls.name }}</a>
+            <div style="min-width:0; flex:1;">
+              <span class="cg-status">{% if info.status == 'ongoing' %}<span class="pulse"></span>{% endif %}{% if info.on_hold %}<i class="bi bi-pause-fill"></i>On hold{% else %}{{ status_labels[info.status] }}{% endif %}</span>
+              <a class="cg-name" href="/classes/{{ cls.id }}" title="{{ cls.name }}">{{ cls.name }}</a>
               <div class="cg-program">{{ cls.program.name if cls.program else 'No program yet' }}</div>
             </div>
-            <span class="cg-status">{% if info.status == 'ongoing' %}<span class="pulse"></span>{% endif %}{% if info.on_hold %}<i class="bi bi-pause-fill"></i>On hold{% else %}{{ status_labels[info.status] }}{% endif %}</span>
           </div>
 
           <div class="cg-body">
-            <div class="cg-line"><i class="bi bi-person-badge"></i>{% if cls.professor_name %}<strong>{{ cls.professor_name }}</strong>{% else %}<span class="is-missing">No professor yet</span>{% endif %}</div>
+            <div class="cg-line"><i class="bi bi-person-badge"></i>{% if cls.professor_name %}<span class="cg-prof">{{ ui.avatar(cls.professor_name, 24) }}<strong>{{ cls.professor_name }}</strong></span>{% else %}<span class="cg-noprof"><span class="ui-chip">No professor yet</span>{% if info.status != 'completed' %}<button type="button" data-parameters="{{ cls.id }}" data-name="{{ cls.name }}">Choose one</button>{% endif %}</span>{% endif %}</div>
             <div class="cg-line"><i class="bi bi-clock"></i><span>{% if cls.start_time %}{{ info.schedule_label }}{% else %}<span class="is-missing">Session time not set</span>{% endif %}{% if cls.room %} · {{ cls.room }}{% endif %}</span></div>
             <div class="cg-line"><i class="bi bi-flag"></i>
               <span>
@@ -191,11 +229,7 @@
 
           <div class="cg-seats">
             <div class="cg-seats-head"><span>Places</span><span>{{ info.enrolled }} of {{ info.capacity }} taken</span></div>
-            {% if info.capacity <= 40 %}
-            <div class="cg-seat-row" aria-hidden="true">{% for seat in range(info.capacity) %}<span class="cg-seat {{ 'taken' if seat < info.enrolled }}"></span>{% endfor %}</div>
-            {% else %}
-            <div class="ui-bar"><span style="width:{{ info.fill_pct }}%; background:{{ look.colour }};"></span></div>
-            {% endif %}
+            <div class="cg-meter" role="img" aria-label="{{ info.enrolled }} of {{ info.capacity }} places taken"><span style="width:{{ [info.fill_pct, 2 if info.enrolled else 0] | max }}%;"></span></div>
           </div>
 
           {% if info.status != 'not_started' %}
@@ -206,15 +240,15 @@
           {% endif %}
 
           <div class="cg-foot">
-            <a class="ui-btn sm" href="/classes/{{ cls.id }}"><i class="bi bi-box-arrow-in-right"></i>Open</a>
-            <a class="ui-btn sm" href="/classes/{{ cls.id }}/course" title="Course files and weekly questions"><i class="bi bi-folder2-open"></i>Course</a>
-            <a class="ui-btn sm" href="/classes/{{ cls.id }}/attendance" title="Who was at each session"><i class="bi bi-person-check"></i>Presence</a>
+            <a class="ui-btn primary sm" href="/classes/{{ cls.id }}"><i class="bi bi-box-arrow-in-right"></i>Open</a>
+            <a class="cg-icon" href="/classes/{{ cls.id }}/course" title="Course files and weekly questions" aria-label="Course"><i class="bi bi-folder2-open"></i></a>
+            <a class="cg-icon" href="/classes/{{ cls.id }}/attendance" title="Who was at each session" aria-label="Presence"><i class="bi bi-person-check"></i></a>
+            <button type="button" class="cg-icon" data-parameters="{{ cls.id }}" data-name="{{ cls.name }}" title="Change every parameter of this class" aria-label="Parameters"><i class="bi bi-sliders"></i></button>
             {% if not info.enrolled and info.status != 'completed' %}
             <form method="post" action="/classes/{{ cls.id }}/delete" class="m-0 ms-auto" data-confirm="Remove {{ cls.name }}? It has no candidate. This cannot be undone.">
-              <button class="ui-btn sm danger" title="Nobody is in this class: it can be removed"><i class="bi bi-trash3"></i>Remove</button>
+              <button class="cg-icon danger" title="Nobody is in this class: it can be removed" aria-label="Remove"><i class="bi bi-trash3"></i></button>
             </form>
             {% endif %}
-            <button type="button" class="ui-btn soft sm {{ 'ms-auto' if info.enrolled or info.status == 'completed' }}" data-parameters="{{ cls.id }}" data-name="{{ cls.name }}" title="Change every parameter of this class"><i class="bi bi-sliders"></i>Parameters</button>
           </div>
         </article>
         {% endfor %}
@@ -229,11 +263,100 @@
   <!-- ================= Professors ================= -->
   <div class="tab-pane fade" id="tab-professors" role="tabpanel">
     <div class="ui-card-sub mb-3">Only a professor who has a program among their specialities can teach its classes: a new class gets one of them by itself, and a class without one waits. A professor with access signs in and sees only their own classes: the course, and the presence of candidates.</div>
+
+    {# Reminders to professors to add the resources of a week before it is taught. #}
+    <section class="ui-card mb-3" id="resources" data-live-region>
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><span class="emo emo-bounce">📚</span> Remind professors to add their resources</div>
+          <div class="ui-card-sub">Before a week is taught, when it still has no resource (slides, exercises, a video), its professor gets one message: in the application, by email and on WhatsApp. Once per class and per week.</div></div>
+        <span class="ui-chip {{ 'ok' if resource_plan.on else 'muted' }}">{{ 'On' if resource_plan.on else 'Stopped' }}</span>
+      </div>
+      <form method="post" action="/classes/professors/resource-reminders" class="rr-form">
+        <label class="rr-line"><input type="checkbox" name="on" value="1" {{ 'checked' if resource_plan.on }}> Send them, <input type="number" name="days" min="1" max="14" value="{{ resource_plan.days }}" aria-label="Days before"> day(s) before the week's session</label>
+        <label class="form-label small fw-bold mb-1 mt-2" for="rr-text">Their words <span class="text-muted fw-normal">· {professor} {class_name} {program} {week} {topic} {date} {link}</span></label>
+        <textarea id="rr-text" name="text" rows="6" class="form-control">{{ resource_plan.text }}</textarea>
+        <div class="d-flex gap-2 flex-wrap mt-2">
+          <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save</button>
+          <button class="ui-btn sm" name="send_now" value="1"><i class="bi bi-send"></i>Save and send the ones due now ({{ resource_due | selectattr('reachable') | list | length }})</button>
+        </div>
+      </form>
+      {% if resource_due %}<div class="small mt-2"><b>Due now:</b> {% for item in resource_due[:6] %}{{ item.professor.name }} · {{ item.group.name }} week {{ item.week }} ({{ item.date.strftime('%d/%m') }}){% if not item.reachable %} <a href="/classes/?tab=professors#professor-{{ item.professor.id }}" class="text-danger">cannot be reached: add their email or phone</a>{% endif %}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+      {% if resource_recent %}<div class="small text-muted mt-1"><b>Last sent:</b> {% for item in resource_recent[:5] %}{{ item.professor }} · {{ item.class }} week {{ item.week }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+      <style>.rr-line { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.86rem; font-weight:700; }
+             .rr-line input[type=number] { width:64px; border:1px solid var(--border-color); border-radius:10px; padding:4px 8px; }</style>
+    </section>
+
+    {# Who teaches each program: as many professors as you like; the programs nobody teaches yet come first, in red. #}
+    {% set nobody = coverage | selectattr('nobody') | list %}
+    <section class="ui-card mb-3" id="coverage" data-live-region>
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-people"></i>Who teaches each program</div>
+          <div class="ui-card-sub">Add as many professors as you like to a program: someone who already works with you, or a new one. A program nobody teaches yet cannot open a class.</div></div>
+        <span class="ui-chip {{ 'bad' if nobody else 'ok' }}">{% if nobody %}<i class="bi bi-exclamation-octagon-fill"></i> {{ nobody | length }} without a teacher yet{% else %}<i class="bi bi-check2-circle"></i> Every program has a teacher{% endif %}</span>
+      </div>
+      {% if nobody %}
+      <div class="pc-alert"><span class="pc-alert-ico"><i class="bi bi-person-exclamation"></i></span>
+        <div><b>No teacher yet</b><div class="pc-alert-list">{% for row in nobody %}<a href="#cover-{{ row.program.id }}">{{ row.program.name }}</a>{% endfor %}</div></div></div>
+      {% endif %}
+      {% for row in coverage %}
+      <div class="pc-row {{ 'is-nobody' if row.nobody }}" id="cover-{{ row.program.id }}">
+        <div class="pc-name"><b>{{ row.program.name }}</b>
+          {% if row.nobody %}<span class="ui-chip bad">No teacher yet</span>{% else %}<span class="ui-chip ok">{{ row.real | length }} professor{{ 's' if row.real | length != 1 }}</span>{% endif %}</div>
+        <div class="pc-people">
+          {% for professor in row.real %}<a class="pc-person" href="#professor-{{ professor.id }}">{{ ui.avatar(professor.name, 22) }}<span>{{ professor.name }}</span></a>{% endfor %}
+          {% for professor in row.places %}<span class="ui-chip muted" title="A place to name: never given a class until it has a real name">{{ professor.name.split('(')[-1].rstrip(')') }} · to name</span>{% endfor %}
+          {% if row.nobody and not row.places %}<span class="pc-none">Nobody teaches it yet.</span>{% endif %}
+        </div>
+        <div class="pc-do">
+          {% if row.others %}
+          <form method="post" action="/classes/professors/" class="pc-also" onsubmit="this.action = '/classes/professors/' + this.querySelector('select').value + '/specialty';">
+            <input type="hidden" name="program_id" value="{{ row.program.id }}">
+            <select aria-label="A professor who already works with you">{% for professor in row.others %}<option value="{{ professor.id }}">{{ professor.name }}</option>{% endfor %}</select>
+            <button class="ui-btn sm">Also teaches it</button>
+          </form>
+          {% endif %}
+          <details class="pc-new"><summary class="ui-btn sm {{ 'primary' if row.nobody }}"><i class="bi bi-person-plus"></i>A new professor</summary>
+            <form method="post" action="/classes/professors/create" class="pc-new-form">
+              <input type="hidden" name="programs" value="{{ row.program.name }}">
+              <input name="name" placeholder="Full name" required aria-label="Full name">
+              <input name="email" type="email" placeholder="Email" aria-label="Email">
+              <input name="phone" placeholder="Phone (+216…)" aria-label="Phone">
+              <button class="ui-btn primary sm">Add</button>
+            </form></details>
+        </div>
+      </div>
+      {% endfor %}
+      <style>
+        .pc-alert { display:flex; gap:12px; align-items:flex-start; background:linear-gradient(120deg, #fff1f2, #fff7f7); border:1px solid #fecdd3; border-radius:16px; padding:12px 14px; margin:4px 0 12px; }
+        .pc-alert-ico { width:38px; height:38px; border-radius:12px; background:#ffe4e6; color:#be123c; display:grid; place-items:center; font-size:1.15rem; flex:none; animation:pcPulse 2.4s ease-in-out infinite; }
+        @keyframes pcPulse { 50% { box-shadow:0 0 0 6px rgba(225,29,72,.12); } }
+        .pc-alert b { color:#9f1239; font-size:.86rem; }
+        .pc-alert-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+        .pc-alert-list a { font-size:.76rem; font-weight:700; color:#be123c; background:#fff; border:1px solid #fecdd3; border-radius:999px; padding:3px 10px; text-decoration:none; }
+        .pc-alert-list a:hover { background:#be123c; color:#fff; }
+        .pc-row { display:grid; grid-template-columns:minmax(180px, 1.1fr) minmax(0, 1.4fr) auto; gap:12px; align-items:center; padding:10px 8px; border-top:1px solid var(--border-color); border-radius:12px; transition:background-color .15s ease; }
+        .pc-row:hover { background:#faf8fd; }
+        .pc-row.is-nobody { background:#fff8f8; box-shadow:inset 3px 0 0 #e11d48; }
+        .pc-row:target { animation:pcGlow 1.6s ease 2; }
+        @keyframes pcGlow { 50% { background:#ffe4e6; } }
+        @media (max-width: 991px) { .pc-row { grid-template-columns:1fr; } }
+        .pc-name { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.88rem; }
+        .pc-people { display:flex; gap:6px; flex-wrap:wrap; }
+        .pc-person { display:inline-flex; align-items:center; gap:6px; background:var(--berry-subtle); color:var(--primary-berry); border-radius:999px; padding:2px 10px 2px 2px; font-size:.76rem; font-weight:700; text-decoration:none; }
+        .pc-person:hover { background:var(--primary-berry); color:#fff; }
+        .pc-none { font-size:.8rem; color:#be123c; font-weight:600; }
+        .pc-do { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+        .pc-also { display:flex; gap:6px; margin:0; } .pc-also select, .pc-new-form input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 8px; }
+        .pc-new summary { list-style:none; cursor:pointer; } .pc-new summary::-webkit-details-marker { display:none; }
+        .pc-new-form { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+        @media (prefers-reduced-motion: reduce) { .pc-alert-ico, .pc-row:target { animation:none; } }
+      </style>
+    </section>
     {% if professor_cards %}
     <div class="pf-grid">
       {% for card in professor_cards %}
       {% set professor = card.professor %}
-      <article class="pf-card">
+      <article class="pf-card" id="professor-{{ professor.id }}">
         <div class="pf-band">
           {% if not professor.is_available %}<span class="ui-chip bad">Unavailable</span>
           {% elif professor.available_from and professor.available_from > today %}<span class="ui-chip warn">From {{ professor.available_from.strftime('%d %b') }}</span>
@@ -247,6 +370,8 @@
           <div class="pf-tags">
             {% for specialty in card.specialties %}<span class="ui-chip brand">{{ specialty }}</span>{% else %}<span class="ui-chip muted">No specialty set</span>{% endfor %}
           </div>
+          {% set said = card.reviews.professors | selectattr('name', 'equalto', professor.name) | list %}
+          <div class="pf-line"><i class="bi bi-star-fill" style="color:#f5b301;"></i>{% if said %}<b>{{ said[0].stars }}</b>/5 from {{ said[0].count }} candidate{{ 's' if said[0].count != 1 }}{% else %}<span class="text-muted">No rating from candidates yet</span>{% endif %}</div>
           <div class="pf-line"><i class="bi bi-envelope"></i>{% if professor.email %}<a href="mailto:{{ professor.email }}">{{ professor.email }}</a>{% else %}<span class="text-muted">No email</span>{% endif %}</div>
           <div class="pf-line"><i class="bi bi-telephone"></i>{% if professor.phone %}<a href="tel:{{ professor.phone }}">{{ professor.phone }}</a>{% else %}<span class="text-muted">No phone</span>{% endif %}</div>
           {% if card.absences %}
@@ -274,6 +399,8 @@
                   data-access="{{ professor.id }}" data-name="{{ professor.name }}" data-email="{{ (card.account.email if card.account else professor.email) or '' }}"
                   data-has="{{ '1' if card.account else '0' }}"><i class="bi bi-key"></i>{{ 'New password' if card.account else 'Give access' }}</button>
           <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#absenceModal" data-absence="{{ professor.id }}" data-name="{{ professor.name }}"><i class="bi bi-calendar-x"></i>Absence</button>
+          <button type="button" class="ui-btn sm ghost danger pf-delete" data-bs-toggle="modal" data-bs-target="#deleteProfessorModal" data-delete-professor="{{ professor.id }}"
+                  title="Delete this professor" aria-label="Delete this professor"><i class="bi bi-trash3"></i></button>
         </div>
       </article>
       {% endfor %}
@@ -475,6 +602,16 @@
   </div>
 </div>
 
+<!-- ================= Delete a professor ================= -->
+<div class="modal fade ui-modal" id="deleteProfessorModal" tabindex="-1" aria-labelledby="deleteProfessorTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><div><h5 class="modal-title" id="deleteProfessorTitle">Delete a professor</h5><div class="ui-card-sub">This cannot be undone.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div id="deleteProfessorBody"><div class="modal-body"><div class="ui-card-sub">Loading…</div></div></div>
+    </div>
+  </div>
+</div>
+
 <!-- ================= Absence of a professor ================= -->
 <div class="modal fade ui-modal" id="absenceModal" tabindex="-1" aria-labelledby="absenceTitle" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
@@ -622,6 +759,16 @@
       document.getElementById("accessRemove").classList.toggle("d-none", !has);
       document.getElementById("ac-email").value = access.dataset.email || "";
       document.getElementById("ac-password").value = "";
+    }
+    const removal = event.target.closest("[data-delete-professor]");
+    if (removal) {
+      // What deleting them will do comes from the server: their classes, who could take each, their access.
+      const body = document.getElementById("deleteProfessorBody");
+      body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">Loading…</div></div>';
+      fetch(`/classes/professors/${encodeURIComponent(removal.dataset.deleteProfessor)}/delete`, { credentials: "same-origin" })
+        .then(answer => { if (!answer.ok) throw new Error(); return answer.text(); })
+        .then(html => { body.innerHTML = html; })
+        .catch(() => { body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">It could not be opened. Reload the page and try again.</div></div>'; });
     }
     const absence = event.target.closest("[data-absence]");
     if (absence) {

@@ -6,8 +6,8 @@ from app.models.email_thread import EmailThread
 from app.models.notification import Notification
 from app.models.program import Program
 from app.models.registration import Registration, RegistrationStatus
-from app.services import auth, brand, guides, notification_fixes, program_icons, theme
-from app.services import translations
+from app.services import auth, brand, guides, notification_fixes, page_pdf_links, program_icons, theme
+from app.services import translations, videos
 from app.services.settings_service import get_settings
 
 SIDEBAR_PROGRAMS = 6
@@ -39,11 +39,24 @@ def notification_context(request: Request) -> dict:
             "ui_background": "plain" if getattr(settings, "ui_background", None) == "plain" else "animated",
             "app_brand": brand.view(settings),
             "page_guide": guides.for_path(request.url.path),
+            "page_pdf": page_pdf_links.link_for(request.url.path, user),
+            "page_pdf_more": page_pdf_links.more_for(request.url.path, user),
             "notifications": [],
             "inbox_pending": 0,
+            "video_embed": videos.embed_url,      # a video link -> its player, opened inside the page (_video_player.html)
+            "video_kind": videos.kind_of,
+            "team_unread": 0,
+            # A team member the admin gave the assistant to (it reads all the data).
+            "assistant_auto_send": __import__("app.services.chatbot_send", fromlist=["auto_send"]).auto_send(db),
+            "can_use_assistant": bool(getattr(user, "is_staff", False) and (user.permissions or {}).get("assistant") in ("view", "edit")),
+            "member_unread": 0,
             "sidebar_programs": [],
         }
         if not user.is_admin:
+            if user.id:
+                from app.services import team_messages
+
+                context["member_unread"] = team_messages.member_unread(db, user)
             return context
 
         context["notifications"] = (
@@ -59,6 +72,9 @@ def notification_context(request: Request) -> dict:
         for item in context["notifications"]:      # what each one lets the admin do at once
             item.fix = notification_fixes.fix_for(db, item)
         context["inbox_pending"] = db.query(EmailThread).filter(EmailThread.needs_admin.is_(True)).count()
+        from app.services import team_messages
+
+        context["team_unread"] = team_messages.unread_count(db)
 
         counts = dict(
             db.query(Registration.program_id, func.count(Registration.id))

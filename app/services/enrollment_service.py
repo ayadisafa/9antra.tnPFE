@@ -282,6 +282,39 @@ def _listed(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " and " + items[-1]
 
 
+def _weeks_of(group: ClassGroup) -> tuple[date | None, date | None]:
+    """The first and the last day a class runs (None when its date is not known yet)."""
+    start = class_start_dt(group)
+    if start is None:
+        return None, None
+    return start.date(), start.date() + timedelta(weeks=max(1, group.total_weeks or 1))
+
+
+def professor_clash(db: Session, professor_id: str | None, days: list[int], start_time: time | None, end_time: time | None,
+                    first_day: date | None = None, weeks: int | None = None, exclude_id: str | None = None) -> ClassGroup | None:
+    """Another class of this professor on the same days and hours, in the same weeks: a professor cannot be in two places."""
+    if not professor_id or not days or not start_time or not end_time:
+        return None
+    last_day = first_day + timedelta(weeks=max(1, weeks or 1)) if first_day else None
+    for other in (db.query(ClassGroup).filter(ClassGroup.professor_id == professor_id, ClassGroup.status != ClassStatus.COMPLETED,
+                                              ClassGroup.id != (exclude_id or "")).all()):
+        if not (set(days) & set(parse_days(other.days_of_week))) or not other.start_time or not other.end_time:
+            continue
+        if not max(start_time, other.start_time) < min(end_time, other.end_time):
+            continue
+        other_first, other_last = _weeks_of(other)
+        if first_day and other_first and (last_day <= other_first or other_last <= first_day):
+            continue                    # the same hours, but not in the same weeks
+        return other
+    return None
+
+
+def clash_message(professor: Professor, other: ClassGroup) -> str:
+    hours = f"{other.start_time:%H:%M}–{other.end_time:%H:%M}" if other.start_time and other.end_time else ""
+    return (f"{professor.name} already teaches {other.name} on the same days and hours ({other.days_of_week} {hours}). "
+            "A professor cannot have two classes at the same time: choose another professor, or other hours.")
+
+
 def find_available_professor(db: Session, program: Program | None, days: list[int],
                              start_time: time | None, end_time: time | None,
                              on_date: date | None = None) -> Professor | None:
@@ -336,6 +369,10 @@ def create_class(db: Session, program: Program, *, settings=None,
     """Create a class using the admin defaults; explicit arguments override them."""
     from app.services.class_service import generate_unique_class_name
 
+    if professor is not None and start_time and end_time:
+        other = professor_clash(db, professor.id, parse_days(days_of_week), start_time, end_time, start_date, total_weeks)
+        if other is not None:
+            raise ValueError(clash_message(professor, other))
     if professor is not None and not teaches(professor, program):
         raise ValueError(
             f"{professor.name} does not have {program.name} among their specialities. "
@@ -722,8 +759,9 @@ def delete_class(db: Session, class_group: ClassGroup) -> None:
 # Enrollment
 # ------------------------------------------------------------------
 
-def find_open_class(db: Session, registration: Registration, now: datetime | None = None) -> ClassGroup | None:
-    """A class of the same program that has not started and still has a seat."""
+def find_open_class(db: Session, registration: Registration, now: datetime | None = None,
+                    starts_from: date | None = None) -> ClassGroup | None:
+    """A class of the same program that has not started and still has a seat (starting on `starts_from` or later)."""
     now = now or local_now()
     options = []
     for class_group in db.query(ClassGroup).filter(
@@ -732,6 +770,8 @@ def find_open_class(db: Session, registration: Registration, now: datetime | Non
     ):
         start = class_start_dt(class_group)
         if start is not None and start <= now:
+            continue
+        if starts_from and (start is None or start.date() < starts_from):
             continue
         enrolled = enrolled_count(db, class_group.id)
         if enrolled >= class_capacity(class_group):
@@ -762,10 +802,32 @@ def _schedule_conflict_note(db: Session, registration: Registration, class_group
     return ""
 
 
-def class_in_the_way(db: Session, registration: Registration, days: list[int],
-                     start_time: time | None, end_time: time | None) -> ClassGroup | None:
-    """The class the candidate already follows on the same weekly hours, if any:
-    one program at a time on a slot, the next one starts when it ends."""
+def gap_days(settings) -> int:
+    value = getattr(settings, "next_class_gap_days", None)
+    return 10 if value is None else max(0, int(value))
+
+
+def not_before(db: Session, registration: Registration) -> date | None:
+    """The first day the candidate's next class may start: some days after the end of their latest class (None when it
+    ended long ago, or they never had one)."""
+    gap = gap_days(get_settings(db))
+    latest = None
+    for other in (db.query(Registration).filter(Registration.candidate_id == registration.candidate_id, Registration.id != registration.id,
+                                                Registration.class_group_id.is_not(None)).all()):
+        group = other.class_group
+        ends = class_end_dt(group) if group is not None else None
+        if ends is not None and (latest is None or ends.date() > latest):
+            latest = ends.date()
+    if latest is None:
+        return None
+    first = latest + timedelta(days=gap)
+    return first if first > local_now().date() else None
+
+
+def class_in_the_way(db: Session, registration: Registration, days: list[int] | None = None,
+                     start_time: time | None = None, end_time: time | None = None) -> ClassGroup | None:
+    """The class the candidate already follows (running, or about to start), if any: one program at a time,
+    whatever the hours. The next one starts in a class some days after it ends (Settings, Classes)."""
     others = (
         db.query(Registration)
         .filter(Registration.candidate_id == registration.candidate_id, Registration.id != registration.id,
@@ -776,11 +838,7 @@ def class_in_the_way(db: Session, registration: Registration, days: list[int],
         current = other.class_group
         if current is None or current.status == ClassStatus.COMPLETED:
             continue
-        if not set(days) & set(parse_days(current.days_of_week)):
-            continue
-        known = start_time and end_time and current.start_time and current.end_time
-        if not known or max(start_time, current.start_time) < min(end_time, current.end_time):
-            return current
+        return current
     return None
 
 
@@ -801,6 +859,7 @@ def ask_to_wait_task(registration_id: str, current_class_id: str) -> None:
             values={
                 "current_program": current.program.name if current.program else current.name,
                 "current_end": f"jusqu'au {ends.day} {months[ends.month - 1]}" if ends else "en ce moment",
+                "gap_days": str(gap_days(get_settings(db))),
             },
         )
         db.commit()
@@ -841,7 +900,8 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
 
         now = local_now()
         settings = get_settings(db)
-        class_group = find_open_class(db, registration, now)
+        after = not_before(db, registration)        # their last class ended a few days ago: the next starts some days after
+        class_group = find_open_class(db, registration, now, starts_from=after)
         created = False
         # Already in a class on the same hours: this program starts when that one ends.
         if class_group is not None:
@@ -855,9 +915,10 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
                 _notify(
                     db, category="ASSIGNMENT_PENDING", title="Waits for their current class to end",
                     message=(
-                        f"{_who(registration)} paid for {registration.program_name} but already follows {current.name} "
-                        f"on the same hours{', until ' + format_date_en(ends) if ends else ''}. They start this program when "
-                        "that class ends, and were asked by email whether that suits them."
+                        f"{_who(registration)} paid for {registration.program_name} but already follows {current.name}"
+                        f"{' until ' + format_date_en(ends) if ends else ''}. One program at a time: they are placed in a class "
+                        f"of this program starting about {gap_days(settings)} days after it ends, with a professor free then. "
+                        "They were told by email."
                     ),
                     action_url="/classes/?tab=decisions", registration=registration,
                 )
@@ -875,7 +936,8 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
                     db.commit()
                 return EnrollmentResult(registration, reason="no_open_class")
             program = db.get(Program, registration.program_id)
-            class_group = create_class(db, program, settings=settings, auto_created=True)
+            first_day = first_session_on_or_after(after, default_schedule(db, program, settings)[0]) if after else None
+            class_group = create_class(db, program, settings=settings, auto_created=True, start_date=first_day)
             created = True
 
         _attach(db, registration, class_group, now)
@@ -1080,6 +1142,12 @@ def update_class_parameters(db: Session, class_group: ClassGroup, *, name: str |
                 f"{professor.name} does not have {program_name} among their specialities. "
                 "Add it to their profile first, or choose another professor."
             )
+        if professor is not None:
+            first = fixed_start_date if start_mode == START_FIXED_DATE and fixed_start_date else (before[0] if before[0] else None)
+            other = professor_clash(db, professor.id, parse_days(days_of_week), start_time, end_time, first, total_weeks, exclude_id=class_group.id)
+            if other is not None:
+                raise ValueError(clash_message(professor, other))
+        newly_given = professor is not None and professor.id != class_group.professor_id
         class_group.professor_id = professor.id if professor else None
         class_group.professor_name = professor.name if professor else None
         class_group.capacity = class_group.max_capacity = capacity

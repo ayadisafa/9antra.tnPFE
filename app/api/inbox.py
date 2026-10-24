@@ -25,6 +25,7 @@ from app.models.knowledge import KnowledgeEntry
 from app.models.program import Program
 from app.models.registration import Registration, RegistrationStatus
 from app.services import (
+    channels,
     email_assistant,
     email_composer,
     email_files,
@@ -44,11 +45,15 @@ from app.template_context import notification_context
 
 router = APIRouter(prefix="/inbox", tags=["Inbox"])
 templates = Jinja2Templates(directory="app/templates", context_processors=[notification_context])
+templates.env.filters["fromjson"] = lambda value: json.loads(value) if value else {}
 
 FILTERS = {
     "todo": "Needs your answer",
     "conversations": "Conversations",
     "auto": "Answered by the system",
+    "whatsapp": "WhatsApp",
+    "sms": "SMS",
+    "to_send": "To send from your phone",
     "sent": "Sent by 9antra",
     "all": "All",
 }
@@ -150,6 +155,14 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         query = query.filter(EmailThread.inbound_count > 0)
     elif current == "sent":
         query = query.filter(EmailThread.inbound_count == 0)
+    elif current == "whatsapp":
+        query = query.filter(EmailThread.channel == "whatsapp")
+    elif current == "sms":
+        query = query.filter(EmailThread.channel == "sms")         # what candidates send by SMS, and the answers
+    elif current == "to_send":
+        query = query.filter(exists().where(
+            CandidateEmail.thread_id == EmailThread.id, CandidateEmail.channel.in_(("whatsapp", "sms")), CandidateEmail.status == "to_send",
+        ))
     elif current == "auto":
         query = query.filter(exists().where(
             CandidateEmail.thread_id == EmailThread.id,
@@ -219,6 +232,9 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         "conversations": db.query(EmailThread).filter(EmailThread.inbound_count > 0).count(),
         "sent": db.query(EmailThread).filter(EmailThread.inbound_count == 0).count(),
         "all": db.query(EmailThread).count(),
+        "whatsapp": db.query(EmailThread).filter(EmailThread.channel == "whatsapp").count(),
+        "sms": db.query(EmailThread).filter(EmailThread.channel == "sms").count(),
+        "to_send": db.query(CandidateEmail).filter(CandidateEmail.channel.in_(("whatsapp", "sms")), CandidateEmail.status == "to_send").count(),
     }
     settings = get_settings(db)
     state = mailbox_service.get_state(db)
@@ -259,10 +275,24 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
             "model_ready": _model_ready(),
             "model_name": email_assistant.MODEL,
             "candidates": db.query(Candidate).order_by(Candidate.full_name).all(),
+            "whatsapp_ready": __import__("app.services.whatsapp", fromlist=["configured"]).configured(),
+            "wa_link": __import__("app.services.whatsapp_inbox", fromlist=["link_of"]).link_of,
+            "send_choice": channels.choice(db), "send_status": channels.status(), "send_names": channels.NAMES,
+            "reword_default": bool(getattr(settings, "reword_and_send", False)),
             "notice": params.get("notice"),
             "error": params.get("error"),
         },
     )
+
+
+@router.post("/channels")
+def choose_channels(way: str = Form("auto"), fallback: bool = Form(False), db: Session = Depends(get_db)):
+    """How messages to candidates go (email, WhatsApp, SMS or the system's choice), and whether a way that does not
+    work hands over to the next one."""
+    chosen = channels.set_choice(db, way, fallback)
+    name = channels.NAMES[chosen["way"]]
+    return _redirect("/inbox", notice=f"Messages now go: {name.lower() if chosen['way'] == 'auto' else 'by ' + name}"
+                     + (", and by the next way when it does not work." if chosen["fallback"] else ", and only that way."))
 
 
 @router.get("/pending-count")
@@ -327,9 +357,30 @@ def reply(
     learn: bool = Form(False),
     question: str = Form(""),
     attachment_ids: list[str] = Form(default=[]),
+    reword: bool = Form(False),
+    reword_language: str = Form(""),
     db: Session = Depends(get_db),
 ):
     thread = _thread_or_404(db, thread_id)
+    if reword and body.strip():
+        # "Reword and send at once": the admin's words (any language) as a proper reply; sent only when nothing changed.
+        last_inbound = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
+                        .order_by(CandidateEmail.received_at.desc()).first())
+        name = (thread.candidate.full_name or "").split() if thread.candidate else []
+        written = reply_writer.reformulate(body, first_name=name[0].capitalize() if name else "",
+                                           question=(last_inbound.body or "") if last_inbound else "", language=reword_language or None)
+        if written is None:
+            return _redirect("/inbox", thread=thread_id, draft=body[:1500],
+                             error="The assistant did not answer, so nothing was sent: your words are back in the box.")
+        if written.get("warning"):
+            return _redirect("/inbox", thread=thread_id, draft=written["reply"][:1500],
+                             error="Not sent: read the reworded answer first. " + written["warning"])
+        body = written["reply"]
+    from app.services import derja
+
+    untaught = False
+    if learn and not reword and (derja.is_tunisian(body) or derja.has_arabic_letters(body)):
+        learn, untaught = False, True       # learned in French or English only: what the assistant answers with
     try:
         message = email_assistant.admin_reply(
             db, thread, body, learn=learn, question=question,
@@ -346,6 +397,8 @@ def reply(
                   "Fix it in Settings, then use “Send again”.",
         )
     notice = "Test discussion: your answer was recorded, not sent." if message.status == "test" else "Answer sent."
+    if untaught:
+        notice += " Not learned: it is written in Tunisian. Tick “Reword and send at once” so the system learns it in French or English."
     taught = db.get(KnowledgeEntry, getattr(message, "taught_entry_id", None) or "")
     if taught is not None:
         notice += " The system learned it and will answer this question by itself."
@@ -364,6 +417,8 @@ def _read_again(db: Session, entry: KnowledgeEntry, skip_thread_id: str | None =
 
 class Phrase(BaseModel):
     text: str = Field(min_length=2, max_length=reply_writer.MAX_PHRASE)
+    language: str | None = None         # fr | en: the language of the reworded text (the note may be in Tunisian)
+    first_name: str = ""
 
 
 @router.post("/thread/{thread_id}/reformulate")
@@ -381,6 +436,7 @@ def reformulate(thread_id: str, payload: Phrase, db: Session = Depends(get_db)):
         payload.text,
         first_name=name[0].capitalize() if name else "",
         question=(last_inbound.body or "") if last_inbound else "",
+        language=payload.language,
     )
     if written is None:
         return JSONResponse(
@@ -388,6 +444,24 @@ def reformulate(thread_id: str, payload: Phrase, db: Session = Depends(get_db)):
             content={"detail": "The assistant did not answer. Try again in a moment; if it keeps failing, Settings says how to start it."},
         )
     return written
+
+
+@router.post("/reformulate")
+def reformulate_any(payload: Phrase):
+    """Reword a short note (Tunisian, French or English) into a proper message in French or English. Nothing is sent."""
+    written = reply_writer.reformulate(payload.text, first_name=payload.first_name.strip()[:40], language=payload.language)
+    if written is None:
+        return JSONResponse(status_code=503, content={"detail": "The assistant did not answer. Try again in a moment."})
+    return written
+
+
+@router.post("/reword-mode")
+def reword_mode(on: str = Form("0"), db: Session = Depends(get_db)):
+    """"Reword and send at once": on or off, remembered."""
+    settings = get_settings(db)
+    settings.reword_and_send = on == "1"
+    db.commit()
+    return {"on": bool(settings.reword_and_send)}
 
 
 @router.post("/thread/{thread_id}/no-reply")
@@ -414,6 +488,83 @@ def close_thread(thread_id: str, db: Session = Depends(get_db)):
     thread.closed_at = utcnow()
     db.commit()
     return _redirect("/inbox", notice="Discussion closed. It reopens by itself if the candidate writes again.")
+
+
+@router.post("/whatsapp/{message_id}/sent")
+def whatsapp_sent(message_id: str, remove: bool = Form(False), db: Session = Depends(get_db)):
+    """A message waiting in "To send on WhatsApp": the admin sent it from WhatsApp (or removes it)."""
+    from app.services import whatsapp_inbox
+
+    message = db.get(CandidateEmail, message_id)
+    if message is None or message.channel not in ("whatsapp", "sms") or message.status != "to_send":
+        raise HTTPException(status_code=404, detail="Message not found")
+    whatsapp_inbox.mark_sent(db, message, cancelled=remove)
+    db.commit()
+    way = "by SMS" if message.channel == "sms" else "on WhatsApp"
+    return _redirect("/inbox", notice="Removed: it will not be sent." if remove else f"Marked as sent {way}.",
+                     thread=message.thread_id, filter="to_send" if whatsapp_inbox.outbox(db) else "whatsapp")
+
+
+def _answered(db: Session, reply: CandidateEmail) -> CandidateEmail | None:
+    """The candidate's message an answer was written for: the one marked answered right when it was sent,
+    else the latest one before it in the discussion."""
+    from datetime import timedelta
+
+    sent = reply.received_at
+    exact = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == reply.thread_id, CandidateEmail.direction == "inbound",
+                                             CandidateEmail.replied_at.isnot(None),
+                                             CandidateEmail.replied_at >= sent - timedelta(seconds=2),
+                                             CandidateEmail.replied_at <= sent + timedelta(minutes=2))
+             .order_by(CandidateEmail.replied_at.asc()).first())
+    if exact is not None:
+        return exact
+    return (db.query(CandidateEmail).filter(CandidateEmail.thread_id == reply.thread_id, CandidateEmail.direction == "inbound",
+                                            CandidateEmail.received_at <= sent)
+            .order_by(CandidateEmail.received_at.desc()).first())
+
+
+@router.post("/message/{message_id}/score")
+def score_answer(message_id: str, verdict: str = Form(""), db: Session = Depends(get_db)):
+    """The admin says whether the assistant's answer was right. It counts in the assistant's results."""
+    reply = db.get(CandidateEmail, message_id)
+    if reply is None or reply.direction != "outbound" or reply.author != "system":
+        raise HTTPException(status_code=404, detail="Answer not found")
+    reply.admin_score = {"right": 1, "wrong": -1}.get(verdict)
+    db.commit()
+    notice = {"right": "Marked as a right answer.", "wrong": "Marked as wrong. Correct it below so the assistant learns the right answer."}.get(verdict, "Your mark was removed.")
+    return _redirect("/inbox", notice=notice, thread=reply.thread_id)
+
+
+@router.post("/message/{message_id}/correct")
+def correct_answer(message_id: str, answer: str = Form(""), send: bool = Form(False), db: Session = Depends(get_db)):
+    """The admin writes the right answer: the assistant uses it next time; it can also go to the candidate now."""
+    reply = db.get(CandidateEmail, message_id)
+    if reply is None or reply.direction != "outbound" or reply.author != "system":
+        raise HTTPException(status_code=404, detail="Answer not found")
+    text = (answer or "").strip()
+    if len(text) < 3:
+        return _redirect("/inbox", error="Write the right answer first.", thread=reply.thread_id)
+    asked = _answered(db, reply)
+    question = (asked.question or email_threads.snippet(asked.body, 240)) if asked is not None else ""
+    if not question:
+        return _redirect("/inbox", error="The question this answer was for could not be found.", thread=reply.thread_id)
+    try:
+        knowledge_service.save_entry(db, title=question, content=email_assistant.clean_answer(text) or text, origin="learned",
+                                     source_email_id=asked.id if asked is not None else None)
+    except ValueError as problem:
+        db.rollback()
+        return _redirect("/inbox", error=str(problem), thread=reply.thread_id)
+    reply.admin_score = -1 if reply.admin_score is None else reply.admin_score
+    notice = "The assistant learned the right answer: it uses it from now on."
+    if send:
+        thread = db.get(EmailThread, reply.thread_id)
+        try:
+            email_assistant.admin_reply(db, thread, text)
+            notice += " It was also sent to the candidate."
+        except ValueError as problem:
+            notice += f" It could not be sent: {problem}"
+    db.commit()
+    return _redirect("/inbox", notice=notice, thread=reply.thread_id)
 
 
 @router.post("/message/{message_id}/resend")
@@ -822,6 +973,9 @@ def templates_page(request: Request, db: Session = Depends(get_db)):
         "active_page": "inbox",
         "groups": groups,
         "current": current,
+        "whatsapp_ready": __import__("app.services.whatsapp", fromlist=["configured"]).configured(),
+        "whatsapp_kinds": __import__("app.services.whatsapp", fromlist=["REMINDERS"]).REMINDERS,
+        "reminder_hours": __import__("app.services.welcome", fromlist=["reminder_hours"]).reminder_hours(db),
         "own_templates": email_composer.own_templates(db),
         "smtp_ready": email_threads.smtp_configured(),
         "own_address": (os.getenv("SMTP_EMAIL") or "").strip(),
@@ -905,14 +1059,20 @@ def save_auto(
     image_id: str = Form(""),
     image_position: str = Form("top"),
     attachment_ids: list[str] = Form(default=[]),
+    channel: str = Form("auto"),
+    hours: str = Form(""),
     db: Session = Depends(get_db),
 ):
     spec = _auto_or_404(key)
+    if key == "payment_reminder" and hours.strip():
+        from app.services import welcome
+
+        welcome.set_reminder_hours(db, hours)
     try:
         email_templates.save(
             db, key, subject=subject, title=title, body=body, closing=closing, style=style,
             show_details=show_details, is_active=is_active, cta_label=cta_label, cta_url=cta_url,
-            image_id=image_id or None, image_position=image_position, attachment_ids=attachment_ids,
+            image_id=image_id or None, image_position=image_position, attachment_ids=attachment_ids, channel=channel,
         )
     except ValueError as err:
         db.rollback()
@@ -964,6 +1124,7 @@ def knowledge_page(request: Request, db: Session = Depends(get_db)):
             "written": written,
             "system": system,
             "stats": knowledge_service.stats(db),
+            "imported": __import__("app.services.knowledge_import", fromlist=["sources"]).sources(db),
             "editing": db.get(KnowledgeEntry, edit_id) if edit_id else None,
             "prefill_question": request.query_params.get("question", ""),
             "notice": request.query_params.get("notice"),
@@ -991,6 +1152,36 @@ def save_knowledge(
         if already is not None else "Saved. The assistant uses it from now on."
     )
     return _redirect("/inbox/knowledge", notice=notice + _read_again(db, entry))
+
+
+@router.post("/knowledge/import")
+def import_knowledge(url: str = Form(""), text: str = Form(""), title: str = Form(""), db: Session = Depends(get_db)):
+    """What the assistant learns from a page (a public link) or a pasted text, kept with its source."""
+    from app.services import knowledge_import
+
+    url, text = (url or "").strip(), (text or "").strip()
+    try:
+        if text:
+            source = url or (title or "Texte collé").strip()
+            parts = knowledge_import.learn(db, title=title or source, text=text, source=source)
+        elif url:
+            found_title, found_text = knowledge_import.fetch(url)
+            parts = knowledge_import.learn(db, title=title or found_title, text=found_text, source=url)
+        else:
+            return _redirect("/inbox/knowledge#learn", error="Give a link, or paste a text.")
+    except ValueError as err:
+        db.rollback()
+        return _redirect("/inbox/knowledge#learn", error=str(err))
+    return _redirect("/inbox/knowledge#learn",
+                     notice=f"Learnt: {parts} part{'s' if parts != 1 else ''}. The assistant uses it from now on, and says where it comes from.")
+
+
+@router.post("/knowledge/import/forget")
+def forget_imported(key: str = Form(""), db: Session = Depends(get_db)):
+    from app.services import knowledge_import
+
+    knowledge_import.forget(db, key)
+    return _redirect("/inbox/knowledge#learn", notice="Forgotten: the assistant no longer uses it.")
 
 
 @router.post("/knowledge/{entry_id}/delete")

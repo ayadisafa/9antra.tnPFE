@@ -184,7 +184,8 @@ check("the price of a program", "390 DT online" in found["reply"] and "490 DT on
 found = ask("What should we add to DevOps?")
 check("what to add to a program, from the offers", "Add AWS" in found["reply"] and f"/programs/{devops.id}#market" in [link["url"] for link in found["links"]], found["reply"][:160])
 found = ask("how do I create a class?")
-check("how to do something here, with the page", found["source"] == "guide" and "paid candidates are waiting" in found["reply"] and found["links"][0]["url"] == "/classes/")
+check("how to do something here, with the page", found["source"] == "guide" and "paid candidates are waiting" in found["reply"] and found["links"][0]["url"] == "/classes/",
+      (found["source"], found["reply"][:160], found["links"][:1]))
 found = ask("How do I use it on my phone?")
 check("how to use it on the phone", "start_for_phone.bat" in found["reply"])
 found = ask("level checks: who has not answered?")

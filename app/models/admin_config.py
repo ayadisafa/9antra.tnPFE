@@ -75,6 +75,52 @@ class SystemSettings(Base):
     # Main colour of the application's design; empty = the original berry.
     ui_color = Column(String, nullable=True)
     app_name = Column(String, nullable=True)      # the name shown in the menu and on the sign-in page
+    # The progress report by email (see services/report_email.py): on or off, how many days apart,
+    # to which addresses (empty: the admins'), when it last went, and when its clock started.
+    report_email_on = Column(Boolean, default=True)
+    report_every_days = Column(Integer, default=7)
+    report_recipients = Column(Text, nullable=True)
+    report_sent_at = Column(DateTime, nullable=True)
+    report_since = Column(DateTime, nullable=True)
+    # WhatsApp: how the assistant answers there (auto | review | off), and the rules the admin gives the assistant:
+    # subjects it never answers alone (one per line) and what it should know or say (given to the model).
+    whatsapp_auto_reply = Column(String, nullable=True, default="auto")
+    assistant_never = Column(Text, nullable=True)
+    assistant_notes = Column(Text, nullable=True)
+    # The team chat: may the assistant answer a professor or a team member alone, with an answer the admin taught.
+    team_auto_reply = Column(Boolean, default=False)
+    # When the level check goes: "before" (some days before the first session) | "paid" (as soon as they paid in full).
+    level_check_when = Column(String, nullable=True, default="before")
+    level_check_days_before = Column(Integer, nullable=True, default=7)
+    # The centre's own numbers, written in emails and documents so candidates can call or write on WhatsApp.
+    centre_phone = Column(String, nullable=True)
+    centre_whatsapp = Column(String, nullable=True)
+    # How messages to candidates go (auto | email | whatsapp | sms), and the next way when one does not work.
+    send_way = Column(String, nullable=True, default="auto")
+    send_fallback = Column(Boolean, nullable=True, default=True)
+    # Hours after registering before the one automatic payment reminder; when the welcome message's clock started.
+    payment_reminder_hours = Column(Integer, nullable=True, default=24)
+    welcome_since = Column(DateTime, nullable=True)
+    # The centre's bank account(s), one RIB per line: a payment proof must show the money went there.
+    centre_ribs = Column(Text, nullable=True)
+    # The admin's short answer is reworded and sent at once, without showing it first (when the rewording is safe).
+    reword_and_send = Column(Boolean, nullable=True, default=False)
+    # What the admin asks the assistant to send (email, WhatsApp, SMS) goes at once (True), or is only prepared.
+    assistant_auto_send = Column(Boolean, nullable=True, default=True)
+    # Professors reminded to add a week's resources some days before it is taught (services/resource_reminders.py).
+    resource_reminder_on = Column(Boolean, nullable=True, default=True)
+    resource_reminder_days = Column(Integer, nullable=True, default=2)
+    resource_reminder_text = Column(Text, nullable=True)
+    # The registration form given to whoever asks how to register (empty: the form 9antra uses today).
+    registration_form_url = Column(String, nullable=True)
+    # A candidate follows one program at a time: the next one starts in a class at least this many days after the first ends.
+    next_class_gap_days = Column(Integer, nullable=True, default=10)
+    # After each session, its questions go this many hours after it ends (services/session_check.py).
+    session_check_on = Column(Boolean, nullable=True, default=True)
+    session_check_hours = Column(Integer, nullable=True, default=24)
+    session_check_since = Column(DateTime, nullable=True)       # sessions that ended before this are never asked about
+    prospect_answers_on = Column(Boolean, nullable=True, default=True)   # people not registered yet get the programs' facts
+    centre_address = Column(String, nullable=True)              # where the centre is, said to whoever asks
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

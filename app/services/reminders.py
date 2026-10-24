@@ -131,7 +131,7 @@ def label_of(db: Session, audience: str, audience_id: str | None) -> str:
 
 
 def create(db: Session, *, audience: str, audience_id: str | None, subject: str, body: str, title: str | None = None,
-           style: str = "brand", send_at: datetime | None = None, by: str | None = None) -> AdminReminder:
+           style: str = "brand", send_at: datetime | None = None, by: str | None = None, channel: str = "email") -> AdminReminder:
     """Keep a reminder. `send_at` is UTC; None means at the next pass, within a minute."""
     if audience not in AUDIENCES:
         raise ValueError("Choose who receives the reminder.")
@@ -145,6 +145,7 @@ def create(db: Session, *, audience: str, audience_id: str | None, subject: str,
         audience=audience, audience_id=audience_id or None, audience_label=label_of(db, audience, audience_id),
         subject=" ".join(subject.split())[:200], title=" ".join((title or "").split())[:120] or None, body=body.strip(),
         style=style if style in STYLES else "brand", send_at=send_at or datetime.utcnow(), created_by=by,
+        channel=channel if channel in ("email", "both", "whatsapp") else "email",
     )
     db.add(reminder)
     db.commit()
@@ -168,12 +169,23 @@ def send(db: Session, reminder: AdminReminder) -> tuple[int, int]:
     reminder.status = "sending"
     db.commit()
     sent = failed = 0
+    from app.services import whatsapp, whatsapp_inbox
+
+    channel = reminder.channel if reminder.channel in ("email", "both", "whatsapp") else "email"
     for person, registration_id in recipients(db, reminder.audience, reminder.audience_id):
         try:
-            delivered = email_composer.send_one(
-                db, person, subject=reminder.subject, title=reminder.title or "", body=reminder.body, style=reminder.style,
-                registration_id=registration_id,
-            )
+            fields = dict(subject=reminder.subject, title=reminder.title or "", body=reminder.body, style=reminder.style,
+                          registration_id=registration_id)
+            texted = channel in ("both", "whatsapp") and whatsapp.normalise(person.phone) is not None
+            delivered = False
+            if channel != "whatsapp" or not texted:
+                delivered = email_composer.send_one(db, person, **fields)
+            if texted:
+                from app.services.email_templates import whatsapp_text
+
+                rendered = email_composer.render(db, candidate=person, **fields)
+                message = whatsapp_inbox.send(db, person, whatsapp_text(rendered), kind="reminder", author="admin")
+                delivered = delivered or bool(message is not None and message.status in ("sent", "to_send"))
             db.commit()
         except Exception:
             db.rollback()

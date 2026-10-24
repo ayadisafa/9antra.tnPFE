@@ -108,6 +108,21 @@
   .ix-subject { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; font-size: .72rem; font-weight: 800; color: var(--muted); letter-spacing: .03em; }
   .ix-subject::before, .ix-subject::after { content: ""; flex: 1; height: 1px; background: var(--border-color); }
   .ix-subject span { max-width: 70%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ix-wa { color:#16a34a; }
+  .ix-chip.wa { background:#e8f8ee; color:#15803d; }
+  .ix-wa-bar { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 16px; border-radius:16px; background:#ecfdf3; border:1px solid #bfe8cf; margin-bottom:14px; font-size:.86rem; color:#14532d; }
+  .ix-wa-bar i { font-size:1.3rem; color:#16a34a; } .ix-wa-bar a.ui-like { margin-left:auto; }
+  .ix-wa-send { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .ix-wa-send a, .ix-wa-send button { display:inline-flex; align-items:center; gap:6px; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:800; text-decoration:none; border:1px solid transparent; cursor:pointer; }
+  .ix-wa-open { background:#16a34a; color:#fff; } .ix-wa-open:hover { background:#15803d; color:#fff; }
+  .ix-wa-done { background:#fff; border-color:#bfe8cf !important; color:#15803d; } .ix-wa-drop { background:transparent; color:var(--muted); }
+  .ix-score { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-top:8px; font-size:.74rem; color:var(--muted); }
+  .ix-score form { margin:0; display:inline; }
+  .ix-score button { border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:3px 10px; font-size:.74rem; font-weight:700; color:#5b5670; cursor:pointer; }
+  .ix-score button.is-on.right { background:var(--mint-subtle); border-color:var(--mint); color:var(--mint); }
+  .ix-score button.is-on.wrong { background:#fff1f2; border-color:#e11d48; color:#be123c; }
+  .ix-correct { margin-top:8px; text-align:left; } .ix-correct summary { cursor:pointer; font-size:.76rem; font-weight:800; color:var(--primary-berry); }
+  .ix-correct textarea { font-size:.82rem; border-radius:12px; margin-top:6px; }
 </style>
 
 {% include "_flash.html" %}
@@ -125,6 +140,36 @@
   {% else %}<span class="ix-chip quiet"><i class="bi bi-send-fill"></i>Sent</span>{% endif %}
   {% if thread.last_status == "test" %}<span class="ix-chip berry">Test</span>{% endif %}
 {% endmacro %}
+
+{% set inbox_side = "candidates" %}
+{% include "_inbox_switch.html" %}
+
+{# How messages to candidates go: the admin's choice, and the next way when one does not work (services/channels.py). #}
+<form class="ix-ways" method="post" action="/inbox/channels" id="ways">
+  <span class="ix-ways-title"><i class="bi bi-signpost-split-fill"></i>Messages go by</span>
+  {% for way in ["auto", "email", "whatsapp", "sms"] %}
+  <label class="ix-way {{ 'is-on' if send_choice.way == way }}" title="{{ send_status[way].note if way in send_status else 'WhatsApp when your Business number is connected, otherwise email; then the ways that need your phone' }}">
+    <input type="radio" name="way" value="{{ way }}" {{ 'checked' if send_choice.way == way }} onchange="this.form.requestSubmit()">
+    <i class="bi {{ {'auto': 'bi-shuffle', 'email': 'bi-envelope', 'whatsapp': 'bi-whatsapp', 'sms': 'bi-chat-dots'}[way] }}"></i>{{ send_names[way] }}
+    {% if way in send_status %}<em class="{{ 'ok' if send_status[way].alone else 'wait' }}">{{ 'by itself' if send_status[way].alone else 'your phone' if way != 'email' else 'not connected' }}</em>{% endif %}
+  </label>
+  {% endfor %}
+  <label class="ix-way-next"><input type="checkbox" name="fallback" value="true" {{ 'checked' if send_choice.fallback }} onchange="this.form.requestSubmit()"> If it does not work, the next way</label>
+  <noscript><button class="ui-btn sm">Save</button></noscript>
+</form>
+<style>
+  .ix-ways { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:9px 12px; margin-bottom:14px; }
+  .ix-ways-title { font-size:.76rem; font-weight:800; color:var(--muted); display:inline-flex; gap:6px; align-items:center; margin-right:4px; text-transform:uppercase; letter-spacing:.04em; }
+  .ix-way { position:relative; display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); border-radius:999px; padding:5px 12px; font-size:.8rem; font-weight:700; cursor:pointer; color:#5b5470; }
+  .ix-way input { position:absolute; opacity:0; pointer-events:none; }
+  .ix-way.is-on { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .ix-way em { font-style:normal; font-size:.66rem; font-weight:800; border-radius:999px; padding:1px 7px; }
+  .ix-way em.ok { background:#dcfce7; color:#166534; } .ix-way em.wait { background:var(--gold-subtle); color:var(--gold-dark); }
+  .ix-way.is-on em { background:rgba(255,255,255,.22); color:#fff; }
+  .ix-way-next { font-size:.78rem; font-weight:700; color:#5b5470; display:inline-flex; gap:6px; align-items:center; margin-left:auto; }
+  .ix-way-next input { accent-color:var(--primary-berry); }
+  @media (max-width: 767px) { .ix-way-next { margin-left:0; } }
+</style>
 
 <!-- ============ KPIs ============ -->
 <div class="ix-kpis mb-3" id="live-inbox-kpis" data-live-region>
@@ -198,6 +243,14 @@
 {% set keep_filters = ("&q=" ~ (search | urlencode) if search else "") ~ ("&candidate=" ~ candidate_filter.id if candidate_filter else "") %}
 {% set keep = keep_filters ~ ("&view=all" if whole_history else "") %}
 
+{% if counts.to_send %}
+<div class="ix-wa-bar">
+  <i class="bi bi-whatsapp"></i>
+  <span><strong>{{ counts.to_send }} message{{ 's' if counts.to_send != 1 }} (WhatsApp or SMS)</strong> wait{{ '' if counts.to_send != 1 else 's' }} for you to send from your phone. Each opens WhatsApp or your messages with the text written: press send there, then “Sent” here.{% if not whatsapp_ready %} Once your WhatsApp Business number is connected, WhatsApp messages go by themselves.{% endif %}</span>
+  <a class="ui-btn sm" href="/inbox?filter=to_send" style="margin-left:auto;">Open them</a>
+</div>
+{% endif %}
+
 <div class="ix-layout">
   <!-- ============ Discussions ============ -->
   <aside class="ix-card">
@@ -225,7 +278,7 @@
         <div class="ix-avatar">{{ initials(thread.candidate.full_name or thread.candidate.email) }}</div>
         <div class="flex-grow-1" style="min-width:0;">
           <div class="d-flex justify-content-between gap-2">
-            <span class="ix-row-name text-truncate">{% if thread.unread %}<span class="ix-dot" title="New"></span>{% endif %}{{ thread.candidate.full_name or thread.candidate.email }}</span>
+            <span class="ix-row-name text-truncate">{% if thread.unread %}<span class="ix-dot" title="New"></span>{% endif %}{% if thread.channel == "whatsapp" %}<i class="bi bi-whatsapp ix-wa me-1" title="WhatsApp"></i>{% endif %}{{ thread.candidate.full_name or thread.candidate.email }}</span>
             <span class="ix-row-time">{{ thread.last_message_at | ago }}</span>
           </div>
           <div class="ix-row-subject">{{ thread.subject or "No subject" }}</div>
@@ -308,14 +361,15 @@
       {% if message.direction == "inbound" %}
       <div class="ix-msg in">
         <div class="ix-msg-meta">
-          <span class="ix-msg-who">{{ selected.candidate.full_name or selected.candidate.email }}</span>
+          <span class="ix-msg-who">{% if message.channel == "whatsapp" %}<i class="bi bi-whatsapp ix-wa"></i> {% endif %}{{ selected.candidate.full_name or selected.candidate.email }}</span>
           <span>{{ message.received_at | localdt }}</span>
           {% if message.language %}<span class="ix-chip quiet">{{ language_labels.get(message.language, message.language) }}</span>{% endif %}
           {% if message.intent and message.intent in intent_labels %}<span class="ix-chip quiet">{{ intent_labels[message.intent] }}</span>{% endif %}
-          {% if message.sentiment in ("concerned", "frustrated") %}<span class="ix-chip bad">{{ message.sentiment | capitalize }}</span>{% endif %}
+          {% if message.emotions %}{% import "_emoji.html" as emo %}{% set felt = message.emotions | fromjson %}{% for item in felt.emotions[:3] %}<span class="ix-chip {{ 'bad' if item.key in ('frustrated', 'disappointed') else 'warn' if item.key in ('worried', 'confused', 'urgent') else 'ok' }}" title="Words that showed it: {{ item.words | join(', ') }}. {{ felt.how }}">{{ emo.feel(item.key) }} {{ item.label }}</span>{% endfor %}
+          {% elif message.sentiment in ("concerned", "frustrated") %}<span class="ix-chip bad">{{ message.sentiment | capitalize }}</span>{% endif %}
           {% if message.message_id and message.message_id.startswith("<test-") %}<span class="ix-chip berry">Test</span>{% endif %}
         </div>
-        <div class="ix-bubble">{{ message.body }}</div>
+        <div class="ix-bubble" data-no-i18n>{{ message.body }}</div>
         {{ email_files.attachments(item.files) }}
         <div class="ix-msg-foot">
           {% if message.status == "processing" %}<span><i class="bi bi-hourglass-split"></i> The assistant is reading this email</span>
@@ -337,7 +391,7 @@
           {% if message.confidence is not none and not by_admin %}<span class="ix-chip ok" title="Confidence KPI of this answer">{{ (message.confidence * 100) | round | int }}% confidence</span>{% endif %}
           <span>{{ message.received_at | localdt }}</span>
         </div>
-        <div class="ix-bubble">{{ message.body }}</div>
+        <div class="ix-bubble" data-no-i18n>{{ message.body }}</div>
         {{ email_files.attachments(item.files) }}
         <div class="ix-msg-foot">
           {% if message.status == "failed" %}
@@ -345,12 +399,40 @@
             <form method="post" action="/inbox/message/{{ message.id }}/resend"><button class="ix-linkbtn">Send again</button></form>
           {% elif message.status == "test" %}
             <span class="ix-chip berry">Test · not sent</span>
+          {% elif message.status == "to_send" %}
+            <span class="ix-chip wa"><i class="bi {{ 'bi-chat-dots' if message.channel == 'sms' else 'bi-whatsapp' }}"></i>{{ 'SMS · ' if message.channel == 'sms' }}Waiting for you to send it</span>
+          {% elif message.status == "cancelled" %}
+            <span class="ix-chip quiet">Removed, not sent</span>
           {% else %}
-            <span class="ix-chip ok"><i class="bi bi-check2"></i>Sent</span>
+            <span class="ix-chip {{ 'wa' if message.channel in ('whatsapp', 'sms') else 'ok' }}"><i class="bi {{ 'bi-whatsapp' if message.channel == 'whatsapp' else 'bi-chat-dots' if message.channel == 'sms' else 'bi-check2' }}"></i>Sent{{ ' on WhatsApp' if message.channel == 'whatsapp' else ' by SMS' if message.channel == 'sms' }}</span>
           {% endif %}
           {% if message.html_body %}<a href="/inbox/message/{{ message.id }}/html" target="_blank" rel="noopener">View as received</a>{% endif %}
         </div>
-        {% if message.analysis and message.status != "sent" %}<div class="ix-msg-foot">{{ message.analysis }}</div>{% endif %}
+        {% if message.analysis and message.status not in ("sent", "to_send") %}<div class="ix-msg-foot">{{ message.analysis }}</div>{% endif %}
+        {% if message.status == "to_send" and wa_link(message) %}
+        <div class="ix-wa-send">
+          <a class="ix-wa-open" href="{{ wa_link(message) }}" target="_blank" rel="noopener"><i class="bi {{ 'bi-chat-dots' if message.channel == 'sms' else 'bi-whatsapp' }}"></i>{{ 'Open messages' if message.channel == 'sms' else 'Open WhatsApp' }}</a>
+          <form method="post" action="/inbox/whatsapp/{{ message.id }}/sent"><button class="ix-wa-done"><i class="bi bi-check2"></i>Sent</button></form>
+          <form method="post" action="/inbox/whatsapp/{{ message.id }}/sent"><input type="hidden" name="remove" value="true"><button class="ix-wa-drop">Remove</button></form>
+        </div>
+        {% endif %}
+        {% if not by_admin and message.intent == "reply" and message.status in ("sent", "test") %}
+        <div class="ix-score">
+          <span>Was this answer right?</span>
+          <form method="post" action="/inbox/message/{{ message.id }}/score"><input type="hidden" name="verdict" value="{{ 'clear' if message.admin_score == 1 else 'right' }}">
+            <button class="right {{ 'is-on' if message.admin_score == 1 }}"><i class="bi bi-hand-thumbs-up"></i> Right</button></form>
+          <form method="post" action="/inbox/message/{{ message.id }}/score"><input type="hidden" name="verdict" value="{{ 'clear' if message.admin_score == -1 else 'wrong' }}">
+            <button class="wrong {{ 'is-on' if message.admin_score == -1 }}"><i class="bi bi-hand-thumbs-down"></i> Wrong</button></form>
+        </div>
+        <details class="ix-correct" {{ 'open' if message.admin_score == -1 }}>
+          <summary>Correct it: write the right answer, the assistant learns it</summary>
+          <form method="post" action="/inbox/message/{{ message.id }}/correct">
+            <textarea class="form-control" name="answer" rows="3" required placeholder="The right answer, as you would write it to the candidate">{{ message.body }}</textarea>
+            <label class="small mt-1 d-block"><input type="checkbox" name="send" value="true"> Also send it to {{ selected.candidate.full_name or "the candidate" }} now{{ ' on WhatsApp' if selected.channel == 'whatsapp' }}</label>
+            <button class="ui-btn sm primary mt-2"><i class="bi bi-mortarboard"></i>Teach it</button>
+          </form>
+        </details>
+        {% endif %}
         {% if not by_admin and (sources.hits or sources.used_record) %}
         <details class="ix-sources text-end">
           <summary>What this answer is based on</summary>
@@ -390,6 +472,7 @@
           Confidence {{ percent }}% · it answers alone from {{ threshold }}%
           {% if sources.method == "document" %}· the program's PDF, made from your programs, is attached
           {% elif sources.method == "record" %}· based on the candidate's own record
+          {% elif sources.method == "register" %}· the registration form's link (Settings, The centre's numbers)
           {% elif sources.method == "taught" %}· based on an answer you taught{{ ", written again by the system (nothing added, nothing left out)" if sources.rewritten else ", in your own words" }}
           {% elif sources.method == "composed" %}· phrased from the knowledge found
           {% else %}· no solid basis found{% endif %}
@@ -416,15 +499,26 @@
           {% else %}Write to {{ selected.candidate.full_name or selected.candidate.email }}{% endif %}
         </label>
         <textarea class="form-control" id="reply-body" name="body" rows="{{ 8 if pending else 4 }}" required
-                  placeholder="Bonjour…">{{ pending.suggested_reply if pending and pending.suggested_reply else "" }}</textarea>
+                  placeholder="Bonjour… (or a few words, even in Tunisian)">{{ request.query_params.get('draft') or (pending.suggested_reply if pending and pending.suggested_reply else "") }}</textarea>
         <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
           <button type="button" class="btn btn-sm btn-light border rounded-pill fw-semibold" id="reformulate-btn" data-url="/inbox/thread/{{ selected.id }}/reformulate"
                   {% if not model_ready %}disabled title="The assistant is not running right now"{% endif %}>
             <i class="bi bi-stars me-1" style="color:var(--primary-berry);"></i>Reformulate
           </button>
+          {% set reply_lang = 'en' if pending and pending.language == 'en' else 'fr' %}
+          <select class="form-select form-select-sm rounded-pill" id="reformulate-lang" name="reword_language" style="width:auto;" aria-label="Language of the reworded answer">
+            <option value="fr" {{ 'selected' if reply_lang == 'fr' }}>in French</option>
+            <option value="en" {{ 'selected' if reply_lang == 'en' }}>in English</option>
+          </select>
           <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 d-none" id="reformulate-undo">Put my words back</button>
-          <span class="small text-muted" id="reformulate-status">Write your answer in a few words, the system turns it into a proper email. You read it before sending.</span>
+          <span class="small text-muted" id="reformulate-status">Write your answer in a few words, in Tunisian, French or English: the system turns it into a proper email in the language chosen. You read it before sending.</span>
         </div>
+        <label class="ix-reword" title="Your words are reworded and sent at once. When the rewording changes a figure, it waits for you instead.">
+          <input type="checkbox" name="reword" value="true" id="reword-send" {{ 'checked' if reword_default }}>
+          <span><b>Reword and send at once</b> · no waiting: “Send answer” rewords your words in the language chosen, then sends. When the rewording would change a figure, it waits for your eye. Untick to read it first.</span>
+        </label>
+        <style>.ix-reword { display:flex; gap:8px; align-items:flex-start; font-size:.8rem; color:#5b5470; margin-top:8px; background:#faf8fd; border-radius:12px; padding:8px 10px; }
+               .ix-reword input { margin-top:3px; accent-color:var(--primary-berry); } .ix-reword b { color:var(--ink-text); }</style>
         <div class="form-text">Your signature is added automatically. An empty line starts a new paragraph; lines starting with “-” become a list.</div>
 
         {{ email_files.picker(accept_documents, photo=False, attached=draft_files) }}
@@ -499,6 +593,12 @@
   scrollToLatest();
   document.addEventListener("live:refreshed", scrollToLatest);
 
+  // "Reword and send at once": remembered for the next answers too (and can be switched off the same way).
+  document.addEventListener("change", event => {
+    if (event.target.id !== "reword-send") return;
+    const form = new FormData(); form.append("on", event.target.checked ? "1" : "0");
+    fetch("/inbox/reword-mode", { method: "POST", body: form }).catch(() => {});
+  });
   // "Reformulate": the few words typed become a complete email, to read before sending.
   // The reply form can be redrawn by a live refresh, so clicks are caught on the page.
   let myWords = null;
@@ -537,7 +637,7 @@
       const response = await fetch(button.dataset.url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: words.slice(0, 2000) }),
+        body: JSON.stringify({ text: words.slice(0, 2000), language: (document.getElementById("reformulate-lang") || {}).value || null }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail && typeof data.detail === "string" ? data.detail : "The phrase could not be reformulated.");

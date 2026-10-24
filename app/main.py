@@ -1,3 +1,10 @@
+import os as _os
+from pathlib import Path as _Path
+
+# The sentence models are already on this computer: never ask huggingface.co when starting (a start without internet would fail).
+if any((_Path(_os.environ.get("HF_HOME") or _Path.home() / ".cache" / "huggingface") / "hub").glob("models--sentence-transformers--*")):
+    _os.environ.setdefault("HF_HUB_OFFLINE", "1")
+
 from contextlib import asynccontextmanager
 import os
 import signal
@@ -38,6 +45,13 @@ from app.api.program_pdf import router as program_pdf_router
 from app.api.reminders import router as reminders_router
 from app.api.i18n import router as i18n_router
 from app.api.workspace import router as workspace_router
+from app.api.page_pdf import router as page_pdf_router
+from app.api.whatsapp import router as whatsapp_router
+from app.api.friend import router as friend_router
+from app.api.team import router as team_router
+from app.api.videos import router as videos_router
+from app.api.proofs import router as proofs_router
+from app.api.sms import router as sms_router
 from app.services.auth import AccessGate, SecurityHeaders
 from app.services.realtime import broadcaster, install_session_hooks
 
@@ -78,6 +92,8 @@ scheduler = BackgroundScheduler(
 
 # Every committed change is pushed to open admin pages (notifications + live refresh).
 install_session_hooks(SessionLocal)
+__import__("app.services.program_icons", fromlist=["install_hooks"]).install_hooks(SessionLocal)    # every new program gets its picture
+__import__("app.services.professor_announcements", fromlist=["install_hooks"]).install_hooks(SessionLocal)   # a professor given a class is told
 
 
 _exit_timer = None
@@ -139,6 +155,12 @@ async def lifespan(app: FastAPI):
 
     # Start scheduled background tasks
     start()
+    # The job offers are read once now, not by the first program page that needs them.
+    threading.Thread(target=__import__("app.services.market", fromlist=["warm"]).warm, name="market-warm", daemon=True).start()
+    # The meaning model and the guide's examples, ready before the first question.
+    from app.services import howto as _howto, meaning as _meaning
+
+    _meaning.warm([text for texts in _howto.bank().values() for text in texts])
 
     yield
 
@@ -162,15 +184,22 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 ensure_sqlite_compatibility()
 # Include Application Routers
 app.include_router(auth_router)
+app.include_router(page_pdf_router)    # every page as a PDF: before the pages, whose addresses would catch …/pdf
+app.include_router(friend_router)      # /account/friend: what Yasmine, the animated friend, says
+app.include_router(sms_router)         # /sms/webhook: the SMS the Android phone receives
+app.include_router(whatsapp_router)    # /whatsapp/webhook: where Meta delivers the messages candidates send
 app.include_router(teacher_router)
 app.include_router(realtime_router)
 app.include_router(settings_router)
+app.include_router(proofs_router)      # payment proofs: /payments/proofs/..., /candidate/{id}/proof
+app.include_router(team_router)        # /inbox/team, /account/messages: the chat with the professors and the team
 app.include_router(inbox_router)
 app.include_router(course_router)
 app.include_router(website_router)
 app.include_router(opinion_router)
 app.include_router(system_router)      # /system, and what a phone needs to keep the application on its home screen
 app.include_router(meeting_router)     # a session's meeting: before teacher_router's /classes/{id}/attendance/{session}
+app.include_router(videos_router)      # /programs/videos: before program_router's /programs/{program_id}
 app.include_router(market_router)      # /programs/market: before program_router's /programs/{program_id}
 app.include_router(program_pdf_router) # /programs/{id}/pdf: a program to download or send
 app.include_router(reminders_router)   # /reminders: the admin's own reminders

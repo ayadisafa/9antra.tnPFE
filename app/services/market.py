@@ -16,6 +16,7 @@ from a fixed list, and the percentages are those counts:
 from __future__ import annotations
 
 import hashlib
+from functools import lru_cache
 import html
 import logging
 import re
@@ -244,13 +245,24 @@ def plain(text: str | None) -> str:
     return " ".join(html.unescape(_TAGS.sub(" ", text or "")).split())[:KEEP_TEXT]
 
 
+# An offer's text is read once: the 700 kept offers were read again for every program page (11 s each time).
+@lru_cache(maxsize=40000)
+def _skills_named(text: str, subject: str) -> frozenset:
+    return frozenset(name for name, pattern in _SKILL.get(subject, []) if pattern.search(text))
+
+
+@lru_cache(maxsize=4000)
+def _common_named(text: str) -> frozenset:
+    return frozenset(name for name, pattern in _COMMON if pattern.search(text))
+
+
 def skills_in(text: str, subject: str) -> set[str]:
     """The skills of a field that a text names."""
-    return {name for name, pattern in _SKILL.get(subject, []) if pattern.search(text or "")}
+    return set(_skills_named(text or "", subject))
 
 
 def common_in(text: str) -> set[str]:
-    return {name for name, pattern in _COMMON if pattern.search(text or "")}
+    return set(_common_named(text or ""))
 
 
 # The skills without which an offer is not of the field, whatever else it names.
@@ -266,11 +278,16 @@ _HINTS = {"ai": _pattern(r"ai|ia")}
 
 
 def fields_of(title: str, text: str = "") -> list[str]:
+    return list(_fields_of(title or "", text or ""))
+
+
+@lru_cache(maxsize=4000)
+def _fields_of(title: str, text: str) -> tuple:
     """The fields an offer belongs to: by its title, else by the skills it names
     (three of one field at least, one of which defines the field)."""
     by_title = [subject for subject, pattern in _TITLE.items() if pattern.search(title or "")]
     if by_title:
-        return by_title
+        return tuple(by_title)
     counted = []
     for subject in SKILLS:
         named = skills_in(text, subject)
@@ -280,7 +297,7 @@ def fields_of(title: str, text: str = "") -> list[str]:
     for subject, hint in _HINTS.items():
         if subject not in found and hint.search(title or "") and len(skills_in(text, subject)) >= 2:
             found.append(subject)
-    return found
+    return tuple(found)
 
 
 def others_of(title: str) -> list[str]:
@@ -320,6 +337,23 @@ def kept_offers(db: Session) -> list[dict]:
                location=row.location or "", url=row.url or "", posted=row.posted_at or row.added_at, key=row.id)
         for row in db.query(MarketOffer).order_by(MarketOffer.added_at.desc()).all()
     ]
+
+
+def warm() -> None:
+    """Read the kept offers once in the background when the application starts, so the first program page does not
+    wait for it. The database is closed before the reading (it must never wait on a long read)."""
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        rows = [(row.title or "", row.text or "") for row in db.query(MarketOffer.title, MarketOffer.text).all()]
+    finally:
+        db.close()
+    for title, text in rows:
+        whole = f"{title}. {text}"
+        fields_of(title, whole)
+        for subject in SKILLS:
+            skills_in(whole, subject)
 
 
 def all_offers(db: Session) -> list[dict]:

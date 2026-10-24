@@ -135,10 +135,11 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "advice_summary": advisor.summary(advice),
             "figures": overview.figures(db, now_utc),
             "sessions": overview.coming_sessions(db, now_local),
-            "classes": overview.classes_in_progress(db, now_local),
+            "board": overview.week_board(db, now_local),
             "registrations": overview.newest_registrations(db),
             "programs": overview.popular_programs(db),
             "parts": overview.activity_parts(db, now_utc),
+            "no_teacher": overview.programs_without_teacher(db),
             "news": website_sync.week_news(db, now_utc),
             "said": feedback.overview(db),
             "smart": {"ideas": reminders.suggestions(db)[:3],
@@ -163,9 +164,8 @@ def guide_page(request: Request):
     )
 
 
-@router.get("/payments")
-def payments_page(request: Request, db: Session = Depends(get_db)):
-    """Who still has to pay, where their reminder stands, and what to do."""
+def payment_rows(db: Session) -> tuple[list[dict], dict]:
+    """Who still has to pay, where their reminder stands, and what to do; with the totals."""
     candidates = (
         db.query(Candidate)
         .options(joinedload(Candidate.registrations).joinedload(Registration.program),
@@ -193,14 +193,25 @@ def payments_page(request: Request, db: Session = Depends(get_db)):
             "whatsapp": whatsapp.link(candidate.phone),
         })
     rows.sort(key=lambda row: -(row["advice"].priority if row["advice"] else 0))
+    totals = {
+        "due": sum(row["due"] for row in rows), "people": len(rows), "paid": paid_total,
+        "to_decide": sum(1 for row in rows if row["advice"] and row["advice"].action),
+    }
+    return rows, totals
+
+
+@router.get("/payments")
+def payments_page(request: Request, db: Session = Depends(get_db)):
+    """Who still has to pay, where their reminder stands, and what to do."""
+    rows, totals = payment_rows(db)
     return templates.TemplateResponse(
         request=request, name="payments.html",
         context={
             "active_page": "payments", "rows": rows,
-            "totals": {
-                "due": sum(row["due"] for row in rows), "people": len(rows), "paid": paid_total,
-                "to_decide": sum(1 for row in rows if row["advice"] and row["advice"].action),
-            },
+            "totals": totals,
+            "proofs": __import__("app.services.payment_proofs", fromlist=["waiting"]).waiting(db),
+            "proofs_done": __import__("app.services.payment_proofs", fromlist=["recent"]).recent(db, limit=6),
+            "centre_ribs_set": bool(__import__("app.services.payment_proofs", fromlist=["centre_ribs"]).centre_ribs(db)),
             "notice": request.query_params.get("notice"), "error": request.query_params.get("error"),
         },
     )

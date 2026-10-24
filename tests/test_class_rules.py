@@ -102,7 +102,8 @@ db.expire_all()
 check("one click adds the speciality", answer.status_code == 303 and "Internet of Things (IoT)" in (professor("amira").specialties or "") and "Python" in professor("amira").specialties, professor("amira").specialties)
 check("and returns to the class", where(answer).startswith(f"/classes/{iot_class.id}"), where(answer))
 iot_class = by_name("IOTI-20261017-1")
-check("once solved, it starts by itself on its date", es.refresh_class_status(db, iot_class, now=day_after) == ClassStatus.ONGOING)
+# Once its date has passed in real time, the page itself may already have started it: either way it runs.
+check("once solved, it starts by itself on its date", (es.refresh_class_status(db, iot_class, now=day_after) or iot_class.status) == ClassStatus.ONGOING, iot_class.status)
 db.rollback(); db.expire_all()
 
 bi_class = by_name("BIB-20261024-1")

@@ -277,13 +277,15 @@ check("icons: a program without picture shows its initials", pi.view(flutter)["u
 check("icons: found on the web and stored here", pi.assign_from_web(db, flutter) == "ok" and pi.has_icon(flutter))
 check("icons: a square mark is preferred to a wide logo", flutter.icon_ref == "logos:flutter-icon", flutter.icon_ref)
 first_url = pi.url_of(flutter)
+first_file = pi.path_of(flutter)
 check("icons: served from this application", first_url.startswith(f"/programs/{flutter.id}/icon?v=") and pi.path_of(flutter).read_bytes() == SQUARE)
 check("icons: the admin can choose another one", pi.assign_from_web(db, flutter, ref="devicon:flutter") == "ok" and flutter.icon_ref == "devicon:flutter" and pi.url_of(flutter) != first_url)
-check("icons: the previous file is not left behind", len(list(pi.storage_dir().iterdir())) == 1)
+check("icons: the previous file is not left behind", not first_file.exists() and pi.path_of(flutter).exists())
 odd = Program(name="Zzzz Qqqq"); db.add(odd); db.commit()
 check("icons: a name nothing matches", pi.assign_from_web(db, odd) == "nothing" and not pi.needs_icon(odd) and odd.icon_checked_at is not None)
 web["online"] = False
-check("icons: offline is reported as such", pi.assign_from_web(db, python) == "offline" and not pi.has_icon(python))
+check("icons: offline is reported as such, and a picture is drawn meanwhile", pi.assign_from_web(db, python) == "offline"
+      and python.icon_ref == pi.DRAWN and pi.has_icon(python))
 web["online"] = True
 python.icon_checked_at = None; db.commit()
 got = pi.assign_missing(db, limit=50)
@@ -369,7 +371,12 @@ check("questions: the right answer is not always in the same place", len(positio
 
 count_before = len(bank)
 wq.queue(db, klass, 2); wq.work_one(db)
-check("questions: asking again writes nothing new when every file is covered", len(wq.questions_of(db, klass.id, 2)) == count_before)
+added = [q for q in wq.questions_of(db, klass.id, 2)][count_before:]
+check("questions: asking again writes nothing new from the files; only from the course's own plan and the website",
+      all((q.material_id or "").startswith(("plan:", "site:")) for q in added), [q.material_id for q in added])
+count_before = len(wq.questions_of(db, klass.id, 2))
+wq.queue(db, klass, 2); wq.work_one(db)
+check("questions: and then nothing new, everything being covered", len(wq.questions_of(db, klass.id, 2)) == count_before)
 cm.set_week_notes(db, klass, 3, "NOQUOTE The teacher showed how images are built layer by layer in Docker. Each instruction of a Dockerfile adds one layer to the image.")
 wq.queue(db, klass, 3); wq.work_one(db)
 week3 = wq.questions_of(db, klass.id, 3)
@@ -386,7 +393,22 @@ check("questions: a question about the document itself is not sent", any("instea
 cm.set_week_notes(db, klass, 6, "Too short.")
 wq.queue(db, klass, 6); wq.work_one(db)
 week6 = db.query(ClassWeek).filter(ClassWeek.class_group_id == klass.id, ClassWeek.week_number == 6).first()
-check("questions: too little course says so instead of inventing", week6.questions_status == "idle" and "not enough to learn from" in week6.questions_note and not wq.questions_of(db, klass.id, 6))
+check("questions: too little course: only the course's own plan is used, nothing invented from the notes",
+      (week6.questions_status == "idle" and not wq.questions_of(db, klass.id, 6))
+      or all((q.material_id or "").startswith(("plan:", "site:")) for q in wq.questions_of(db, klass.id, 6)),
+      [q.material_id for q in wq.questions_of(db, klass.id, 6)])
+from app.models import ClassGroup as _Group, Program as _Program
+
+bare_program = _Program(name="Bare Course Without Plan", description="", is_approved=True)
+db.add(bare_program); db.flush()
+bare = _Group(name="T-BARE-1", program_id=bare_program.id, status=klass.status, start_date=klass.start_date, total_weeks=4,
+              start_time=klass.start_time, end_time=klass.end_time, days_of_week=klass.days_of_week)
+db.add(bare); db.commit()
+cm.set_week_notes(db, bare, 2, "Too short.")
+wq.queue(db, bare, 2); wq.work_one(db)
+bare_week = db.query(ClassWeek).filter(ClassWeek.class_group_id == bare.id, ClassWeek.week_number == 2).first()
+check("questions: a course with no plan and too little course says so instead of inventing",
+      bare_week.questions_status == "idle" and "not enough to learn from" in bare_week.questions_note and not wq.questions_of(db, bare.id, 2))
 model["on"] = False
 cm.set_week_notes(db, klass, 7, "The teacher explained monitoring with dashboards that show the load of every server. An alert is sent when a threshold is passed for five minutes.")
 wq.queue(db, klass, 7); wq.work_one(db)
@@ -431,7 +453,7 @@ check("send: the email is the editable 'Weekly questions' one, in the candidate'
 check("send: the week is marked sent", db.query(ClassWeek).filter(ClassWeek.class_group_id == klass.id, ClassWeek.week_number == 2).first().sent_at is not None)
 again = wq.send_week(db, klass, 2, base_url=BASE)
 check("send: sending twice does not email twice", again["sent"] == 0 and again["already"] == 3 and len(outbox) == 3, again)
-check("send: nothing ready, nothing sent", "No question is ready" in wq.send_week(db, klass, 6, base_url=BASE).get("error", ""))
+check("send: nothing ready, nothing sent", "No question is ready" in wq.send_week(db, bare, 2, base_url=BASE).get("error", ""))
 dora = person("Dora Test", "dora.test@example.com"); reg_d = register(dora, devops, paid=390, class_group=klass); db.commit()
 send_mode["fail"] = True
 failed = wq.send_week(db, klass, 2, base_url=BASE)
@@ -605,7 +627,7 @@ def page(url, **kw):
     return response.status_code, response.text
 
 status, html = page("/")
-check("page: dashboard opens", status == 200 and "What needs you" in html and "Weekly timetable" in html, status)
+check("page: dashboard opens", status == 200 and "What needs you" in html and "Classes and weekly timetable" in html and "Newest registrations and most chosen programs" in html, status)
 check("page: dashboard shows the recommendations with their reason and button", "Answer Ghassen" in html and "ui-advice" in html and "Not now" in html)
 check("page: dashboard has no invented figures left", "4.9" not in html and "AVG. RATING" not in html and "ui-avatars.com" not in html)
 check("page: dashboard shows real money and classes", "DT received" in html and "T-DEVOPS-1" in html)
@@ -657,9 +679,10 @@ check("page: programs show their picture or their initials", f"/programs/{flutte
 check("page: an incomplete program offers a proposal", "Propose them" in html or "Read and confirm" in html)
 response = client.get(pi.url_of(flutter))
 check("page: a picture is served safely", response.status_code == 200 and response.headers["content-type"].startswith("image/svg+xml") and "sandbox" in response.headers["content-security-policy"] and response.headers["x-content-type-options"] == "nosniff")
+pi.remove(db, odd)
 check("page: no picture, no file", client.get(f"/programs/{odd.id}/icon").status_code == 404)
 response = client.get("/programs/icons/search", params={"q": "python"})
-check("page: the picture search lists the catalogue", response.status_code == 200 and response.json()["icons"][0]["ref"] == "devicon:python" and response.json()["icons"][0]["url"].startswith("https://api.iconify.design/devicon/python.svg"))
+check("page: the picture search lists the catalogue", response.status_code == 200 and response.json()["icons"][0]["ref"] == "devicon:python" and response.json()["icons"][0]["url"].startswith(pi.API + "/devicon/python.svg"))
 web["online"] = False
 check("page: the search says when the web is unreachable", client.get("/programs/icons/search", params={"q": "python"}).status_code == 502)
 web["online"] = True

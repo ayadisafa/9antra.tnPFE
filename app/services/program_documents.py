@@ -76,6 +76,18 @@ def language_asked(message: str, default: str = "fr") -> str:
     return default
 
 
+_CONTENT = (r"contenu|programme de (la )?formation|qu est ce qu on (apprend|etudie|fait)|que (va|vais) (t on|je) (apprendre|etudier)|"
+            r"ce qu on (apprend|etudie)|on apprend quoi|what (will|do|does|would) (i|we|you|it) (learn|study|cover|teach)|what is (in|taught)|"
+            r"what does .{1,40} (cover|teach)|syllabus|curriculum|chnowa (n9raw|na9raw|nakraw|fih|fiha|yet9ra|tet9ra)|chnia (fih|fiha)|"
+            r"quoi il y a dedans|les modules|modules|le programme de")
+
+
+def asks_about_content(message: str) -> bool:
+    """Whether the message asks what a program teaches (its content): its PDF answers it best."""
+    text = plain(message)
+    return bool(text) and re.search(r"\b(" + _CONTENT + r")\b", text) is not None and not _has(text, _OTHER)
+
+
 def named_programs(db: Session, message: str) -> list[Program]:
     """The programs a message names: by their whole name, else by a word only they have."""
     from app.services import knowledge_service

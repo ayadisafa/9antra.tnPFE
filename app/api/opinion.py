@@ -26,6 +26,7 @@ def _page(request: Request, db: Session, row, *, problem: str | None = None, edi
             "external_id": row.external_id, "status": "asked", "rating": row.rating,
             "comment": row.comment, "program_name": row.program_name,
         })()
+    data = program_feedback._payload(row) if row is not None else {}
     name = ((row.author_name or "").split() or [""])[0].capitalize() if row is not None else ""
     return templates.TemplateResponse(
         request=request, name="opinion.html", status_code=status_code, headers=_HEADERS,
@@ -33,6 +34,8 @@ def _page(request: Request, db: Session, row, *, problem: str | None = None, edi
             "row": shown, "first_name": name, "problem": problem,
             "may_publish": bool(row is not None and program_feedback._payload(row).get("may_publish")),
             "facebook": program_feedback.facebook_reviews(),
+            "professor": program_feedback.professor_of(db, row) if row is not None else "",
+            "given": data, "thanks": request.query_params.get("thanks") == "1",
             "app_name": brand.view(get_settings(db))["name"],
         },
     )
@@ -51,18 +54,39 @@ def give_opinion(
     stars: int = Form(0),
     words: str = Form(""),
     publish: bool = Form(False),
+    happy: int = Form(0),
+    improve: str = Form(""),
+    prof_stars: int = Form(0),
+    prof_words: str = Form(""),
+    recommend: str = Form(""),
     db: Session = Depends(get_db),
 ):
     row = program_feedback.by_token(db, token)
     if row is None:
         return _page(request, db, None, status_code=404)
     try:
-        program_feedback.answer(db, row, stars=stars, words=words, may_publish=publish)
+        program_feedback.answer(db, row, stars=stars, words=words, may_publish=publish, happy=happy, improve=improve,
+                                prof_stars=prof_stars, prof_words=prof_words, recommend=recommend)
     except ValueError as err:
         db.rollback()
         return _page(request, db, row, problem=str(err), edit=True, status_code=400)
     db.commit()
-    return RedirectResponse(f"/opinion/{token}", status_code=303)
+    return RedirectResponse(f"/opinion/{token}?thanks=1", status_code=303)
+
+
+@router.post("/candidate/{candidate_id}/ask-review/{registration_id}")
+def ask_one(candidate_id: str, registration_id: str, db: Session = Depends(get_db)):
+    """Ask one candidate, now, what they thought of a program they finished."""
+    from app.models.registration import Registration
+
+    registration = db.get(Registration, registration_id)
+    if registration is None or registration.candidate_id != candidate_id:
+        raise HTTPException(status_code=404, detail="Registration not found")
+    row = program_feedback.ask(db, registration, manual=True)
+    db.commit()
+    query = urlencode({"notice": "Asked: they get a link to give their review."} if row is not None
+                      else {"error": "Not sent: they already answered, or no email or phone can reach them."})
+    return RedirectResponse(f"/candidate/{candidate_id}?{query}#reviews", status_code=303)
 
 
 @router.post("/classes/{class_id}/ask-opinions")

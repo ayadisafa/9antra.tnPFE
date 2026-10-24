@@ -30,6 +30,7 @@ class EmailThread(Base):
     last_author = Column(String, nullable=True)
     last_status = Column(String, nullable=True)
     last_snippet = Column(String, nullable=True)
+    channel = Column(String, default="email", nullable=True)       # email | whatsapp: how its messages travel
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     closed_at = Column(DateTime, nullable=True)

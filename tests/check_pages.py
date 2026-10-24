@@ -46,16 +46,25 @@ classes = db.query(ClassGroup).all()
 paths = ["/", "/candidate/all", "/classes/", "/programs/all", "/quiz/all", "/inbox", "/payments", "/website", "/settings", "/system",
          "/guide", "/inbox/templates", "/programs/market", "/inbox/compose", "/reminders", "/reminders?audience=class&idea=bring",
          "/settings/translations", "/settings/translations?lang=ar", "/i18n/fr.json", "/i18n/ar.json", "/find?q=pay", "/data",
-         "/settings/team", "/programs/documents", "/programs/summary.pdf", "/programs/catalogue.pdf", "/data/candidates.csv"]
+         "/settings/team", "/programs/documents", "/programs/summary.pdf", "/programs/catalogue.pdf", "/data/candidates.csv",
+         "/inbox/team", "/inbox/team?person=", "/account/friend", "/programs/videos", "/inbox/templates?key=welcome",
+         "/inbox/templates?key=payment_reminder", "/payments#proofs"]
 paths += [f"/classes/{c.id}" for c in classes] + [f"/classes/{c.id}/attendance" for c in classes]
 paths += [f"/programs/{p.id}" for p in programs] + [f"/quiz/preview/{p.id}" for p in programs]
 paths += [f"/programs/{p.id}/pdf" for p in programs]
+paths += [f"/inbox/team?person=professor:{one.id}" for one in db.query(__import__("app.models", fromlist=["Professor"]).Professor).all()]
 paths += [f"/programs/{p.id}/pdf/{look}" for p in programs for look in ("brochure", "classic", "one_page")]
 paths += [f"/candidate/{c.id}" for c in db.query(Candidate).limit(40).all()]
 paths += [f"/data/{key}" for key in ("candidates", "registrations", "payments", "programs", "levels", "weeks", "classes", "sessions",
                                      "attendance", "professors", "email_templates", "knowledge", "reminders", "website", "market",
                                      "notifications", "translations", "settings")]
 paths += [f"/level/{q.access_token}" for q in db.query(Quiz).filter(Quiz.kind == "level").all()]
+# Every page as a PDF, and the reports.
+paths += ["/dashboard/pdf", "/dashboard/analysis/pdf", "/candidate/all/pdf", "/candidate/all/analysis/pdf", "/programs/pdf", "/programs/overview/pdf",
+          "/programs/market/pdf", "/classes/pdf", "/payments/pdf", "/quiz/pdf", "/inbox/pdf", "/reminders/pdf", "/website/pdf", "/system/pdf", "/settings/pdf"]
+paths += [f"/classes/{c.id}/pdf" for c in classes] + [f"/classes/{c.id}/attendance/pdf" for c in classes]
+paths += [f"/candidate/{c.id}/pdf" for c in db.query(Candidate).limit(15).all()]
+paths += [f"/data/{key}.pdf" for key in ("candidates", "registrations", "payments", "programs", "classes", "professors", "reminders")]
 
 bad = []
 for path in paths:

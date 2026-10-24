@@ -11,6 +11,8 @@ from __future__ import annotations
 import re
 from urllib.parse import urlencode
 
+from contextvars import ContextVar
+
 from sqlalchemy.orm import Session
 
 from app.models.candidate import Candidate
@@ -55,6 +57,31 @@ def _names_list(programs: list[Program], most: int = 4) -> str:
 # ------------------------------------------------------------------
 # Programs as PDF
 # ------------------------------------------------------------------
+
+# Whether the person asking may make the assistant send (set by chatbot.answer for each question).
+may_send: ContextVar[bool] = ContextVar("assistant_may_send", default=False)
+
+
+def _send_document(db: Session, person: Candidate, programs: list, lang: str, short: bool, file, fr: bool) -> dict | None:
+    """“Send at once” is on: the email with the program's PDF goes now. None when it cannot go (then it is prepared)."""
+    from app.services import email_assistant, email_files, email_threads, program_documents as docs
+
+    if not email_threads.smtp_configured() or not (person.email or "").strip():
+        return None
+    words = docs.reply_text(programs, "named", lang, summary=short).replace("Comme demandé, vous", "Vous").replace("As you asked, you", "You")
+    text = f"{email_assistant.greeting_for(person, lang)}\n\n{words}"
+    plain, page = email_assistant.compose_reply(db, person, text, language=lang)
+    subject = ((f"Le programme de {programs[0].name}" if len(programs) == 1 else "Nos formations") if lang == "fr"
+               else (f"The program of {programs[0].name}" if len(programs) == 1 else "Our programs"))
+    sent = email_threads.deliver(db, person, subject, plain, page, kind="message", author="The assistant", language=lang,
+                                 files=email_files.load(db, [file.id]))
+    if sent is None or getattr(sent, "status", "") == "failed":
+        return None
+    first = _name(person)
+    reply = (f"Envoyé à {first} ({person.email}), avec le PDF en pièce jointe." if fr
+             else f"Sent to {first} ({person.email}), with the PDF attached.")
+    return {"reply": reply, "source": "action", "links": [_link(f"Open the discussion with {first.split()[0]}", f"/inbox?candidate={person.id}")]}
+
 
 def document(db: Session, message: str, earlier: list[str] | None = None, fr: bool = False) -> dict | None:
     """A program, or several, as a PDF: to open, to download, or ready in an email to a candidate.
@@ -115,6 +142,12 @@ def document(db: Session, message: str, earlier: list[str] | None = None, fr: bo
 
     if person is not None:
         file = docs.make_file(db, programs, lang, person.full_name, summary=short)
+        from app.services import chatbot_send
+
+        if may_send.get() and chatbot_send.auto_send(db):
+            done = _send_document(db, person, programs, lang, short, file, fr)
+            if done is not None:
+                return done
         query = {"candidate": person.id, "attach": file.id, "program": about, "count": len(programs)}
         first = _name(person).split()[0]
         if fr:

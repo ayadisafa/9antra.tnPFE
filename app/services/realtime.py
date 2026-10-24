@@ -133,7 +133,7 @@ def _topics_for(obj, deleted: bool = False) -> set[str]:
     elif name == "Professor":
         topics |= {"classes", "dashboard"}
     elif name == "SystemSettings":
-        topics |= {"settings", "classes"}
+        topics |= {"settings", "classes", "system"}
     elif name in ("Program", "ProgramProposal"):
         topics |= {"programs", "dashboard"}
     elif name in ("ClassMaterial", "ClassWeek", "WeekQuestion"):
@@ -143,9 +143,43 @@ def _topics_for(obj, deleted: bool = False) -> set[str]:
         if getattr(obj, "candidate_id", None):
             topics.add(f"candidate:{obj.candidate_id}")
         if getattr(obj, "class_group_id", None):
-            topics |= {"dashboard", f"course:{obj.class_group_id}"}
+            topics |= {"dashboard", f"course:{obj.class_group_id}", f"class:{obj.class_group_id}"}
     elif name == "AdviceSnooze":
         topics.add("dashboard")
+    elif name == "TeamMessage":
+        topics |= {"team", f"team:{obj.person}"}
+    elif name == "CandidateFeedback":
+        topics |= {"reviews", "programs", "dashboard"}
+        if getattr(obj, "candidate_id", None):
+            topics.add(f"candidate:{obj.candidate_id}")
+    elif name in ("MarketOffer", "MarketSignal"):
+        topics |= {"market", "programs"}
+    elif name in ("WebsiteItem", "WebsiteCheck"):
+        topics |= {"website", "programs", "dashboard"}
+    elif name == "User":
+        topics.add("team_people")
+    elif name == "ResourceReminder":
+        topics |= {"classes", f"course:{obj.class_group_id}"}
+    elif name == "Attendance":
+        topics |= {"classes", "dashboard", f"class:{obj.class_group_id}", f"candidate:{obj.candidate_id}"}
+    elif name == "AdminReminder":
+        topics.add("reminders")
+    elif name in ("ProfessorAbsence", "ProfessorAvailability"):
+        topics |= {"classes", "dashboard"}
+    elif name in ("ProgramLevel", "WeeklyCurriculum", "CurriculumResource"):
+        topics |= {"programs"}
+    elif name == "SessionCheck":
+        topics |= {"classes", f"class:{obj.class_group_id}", f"course:{obj.class_group_id}"}
+    elif name == "ProfessorAnnouncement":
+        topics |= {"classes", "team"}
+    elif name == "PlannedResend":
+        topics |= {"system", "reminders", "dashboard"}
+    elif name == "UiTranslation":
+        topics.add("i18n")
+    elif name == "PaymentProof":
+        topics |= {"payments", "dashboard"}
+        if getattr(obj, "candidate_id", None):
+            topics.add(f"candidate:{obj.candidate_id}")
     return topics
 
 
@@ -186,8 +220,8 @@ def install_session_hooks(session_factory) -> None:
         session.info.pop("rt_topics", None)
 
 
-async def event_stream(request):
-    """Async generator backing GET /events/stream."""
+async def event_stream(request, notifications: bool = True):
+    """Async generator backing GET /events/stream. Without `notifications`, only the changes go out."""
     queue = broadcaster.subscribe()
     try:
         yield "retry: 3000\n\n"
@@ -201,6 +235,8 @@ async def event_stream(request):
                 continue
             if message is _CLOSE:
                 break
+            if not notifications and message.startswith("event: notification"):
+                continue
             yield message
     finally:
         broadcaster.unsubscribe(queue)

@@ -85,6 +85,7 @@
     .tab.active { color:var(--primary-berry); background:var(--berry-subtle); }
     .tab.active i { transform:translateY(-1px) scale(1.08); }
     .tab:focus-visible { outline:2px solid var(--primary-berry); outline-offset:1px; }
+    .tab-dot { position:absolute; top:5px; left:calc(50% - 15px); width:10px; height:10px; border-radius:50%; background:#e11d48; border:2px solid #fff; box-sizing:content-box; }
     .tab-count { position:absolute; top:3px; left:calc(50% + 5px); min-width:17px; height:17px; border-radius:99px; background:var(--accent-gold-dark); color:#fff; font-size:.6rem; font-weight:800; display:grid; place-items:center; padding:0 4px; border:2px solid #fff; box-sizing:content-box; }
     body .wrapper > main.main { padding-bottom:calc(108px + env(safe-area-inset-bottom, 0px)); min-width:0; max-width:100vw; overflow-x:clip; }
     body .wrapper > aside.sidebar { z-index:60; width:min(304px, 86vw) !important; box-shadow:0 0 70px rgba(36,26,56,.4); transition:transform .26s cubic-bezier(.2,.8,.2,1); padding-bottom:22px; }
@@ -111,6 +112,37 @@
   .it-bg i { position:absolute; left:var(--x); top:var(--y); font-size:var(--s, 40px); color:var(--primary-berry); opacity:.075; animation:itFloat var(--d, 26s) ease-in-out infinite; animation-delay:var(--w, 0s); will-change:transform; }
   @keyframes itFloat { 0%, 100% { transform:translate3d(0, 0, 0) rotate(0deg); } 33% { transform:translate3d(16px, -26px, 0) rotate(7deg); } 66% { transform:translate3d(-14px, -10px, 0) rotate(-6deg); } }
   @media (prefers-reduced-motion: reduce) { .it-bg i { animation:none; } }
+  /* Moving emojis that say an analysis at a glance (_emoji.html). */
+  .emo { display:inline-block; font-style:normal; line-height:1; transform-origin:50% 70%; }
+  .emo-big { font-size:1.9rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .emo-bounce { animation:emoBounce 1.6s ease-in-out infinite; }
+    .emo-float { animation:emoFloat 2.6s ease-in-out infinite; }
+    .emo-wobble { animation:emoWobble 2.2s ease-in-out infinite; }
+    .emo-shake { animation:emoShake 1.8s ease-in-out infinite; }
+    .emo-tilt { animation:emoTilt 2.8s ease-in-out infinite; }
+    .emo-droop { animation:emoDroop 2.6s ease-in-out infinite; }
+    .emo-pulse { animation:emoPulse 1.8s ease-in-out infinite; }
+    .emo-ring { animation:emoRing 1.4s ease-in-out infinite; }
+    .emo-flicker { animation:emoFlicker 1.2s ease-in-out infinite; }
+    .emo-launch { animation:emoLaunch 2s ease-in-out infinite; }
+    .emo-spin { animation:emoSpin 3s linear infinite; }
+    .emo-twinkle { animation:emoTwinkle 2s ease-in-out infinite; }
+    .emo-wave { animation:emoWave 1.6s ease-in-out infinite; transform-origin:10% 90%; }
+  }
+  @keyframes emoBounce { 0%, 100% { transform:translateY(0) scale(1); } 30% { transform:translateY(-6px) scale(1.06); } 55% { transform:translateY(0) scale(.97, 1.03); } }
+  @keyframes emoFloat { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+  @keyframes emoWobble { 0%, 100% { transform:rotate(0); } 25% { transform:rotate(-8deg); } 75% { transform:rotate(8deg); } }
+  @keyframes emoShake { 0%, 60%, 100% { transform:translateX(0); } 10%, 30%, 50% { transform:translateX(-2px) rotate(-3deg); } 20%, 40% { transform:translateX(2px) rotate(3deg); } }
+  @keyframes emoTilt { 0%, 100% { transform:rotate(0); } 50% { transform:rotate(-14deg); } }
+  @keyframes emoDroop { 0%, 100% { transform:translateY(0) rotate(0); } 50% { transform:translateY(3px) rotate(-6deg); } }
+  @keyframes emoPulse { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+  @keyframes emoRing { 0%, 50%, 100% { transform:rotate(0); } 10%, 30% { transform:rotate(-16deg); } 20%, 40% { transform:rotate(16deg); } }
+  @keyframes emoFlicker { 0%, 100% { transform:scale(1) translateY(0); opacity:1; } 50% { transform:scale(1.12, .94) translateY(-2px); opacity:.85; } }
+  @keyframes emoLaunch { 0%, 100% { transform:translate(0, 0) rotate(0); } 50% { transform:translate(3px, -5px) rotate(-8deg); } }
+  @keyframes emoSpin { to { transform:rotate(360deg); } }
+  @keyframes emoTwinkle { 0%, 100% { transform:scale(1) rotate(0); opacity:1; } 50% { transform:scale(1.2) rotate(15deg); opacity:.8; } }
+  @keyframes emoWave { 0%, 100% { transform:rotate(0); } 50% { transform:rotate(14deg); } }
   @media (max-width: 991px) { .it-bg i:nth-child(n+7) { display:none; } }
   /* Day or night. Night shows the same pages in the dark: everything is turned over, pictures are turned back. */
   html.mode-night, html.mode-night-blue { filter:invert(1) hue-rotate(180deg); }
@@ -259,10 +291,105 @@
   @keyframes artSwapA { 0%, 42% { opacity:1; } 50%, 92% { opacity:0; } 100% { opacity:1; } }
   @keyframes artSwapB { 0%, 42% { opacity:0; } 50%, 92% { opacity:1; } 100% { opacity:0; } }
 
+
+  /* ---------------- The PDF button of the top bar ---------------- */
+  .topbar-pdf { height:40px; border-radius:999px; border:1px solid var(--border-color); background:linear-gradient(135deg, #fff, var(--berry-subtle)); color:var(--primary-berry);
+                display:inline-flex; align-items:center; gap:7px; padding:0 14px; font-weight:800; font-size:.8rem; cursor:pointer; transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease; }
+  .topbar-pdf i { font-size:1.05rem; }
+  .topbar-pdf:hover, .topbar-pdf[aria-expanded="true"] { border-color:var(--primary-berry); transform:translateY(-1px); box-shadow:0 10px 22px -14px rgba(164,44,103,.7); }
+  .topbar-pdf:focus-visible { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .pdf-menu { min-width:280px; font-size:.86rem; }
+  .pdf-menu .dropdown-item { display:flex; gap:10px; align-items:center; padding:8px 10px; white-space:normal; line-height:1.3; }
+  .pdf-menu .dropdown-item i { color:var(--primary-berry); width:18px; flex:none; text-align:center; }
+  .pdf-menu .dropdown-item:hover { background:var(--berry-subtle); }
+  .pdf-menu-head { font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.08em; color:#9b95b0; padding:6px 10px 3px; }
+  @media (max-width: 991px) { .topbar-pdf { width:40px; padding:0; justify-content:center; } }
+
+  /* ---------------- More air ---------------- */
+  @media (min-width: 1400px) { .main { padding:34px 56px 80px; } }
+  .ui-head { margin-bottom:24px; }
+  .ui-head h2 { letter-spacing:-.02em; }
+  .db-logo { width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid #fff; box-shadow:0 0 0 2px var(--berry-subtle), 0 10px 22px -12px rgba(60,20,90,.6); }
+  @media (prefers-reduced-motion: no-preference) { .db-logo { animation:logoPop .6s cubic-bezier(.2,.9,.3,1.3) both, logoRing 3.2s ease-in-out 1s infinite; } }
+  @keyframes logoRing { 0%, 100% { box-shadow:0 0 0 2px var(--berry-subtle), 0 10px 22px -12px rgba(60,20,90,.6); } 50% { box-shadow:0 0 0 6px var(--berry-subtle), 0 10px 22px -12px rgba(60,20,90,.6); } }
+
+  /* ---------------- Cards that answer the pointer ---------------- */
+  .ui-card, .db-card, .cd-card, .st-card, .ui-stat, .cd-hero, .st-plain-card { transition:box-shadow .25s ease, border-color .25s ease, transform .25s ease; }
+  .ui-card:hover, .db-card:hover, .cd-card:hover, .st-card:hover, .st-plain-card:hover { box-shadow:0 22px 44px -32px rgba(60,20,90,.45); }
+  a.ui-stat:hover, a.db-tile:hover, a.db-part:hover { transform:translateY(-3px); box-shadow:0 18px 34px -24px rgba(60,20,90,.55); }
+  .table > tbody > tr { transition:background-color .15s ease; } .table-hover > tbody > tr:hover > * { background-color:var(--berry-subtle) !important; }
+
+  /* ---------------- Motion: bars fill, numbers count, what is further down rises as it comes into view ---------------- */
+  @media (prefers-reduced-motion: no-preference) {
+    body.first-paint .ui-bar > span, body.first-paint .bh-bar span { transform-origin:left; animation:barFill 1.1s cubic-bezier(.2,.8,.2,1) .25s both; }
+    body.first-paint .progress-bar { transform-origin:left; animation:barFill 1.1s cubic-bezier(.2,.8,.2,1) .25s both; }
+    .reveal { opacity:0; transform:translateY(16px); }
+    .reveal.is-in { opacity:1; transform:none; transition:opacity .6s ease, transform .6s cubic-bezier(.2,.8,.2,1); }
+  }
+  @keyframes barFill { from { transform:scaleX(0); } to { transform:none; } }
+  @media print { .reveal { opacity:1 !important; transform:none !important; } .topbar, .sidebar, .tabbar, .it-bg, .assistant-launcher { display:none !important; } .main { margin:0 !important; padding:0 !important; } }
+
   @media (prefers-reduced-motion: reduce) {
     body.first-paint .guide, body.first-paint .ui-head, body.first-paint .ui-stat, body.first-paint .ui-card,
     body.first-paint .ui-advice, body.first-paint .ui-toolbar, .guide-step, .guide-arrow span, .brand-logo, .art * { animation:none !important; }
     .art .a-draw { stroke-dashoffset:0; }
     .art .a-seat { opacity:1; }
+  }
+  /* ---------------- 2026-10: the look, a step further (every page) ---------------- */
+  /* Page heads: a soft band with a slow light, like the dashboard's. */
+  .ui-head { position:relative; overflow:hidden; background:linear-gradient(120deg, #fdf2f7 0%, #f6efff 55%, #eef6ff 100%);
+             border:1px solid #f1e3ee; border-radius:24px; padding:18px 22px; margin-bottom:20px; isolation:isolate; }
+  .ui-head::after { content:""; position:absolute; width:240px; height:240px; right:-70px; top:-110px; border-radius:50%; z-index:-1;
+                    background:radial-gradient(circle, rgba(164,44,103,.13), transparent 70%); animation:uiGlow 10s ease-in-out infinite; }
+  .ui-head h2 { font-size:1.5rem; }
+  .ui-head p { color:#5b5670; }
+  @keyframes uiGlow { 50% { transform:translate(-30px, 18px) scale(1.08); } }
+
+  /* Buttons: depth, a lift on hover, a ring when chosen with the keyboard. */
+  .ui-btn { transition:transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease; }
+  .ui-btn:hover { transform:translateY(-1px); box-shadow:0 8px 18px -14px rgba(36,26,56,.55); }
+  .ui-btn.primary { background:linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); box-shadow:0 10px 22px -14px rgba(164,44,103,.9); }
+  .ui-btn.primary:hover { box-shadow:0 14px 26px -14px rgba(164,44,103,.95); }
+  .btn-primary { background:linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); border:0; }
+
+  /* Fields: rounded, a clear ring when typing in them. */
+  .form-control, .form-select { border-radius:12px; border-color:var(--border-color); transition:border-color .15s ease, box-shadow .15s ease; }
+  .form-control:focus, .form-select:focus, textarea:focus, select:focus { border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.14); outline:none; }
+  :focus-visible { outline-color:var(--primary-berry); }
+
+  /* Notices: a rounded line that slides in, then leaves by itself (see the script below). */
+  .page-flash { border:0; border-radius:16px; padding:12px 16px; font-weight:600; font-size:.88rem; display:flex; align-items:center;
+                box-shadow:0 14px 30px -24px rgba(36,26,56,.6); animation:flashIn .45s cubic-bezier(.2,.8,.2,1) both; }
+  .page-flash.alert-success { background:linear-gradient(90deg, #e9f9ef, #f4fdf7); color:#14532d; }
+  .page-flash.alert-danger { background:linear-gradient(90deg, #fff1f2, #fff8f8); color:#9f1239; }
+  .page-flash.is-leaving { animation:flashOut .5s ease both; }
+  @keyframes flashIn { from { opacity:0; transform:translateY(-10px) scale(.98); } }
+  @keyframes flashOut { to { opacity:0; transform:translateY(-8px); height:0; margin:0; padding-top:0; padding-bottom:0; } }
+
+  /* The menu: the page you are on, well marked. */
+  body .sidebar nav ul li a.nav-link { position:relative; transition:background-color .15s ease, color .15s ease, padding .15s ease; }
+  body .sidebar nav ul li a.nav-link:hover { padding-inline-start:.8rem; }
+  body .sidebar nav ul li a.nav-link.active { background:linear-gradient(90deg, var(--berry-subtle), rgba(253,242,247,.35)); }
+  body .sidebar nav ul li a.nav-link.active::before { content:""; position:absolute; inset-inline-start:-14px; top:20%; bottom:20%; width:4px;
+                                                      border-radius:0 6px 6px 0; background:var(--primary-berry); }
+  html[dir="rtl"] body .sidebar nav ul li a.nav-link.active::before { border-radius:6px 0 0 6px; }
+
+  /* Tables: a quiet head, rows that answer the pointer. */
+  .table > thead th { font-size:.72rem; text-transform:uppercase; letter-spacing:.04em; color:#8d88a3; font-weight:800; border-bottom-width:1px; }
+  .table > tbody > tr:hover > * { background-color:#fbf8fd; }
+
+  /* Chips and figures: a little more air. */
+  .ui-chip { letter-spacing:.01em; }
+  .ui-stat-ico { background:linear-gradient(135deg, var(--berry-subtle), #fff); }
+  .t-gold .ui-stat-ico { background:linear-gradient(135deg, var(--gold-subtle), #fff); } .t-mint .ui-stat-ico { background:linear-gradient(135deg, var(--mint-subtle), #fff); }
+  .t-sky .ui-stat-ico { background:linear-gradient(135deg, var(--sky-subtle), #fff); } .t-red .ui-stat-ico { background:linear-gradient(135deg, #fff1f2, #fff); }
+
+  /* Thin scrollbars. */
+  * { scrollbar-width:thin; scrollbar-color:rgba(164,44,103,.28) transparent; }
+  ::-webkit-scrollbar { width:9px; height:9px; } ::-webkit-scrollbar-thumb { background:rgba(164,44,103,.25); border-radius:9px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ui-head::after, .page-flash, .page-flash.is-leaving { animation:none !important; }
+    .ui-btn:hover { transform:none; } body .sidebar nav ul li a.nav-link:hover { padding-inline-start:.6rem; }
   }
 </style>

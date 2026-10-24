@@ -346,4 +346,19 @@ def sources(db: Session, class_id: str, week_number: int) -> list[dict]:
     ).first()
     if week is not None and (week.notes or "").strip():
         found.append({"key": "notes", "name": "Your notes for the week", "text": week.notes.strip()})
+    # What the system knows of the course itself: its plan for the week and what 9antra.tn says of it. So any course,
+    # a new one too, can be asked about after its sessions, even before a professor adds a file.
+    from app.models import ClassGroup
+    from app.services import chatbot_sources
+
+    group = db.get(ClassGroup, class_id)
+    if group is not None and group.program is not None:
+        weeks, _ = chatbot_sources._weeks_of(db, group.program)
+        this = next((item for item in weeks if item["number"] == week_number), None)
+        if this is not None:
+            plan = ". ".join(part for part in (this["title"], this["objectives"].replace(";", ".")) if part).strip()
+            if len(plan) >= 40:
+                found.append({"key": f"plan:{group.program_id}:{week_number}", "name": "The course plan for this week", "text": plan})
+            if len(this["site"]) >= 40:
+                found.append({"key": f"site:{group.program_id}:{week_number}", "name": "9antra.tn, this week of the course", "text": this["site"]})
     return found

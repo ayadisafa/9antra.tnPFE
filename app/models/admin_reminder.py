@@ -25,4 +25,5 @@ class AdminReminder(Base):
     sent_count = Column(Integer, nullable=False, default=0)
     failed_count = Column(Integer, nullable=False, default=0)
     created_by = Column(String, nullable=True)
+    channel = Column(String, nullable=True, default="email")     # email | both | whatsapp
     created_at = Column(DateTime, default=datetime.utcnow)

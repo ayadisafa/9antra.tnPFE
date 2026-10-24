@@ -50,7 +50,7 @@ yasmine = Candidate(full_name="Yasmine Gharbi", email="yasmine.docs@example.com"
 for program, paid in ((devops, 0), (python, 390)):
     db.add(Registration(candidate_id=yasmine.id, program_id=program.id, program_name=program.name, delivery_mode="online", total_amount=390, total_price=390,
                         paid_amount=paid, payment_status=PaymentStatus.PAID if paid else PaymentStatus.UNPAID,
-                        status=RegistrationStatus.PENDING, registration_date=datetime.utcnow() - timedelta(days=1)))
+                        status=RegistrationStatus.PENDING, registration_date=datetime.utcnow() - timedelta(minutes=1)))
 db.commit()
 
 # ======================================================================
@@ -83,10 +83,12 @@ data = pp.build_catalogue(db, None, "fr")
 text = text_of(data)
 check("one PDF with every program in it", data[:4] == b"%PDF" and all(pp.plain(p.name).split("(")[0].strip() in text for p in programs),
       [p.name for p in programs if pp.plain(p.name).split("(")[0].strip() not in text])
-first = page_text(data, 0)
-check("its first page shows all of them at a glance, with their prices", "Nos formations" in first and "Toutes les formations en un coup d'œil" in first
-      and f"{len(programs)} formations" in first and f"{devops.price_online:.0f} DT" in first, first[:300])
-check("then each program on its own pages, numbered", pages_of(data) > len(programs) and f"FORMATION 1 SUR {len(programs)}" in page_text(data, 1), page_text(data, 1)[:120])
+first, glance = page_text(data, 0), page_text(data, 1)
+check("its first page welcomes the reader: who 9antra is, and the website", "Nos formations" in first and "Bienvenue chez 9antra" in first
+      and f"{len(programs)} formations" in first and "https://9antra.tn" in first, first[:300])
+check("its second page shows all of them at a glance, with their prices", "Toutes les formations en un coup d'œil" in glance
+      and f"{devops.price_online:.0f} DT" in glance, glance[:300])
+check("then each program on its own pages, numbered", pages_of(data) > len(programs) and f"FORMATION 1 SUR {len(programs)}" in page_text(data, 2), page_text(data, 2)[:120])
 check("each one week by week, as the brochure tells it", all(week.topic_title.split(":")[0][:20] in text for level in devops.levels for week in level.weeks[:2]))
 english = pp.build_catalogue(db, [devops, python], "en", "Yasmine Gharbi")
 words = text_of(english)

@@ -1,0 +1,83 @@
+{# Payment proofs waiting for the admin (services/payment_proofs.py): the picture, what was read, each check, and the
+   three things to do. Used on the Payments page and in a candidate's file. #}
+{% import "_emoji.html" as emo %}
+{% macro list(items, back, show_candidate=True) %}
+<style>
+  .pf { display:grid; grid-template-columns:150px minmax(0, 1fr); gap:16px; padding:16px; border:1px solid var(--border-color); border-radius:18px; background:#fff; margin-bottom:12px; }
+  @media (max-width: 767px) { .pf { grid-template-columns:1fr; } }
+  .pf-pic { display:block; border-radius:12px; overflow:hidden; background:#f4f1f8; aspect-ratio:3 / 4; position:relative; }
+  .pf-pic img, .pf-pic iframe { width:100%; height:100%; object-fit:cover; border:0; display:block; }
+  .pf-pic span { position:absolute; inset:auto 6px 6px auto; background:rgba(15,11,22,.7); color:#fff; font-size:.68rem; font-weight:700; border-radius:999px; padding:2px 8px; }
+  .pf-head { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .pf-head b { font-size:.95rem; }
+  .pf-verdict { display:inline-flex; gap:6px; align-items:center; font-size:.74rem; font-weight:800; border-radius:999px; padding:4px 10px; }
+  .pf-verdict.ok { background:#dcfce7; color:#166534; } .pf-verdict.warn { background:var(--gold-subtle); color:var(--gold-dark); } .pf-verdict.bad { background:#fff1f2; color:#be123c; }
+  .pf-facts { display:flex; gap:14px; flex-wrap:wrap; margin:8px 0; font-size:.82rem; color:#5b5670; }
+  .pf-facts strong { color:var(--ink-text); }
+  .pf-checks { list-style:none; padding:0; margin:0 0 10px; font-size:.8rem; display:grid; gap:4px; }
+  .pf-checks li { display:flex; gap:7px; align-items:flex-start; }
+  .pf-checks i.ok { color:#16a34a; } .pf-checks i.no { color:#e11d48; } .pf-checks i.na { color:#a39cb5; }
+  .pf-do { display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end; border-top:1px dashed var(--border-color); padding-top:10px; }
+  .pf-do form { display:flex; gap:6px; flex-wrap:wrap; align-items:flex-end; margin:0; }
+  .pf-do select, .pf-do input { border:1px solid var(--border-color); border-radius:10px; padding:6px 9px; font-size:.82rem; }
+  .pf-do input[name=amount] { width:96px; }
+  .pf-text summary { font-size:.74rem; color:var(--muted); cursor:pointer; }
+  .pf-text pre { white-space:pre-wrap; font-size:.74rem; background:#faf8fd; border-radius:10px; padding:8px; max-height:180px; overflow:auto; }
+</style>
+{% for item in items %}
+{% set proof = item.proof %}
+<article class="pf" id="proof-{{ proof.id }}">
+  <a class="pf-pic" href="{{ item.file_url }}" target="_blank" rel="noopener" title="Open the file">
+    <img src="{{ item.file_url }}" alt="Payment proof" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('iframe'), {src: this.src}))">
+    <span>{{ {'email': 'Email', 'whatsapp': 'WhatsApp', 'upload': 'Added by you'}.get(proof.source, proof.source) }}</span>
+  </a>
+  <div>
+    <div class="pf-head">
+      {% if show_candidate and item.candidate %}<b><a href="/candidate/{{ item.candidate.id }}#proofs" class="text-decoration-none" style="color:inherit;">{{ item.candidate.full_name or item.candidate.email }}</a></b>{% endif %}
+      <span class="pf-verdict {{ item.tone }}">{{ emo.kind(item.proof.verdict or 'to_check') }} {{ item.label }}</span>
+      <small class="text-muted">{{ proof.created_at.strftime('%d %b, %H:%M') if proof.created_at }}</small>
+    </div>
+    <div class="pf-facts">
+      <span>Amount <strong>{{ '%g' | format(proof.amount) ~ ' DT' if proof.amount else 'not read' }}</strong></span>
+      {% if proof.bank %}<span>Bank <strong>{{ proof.bank }}</strong></span>{% endif %}
+      {% if proof.proof_date %}<span>Date <strong>{{ proof.proof_date.strftime('%d/%m/%Y') }}</strong></span>{% endif %}
+      {% if proof.reference %}<span>Ref. <strong>{{ proof.reference }}</strong></span>{% endif %}
+      {% for rib in item.ribs %}<span>RIB <strong>{{ rib }}</strong></span>{% endfor %}
+      <span>For <strong>{{ item.registration.program_name if item.registration else 'program not said' }}</strong></span>
+    </div>
+    <ul class="pf-checks">
+      {% for check in item.checks %}
+      <li><i class="bi {{ 'bi-check-circle-fill ok' if check.ok == true else 'bi-x-circle-fill no' if check.ok == false else 'bi-dash-circle na' }}"></i><span>{{ check.text }}</span></li>
+      {% endfor %}
+    </ul>
+    {% if proof.status in ('waiting', 'reading') %}
+    <div class="pf-do">
+      {% if item.owed %}
+      <form method="post" action="/payments/proofs/{{ proof.id }}/confirm">
+        <input type="hidden" name="back" value="{{ back }}">
+        <select name="registration_id" aria-label="Which registration it pays" required>
+          {% for one in item.owed %}<option value="{{ one.id }}" {{ 'selected' if item.registration and item.registration.id == one.id }}>{{ one.program_name }} · owes {{ '%g' | format(one.remaining_amount) }} DT</option>{% endfor %}
+        </select>
+        <input name="amount" inputmode="decimal" value="{{ '%g' | format(proof.amount) if proof.amount else '' }}" aria-label="Amount received" placeholder="DT" required>
+        <button class="ui-btn primary sm"><i class="bi bi-check2-circle"></i>Confirm: record it</button>
+      </form>
+      {% else %}
+      <span class="small text-muted">They owe nothing: nothing to record.</span>
+      {% endif %}
+      {% if not item.registration and item.candidate %}
+      <form method="post" action="/payments/proofs/{{ proof.id }}/ask"><input type="hidden" name="back" value="{{ back }}">
+        <button class="ui-btn sm" title="Sends the fixed question by the way chosen above the inbox"><i class="bi bi-question-circle"></i>{{ 'Ask again' if proof.asked_program_at else 'Ask which program' }}</button></form>
+      {% endif %}
+      <form method="post" action="/payments/proofs/{{ proof.id }}/refuse" data-confirm="Refuse this proof? Nothing is recorded.">
+        <input type="hidden" name="back" value="{{ back }}">
+        <input name="note" placeholder="Why (for you)" aria-label="Why it is refused">
+        <button class="ui-btn sm"><i class="bi bi-x-lg"></i>Refuse</button></form>
+    </div>
+    {% else %}
+    <div class="small text-muted">{{ 'Confirmed' if proof.status == 'confirmed' else 'Refused' }} by {{ proof.decided_by }}{{ ', ' ~ proof.decided_at.strftime('%d %b') if proof.decided_at }}{% if proof.recorded_amount %} · {{ '%g' | format(proof.recorded_amount) }} DT recorded{% endif %}{% if proof.decision_note %} · {{ proof.decision_note }}{% endif %}</div>
+    {% endif %}
+    {% if proof.text %}<details class="pf-text"><summary>What was read on it</summary><pre>{{ proof.text }}</pre></details>{% endif %}
+  </div>
+</article>
+{% endfor %}
+{% endmacro %}

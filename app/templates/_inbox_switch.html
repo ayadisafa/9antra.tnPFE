@@ -1,0 +1,13 @@
+{# The two inboxes: the candidates' discussions and the team chat (professors and team members). #}
+<style>
+  .ibx-switch { display:inline-flex; gap:4px; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:4px; margin-bottom:14px; }
+  .ibx-switch a { display:inline-flex; align-items:center; gap:7px; padding:7px 16px; border-radius:999px; font-size:.84rem; font-weight:800; color:#5b5470; text-decoration:none; }
+  .ibx-switch a:hover { color:var(--primary-berry); }
+  .ibx-switch a.is-on { background:var(--primary-berry); color:#fff; box-shadow:0 8px 18px -10px var(--primary-berry); }
+  .ibx-switch b { min-width:20px; height:20px; border-radius:999px; background:#e11d48; color:#fff; font-size:.68rem; display:inline-grid; place-items:center; padding:0 6px; }
+  .ibx-switch a.is-on b { background:#fff; color:var(--primary-berry); }
+</style>
+<nav class="ibx-switch" aria-label="Inboxes">
+  <a href="/inbox" class="{{ 'is-on' if inbox_side == 'candidates' }}"><i class="bi bi-people-fill"></i>Candidates{% if inbox_pending %}<b>{{ inbox_pending }}</b>{% endif %}</a>
+  <a href="/inbox/team" class="{{ 'is-on' if inbox_side == 'team' }}"><i class="bi bi-person-workspace"></i>Team{% if team_unread %}<b>{{ team_unread }}</b>{% endif %}</a>
+</nav>

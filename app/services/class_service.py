@@ -330,19 +330,27 @@ def get_calendar_events(db: Session) -> list[dict]:
         current_week = getattr(cls, 'current_week', None)
         total_weeks = getattr(cls, 'total_weeks', None) or 12
         conflict = False
+        clashes = []
+        finished = ("completed", "cancelled")
         for other in classes:
             if other.id == cls.id or not cls.professor_name or other.professor_name != cls.professor_name:
                 continue
+            if str(getattr(cls.status, "value", cls.status)).lower() in finished or str(getattr(other.status, "value", other.status)).lower() in finished:
+                continue              # a finished class clashes with nothing any more
             if not cls.start_time or not cls.end_time or not other.start_time or not other.end_time:
                 continue
             cls_days = {day.strip().lower() for day in (cls.days_of_week or "").split(",") if day.strip()}
             other_days = {day.strip().lower() for day in (other.days_of_week or "").split(",") if day.strip()}
             if cls_days & other_days and cls.start_time < other.end_time and other.start_time < cls.end_time:
                 conflict = True
-                break
+                clashes.append(other.name)
         events.append({
             "id": cls.id,
             "title": f"{cls.name} ({cls.program.name if cls.program else 'PRG'})",
+            "className": cls.name,
+            "program": cls.program.name if cls.program else "",
+            "programId": cls.program_id,
+            "clashesWith": clashes,
             "daysOfWeek": [d.strip() for d in cls.days_of_week.split(",")] if cls.days_of_week else [],
             "startTime": cls.start_time.strftime("%H:%M") if cls.start_time else "09:00",
             "endTime": cls.end_time.strftime("%H:%M") if cls.end_time else "12:00",

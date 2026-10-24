@@ -32,7 +32,8 @@ BASELINE_ZIP = os.path.join(PROJECT, "_backups", "pre-level-check-20261013.zip")
 BASELINE_SHA256 = "67de6f5bda6d995975182c96cad40156044b08f0f9f6945a67a01e962fa95c23"
 
 SECRETS = ("SMTP_EMAIL", "SMTP_PASSWORD", "IMAP_EMAIL", "IMAP_PASSWORD", "WHATSAPP_TOKEN", "WHATSAPP_PHONE_ID",
-           "WHATSAPP_TEMPLATE", "FACEBOOK_PAGE_ACCESS_TOKEN", "GEMINI_API_KEY")
+           "WHATSAPP_TEMPLATE", "FACEBOOK_PAGE_ACCESS_TOKEN", "GEMINI_API_KEY",
+           "SMS_GATEWAY_URL", "SMS_GATEWAY_USER", "SMS_GATEWAY_PASSWORD", "SMS_SIGNING_KEY")
 FOLDERS = ("EMAIL_FILES_DIR", "CLASS_FILES_DIR", "PROGRAM_ICONS_DIR", "BRAND_DIR", "FEEDBACK_DIR", "BACKUP_DIR")
 
 
@@ -69,6 +70,9 @@ def prepare(tag: str, *, web: bool = False, source: str | None = None) -> str:
         os.environ[name] = os.path.join(WORK, f"{tag}_{name.lower()}")
         shutil.rmtree(os.environ[name], ignore_errors=True)
     os.environ["BACKGROUND_TASKS_INLINE"] = "1"
+    os.environ.setdefault("MEANING_OFF", "1")          # a suite about meaning sets it to "0" before importing the app
+    if not web:
+        os.environ["ICON_API_URL"] = "http://127.0.0.1:9"    # the icon catalogue (httpx) is never reached: pictures are drawn here
     if PROJECT not in sys.path:
         sys.path.insert(0, PROJECT)
     sys.stdout.reconfigure(encoding="utf-8", line_buffering=True)

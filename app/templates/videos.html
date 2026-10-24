@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Videos · 9antra{% endblock %}
+{% block page_title %}Videos{% endblock %}
+
+{% block content %}
+{% include "_ui.html" %}
+<style>
+  .vd-top { display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin-bottom:16px; }
+  .vd-top p { margin:0; color:#5b5670; font-size:.88rem; flex:1; min-width:240px; }
+  .vd-find { border:1px solid var(--border-color); border-radius:999px; padding:9px 16px; font-size:.86rem; min-width:240px; }
+  .vd-find:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.12); }
+  .vd-jump { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; }
+  .vd-jump a { font-size:.76rem; font-weight:700; border:1px solid var(--border-color); border-radius:999px; padding:4px 11px; text-decoration:none; color:#5b5470; background:#fff; }
+  .vd-jump a:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .vd-group { margin-bottom:26px; scroll-margin-top:var(--stick-top, 96px); }
+  .vd-group h2 { font-size:1rem; font-weight:800; display:flex; gap:10px; align-items:center; margin-bottom:12px; }
+  .vd-group h2 img { width:30px; height:30px; border-radius:9px; object-fit:cover; }
+  .vd-group h2 small { color:var(--muted); font-weight:600; font-size:.78rem; }
+  .vd-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+  .vd-card { display:block; background:#fff; border:1px solid var(--border-color); border-radius:16px; overflow:hidden; text-decoration:none; color:var(--ink-text); transition:transform .15s ease, border-color .15s ease, box-shadow .15s ease; }
+  .vd-card:hover { transform:translateY(-2px); border-color:var(--primary-berry); box-shadow:0 14px 30px -18px rgba(60,20,80,.5); color:var(--ink-text); }
+  .vd-pic { position:relative; aspect-ratio:16 / 9; background:linear-gradient(135deg, #2b1d33, var(--primary-berry)); }
+  .vd-pic img { width:100%; height:100%; object-fit:cover; display:block; }
+  .vd-pic .play { position:absolute; inset:0; display:grid; place-items:center; color:#fff; font-size:2.4rem; text-shadow:0 4px 18px rgba(0,0,0,.5); }
+  .vd-pic .wk { position:absolute; left:8px; top:8px; background:rgba(15,11,22,.75); color:#fff; font-size:.7rem; font-weight:800; border-radius:999px; padding:3px 9px; }
+  .vd-pic .len { position:absolute; right:8px; bottom:8px; background:rgba(15,11,22,.75); color:#fff; font-size:.7rem; font-weight:700; border-radius:6px; padding:2px 6px; }
+  .vd-cap { padding:10px 12px; font-size:.82rem; font-weight:700; line-height:1.35; }
+  .vd-cap small { display:block; color:var(--muted); font-weight:600; font-size:.72rem; margin-top:2px; }
+</style>
+
+<div class="vd-top">
+  <p>{{ count }} video{{ 's' if count != 1 }}: each week's video of the programs (from 9antra.tn) and the website's own videos. They play here; nothing is copied to this computer.</p>
+  <input class="vd-find" type="search" placeholder="Find a video…" aria-label="Find a video" data-vd-find>
+</div>
+
+{% if programs | length > 1 %}
+<nav class="vd-jump" aria-label="Programs">
+  {% for group in programs %}<a href="#p-{{ group.program.id }}">{{ group.program.name }} · {{ group.videos | length }}</a>{% endfor %}
+  {% if website %}<a href="#website">Website · {{ website | length }}</a>{% endif %}
+</nav>
+{% endif %}
+
+{% macro card(video, caption) %}
+<a class="vd-card" href="{{ video.url }}" target="_blank" rel="noopener" data-video="{{ video.embed }}" data-video-kind="{{ video.kind }}"
+   data-video-title="{{ caption }}" data-vd-text="{{ (caption ~ ' ' ~ video.title) | lower }}">
+  <div class="vd-pic">
+    {% if video.thumbnail %}<img src="{{ video.thumbnail }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
+    <span class="play"><i class="bi bi-play-circle-fill"></i></span>
+    {% if video.week %}<span class="wk">Week {{ video.week }}</span>{% endif %}
+    {% if video.length %}<span class="len">{{ video.length }}</span>{% endif %}
+  </div>
+  <div class="vd-cap">{{ video.title }}{% if video.free %}<small style="color:var(--mint);">Free on the website</small>{% endif %}</div>
+</a>
+{% endmacro %}
+
+{% for group in programs %}
+<section class="vd-group" id="p-{{ group.program.id }}" data-vd-group>
+  <h2>{% if group.icon and group.icon.url %}<img src="{{ group.icon.url }}" alt="">{% endif %}
+    <a href="/programs/{{ group.program.id }}" class="text-decoration-none" style="color:inherit;">{{ group.program.name }}</a>
+    <small>{{ group.videos | length }} video{{ 's' if group.videos | length != 1 }}</small></h2>
+  <div class="vd-grid">{% for video in group.videos %}{{ card(video, group.program.name ~ (" · Week " ~ video.week if video.week else "") ~ " · " ~ video.title) }}{% endfor %}</div>
+</section>
+{% endfor %}
+
+{% if website %}
+<section class="vd-group" id="website" data-vd-group>
+  <h2><i class="bi bi-globe2"></i>From the website <small>{{ website | length }} video{{ 's' if website | length != 1 }}</small></h2>
+  <div class="vd-grid">{% for video in website %}{{ card(video, video.title) }}{% endfor %}</div>
+</section>
+{% endif %}
+
+{% if not count %}
+<div class="ui-empty"><i class="bi bi-camera-video-off"></i><strong>No video yet</strong>The videos come from 9antra.tn, read every six hours (Website page).</div>
+{% endif %}
+
+<script>
+(() => {
+  const find = document.querySelector("[data-vd-find]");
+  if (!find) return;
+  find.addEventListener("input", () => {
+    const words = find.value.trim().toLowerCase();
+    document.querySelectorAll("[data-vd-text]").forEach(card => { card.hidden = words && !card.dataset.vdText.includes(words); });
+    document.querySelectorAll("[data-vd-group]").forEach(group => { group.hidden = !group.querySelector("[data-vd-text]:not([hidden])"); });
+  });
+})();
+</script>
+{% endblock %}

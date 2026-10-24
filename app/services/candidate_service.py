@@ -282,11 +282,13 @@ def _update_firebase_metadata(
     if firebase_id:
         registration.firebase_id = str(firebase_id)
 
+    from app.services.firebase_service import stored_text, stored_time      # the same time is no change: nothing is written
+
     if registration_date:
-        registration.registration_date = registration_date
+        registration.registration_date = stored_time(registration_date)
 
     if hasattr(registration, "firebase_timestamp"):
-        registration.firebase_timestamp = (
+        registration.firebase_timestamp = stored_time(
             firebase_timestamp or registration_date
         )
 
@@ -296,7 +298,7 @@ def _update_firebase_metadata(
     registration.payment_reminder_sent = payment_reminder_sent
 
     if reminder_sent_at:
-        registration.reminder_sent_at = reminder_sent_at
+        registration.reminder_sent_at = stored_text(reminder_sent_at)
 
 
 def _update_candidate_from_registration(

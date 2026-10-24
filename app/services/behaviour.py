@@ -167,7 +167,7 @@ def profile(db: Session, candidate: Candidate, now: datetime | None = None) -> d
 
     # ---- What they are sent: weekly questions and the level check ----
     quizzes = db.query(Quiz).filter(Quiz.candidate_id == candidate.id).all()
-    weekly = [quiz for quiz in quizzes if quiz.kind == "weekly" and quiz.sent_at is not None]
+    weekly = [quiz for quiz in quizzes if quiz.kind in ("weekly", "session") and quiz.sent_at is not None]
     level = [quiz for quiz in quizzes if (quiz.kind or "level") == "level" and quiz.angle == "placement"
              and (quiz.sent_at is not None or quiz.completed_at is not None)]
     answered = [quiz for quiz in weekly if quiz.completed_at is not None]

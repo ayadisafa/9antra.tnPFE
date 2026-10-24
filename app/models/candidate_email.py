@@ -40,6 +40,9 @@ class CandidateEmail(Base):
     suggested_reply = Column(Text, nullable=True)       # the assistant's draft, waiting for the admin
     escalation_reason = Column(Text, nullable=True)     # why the assistant asked the admin
     attachments = Column(Text, nullable=True)           # JSON: the files that came with the email
+    channel = Column(String, default="email", nullable=True, index=True)   # email | whatsapp
+    emotions = Column(Text, nullable=True)        # what the candidate felt, read with word lists (services/emotions.py), as JSON
+    admin_score = Column(Integer, nullable=True)        # the admin's verdict on an assistant's answer: 1 right, -1 wrong
 
     candidate = relationship("Candidate")
     registration = relationship("Registration")

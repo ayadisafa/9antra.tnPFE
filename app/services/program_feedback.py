@@ -108,7 +108,8 @@ def ask(db: Session, registration: Registration, *, manual: bool = False) -> Can
         db, "feedback_request", registration=registration,
         values={"feedback_link": link, "facebook_link": facebook_reviews()}, manual=manual,
     )
-    if not email_templates.delivered(message):
+    # By the way chosen above the inbox: an email sent, or a WhatsApp / SMS waiting for the admin's phone, both count.
+    if not (message is not None and message.status in ("sent", "to_send")):
         if message is None and not manual:
             row.status = "off"       # the email is switched off: nothing waits
         return None
@@ -129,8 +130,9 @@ def send_due(db: Session, limit: int = 20) -> int:
     sent = 0
     for row in rows:
         registration = db.get(Registration, row.registration_id) if row.registration_id else None
-        if registration is None or registration.candidate is None or not registration.candidate.email:
-            row.status = "off"
+        candidate = registration.candidate if registration else None
+        if candidate is None or not (candidate.email or (candidate.phone or "").strip()):
+            row.status = "off"          # no email and no phone: nobody to ask
             continue
         if ask(db, registration) is not None:
             sent += 1
@@ -152,7 +154,7 @@ def ask_class(db: Session, class_group: ClassGroup) -> dict:
         existing = of_registration(db, registration.id)
         if existing is not None and existing.status == "received":
             outcome["answered"] += 1
-        elif registration.candidate is None or not registration.candidate.email:
+        elif registration.candidate is None or not (registration.candidate.email or (registration.candidate.phone or "").strip()):
             outcome["failed"] += 1
         elif ask(db, registration, manual=True) is not None:
             outcome["sent"] += 1
@@ -170,14 +172,33 @@ def stars_in(text: str) -> int | None:
     return int(found.group(1)) if found.group(1) else len(found.group(2))
 
 
+def professor_of(db: Session, row: CandidateFeedback) -> str:
+    """The name of the professor of the class the review is about."""
+    class_id = _payload(row).get("class_id")
+    group = db.get(ClassGroup, class_id) if class_id else None
+    if group is None and row.registration_id:
+        registration = db.get(Registration, row.registration_id)
+        group = registration.class_group if registration else None
+    return (group.professor_name or "").strip() if group else ""
+
+
+RECOMMEND = {"yes": "Yes", "maybe": "Maybe", "no": "No"}
+
+
 def answer(db: Session, row: CandidateFeedback, *, stars: int | None, words: str = "",
-           may_publish: bool = False, channel: str = "page") -> CandidateFeedback:
-    """Record what a candidate answered, and read it."""
+           may_publish: bool = False, channel: str = "page", happy: int | None = None, improve: str = "",
+           prof_stars: int | None = None, prof_words: str = "", recommend: str = "") -> CandidateFeedback:
+    """Record what a candidate answered (the program, how happy they are, what to improve, their professor, whether
+    they recommend us), and read it."""
     words = (words or "").strip()[:WORDS_LIMIT]
+    improve = (improve or "").strip()[:WORDS_LIMIT]
+    prof_words = (prof_words or "").strip()[:WORDS_LIMIT]
     stars = stars if stars in (1, 2, 3, 4, 5) else None
-    if stars is None and not words:
+    happy = happy if happy in (1, 2, 3, 4, 5) else None
+    prof_stars = prof_stars if prof_stars in (1, 2, 3, 4, 5) else None
+    if stars is None and not words and not improve:
         raise ValueError("Choisissez un nombre d'étoiles ou écrivez quelques mots.")
-    reading = feedback.analyse(words, stars=stars)
+    reading = feedback.analyse(" ".join(part for part in (words, improve) if part), stars=stars)
     first = row.status != "received"
     row.rating, row.comment = stars, words or None
     row.sentiment, row.language = reading["sentiment"], reading["language"]
@@ -185,7 +206,11 @@ def answer(db: Session, row: CandidateFeedback, *, stars: int | None, words: str
     row.status = "received"
     row.submitted_at = datetime.now(timezone.utc)
     _keep(row, themes=reading["themes"], positive=reading["positive"], negative=reading["negative"],
-          may_publish=bool(may_publish), channel=channel)
+          may_publish=bool(may_publish), channel=channel, happy=happy, improve=improve or None,
+          improve_themes=feedback.analyse(improve)["themes"] if improve else [],
+          professor=professor_of(db, row) or None, prof_stars=prof_stars, prof_words=prof_words or None,
+          prof_tone=feedback.analyse(prof_words, stars=prof_stars)["sentiment"] if (prof_words or prof_stars) else None,
+          recommend=recommend if recommend in RECOMMEND else None)
     if first:
         happy = reading["sentiment"] == "positive"
         db.add(Notification(
@@ -219,6 +244,9 @@ def _view(row: CandidateFeedback) -> dict:
         "answered": row.status == "received", "asked": row.status in ("asked", "received"),
         "waiting": row.status == "to_ask", "may_publish": bool(data.get("may_publish")),
         "channel": data.get("channel"), "program": row.program_name, "when": row.submitted_at,
+        "happy": data.get("happy"), "improve": data.get("improve") or "", "professor": data.get("professor") or "",
+        "prof_stars": data.get("prof_stars"), "prof_words": data.get("prof_words") or "", "recommend": data.get("recommend"),
+        "improve_themes": [feedback.THEMES[key] for key in data.get("improve_themes") or [] if key in feedback.THEMES],
     }
 
 
@@ -232,7 +260,27 @@ def summary(rows: list[CandidateFeedback]) -> dict:
     for item in answered:
         for theme in item["themes"]:
             themes[theme["label"]] = themes.get(theme["label"], 0) + 1
+    happy = [item["happy"] for item in answered if item["happy"]]
+    recommend = [item["recommend"] for item in answered if item["recommend"]]
+    to_improve: dict[str, int] = {}
+    for item in answered:
+        for theme in item["improve_themes"]:
+            to_improve[theme["label"]] = to_improve.get(theme["label"], 0) + 1
+    professors: dict[str, list] = {}
+    for item in answered:
+        if item["professor"] and item["prof_stars"]:
+            professors.setdefault(item["professor"], []).append(item["prof_stars"])
     return {
+        "happy_pct": round(sum(happy) / len(happy) / 5 * 100) if happy else None,
+        "recommend_pct": round(100 * sum(1 for value in recommend if value == "yes") / len(recommend)) if recommend else None,
+        "to_improve": sorted(to_improve.items(), key=lambda pair: pair[1], reverse=True)[:5],
+        "improve_words": [item["improve"] for item in answered if item["improve"]][:6],
+        "professors": [{"name": name, "stars": round(sum(values) / len(values), 1), "count": len(values)}
+                       for name, values in sorted(professors.items(), key=lambda pair: -sum(pair[1]) / len(pair[1]))],
+        "how": ("Counted from the reviews candidates gave at the end of the program: stars for the program (1 to 5), how happy they "
+                "are (1 to 5, shown in percent), stars for their professor, whether they recommend 9antra, and what they wrote. "
+                "What they wrote is read with fixed word lists (the subjects: the trainer, the content, the rhythm…; the tone: "
+                "positive or negative words), never by a model."),
         "rows": sorted(views, key=lambda item: (not item["answered"], -(item["stars"] or 0), item["name"])),
         "asked": sum(1 for item in views if item["asked"]), "answered": len(answered),
         "waiting": sum(1 for item in views if item["waiting"]),
@@ -251,6 +299,38 @@ def of_class(db: Session, class_id: str) -> dict:
         .filter(CandidateFeedback.source == SOURCE, Registration.class_group_id == class_id)
         .all()
     )
+    return summary(rows)
+
+
+def of_program(db: Session, program_id: str) -> dict:
+    """The opinions of everyone who finished this program."""
+    rows = (
+        db.query(CandidateFeedback)
+        .join(Registration, Registration.id == CandidateFeedback.registration_id)
+        .filter(CandidateFeedback.source == SOURCE, Registration.program_id == program_id)
+        .all()
+    )
+    return summary(rows)
+
+
+def of_candidate(db: Session, candidate_id: str) -> list[dict]:
+    """A candidate's programs that ended: their opinion (or that it was asked), and whether it can be asked."""
+    from app.models import Candidate
+
+    candidate = db.get(Candidate, candidate_id)
+    found = []
+    for registration in (candidate.registrations if candidate else []):
+        if registration.status != RegistrationStatus.COMPLETED:
+            continue
+        row = of_registration(db, registration.id)
+        found.append({"registration": registration, "review": _view(row) if row is not None else None})
+    return found
+
+
+def of_professor(db: Session, name: str) -> dict:
+    """The reviews of the classes a professor taught."""
+    rows = [row for row in db.query(CandidateFeedback).filter(CandidateFeedback.source == SOURCE).all()
+            if (_payload(row).get("professor") or professor_of(db, row)) == name]
     return summary(rows)
 
 

@@ -1,0 +1,26 @@
+{# Moving emojis that say an analysis at a glance. Each one moves in its own way (a happy one bounces, a worried one
+   shakes); they stay still for anyone whose device asks for less motion. The styles are in _base_look.html. #}
+{% macro face(tone, title="") -%}
+{%- set pick = {"ok": ("😄", "bounce"), "info": ("🙂", "float"), "warn": ("😐", "wobble"), "bad": ("😟", "shake"), "muted": ("🤔", "tilt")}.get(tone, ("🤔", "tilt")) -%}
+<span class="emo emo-{{ pick[1] }}" role="img" aria-label="{{ title or tone }}" title="{{ title }}">{{ pick[0] }}</span>
+{%- endmacro %}
+
+{% macro score(value, title="") -%}
+{%- if value is none -%}{{ face("muted", title) }}{%- elif value >= 75 -%}{{ face("ok", title) }}{%- elif value >= 55 -%}{{ face("info", title) }}{%- elif value >= 35 -%}{{ face("warn", title) }}{%- else -%}{{ face("bad", title) }}{%- endif -%}
+{%- endmacro %}
+
+{% macro feel(key) -%}
+{%- set pick = {"frustrated": ("😠", "shake"), "disappointed": ("😞", "droop"), "worried": ("😟", "shake"), "confused": ("😕", "tilt"),
+                "urgent": ("⏰", "ring"), "eager": ("🔥", "flicker"), "happy": ("😄", "bounce"), "grateful": ("🙏", "pulse")}.get(key, ("💬", "float")) -%}
+<span class="emo emo-{{ pick[1] }}" role="img" aria-label="{{ key }}">{{ pick[0] }}</span>
+{%- endmacro %}
+
+{% macro kind(key) -%}
+{%- set pick = {"add": ("🚀", "launch"), "change": ("🔄", "spin"), "strengthen": ("💪", "pulse"), "reduce": ("📉", "droop"), "keep": ("⭐", "twinkle"),
+                "consistent": ("✅", "pulse"), "to_check": ("🧐", "tilt"), "doubtful": ("🚩", "wave"), "unreadable": ("🙈", "shake")}.get(key, ("✨", "twinkle")) -%}
+<span class="emo emo-{{ pick[1] }}" role="img" aria-label="{{ key }}">{{ pick[0] }}</span>
+{%- endmacro %}
+
+{% macro happy(pct) -%}
+{%- if pct is none -%}{{ face("muted") }}{%- elif pct >= 80 -%}<span class="emo emo-bounce" role="img" aria-label="very happy">🥳</span>{%- elif pct >= 60 -%}{{ face("ok") }}{%- elif pct >= 40 -%}{{ face("warn") }}{%- else -%}{{ face("bad") }}{%- endif -%}
+{%- endmacro %}

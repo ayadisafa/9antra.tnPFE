@@ -770,7 +770,7 @@ def send_due(db: Session, base_url: str) -> int:
 def quiz_by_token(db: Session, token: str) -> Quiz | None:
     if not token or len(token) < 16:
         return None
-    return db.query(Quiz).filter(Quiz.kind == "weekly", Quiz.access_token == token).first()
+    return db.query(Quiz).filter(Quiz.kind.in_(("weekly", "session")), Quiz.access_token == token).first()
 
 
 def questions_in(quiz: Quiz) -> list[dict]:

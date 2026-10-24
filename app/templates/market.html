@@ -3,6 +3,7 @@
 
 {% block title %}What the market asks · 9antra{% endblock %}
 {% block page_title %}What the market asks{% endblock %}
+{% block live_topics %}market{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -75,7 +76,7 @@
 {% if trends %}
 <h3 class="mk-h" id="trends"><i class="bi bi-fire"></i>What the trade asks most</h3>
 <p class="mk-p">Every field by the number of offers read, whether you teach it or not. A field in gold has no program here: it is an idea for the catalogue.</p>
-<div class="mk-trends">
+<div class="mk-trends" id="mk-trends" data-live-region>
   {% for trend in trends %}
   <div class="mk-trend {{ '' if trend.taught else 'is-new' }}">
     <div><b>{{ trend.name }}</b><small>{{ trend.offers }} offer{{ 's' if trend.offers != 1 }} · {{ trend.pct }}% of those read</small></div>
@@ -91,7 +92,7 @@
 
 <h3 class="mk-h"><i class="bi bi-journal-check"></i>Your programs against the offers</h3>
 <p class="mk-p">Open a program to see what to teach for each missing skill.</p>
-<div class="mk-grid">
+<div class="mk-grid" id="mk-grid" data-live-region>
   {% for row in programs %}
   <article class="mk-card" id="market-{{ row.program.id }}">
     <div class="mk-top">

@@ -132,6 +132,29 @@
 <div class="lv-note warn"><i class="bi bi-link-45deg"></i><span>The link candidates receive starts with <strong>{{ public_url }}</strong>, which only opens on this computer. Set the address they can reach in <a href="/settings#address">Settings</a> before sending.</span></div>
 {% endif %}
 
+{% set lt = level_timing %}
+<div class="lv-remind lv-when" id="timing">
+  <span class="lv-remind-ico"><i class="bi bi-calendar2-week-fill"></i></span>
+  <div class="lv-when-text">
+    {% if lt.when == "paid" %}<b>It goes as soon as they pay</b><span>A candidate who paid in full receives their level check at once.</span>
+    {% else %}<b>It goes {{ lt.days }} day{{ 's' if lt.days != 1 }} before the first session, by itself</b>
+    <span>{% if lt.coming %}Next: {% for one in lt.coming[:3] %}{{ one.name }} on {{ one.day.strftime("%d %b") }}{{ ", " if not loop.last }}{% endfor %}{% if lt.coming_count > 3 %} and {{ lt.coming_count - 3 }} more{% endif %}.{% else %}No level check is waiting for its day.{% endif %}
+    {% if not lt.can_send %} It cannot go by itself yet: the email, its switch or the public address is missing.{% endif %}</span>{% endif %}
+  </div>
+  <form method="post" action="/quiz/timing" class="lv-when-form">
+    <label><input type="radio" name="when" value="before" {{ 'checked' if lt.when == 'before' }}>
+      <input type="number" name="days" min="1" max="30" value="{{ lt.days }}" aria-label="Days before the first session"> days before</label>
+    <label><input type="radio" name="when" value="paid" {{ 'checked' if lt.when == 'paid' }}> as soon as they pay</label>
+    <button class="ui-btn sm">Save</button>
+  </form>
+</div>
+<style>
+  .lv-when-text { flex:1; min-width:220px; }
+  .lv-when-form { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:.8rem; font-weight:700; color:#5b5670; }
+  .lv-when-form label { display:inline-flex; gap:6px; align-items:center; }
+  .lv-when-form input[type=number] { width:58px; border:1px solid var(--border-color); border-radius:10px; padding:4px 6px; }
+  .lv-when-form input[type=radio] { accent-color:var(--primary-berry); }
+</style>
 <div class="lv-remind {{ 'is-off' if not reminders_on }}">
   <span class="lv-remind-ico"><i class="bi {{ 'bi-alarm-fill' if reminders_on else 'bi-bell-slash-fill' }}"></i></span>
   <div style="min-width:0; flex:1;">

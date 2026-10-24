@@ -135,3 +135,19 @@ SEED: dict[str, tuple[str, str]] = {
     "Send the program (PDF)": ("Envoyer la formation (PDF)", "أرسل البرنامج (PDF)"),
     "Paid, waiting for a class": ("Payé, en attente d'une classe", "مدفوع، في انتظار قسم"),
 }
+
+
+# Every other text of the interface, translated by hand (translation_more.json: English -> [French, Arabic]).
+# Not a list of texts to show: a text is shown only while a page or a service still says it.
+def _more() -> dict[str, tuple[str, str]]:
+    import json
+    from pathlib import Path
+
+    try:
+        data = json.loads((Path(__file__).with_name("translation_more.json")).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    return {source: (pair[0], pair[1]) for source, pair in data.items() if isinstance(pair, list) and len(pair) == 2}
+
+
+MORE: dict[str, tuple[str, str]] = _more()

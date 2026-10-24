@@ -3,7 +3,7 @@
 
 {% block title %}Payments · {{ app_brand.name }}{% endblock %}
 {% block page_title %}Payments{% endblock %}
-{% block live_topics %}candidates{% endblock %}
+{% block live_topics %}candidates,payments{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -34,6 +34,17 @@
   <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people"></i></div><div><div class="ui-stat-num">{{ totals.people }}</div><div class="ui-stat-label">Candidate{{ 's' if totals.people != 1 }} who owe</div></div></div>
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-check"></i></div><div><div class="ui-stat-num">{{ totals.to_decide }}</div><div class="ui-stat-label">Waiting for your decision</div></div></div>
 </div>
+
+{% import "_proofs.html" as proofs_ui %}
+<section class="mb-4" id="proofs">
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <h3 class="h6 fw-bold mb-0"><i class="bi bi-receipt"></i> Payment proofs to check</h3>
+    <span class="ui-chip {{ 'warn' if proofs else 'muted' }}">{{ proofs | length }}</span>
+  </div>
+  <p class="small text-muted mb-2">Receipts, transfers and invoices candidates send by email or WhatsApp are read here: amount, bank, RIB, date, reference, and checks. A photo cannot prove a receipt is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set %} <a href="/settings#whatsapp">Write the centre's RIB in Settings</a> to check the money went to your account.{% endif %}</p>
+  {% if proofs %}{{ proofs_ui.list(proofs, "/payments#proofs") }}{% else %}<div class="ui-card"><div class="ui-card-sub">Nothing to check.</div></div>{% endif %}
+  {% if proofs_done %}<details><summary class="small fw-bold text-muted">Last decided</summary><div class="mt-2">{{ proofs_ui.list(proofs_done, "/payments#proofs") }}</div></details>{% endif %}
+</section>
 
 <section class="ui-card" data-live-region="payments">
   {% for row in rows %}

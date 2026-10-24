@@ -81,10 +81,180 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "public_url": public_base_url(db, request),
             "public_url_local": weekly_questions.is_local_address(public_base_url(db, request)),
             "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT},
+            "plain_words": __import__("app.services.settings_guide", fromlist=["plain_words"]).plain_words(db, request),
+            "report": _report_view(db, settings),
+            "wa": _whatsapp_view(db, settings, request),
+            "registration_form": __import__("app.services.registration_form", fromlist=["url"]).url(db),
+            "session_check": __import__("app.services.session_check", fromlist=["settings_of"]).settings_of(db),
+            "sm": _sms_view(db, request),
+            "rules": {"never": settings.assistant_never or "", "notes": settings.assistant_notes or ""},
+            "wa_trial": request.query_params.get("wa_trial"),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         },
     )
+
+
+def _report_view(db: Session, settings) -> dict:
+    """What the "Report by email" card shows."""
+    from app.services import report_email
+    from app.services.schedule_utils import utc_to_local
+
+    days = report_email.every_days(settings)
+    coming = report_email.next_at(settings)
+    return {
+        "on": report_email.is_on(settings), "days": days, "rhythm": "week" if days == 7 else "ten" if days == 10 else "weeks" if days % 7 == 0 else "days",
+        "weeks": days // 7 if days % 7 == 0 else 2, "label": report_email.rhythm_label(days),
+        "to": report_email.recipients(db, settings), "written": settings.report_recipients or "",
+        "next": utc_to_local(coming) if coming else None, "last": utc_to_local(settings.report_sent_at) if settings.report_sent_at else None,
+        "most_days": report_email.MOST_DAYS, "most_weeks": report_email.MOST_WEEKS,
+    }
+
+
+def _whatsapp_view(db: Session, settings, request) -> dict:
+    """What the WhatsApp Business card shows. Secrets are never shown: only whether they are there."""
+    from app.services import email_assistant
+
+    url = public_base_url(db, request)
+    return {
+        "configured": whatsapp.configured(), "receives": whatsapp.receives(),
+        "phone_id": (os.getenv("WHATSAPP_PHONE_ID") or "").strip(), "has_token": bool((os.getenv("WHATSAPP_TOKEN") or "").strip()),
+        "has_secret": bool(whatsapp.app_secret()), "verify_token": whatsapp.verify_token(),
+        "template": (os.getenv("WHATSAPP_TEMPLATE") or "").strip(), "mode": email_assistant.whatsapp_mode_of(settings),
+        "webhook": f"{url}/whatsapp/webhook", "public_local": weekly_questions.is_local_address(url),
+    }
+
+
+@router.post("/numbers")
+def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None = Form(None), form: str | None = Form(None),
+                 address: str | None = Form(None), whole: str = Form(""), db: Session = Depends(get_db)):
+    """The centre's own phone and WhatsApp numbers, written under every email, and its RIB(s), where candidates pay."""
+    from app.services import tunisian_banks
+
+    kept_ribs = []
+    for line in (ribs or "").splitlines():
+        digits = tunisian_banks.rib_digits(line)
+        if not digits:
+            continue
+        if not tunisian_banks.rib_ok(digits):
+            return _back(error=f"The RIB {line.strip()} is not right: a Tunisian RIB has 20 digits and its last two (the key) must match.", anchor="#whatsapp")
+        kept_ribs.append(tunisian_banks.pretty_rib(digits))
+    values = {}
+    for name, value in (("phone", phone), ("WhatsApp", chat)):
+        value = (value or "").strip()
+        if value and whatsapp.normalise(value) is None:
+            return _back(error=f"The {name} number cannot be read: write it like +216 71 123 456.", anchor="#whatsapp")
+        values[name] = whatsapp.pretty(value) if value else None
+    link = (form or "").strip()
+    if link and not link.startswith(("https://", "http://")):
+        return _back(error="The registration form must be a link starting with https://", anchor="#whatsapp")
+    settings = get_settings(db)
+    settings.centre_phone, settings.centre_whatsapp = values["phone"], values["WhatsApp"]
+    # The whole card was sent (“whole”): an empty box clears what was there (FastAPI turns an empty field into None).
+    if ribs is not None or whole:
+        settings.centre_ribs = "\n".join(kept_ribs) or None
+    if form is not None or whole:
+        settings.registration_form_url = link or None     # empty: back to the form 9antra uses today
+    if address is not None or whole:
+        settings.centre_address = (address or "").strip()[:200] or None
+    db.commit()
+    return _back(notice="Saved: the numbers are written under every email; payment proofs are checked against the RIB.", anchor="#whatsapp")
+
+
+@router.post("/whatsapp")
+def save_whatsapp(token: str = Form(""), phone_id: str = Form(""), app_secret: str = Form(""), verify_token: str = Form(""),
+                  template: str = Form(""), mode: str = Form("auto"), db: Session = Depends(get_db)):
+    """What Meta gave for the WhatsApp Business number (kept in .env), and how the assistant answers there."""
+    import secrets as _secrets
+    from app.services import email_assistant
+
+    phone_id = "".join(phone_id.split())
+    if phone_id and (not phone_id.isdigit() or len(phone_id) < 10):
+        return _back(error="The phone number ID is a long number (Meta shows it under WhatsApp → API Setup), not the phone number itself.", anchor="#whatsapp")
+    chosen = (verify_token or "").strip() or whatsapp.verify_token() or _secrets.token_urlsafe(18)
+    whatsapp.save_account({"WHATSAPP_TOKEN": token, "WHATSAPP_PHONE_ID": phone_id, "WHATSAPP_APP_SECRET": app_secret,
+                           "WHATSAPP_VERIFY_TOKEN": chosen, "WHATSAPP_TEMPLATE": template})
+    settings = get_settings(db)
+    settings.whatsapp_auto_reply = mode if mode in email_assistant.MODES else "auto"
+    db.commit()
+    state = ("Connected: it sends and receives." if whatsapp.receives() else
+             "Saved: it can send. To receive candidates' messages it also needs the app secret and the address given to Meta."
+             if whatsapp.configured() else "Saved.")
+    return _back(notice=state, anchor="#whatsapp")
+
+
+def _sms_view(db: Session, request) -> dict:
+    """What the SMS card shows. Secrets are never shown: only whether they are there."""
+    from app.services import sms
+
+    return {"configured": sms.configured(), "receives": sms.receives(), "url": (os.getenv("SMS_GATEWAY_URL") or "").strip(),
+            "user": (os.getenv("SMS_GATEWAY_USER") or "").strip(), "has_password": bool((os.getenv("SMS_GATEWAY_PASSWORD") or "").strip()),
+            "has_key": bool((os.getenv("SMS_SIGNING_KEY") or "").strip()), "webhook": f"{public_base_url(db, request)}/sms/webhook"}
+
+
+@router.post("/sms")
+def save_sms(url: str = Form(""), user: str = Form(""), password: str = Form(""), key: str = Form("")):
+    """The Android phone that sends and receives the SMS (kept in .env, never in the database)."""
+    from app.services import sms
+
+    url = url.strip().rstrip("/")
+    if url and not url.lower().startswith(("http://", "https://")):
+        return _back(error="The phone's address starts with http:// (the app shows it, for example http://192.168.1.20:8080).", anchor="#sms")
+    sms.save_account({"SMS_GATEWAY_URL": url, "SMS_GATEWAY_USER": user, "SMS_GATEWAY_PASSWORD": password, "SMS_SIGNING_KEY": key})
+    return _back(notice="Saved. Press “Test the phone” to check it answers.", anchor="#sms")
+
+
+@router.post("/sms/test")
+def test_sms():
+    from app.services import sms
+
+    ok, text = sms.test_connection()
+    return _back(notice=text, anchor="#sms") if ok else _back(error=text, anchor="#sms")
+
+
+@router.post("/whatsapp/test")
+def test_whatsapp():
+    ok, text = whatsapp.test_connection()
+    return _back(notice=text, anchor="#whatsapp") if ok else _back(error=text, anchor="#whatsapp")
+
+
+@router.post("/assistant-rules")
+def save_assistant_rules(never: str = Form(""), notes: str = Form(""), prospects_on: str = Form(""), db: Session = Depends(get_db)):
+    """What the assistant must never answer alone, and what it should know or say (emails and WhatsApp)."""
+    settings = get_settings(db)
+    settings.prospect_answers_on = bool(prospects_on)
+    settings.assistant_never = (never or "").strip()[:4000] or None
+    settings.assistant_notes = (notes or "").strip()[:4000] or None
+    db.commit()
+    return _back(notice="The assistant follows your rules from now on, in emails and on WhatsApp.", anchor="#rules")
+
+
+@router.post("/report")
+def save_report(report_email_on: bool = Form(False), rhythm: str = Form("week"), days: str = Form(""), weeks: str = Form(""),
+                recipients: str = Form(""), db: Session = Depends(get_db)):
+    """How often the progress report comes, and to whom."""
+    from app.services import report_email
+
+    settings = get_settings(db)
+    problem = report_email.choose(settings, on=report_email_on, rhythm=rhythm, days=days, weeks=weeks, addresses=recipients)
+    if problem:
+        db.rollback()
+        return _back(error=problem, anchor="#report")
+    db.commit()
+    if not report_email.is_on(settings):
+        return _back(notice="The report by email is off.", anchor="#report")
+    return _back(notice=f"The report will come {report_email.rhythm_label(report_email.every_days(settings))}.", anchor="#report")
+
+
+@router.post("/report/send")
+def send_report_now(db: Session = Depends(get_db)):
+    """Send the progress report now, to the addresses of the card."""
+    from app.services import report_email
+
+    outcome = report_email.send(db)
+    if not outcome["ok"]:
+        return _back(error=outcome["problem"], anchor="#report")
+    return _back(notice="The report was sent to " + ", ".join(outcome["to"]) + ".", anchor="#report")
 
 
 @router.post("/classes")
@@ -103,6 +273,9 @@ def save_class_settings(
     training_reminder_days: str = Form(""),
     enable_automated_reminders: bool = Form(False),
     apply_to_open_classes: bool = Form(False),
+    next_class_gap_days: int = Form(10),
+    session_check_on: str = Form(""),
+    session_check_hours: int = Form(24),
     db: Session = Depends(get_db),
 ):
     """Defaults used for every class created from now on."""
@@ -118,6 +291,7 @@ def save_class_settings(
             (not 1 <= min_students_to_start <= max(default_class_capacity, 1), "Minimum candidates to start must be between 1 and the capacity."),
             (not 0 <= min_start_notice_days <= 60, "Notice must be between 0 and 60 days."),
             (not 1 <= default_program_weeks <= 104, "Duration must be between 1 and 104 weeks."),
+            (not 0 <= next_class_gap_days <= 120, "The days before a candidate's next program must be between 0 and 120."),
             (not session_days, "Choose at least one session day."),
             (start is None, "Set the session start time, so reminders can tell candidates when to attend."),
             (bool(start and end and end <= start), "Session end time must be after its start time."),
@@ -129,6 +303,9 @@ def save_class_settings(
 
     settings = get_settings(db)
     settings.auto_create_class_on_payment = auto_create_class_on_payment
+    settings.next_class_gap_days = next_class_gap_days
+    settings.session_check_on = bool(session_check_on)
+    settings.session_check_hours = max(1, min(72, session_check_hours))
     settings.auto_assign_professor = auto_assign_professor
     settings.class_start_mode = class_start_mode
     settings.default_class_start_days = default_class_start_days
@@ -308,3 +485,20 @@ def send_test_email(recipient: str = Form(...), db: Session = Depends(get_db)):
     if delivered:
         return _back(notice=f"Test email sent to {recipient.strip()}.", anchor="#email")
     return _back(error="The test email could not be delivered. Check SMTP_EMAIL and SMTP_PASSWORD (a Gmail app password is required).", anchor="#email")
+
+
+@router.post("/linkedin")
+def save_linkedin(token: str = Form(""), organization: str = Form("")):
+    """LinkedIn's keys for the page's posts (in the .env file, never in the database), used at once."""
+    from fastapi.responses import RedirectResponse
+    from urllib.parse import urlencode
+
+    from app.services import linkedin
+
+    try:
+        linkedin.save_account({"LINKEDIN_ACCESS_TOKEN": token, "LINKEDIN_ORGANIZATION_ID": organization})
+    except ValueError as error:
+        return RedirectResponse("/website?" + urlencode({"error": str(error)}) + "#linkedin", status_code=303)
+    notice = ("Connected: the page's posts are read with the website, analysed and learnt." if linkedin.configured()
+              else "Saved. Both the access token and the page's number are needed.")
+    return RedirectResponse("/website?" + urlencode({"notice": notice}) + "#linkedin", status_code=303)

@@ -3,7 +3,7 @@
 
 {% block title %}Website · {{ app_brand.name }}{% endblock %}
 {% block page_title %}Website{% endblock %}
-{% block live_topics %}programs{% endblock %}
+{% block live_topics %}programs,website{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -118,7 +118,7 @@
 </div>
 
 {% if view.checks %}
-<section class="ui-card mt-4">
+<section class="ui-card mt-4" id="ws-changes" data-live-region>
   <div class="ui-card-head">
     <div>
       <div class="ui-card-title"><i class="bi bi-clock-history"></i>What changed</div>
@@ -240,7 +240,7 @@
 </section>
 
 {# ---------------- Events ---------------- #}
-<section class="ws-section" id="event">
+<section class="ws-section" id="event" data-live-region>
   <h3><i class="bi bi-calendar-event-fill"></i>Events</h3>
   <p>The workshops announced on the website. The email assistant knows them and can answer candidates who ask.</p>
   <div class="ws-grid">
@@ -267,7 +267,7 @@
 
 {# ---------------- Internship offers ---------------- #}
 {% if view.offers %}
-<section class="ws-section" id="offer">
+<section class="ws-section" id="offer" data-live-region>
   <h3><i class="bi bi-briefcase-fill"></i>Internship offers</h3>
   <p>The internships and end-of-studies projects the website offers.</p>
   <div class="ws-grid">
@@ -290,19 +290,28 @@
 {% endif %}
 
 {# ---------------- News and Facebook posts ---------------- #}
-{% if view.news or view.posts %}
-<section class="ws-section" id="news">
+{% if view.news or view.posts or view.linkedin_posts %}
+<section class="ws-section" id="news" data-live-region>
   <h3><i class="bi bi-newspaper"></i>News</h3>
   <p>What was published lately. It is part of what the email assistant knows.</p>
   <div class="ws-grid">
-    {% for item in view.news + view.posts[:8] %}
+    {% for item in view.news + view.posts[:8] + view.linkedin_posts[:8] %}
     <article class="ws-card" id="{{ 'post' if item.kind == 'post' and loop.index0 == view.news | length else '' }}">
       <div class="ws-facts">
-        <span class="ui-chip {{ 'info' if item.kind == 'post' else 'brand' }}"><i class="bi {{ 'bi-facebook' if item.kind == 'post' else 'bi-globe2' }}"></i>{{ 'Facebook' if item.kind == 'post' else (item.category or 'News') }}</span>
+        <span class="ui-chip {{ 'info' if item.kind in ('post', 'linkedin') else 'brand' }}"><i class="bi {{ 'bi-facebook' if item.kind == 'post' else 'bi-linkedin' if item.kind == 'linkedin' else 'bi-globe2' }}"></i>{{ 'Facebook' if item.kind == 'post' else (item.category or 'News') }}</span>
         {% if item.starts_at %}<span class="ui-chip muted">{{ item.starts_at.strftime('%d %b %Y') }}</span>{% endif %}
       </div>
       <div class="ws-title">{{ item.title }}</div>
       <div class="ws-text" style="display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden;">{{ item.summary }}</div>
+      {% set reading = view.readings.get(item.id) if view.readings else none %}
+      {% if reading %}
+      <div class="ws-read" title="Read by the application: what this post announces">
+        {% for said in reading.announces_said %}<span class="ui-chip brand"><i class="bi bi-megaphone"></i>{{ said }}</span>{% endfor %}
+        {% for program in reading.programs %}<span class="ui-chip ok"><i class="bi bi-mortarboard"></i>{{ program }}</span>{% endfor %}
+        {% for date in reading.dates %}<span class="ui-chip muted"><i class="bi bi-calendar"></i>{{ date }}</span>{% endfor %}
+        {% for price in reading.prices %}<span class="ui-chip warn">{{ price }}</span>{% endfor %}
+      </div>
+      {% endif %}
       <a class="ui-link mt-auto" href="{{ item.url }}" target="_blank" rel="noopener">Read it</a>
     </article>
     {% endfor %}
@@ -314,10 +323,11 @@
 {% if view.videos %}
 <section class="ws-section" id="video">
   <h3><i class="bi bi-play-btn-fill"></i>Videos</h3>
-  <p>The videos published on the website{{ ' and on the Facebook page' if view.facebook }}. They stay where they are hosted; the application keeps their address and opens them there. The videos of each course week are on the program's page.</p>
+  <p>The videos published on the website{{ ' and on the Facebook page' if view.facebook }}. They stay where they are hosted and play here, in the application. The videos of each course week are on the program's page and on the <a href="/programs/videos">Videos</a> page.</p>
   <div class="ws-media">
     {% for item in view.videos %}
-    <a class="ws-thumb" href="{{ item.url }}" target="_blank" rel="noopener" title="{{ item.title }}">
+    {% set embed = video_embed(item.details.embed or item.url) %}
+    <a class="ws-thumb" href="{{ item.url }}" target="_blank" rel="noopener" title="{{ item.title }}" {% if embed %}data-video="{{ embed }}" data-video-kind="{{ video_kind(embed) }}"{% endif %}>
       {% if item.details.thumbnail %}<img src="{{ item.details.thumbnail }}" alt="" loading="lazy" referrerpolicy="no-referrer">{% endif %}
       <span class="play"><i class="bi bi-play-circle-fill"></i></span>
       <span class="cap">{{ item.title }}</span>
@@ -329,7 +339,7 @@
 
 {# ---------------- Feedback ---------------- #}
 {% if said.total %}
-<section class="ws-section" id="feedback">
+<section class="ws-section" id="feedback" data-live-region>
   <h3><i class="bi bi-chat-heart-fill"></i>Feedback</h3>
   <p>What learners said, as published on the website{{ ' and on the Facebook page' if view.facebook }}. Each picture is kept on this computer, its words are read, and their tone is worked out with the same word rules as the weekly check-in.</p>
 
@@ -447,6 +457,28 @@
   <div class="ui-empty"><i class="bi bi-archive"></i><strong>Everything read is still on the website</strong>When something disappears from 9antra.tn it is listed here, kept as it was.</div>
   {% endif %}
 </section>
+
+<section class="ws-section" id="linkedin">
+  <h3><i class="bi bi-linkedin"></i>The LinkedIn page</h3>
+  {% if view.linkedin %}
+  <p>Connected: its posts are read with the website, analysed, and learnt by the assistant ({{ view.linkedin_posts | length }} so far).</p>
+  {% else %}
+  <div class="ui-card">
+    <div class="ui-card-title">LinkedIn gives a page's posts only to an application it approved, with a key made by an admin of the page.</div>
+    <p class="ws-text mt-2">On LinkedIn's developer site, create an application for the 9antra page, ask for the “Community Management API”, then make an
+      access token with the right to read the page's posts (r_organization_social). Write it below with the page's number (urn:li:organization:<b>12345678</b>).
+      The application never reads LinkedIn's pages themselves. Until then, paste a post in Inbox › Knowledge: it is learnt with its source.</p>
+    {% if is_admin %}
+    <form method="post" action="/settings/linkedin" class="d-flex gap-2 flex-wrap align-items-end">
+      <label class="small fw-bold">Access token<input name="token" type="password" class="form-control form-control-sm" autocomplete="off" style="min-width:260px"></label>
+      <label class="small fw-bold">Page number<input name="organization" class="form-control form-control-sm" placeholder="12345678" style="width:140px"></label>
+      <button class="ui-btn primary sm"><i class="bi bi-plug"></i>Connect</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+<style>.ws-read { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 6px; }</style>
 
 <section class="ws-section" id="post">
   <h3><i class="bi bi-facebook"></i>The Facebook page</h3>

@@ -174,6 +174,10 @@ def attendance_page(class_id: str, request: Request, db: Session = Depends(get_d
         meetings.links_for(db, class_group, selected)       # each candidate's own link to the meeting
     joins = meetings.sheet(db, class_group, selected) if selected else {}
     scores = behaviour.scores(db, [registration.candidate for registration in people])
+    from app.services import session_check
+
+    checks = session_check.evidence(db, class_group.id) if selected else {}
+    check_plan = session_check.settings_of(db)
     base_url = public_base_url(db, request)
 
     return templates.TemplateResponse(
@@ -206,6 +210,7 @@ def attendance_page(class_id: str, request: Request, db: Session = Depends(get_d
                     "participation": marks[registration.id].participation if registration.id in marks else None,
                     "questions": marks[registration.id].questions if registration.id in marks else None,
                     "join": joins.get(registration.id),
+                    "check": checks.get((selected.id, registration.id)) if selected else None,
                     "behaviour": scores.get(registration.candidate_id),
                     "rate": rates.get(registration.id, {}).get("rate"),
                     "absent_in_a_row": rates.get(registration.id, {}).get("absent_in_a_row", 0),
@@ -213,6 +218,8 @@ def attendance_page(class_id: str, request: Request, db: Session = Depends(get_d
                 for registration in people
             ],
             "already_marked": bool(marks),
+            "check_summary": session_check.session_summary(db, selected.id) if selected else None,
+            "check_plan": check_plan,
             "summary": summary,
             "labels": attendance.LABELS,
             "participation_labels": behaviour.PARTICIPATION,

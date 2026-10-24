@@ -367,8 +367,8 @@ async def change_program_icon(
         outcome = program_icons.assign_from_web(db, program)
         messages = {
             "ok": (f"A picture was found for {program.name}.", None),
-            "nothing": (None, f"No picture on the web fits “{program.name}”. Search with your own words, or upload one."),
-            "offline": (None, "The icon catalogue could not be reached. Check the internet connection."),
+            "nothing": (f"No icon on the web fits “{program.name}” exactly: a general picture is shown. Search with your own words, or upload one.", None),
+            "offline": (f"The icon catalogue could not be reached: a picture was drawn for {program.name}; a better one is looked for later.", None),
         }
         notice, error = messages[outcome]
         return _back_to_programs(notice=notice, error=error)
@@ -545,8 +545,16 @@ async def process_program_pdf(request: Request, file: UploadFile = File(...)):
         
         extracted_programs = []
         last_error = None
+        # The catalogue is read on this computer (services/catalogue_reader.py): its pages follow one layout.
+        from app.services import catalogue_reader
 
-        for model_name in models_to_try:
+        try:
+            extracted_programs = catalogue_reader.read(contents)
+        except Exception as err:
+            last_error = err
+
+        # Gemini only for a PDF of another layout, and only when a key was written in .env.
+        for model_name in (models_to_try if not extracted_programs and GEMINI_API_KEY else []):
             try:
                 raw_json_text = call_gemini_api_direct(prompt, model_name=model_name)
                 raw_json_text = raw_json_text.strip()
@@ -570,7 +578,9 @@ async def process_program_pdf(request: Request, file: UploadFile = File(...)):
                 request=request,
                 name="program_upload.html",
                 context={
-                    "error": f"Failed to extract programs: {last_error or 'No programs found in file.'}",
+                    "error": (f"No program could be read: {last_error}" if last_error else
+                              "No program could be read: this PDF does not follow the catalogue's layout (a “COURSE PLAN” page per program). "
+                              "Add the programs by hand, or write a Gemini key in .env to try another layout."),
                     "results": None
                 }
             )
@@ -1133,7 +1143,9 @@ def program_detail(program_id: str, request: Request):
                 "missing": program_assistant.missing_labels(program),
                 "proposal": program_assistant.open_proposal(db, program.id),
                 "story": program_story(db, program),
+                "reviews": __import__("app.services.program_feedback", fromlist=["of_program"]).of_program(db, program.id),
                 "market": market.analysis(db, program),
+                "reco": __import__("app.services.recommender", fromlist=["recommend"]).recommend(db, program),
                 "notice": request.query_params.get("notice"),
                 "error": request.query_params.get("error"),
             }

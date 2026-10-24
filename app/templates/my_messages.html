@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Messages · 9antra{% endblock %}
+{% block page_title %}Messages{% endblock %}
+{% block live_topics %}team:{{ person_key }}{% endblock %}
+
+{% block content %}
+<style>
+  .mm-card { background:#fff; border:1px solid var(--border-color); border-radius:20px; max-width:860px; margin:0 auto; display:flex; flex-direction:column; min-height:60vh; }
+  .mm-head { display:flex; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border-color); }
+  .mm-logo { width:42px; height:42px; border-radius:50%; background:var(--berry-subtle); display:grid; place-items:center; overflow:hidden; flex:none; }
+  .mm-logo img { width:100%; height:100%; object-fit:cover; }
+  .mm-head b { display:block; font-size:.98rem; } .mm-head small { color:var(--muted); font-size:.76rem; font-weight:600; }
+  .mm-list { padding:18px; flex:1; }
+  .mm-msg { max-width:80%; margin-bottom:14px; }
+  @media (max-width: 575px) { .mm-msg { max-width:92%; } }
+  .mm-msg.in { margin-left:auto; }      /* what they wrote is on their side: the right */
+  .mm-meta { font-size:.7rem; color:var(--muted); font-weight:600; margin-bottom:4px; }
+  .mm-msg.in .mm-meta { text-align:right; }
+  .mm-bubble { border-radius:16px; padding:11px 14px; font-size:.88rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .mm-msg.out .mm-bubble { background:#fff; border:1px solid var(--border-color); border-top-left-radius:5px; }
+  .mm-msg.in .mm-bubble { background:var(--berry-subtle); border:1px solid #f6d8e6; border-top-right-radius:5px; }
+  .mm-empty { text-align:center; color:var(--muted); padding:40px 10px; }
+  .mm-answer { margin-top:8px; display:flex; flex-direction:column; gap:6px; background:var(--gold-subtle); border-radius:14px; padding:10px; }
+  .mm-answer textarea { border:1px solid var(--border-color); border-radius:12px; padding:8px 11px; font-size:.86rem; min-height:70px; }
+  .mm-answer button { align-self:flex-end; border:0; background:var(--primary-berry); color:#fff; border-radius:999px; padding:6px 14px; font-weight:800; font-size:.8rem; }
+  .mm-empty i { font-size:2rem; color:var(--primary-berry); display:block; margin-bottom:8px; }
+  .mm-write { border-top:1px solid var(--border-color); padding:12px 16px; display:flex; gap:8px; align-items:flex-end; position:sticky; bottom:0; background:#fff; border-radius:0 0 20px 20px; }
+  @media (max-width: 991px) { .mm-write { bottom:calc(76px + env(safe-area-inset-bottom, 0px)); } }
+  .mm-write textarea { flex:1; border:1px solid var(--border-color); border-radius:14px; padding:10px 13px; font-size:.9rem; min-height:48px; max-height:180px; resize:vertical; }
+  .mm-write textarea:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.12); }
+  .mm-write button { width:46px; height:46px; border-radius:50%; border:0; background:var(--primary-berry); color:#fff; flex:none; display:grid; place-items:center; font-size:1.05rem; }
+</style>
+
+{% include "_flash.html" %}
+<div class="mm-card">
+  <div class="mm-head">
+    <span class="mm-logo">{% if app_brand and app_brand.icon %}<img src="{{ app_brand.icon }}" alt="">{% else %}<i class="bi bi-building"></i>{% endif %}</span>
+    <div><b>{{ app_brand.name if app_brand else "9antra" }}</b><small>Your messages with the centre. You may also answer by email or WhatsApp: it arrives here too.</small></div>
+  </div>
+  <div class="mm-list" id="live-my-messages" data-live-region>
+    {% for item in messages %}
+    <div class="mm-msg {{ item.direction }}">
+      <div class="mm-meta">{{ "You" if item.direction == "in" else (item.author or "The centre") }} · {{ (item.created_at | local).strftime("%d %b, %H:%M") if item.created_at }}</div>
+      <div class="mm-bubble" data-no-i18n>{{ item.body }}</div>
+      {% set question_id = questions.get(item.batch) or questions.get(item.id) %}
+      {% if question_id %}
+      <form class="mm-answer" method="post" action="/account/messages/question/{{ question_id }}/answer">
+        <textarea name="body" required placeholder="Your answer to the candidate…" aria-label="Your answer to the candidate"></textarea>
+        <button class="ui-btn primary sm"><i class="bi bi-reply-fill"></i>Answer the candidate</button>
+      </form>
+      {% endif %}
+    </div>
+    {% else %}
+    <div class="mm-empty"><i class="bi bi-chat-heart"></i>No message yet. Write to the centre below: a question, an absence, anything.</div>
+    {% endfor %}
+  </div>
+  <form class="mm-write" method="post" action="/account/messages">
+    <textarea name="body" required placeholder="Write to the centre…" aria-label="Your message"></textarea>
+    <button aria-label="Send"><i class="bi bi-send-fill"></i></button>
+  </form>
+</div>
+<script>
+(() => {
+  const list = document.getElementById("live-my-messages");
+  if (list && list.lastElementChild) list.lastElementChild.scrollIntoView({ block: "nearest" });
+  // Kept up to date: a new message from the centre shows by itself (unless you are typing).
+  let known = null;
+  setInterval(async () => {
+    if (document.hidden || (document.activeElement && document.activeElement.tagName === "TEXTAREA" && document.activeElement.value)) return;
+    try {
+      const response = await fetch("/account/messages/count");
+      const count = response.ok ? (await response.json()).count : 0;
+      if (known !== null && count > 0) window.location.reload();
+      known = count;
+    } catch (error) {}
+  }, 20000);
+})();
+</script>
+{% endblock %}

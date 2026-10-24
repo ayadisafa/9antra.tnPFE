@@ -2,6 +2,7 @@
 
 {% block title %}System · 9antra{% endblock %}
 {% block page_title %}System{% endblock %}
+{% block live_topics %}system,reminders,settings{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -110,8 +111,142 @@
     </div>
   </div>
 
+  <!-- ============ Everything it does for you ============ -->
+  <h2 class="sy-h" id="automatic"><i class="bi bi-magic"></i>Everything it does for you, by itself</h2>
+  <p class="sy-sub">What happens without you pressing anything: when, whether it is on, and where you change it.</p>
+  <div class="au-grid">
+    {% for item in automations %}
+    {% set again = {"welcome": "welcome", "payment": "payment", "level": "level", "session": "session", "weekly": "weekly", "links": "links", "reviews": "reviews", "report": "report"}.get(item.key) %}
+    <div class="au-card is-{{ item.state }}" style="animation-delay:{{ loop.index0 * 40 }}ms">
+      <span class="au-emo"><span class="emo emo-{{ item.motion }}">{{ item.emoji }}</span></span>
+      <a class="au-text" href="{{ item.change }}"><b>{{ item.title }}</b><span>{{ item.what }}</span><em>{{ item.when }}</em></a>
+      <span class="au-foot"><span class="au-state">{{ item.label }}</span>{% if again %}<a class="au-again" href="?again={{ again }}#resend"><i class="bi bi-arrow-repeat"></i>Send again</a>{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  <style>
+    .au-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:10px; margin-bottom:28px; }
+    .au-card { display:grid; grid-template-columns:auto minmax(0, 1fr); gap:4px 12px; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:12px 14px;
+               text-decoration:none; color:var(--ink-text); transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; opacity:0; animation:auIn .4s ease forwards; }
+    .au-card:hover { transform:translateY(-3px); box-shadow:0 16px 30px -22px rgba(40,20,60,.6); border-color:var(--primary-berry); color:var(--ink-text); }
+    .au-emo { grid-row:span 2; width:48px; height:48px; border-radius:16px; background:var(--berry-subtle); display:grid; place-items:center; font-size:1.6rem; }
+    .au-card.is-off .au-emo { background:#f1eff5; filter:grayscale(.7); } .au-card.is-setup .au-emo { background:var(--gold-subtle); }
+    .au-text b { display:block; font-size:.9rem; } .au-text span { display:block; font-size:.78rem; color:#5b5670; line-height:1.45; margin-top:2px; }
+    .au-text em { display:block; font-style:normal; font-size:.72rem; color:var(--muted); font-weight:700; margin-top:4px; }
+    .au-text { text-decoration:none; color:inherit; } .au-text:hover b { color:var(--primary-berry); }
+    .au-foot { grid-column:2; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .au-again { font-size:.7rem; font-weight:800; color:var(--primary-berry); text-decoration:none; border:1px solid rgba(164,44,103,.25); border-radius:999px; padding:2px 9px; }
+    .au-again:hover { background:var(--primary-berry); color:#fff; }
+    .au-state { justify-self:start; font-size:.7rem; font-weight:800; border-radius:999px; padding:2px 9px; background:#dcfce7; color:#166534; }
+    .au-card.is-off .au-state { background:#f1eff5; color:#6b6480; } .au-card.is-setup .au-state { background:var(--gold-subtle); color:var(--gold-dark); }
+    @keyframes auIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .au-card { animation:none; opacity:1; } }
+  </style>
+
+  <!-- ============ Send something again ============ -->
+  <h2 class="sy-h" id="resend"><i class="bi bi-arrow-repeat"></i>Send something again</h2>
+  <p class="sy-sub">Anything the application sends by itself only once can go again: now, or on the day and hour you choose. You are told what happened.</p>
+  <section class="rs-card" data-live-region id="live-resend">
+    <form method="post" action="/system/resend" class="rs-form" id="rs-form">
+      <label class="rs-field"><span>What</span>
+        <select name="kind" id="rs-kind" required>
+          {% for item in resend.kinds %}<option value="{{ item.key }}" data-for="{{ item.for }}">{{ item.name }}</option>{% endfor %}
+        </select></label>
+      <label class="rs-field" data-for="candidate"><span>For</span>
+        <select name="candidate_id"><option value="">Choose a candidate…</option>{% for person in resend.candidates %}<option value="{{ person.id }}">{{ person.full_name or person.email }}</option>{% endfor %}</select></label>
+      <label class="rs-field" data-for="class" hidden><span>For the class</span>
+        <select name="class_id"><option value="">Choose a class…</option>{% for group in resend.classes %}<option value="{{ group.id }}">{{ group.name }}{% if group.program %} · {{ group.program.name }}{% endif %}</option>{% endfor %}</select></label>
+      <div class="rs-field"><span>When</span>
+        <div class="rs-when">
+          <label><input type="radio" name="when" value="now" checked> Now</label>
+          <label><input type="radio" name="when" value="later"> On <input type="datetime-local" name="at" aria-label="Day and hour"></label>
+        </div></div>
+      <button class="ui-btn primary"><i class="bi bi-arrow-repeat"></i>Send again</button>
+    </form>
+    {% if resend.planned %}
+    <div class="rs-list"><b>Planned to go again</b>
+      {% for row in resend.planned %}
+      <div class="rs-row"><i class="bi bi-clock-history"></i><span>{{ row.kind | replace('_', ' ') }}</span>
+        <span class="rs-what">{{ (resend.kinds | selectattr('key', 'equalto', row.kind) | first).name }}{% if row.target_name %} · {{ row.target_name }}{% endif %}</span>
+        <span class="rs-at">{{ row.due_at.strftime('%a %d %b, %H:%M') }}</span>
+        <form method="post" action="/system/resend/{{ row.id }}/cancel" class="m-0"><button class="ui-btn ghost sm">Cancel</button></form></div>
+      {% endfor %}</div>
+    {% endif %}
+    {% if resend.recent %}
+    <div class="rs-list soft"><b>Sent again lately</b>
+      {% for row in resend.recent %}
+      <div class="rs-row"><i class="bi bi-check2-circle"></i><span class="rs-what">{{ (resend.kinds | selectattr('key', 'equalto', row.kind) | first).name }}{% if row.target_name %} · {{ row.target_name }}{% endif %}</span>
+        <span class="rs-out">{{ row.outcome }}</span></div>
+      {% endfor %}</div>
+    {% endif %}
+  </section>
+  <style>
+    .rs-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px; margin-bottom:28px; }
+    .rs-form { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; }
+    .rs-field { display:flex; flex-direction:column; gap:4px; margin:0; font-size:.78rem; font-weight:700; color:#5b5670; }
+    .rs-field select, .rs-field input[type=datetime-local] { border:1px solid var(--border-color); border-radius:12px; padding:7px 10px; font-size:.84rem; min-width:200px; }
+    .rs-when { display:flex; gap:12px; align-items:center; flex-wrap:wrap; font-weight:600; color:var(--ink-text); }
+    .rs-when label { display:inline-flex; align-items:center; gap:6px; margin:0; }
+    .rs-list { margin-top:14px; border-top:1px solid var(--border-color); padding-top:10px; font-size:.82rem; }
+    .rs-list > b { display:block; margin-bottom:6px; }
+    .rs-row { display:flex; gap:10px; align-items:center; padding:6px 0; flex-wrap:wrap; }
+    .rs-row > span:first-of-type:not(.rs-what) { display:none; }
+    .rs-what { font-weight:700; } .rs-at { color:var(--primary-berry); font-weight:700; } .rs-out { color:#5b5670; }
+    .rs-list.soft .rs-row i { color:var(--mint); } .rs-row i { color:var(--primary-berry); }
+  </style>
+  <script>
+  (function () {
+    var form = document.getElementById("rs-form");
+    if (!form) return;
+    var kind = document.getElementById("rs-kind");
+    function show() {
+      var wanted = kind.options[kind.selectedIndex].getAttribute("data-for");
+      form.querySelectorAll("[data-for]").forEach(function (field) { if (field.tagName !== "OPTION") field.hidden = field.getAttribute("data-for") !== wanted; });
+    }
+    kind.addEventListener("change", show);
+    var asked = new URLSearchParams(location.search).get("again");
+    if (asked) { kind.value = asked; }
+    show();
+    form.querySelector('input[name="at"]').addEventListener("focus", function () { form.querySelector('input[value="later"]').checked = true; });
+  })();
+  </script>
+
+  <!-- ============ What is still missing ============ -->
+  <h2 class="sy-h" id="missing"><i class="bi bi-list-check"></i>What is still missing</h2>
+  <p class="sy-sub">Counted from your programs, classes, professors, candidates and settings. Each line opens the place where it is completed. Yasmine and the assistant give the same list when you ask “what is missing?” (or “chnowa na9es?”).</p>
+  {% if missing %}
+  <div class="ms-grid">
+    {% for area in missing %}
+    <section class="ms-area" style="animation-delay:{{ loop.index0 * 60 }}ms">
+      <div class="ms-head"><i class="bi {{ area.icon }}"></i><b>{{ area.label }}</b><span>{{ area['items'] | length }}</span></div>
+      {% for item in area['items'] %}
+      <a class="ms-line" href="{{ item.url }}">
+        <i class="bi {{ item.icon }}"></i>
+        <span><b>{{ item.text }}</b>{% if item.names %}<small data-no-i18n>{{ item.names | join(', ') }}{{ '…' if item.count > item.names | length }}</small>{% endif %}</span>
+        <i class="bi bi-arrow-right ms-go"></i>
+      </a>
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ui-empty mb-4"><i class="bi bi-check2-circle"></i><strong>Nothing is missing</strong>Everything is in order.</div>
+  {% endif %}
+  <style>
+    .ms-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(330px, 1fr)); gap:12px; margin-bottom:28px; }
+    .ms-area { background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:12px; opacity:0; animation:auIn .4s ease forwards; }
+    .ms-head { display:flex; align-items:center; gap:8px; margin-bottom:6px; } .ms-head i { color:var(--primary-berry); }
+    .ms-head span { margin-inline-start:auto; font-size:.72rem; font-weight:800; border-radius:999px; padding:1px 9px; background:var(--gold-subtle); color:var(--gold-dark); }
+    .ms-line { display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:10px; align-items:center; padding:8px 8px; border-radius:12px; text-decoration:none; color:var(--ink-text); }
+    .ms-line:hover { background:var(--berry-subtle); color:var(--ink-text); } .ms-line > i:first-child { color:#b45309; }
+    .ms-line b { display:block; font-size:.82rem; font-weight:700; } .ms-line small { display:block; font-size:.72rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .ms-go { color:var(--muted); transition:transform .15s ease; } .ms-line:hover .ms-go { transform:translateX(3px); color:var(--primary-berry); }
+    [dir="rtl"] .ms-go { transform:scaleX(-1); } [dir="rtl"] .ms-line:hover .ms-go { transform:scaleX(-1) translateX(3px); }
+    @media (prefers-reduced-motion: reduce) { .ms-area { animation:none; opacity:1; } }
+  </style>
+
   <!-- ============ What it does by itself ============ -->
-  <h2 class="sy-h"><i class="bi bi-activity"></i>What it does by itself</h2>
+  <h2 class="sy-h"><i class="bi bi-activity"></i>The work running behind it</h2>
   <p class="sy-sub">Each card is one piece of work that runs without you: what it does, when it last ran, when it runs again, and where you change its rule.</p>
   <div class="sy-grid">
     {% for item in work %}
@@ -247,7 +382,7 @@
     </li>
     <li class="sy-step">
       <span class="sy-step-no">2</span>
-      <div><b>Keep it on your home screen</b><span>In your phone's browser menu choose “Add to Home screen”: the application gets its own icon and opens like an app.</span></div>
+      <div><b>Keep it on your home screen</b><span><strong>iPhone:</strong> open the address in <strong>Safari</strong> (not Chrome), press the Share button <i class="bi bi-box-arrow-up"></i> at the bottom, then “Add to Home Screen” and “Add”. <strong>Android:</strong> in Chrome's menu <i class="bi bi-three-dots-vertical"></i> choose “Add to Home screen”. The application gets its own icon and opens full screen, like an app; sign in once.</span></div>
     </li>
     <li class="sy-step">
       <span class="sy-step-no">3</span>

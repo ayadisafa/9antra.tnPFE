@@ -90,7 +90,7 @@ answer = admin.post("/settings/team/add", data={"name": "Lina Mansour", "email":
                                                 "perm_candidates": "view", "perm_payments": "edit", "perm_dashboard": "none"})
 lina = db.query(User).filter(User.email == "lina@test.local").first()
 check("a team member is added with the access chosen for each part", answer.status_code == 303 and lina is not None and lina.role == "staff"
-      and access.clean(lina.permissions) == {**{key: "none" for key, *_ in access.SECTIONS}, "candidates": "view", "payments": "edit"}, lina.permissions if lina else None)
+      and access.clean(lina.permissions) == {**{key: "none" for key, *_ in access.SECTIONS + access.RIGHTS}, "candidates": "view", "payments": "edit"}, lina.permissions if lina else None)
 staff = TestClient(main.app, follow_redirects=False)
 staff.post("/login", data={"email": "lina@test.local", "password": "lina-pass-1"})
 check("they land on the first part they may see", where(staff.get("/", headers={"accept": "text/html"})) == "/candidate/all")

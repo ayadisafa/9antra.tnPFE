@@ -117,6 +117,19 @@ def parse_datetime(value: object) -> datetime | None:
     return parsed
 
 
+def stored_time(value: datetime | None) -> datetime | None:
+    """A time as the database keeps it: UTC, without its zone. Comparing it with the stored one then says whether it
+    really changed, so a sync that brings nothing new writes nothing (and keeps nobody else waiting)."""
+    if value is None or value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+
+def stored_text(value: datetime | None) -> str | None:
+    """A time kept in a text column, written as that column has always held it."""
+    return None if value is None else str(value)
+
+
 def _extract_courses(data: dict) -> list[str]:
     """
     Extract program names from Firebase.
@@ -211,12 +224,12 @@ def _update_existing_registration(
                         registration.firebase_id,
                     )
 
-    # Firebase timestamp remains the authoritative registration timestamp.
+    # Firebase timestamp remains the authoritative registration timestamp. The same time already stored is no change.
     if registration_timestamp:
-        registration.registration_date = registration_timestamp
+        registration.registration_date = stored_time(registration_timestamp)
 
         if hasattr(registration, "firebase_timestamp"):
-            registration.firebase_timestamp = registration_timestamp
+            registration.firebase_timestamp = stored_time(registration_timestamp)
 
     if hasattr(registration, "firebase_status"):
         registration.firebase_status = candidate_data.get("status")
@@ -227,7 +240,7 @@ def _update_existing_registration(
         )
 
     if reminder_sent_at:
-        registration.reminder_sent_at = reminder_sent_at
+        registration.reminder_sent_at = stored_text(reminder_sent_at)
 
 
 def get_all_firebase_candidates() -> list[dict]:

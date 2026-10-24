@@ -11,7 +11,7 @@ import html
 import re
 import unicodedata
 
-from app.services import email_assistant
+from app.services import derja, email_assistant
 
 MAX_PHRASE = 2000
 
@@ -90,8 +90,8 @@ def left_out(phrase: str, reply: str) -> list[str]:
     missing = []
     for word in re.findall(r"[^\W\d_]{5,}", phrase):
         plain = _plain(word)
-        if plain in _SMALL_WORDS or plain in missing:
-            continue
+        if plain in _SMALL_WORDS or plain in missing or derja.is_derja_word(word):
+            continue        # a Tunisian word is written in French or English: it is not "left out"
         stem = plain[:5]
         if not any(other.startswith(stem) for other in reply_words):
             missing.append(word)
@@ -123,8 +123,17 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
     phrase = " ".join((phrase or "").split())[:MAX_PHRASE]
     if not phrase:
         return None
-    language = language or language_for(question, phrase)
-    asked = f'The candidate wrote: "{" ".join(question.split())[:600]}"\n\n' if question.strip() else ""
+    language = {"fr": "French", "en": "English"}.get((language or "").lower(), language) or language_for(question, phrase)
+    if language not in _EXAMPLES:
+        language = "French"
+    # The note may be in Tunisian (Latin or Arabic letters), French or English, mixed: what its Tunisian words mean is
+    # given from the hand-written list. When the note is not in the language asked, its words cannot be compared one
+    # by one with the reply: only the figures are checked then.
+    note_language = email_assistant._detect_language(phrase)
+    translating = (derja.is_tunisian(phrase) or derja.has_arabic_letters(phrase)
+                   or note_language != ("en" if language == "English" else "fr"))
+    meaning = derja.hints(phrase, language)
+    asked =f'The candidate wrote: "{" ".join(question.split())[:600]}"\n\n' if question.strip() else ""
     prompt = (
         "A staff member of the training centre wrote a quick note of what to answer. Rewrite it as the email "
         f"reply, in {language}. In the note, 'on', 'je' and 'we' are the training centre: write 'nous' / 'we'. "
@@ -132,7 +141,10 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
         f"Examples of the expected result:\n{_EXAMPLES[language]}\n\n"
         f"{asked}Now the real one.\n"
         f'Note: "{phrase}"\n'
-        f"The candidate's first name: {first_name or '(unknown: greet without a name)'}\n\n"
+        + (f"{meaning}\n" if meaning else "")
+        + ("The note may be written in Tunisian, French or English, or a mix: understand it, then write the reply only in "
+           f"{language}.\n" if translating else "")
+        + f"The candidate's first name: {first_name or '(unknown: greet without a name)'}\n\n"
         "Rules: full, correct, friendly sentences; the same meaning as the note, nothing added, nothing "
         "left out; every number, date, time and name exactly as in the note; a greeting first, one short "
         "polite sentence last; no signature and no 'Cordialement' (they are added automatically).\n\n"
@@ -146,7 +158,7 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
             continue
         reply = _without_signature(str(data["reply"]).replace("\\n", "\n"))
         reply = _amounts_in_dinars(phrase, reply)
-        found = {"reply": reply, "added": added_figures(phrase, reply), "missing": left_out(phrase, reply),
+        found = {"reply": reply, "added": added_figures(phrase, reply), "missing": [] if translating else left_out(phrase, reply),
                  "odd": bool(_ODD_LETTER.search(reply))}
         if best is None or _trouble(found) < _trouble(best):
             best = found

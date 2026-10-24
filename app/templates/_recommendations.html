@@ -1,0 +1,51 @@
+{# The program's recommendations, renewed every 24 hours (services/recommender.py): what to add, change, strengthen,
+   reduce or put forward, each with its numbers and the sources they come from. #}
+{% import "_emoji.html" as emo %}
+{% macro card(reco, program) %}
+<style>
+  .rc { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; margin-top:16px; }
+  .rc-head { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:flex-end; }
+  .rc-head h3 { font-size:1.02rem; font-weight:800; margin:0; display:flex; gap:8px; align-items:center; }
+  .rc-head small { color:var(--muted); font-weight:600; }
+  .rc-item { display:grid; grid-template-columns:auto minmax(0, 1fr) 90px; gap:12px; padding:12px 0; border-top:1px solid var(--border-color); align-items:flex-start; }
+  .rc-item:first-of-type { border-top:0; }
+  @media (max-width: 640px) { .rc-item { grid-template-columns:auto minmax(0, 1fr); } .rc-score { display:none; } }
+  .rc-kind { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; border-radius:999px; padding:4px 9px; white-space:nowrap; }
+  .rc-kind.add { background:#dcfce7; color:#166534; } .rc-kind.change { background:#fef3c7; color:#92400e; } .rc-kind.strengthen { background:#e0e7ff; color:#3730a3; }
+  .rc-kind.reduce { background:#fee2e2; color:#991b1b; } .rc-kind.keep { background:var(--berry-subtle); color:var(--primary-berry); }
+  .rc-title { font-weight:800; font-size:.9rem; } .rc-why { font-size:.82rem; color:#5b5670; margin-top:2px; line-height:1.5; }
+  .rc-sources { font-size:.74rem; color:#6b6480; margin-top:6px; line-height:1.6; }
+  .rc-sources a { color:var(--primary-berry); font-weight:700; text-decoration:none; } .rc-sources a:hover { text-decoration:underline; }
+  .rc-module { font-size:.76rem; margin-top:6px; } .rc-module summary { cursor:pointer; color:var(--muted); font-weight:700; }
+  .rc-score { text-align:right; font-size:.72rem; color:var(--muted); font-weight:700; }
+  .rc-score b { display:block; font-size:1rem; color:var(--ink-text); }
+  .rc-up { color:#16a34a; } .rc-down { color:#e11d48; }
+</style>
+<section class="rc" id="recommendations">
+  <div class="rc-head">
+    <div>
+      <h3><i class="bi bi-stars"></i>Recommendations for {{ program.name }}</h3>
+      <small>{% if reco.day %}Renewed every 24 hours · last {{ reco.day.strftime('%d %b %Y') }}{% if reco.compared_with %} · compared with {{ reco.compared_with.strftime('%d %b') }}{% else %} · trends appear after a week of readings{% endif %}{% else %}The first reading comes with the next daily reading of the job market.{% endif %}</small>
+    </div>
+    <form method="post" action="/programs/market/recommendations/refresh" class="m-0"><input type="hidden" name="back" value="/programs/{{ program.id }}#recommendations">
+      <button class="ui-btn sm" title="Reads every source again now (a few minutes: GitHub allows ten questions a minute)"><i class="bi bi-arrow-repeat"></i>Read again now</button></form>
+  </div>
+  {% for item in reco['items'] %}
+  <div class="rc-item">
+    <span class="rc-kind {{ item.kind }}">{{ emo.kind(item.kind) }} {{ {'add': 'Add', 'change': 'Change', 'strengthen': 'Strengthen', 'reduce': 'Reduce', 'keep': 'Keep'}[item.kind] }}</span>
+    <div style="min-width:0;">
+      <div class="rc-title">{{ item.title }}</div>
+      <div class="rc-why">{{ item.why }}</div>
+      <div class="rc-sources">Sources: {% for source in item.evidence %}{% if source.url %}<a href="{{ source.url }}" {% if source.url.startswith('http') %}target="_blank" rel="noopener noreferrer"{% endif %}>{{ source.label }}</a>{% else %}{{ source.label }}{% endif %}{{ ' · ' if not loop.last }}{% endfor %}</div>
+      {% if item.module and item.kind in ('add', 'change', 'strengthen') %}
+      <details class="rc-module"><summary>What to teach</summary><div class="mt-1">{{ item.module }}</div></details>
+      {% endif %}
+    </div>
+    <div class="rc-score"><b>{{ item.pct }}%</b>of offers{% if item.delta is not none %}<br><span class="{{ 'rc-up' if item.delta > 0 else 'rc-down' if item.delta < 0 else '' }}">{{ '%+g' | format(item.delta) }} pts / 30 d</span>{% endif %}</div>
+  </div>
+  {% else %}
+  <div class="ui-card-sub py-2">{% if reco.day %}Nothing to change for now: the program follows what the offers ask.{% elif not reco.subject %}This program's field is not one the offers are sorted by yet.{% else %}No reading yet.{% endif %}</div>
+  {% endfor %}
+  <details class="small mt-2"><summary class="text-muted">How these recommendations are made</summary><div class="text-muted mt-1">{{ reco.how }}</div></details>
+</section>
+{% endmacro %}

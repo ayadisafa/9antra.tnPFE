@@ -415,10 +415,65 @@ def _system_chunks(db: Session) -> list[dict]:
             "peut répondre à l'email et l'équipe lui propose une autre classe."
         ),
     })
+    # How the sessions work, and the road of a candidate from the form to the review.
+    from app.services import level_check, welcome
+
+    plan = level_check.timing(db)
+    level_when = (f"{plan['days']} jours avant la première séance" if plan["when"] == "before" else "dès le paiement complet")
+    gap = int(getattr(settings, "next_class_gap_days", None) or 10)
+    chunks.append({
+        "source_key": "system:sessions", "kind": "process", "program_id": None,
+        "title": "Comment se passent les séances (sessions, cours, horaires, lien, en ligne, présentiel)",
+        "content": (
+            "Les séances (sessions, cours) ont lieu chaque semaine aux jours et heures de la classe, en ligne ou en présentiel selon la "
+            "formation choisie. Chaque candidat reçoit son propre lien personnel vers la réunion de la séance (Google Meet, Zoom ou une "
+            "salle privée) dans l'heure qui précède la séance ; ce lien s'ouvre 30 minutes avant et note son arrivée. Le formateur note la "
+            "présence et la participation. Après chaque semaine, quelques questions sur ce qui a été vu sont envoyées pour vérifier ce qui "
+            "a été compris, avec les ressources de la semaine (supports, vidéos). Des rappels arrivent "
+            f"{reminders} jours avant la première séance avec la date et l'heure exactes. Pour une question sur le contenu du cours, le "
+            "candidat qui a payé peut écrire : sa question va à son formateur."),
+    })
+    chunks.append({
+        "source_key": "system:path", "kind": "process", "program_id": None,
+        "title": "Le parcours d'un candidat chez 9antra, de l'inscription à la fin de la formation",
+        "content": (
+            "1) L'inscription se fait par le formulaire d'inscription ; le message de bienvenue arrive aussitôt. "
+            f"2) Le paiement : un seul rappel arrive {welcome.reminder_hours(db)} heures après l'inscription s'il n'est pas complet. "
+            "3) Après le paiement complet, le candidat est placé dans une classe de sa formation qui n'a pas encore commencé ; "
+            "tant que le paiement n'est pas complet, il n'est affecté à aucune classe. "
+            "4) Un candidat suit une formation à la fois : s'il suit déjà une classe, sa nouvelle formation commence dans une classe "
+            f"qui démarre après la fin de la première (environ {gap} jours après), avec un formateur disponible à ces horaires ; "
+            "on le prévient par email et il peut répondre si cela ne lui convient pas. "
+            f"5) Le test de niveau arrive {level_when}. 6) Les séances, les questions de chaque semaine et le suivi. "
+            "7) À la fin, on lui demande son avis sur la formation et le formateur."),
+    })
+    # Who 9antra is, where, how to reach it (Settings and the welcome message): see chatbot_sources.
+    from app.services import chatbot_sources
+
+    chunks.append(chatbot_sources.about_chunk(db))
+    from app.services import registration_form
+
+    chunks.append(registration_form.knowledge_chunk(db))
     # What the public website and the Facebook page publish (see website_sync).
     from app.services import website_sync
 
     chunks += website_sync.knowledge_chunks(db)
+    # The course itself, as the professors gave it (files and notes of each week, read once added): the assistant
+    # answers about what was taught, and the questions after each session come from it too.
+    from app.models.course_material import ClassMaterial
+
+    seen_courses: set[tuple] = set()
+    for material in (db.query(ClassMaterial).filter(ClassMaterial.learned_text.isnot(None)).order_by(ClassMaterial.created_at.desc()).limit(200).all()):
+        group = db.get(ClassGroup, material.class_group_id)
+        text = " ".join((material.learned_text or "").split())
+        if group is None or group.program is None or len(text) < 120 or (group.program_id, text[:200]) in seen_courses:
+            continue
+        seen_courses.add((group.program_id, text[:200]))
+        chunks.append({
+            "source_key": f"course:{material.id}", "kind": "course", "program_id": group.program_id,
+            "title": f"{group.program.name} — cours de la semaine {material.week_number} ({material.filename})",
+            "content": f"Ce qui a été enseigné en semaine {material.week_number} de {group.program.name} : {text[:1500]}",
+        })
     return chunks
 
 
@@ -452,7 +507,7 @@ def sync_knowledge(db: Session) -> dict:
             changed.append(entry)
 
         for key, entry in existing.items():
-            if key not in wanted:
+            if key not in wanted and not (key or "").startswith("import:"):       # what the admin gave (a page, a text) stays
                 db.delete(entry)
                 removed += 1
 
@@ -636,7 +691,7 @@ def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
             same, quality, wording = 0.0, 0.0, entry.title
             for item in wordings_of(entry):
                 known = tokenize(item["q"])
-                if item["sure"]:
+                if item["sure"] and entry.origin != "auto":       # learnt by itself: a draft until the admin confirms it
                     same = max([same] + [carries(tokens, known) for tokens in asked])
                 close = max((sameness(tokens, known) for tokens in asked), default=0.0)
                 if close > quality:

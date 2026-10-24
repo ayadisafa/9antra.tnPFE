@@ -54,6 +54,18 @@ _WORDS = {
         "glance": "Toutes les formations en un coup d'œil", "program": "Formation", "number": "Formation {number} sur {count}",
         "summary": "Résumé des formations", "summary_title": "Nos formations en bref",
         "summary_sub": "{count} formations · l'essentiel de chacune", "path": "Parcours", "price_line": "{online} en ligne · {onsite} en présentiel",
+        "welcome": "Bienvenue chez 9antra", "welcome_lead": "9antra est un centre de formation aux métiers du numérique. Nous proposons {count} formations{modes}, dans ces domaines :",
+        "modes_both": " en ligne et en présentiel", "modes_online": " en ligne", "modes_onsite": " en présentiel",
+        "fields": "Domaines", "formats": "Format", "format_both": "En ligne · Présentiel", "format_online": "En ligne", "format_onsite": "Présentiel",
+        "reviews": "Avis", "reviews_note": "{rated} avis publiés", "programs_tile": "Formations",
+        "how": "Comment se passe une formation",
+        "steps": [("Vous vous inscrivez", "à la formation de votre choix, en ligne ou en présentiel."),
+                  ("Un test de niveau", "avant le début, pour que le professeur sache d'où part chacun."),
+                  ("Des séances avec un professeur de la spécialité", "chaque semaine, en suivant le parcours de la formation."),
+                  ("Des questions chaque semaine", "pour vérifier ce qui est compris et revenir sur ce qui ne l'est pas.")],
+        "said": "Nos anciens candidats donnent en moyenne {stars}/5, sur {rated} avis publiés sur 9antra.tn.",
+        "more_box": "Les dates des prochaines sessions, les témoignages et l'inscription : sur notre site", "more": "En savoir plus sur 9antra.tn",
+        "list_next": "Nos formations, l'une après l'autre, aux pages suivantes.",
     },
     "en": {
         "overline": "Training program", "for": "Prepared for", "about": "About the program", "brief": "At a glance",
@@ -70,6 +82,18 @@ _WORDS = {
         "glance": "All the programs at a glance", "program": "Program", "number": "Program {number} of {count}",
         "summary": "Programs in short", "summary_title": "Our programs in short",
         "summary_sub": "{count} programs · the essentials of each", "path": "Path", "price_line": "{online} online · {onsite} on site",
+        "welcome": "Welcome to 9antra", "welcome_lead": "9antra is a training centre for the digital professions. We offer {count} programs{modes}, in these fields:",
+        "modes_both": " online and on site", "modes_online": " online", "modes_onsite": " on site",
+        "fields": "Fields", "formats": "Format", "format_both": "Online · On site", "format_online": "Online", "format_onsite": "On site",
+        "reviews": "Reviews", "reviews_note": "{rated} published reviews", "programs_tile": "Programs",
+        "how": "How a program goes",
+        "steps": [("You register", "for the program of your choice, online or on site."),
+                  ("A level check", "before it starts, so the professor knows where each one starts from."),
+                  ("Sessions with a professor of the field", "every week, following the program's path."),
+                  ("Questions every week", "to check what was understood and go back over what was not.")],
+        "said": "Our former candidates give {stars}/5 on average, over {rated} reviews published on 9antra.tn.",
+        "more_box": "The dates of the next sessions, the testimonials and registration: on our website", "more": "More on 9antra.tn",
+        "list_next": "Our programs, one after the other, on the next pages.",
     },
 }
 _LEVEL_PREFIX = re.compile(r"^\s*(level|niveau)\s*\d+\s*[:\-–.]\s*", re.IGNORECASE)
@@ -183,8 +207,80 @@ def content_of(db: Session, program: Program, lang: str = "fr") -> dict:
     return {
         "name": plain(program.name), "about": plain(program.description), "facts": facts, "prices": prices, "tools": tools[:10],
         "levels": levels, "weeks": number,
+        "url": (formation.url if formation is not None and formation.url else None),
         "contact": {"brand": BRAND, "website": WEBSITE, "email": plain(os.getenv("SMTP_EMAIL") or "")},
     }
+
+
+SITE_URL = "https://" + WEBSITE
+
+
+def intro_of(db: Session, programs: list[Program]) -> dict:
+    """What the welcome page says: how many programs, in which fields, in which formats, what reviews say."""
+    from app.services import feedback, level_bank
+
+    fields = []
+    for program in programs:
+        subject = level_bank.subject_of(program.name, program.website_slug)
+        name = level_bank.SUBJECTS[subject][0] if subject else None
+        if name and name not in fields:
+            fields.append(name)
+    try:
+        said = feedback.overview(db)
+    except Exception:
+        said = {}
+    return {"count": len(programs), "fields": fields, "online": any(program.price_online for program in programs),
+            "onsite": any(program.price_onsite for program in programs), "stars": said.get("stars"), "rated": said.get("rated") or 0}
+
+
+def _welcome(intro: dict, words: dict, accent: str, styles: dict, inner: float) -> list:
+    """The first page of the programs PDFs: who we are, how a program goes, and the website."""
+    from reportlab.lib.colors import HexColor, white
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import KeepTogether, Paragraph, Spacer, Table, TableStyle
+
+    Tiles, Chips, Badge = _flowables(accent)
+    both, online = intro["online"] and intro["onsite"], intro["online"]
+    modes = words["modes_both"] if both else words["modes_online"] if online else words["modes_onsite"] if intro["onsite"] else ""
+    lead = ParagraphStyle("welcome_lead", parent=styles["lead"], fontSize=11.2, leading=16.4, spaceAfter=8)
+    story = [Paragraph(escape(words["welcome"]), ParagraphStyle("welcome", parent=styles["h2"], fontSize=19, leading=23, spaceBefore=0, spaceAfter=8)),
+             Paragraph(escape(words["welcome_lead"].format(count=intro["count"], modes=modes)), lead)]
+    if intro["fields"]:
+        story += [Chips([plain(name) for name in intro["fields"]], _mix(accent, "#ffffff", 0.88), HexColor(accent), size=8.6), Spacer(1, 12)]
+    tiles = [(words["programs_tile"], str(intro["count"]), ""), (words["fields"], str(len(intro["fields"])) if intro["fields"] else "-", "")]
+    tiles.append((words["formats"], words["format_both"] if both else words["format_online"] if online else words["format_onsite"], ""))
+    if intro["stars"]:
+        tiles.append((words["reviews"], f"{intro['stars']:.1f} / 5", words["reviews_note"].format(rated=intro["rated"])))
+    story += [Tiles(tiles, height=56, border=HexColor("#ebe5f3")),
+              Paragraph(escape(words["how"]), ParagraphStyle("how", parent=styles["h2"], spaceBefore=10))]
+    step_style = ParagraphStyle("step", parent=styles["body"], fontSize=9.8, leading=13.6)
+    rows = [[Badge(str(number)), Paragraph(f"<b>{escape(title)}</b> {escape(text)}", step_style)]
+            for number, (title, text) in enumerate(words["steps"], start=1)]
+    steps = Table(rows, colWidths=[34, inner - 34])
+    steps.setStyle(TableStyle([("VALIGN", (0, 0), (-1, -1), "MIDDLE"), ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                               ("TOPPADDING", (0, 0), (-1, -1), 5), ("BOTTOMPADDING", (0, 0), (-1, -1), 5)]))
+    story.append(steps)
+    if intro["stars"] and intro["rated"]:
+        story += [Spacer(1, 6), Paragraph(escape(words["said"].format(stars=f"{intro['stars']:.1f}", rated=intro["rated"])), styles["lead"])]
+    box = Table([[[Paragraph(escape(words["more_box"]), ParagraphStyle("box_title", fontName="Helvetica-Bold", fontSize=11.5, leading=15, textColor=white)),
+                   Paragraph(f'<link href="{SITE_URL}" color="#ffd9a8"><u>{escape(SITE_URL)}</u></link>',
+                             ParagraphStyle("box_link", fontName="Helvetica-Bold", fontSize=13, leading=17, textColor=HexColor("#ffd9a8"), spaceBefore=3))]]],
+                colWidths=[inner])
+    box.setStyle(TableStyle([("BACKGROUND", (0, 0), (-1, -1), HexColor(INK)), ("ROUNDEDCORNERS", [12, 12, 12, 12]),
+                             ("LEFTPADDING", (0, 0), (-1, -1), 18), ("RIGHTPADDING", (0, 0), (-1, -1), 18),
+                             ("TOPPADDING", (0, 0), (-1, -1), 14), ("BOTTOMPADDING", (0, 0), (-1, -1), 15)]))
+    story += [Spacer(1, 10), KeepTogether([box])]
+    return story
+
+
+def _more_link(content: dict, words: dict, accent: str):
+    """A link to the program's own page on 9antra.tn (or the website when it has none)."""
+    from reportlab.lib.styles import ParagraphStyle
+    from reportlab.platypus import Paragraph
+
+    url = content.get("url") or SITE_URL
+    return Paragraph(f'<link href="{escape(url)}" color="{accent}"><b>{escape(words["more"])} ›</b></link>',
+                     ParagraphStyle("more", fontName="Helvetica", fontSize=8.6, leading=11.5, spaceBefore=5))
 
 
 def accent_of(db: Session) -> str:
@@ -374,7 +470,10 @@ def _footer(canvas, content: dict, words: dict, accent: str) -> None:
     canvas.setFillColor(HexColor("#85809c"))
     canvas.setFont("Helvetica", 7.8)
     contact = content["contact"]
-    canvas.drawString(40, 27, " · ".join(part for part in (contact["brand"], contact["website"], contact["email"]) if part))
+    line = " · ".join(part for part in (contact["brand"], contact["website"], contact["email"]) if part)
+    canvas.drawString(40, 27, line)
+    if contact.get("website"):
+        canvas.linkURL("https://" + contact["website"].removeprefix("https://"), (40, 22, 40 + canvas.stringWidth(line, "Helvetica", 7.8), 36), relative=0)
     canvas.drawRightString(width - 40, 27, f"{words['page']} {canvas.getPageNumber()}")
     canvas.restoreState()
 
@@ -788,7 +887,7 @@ def _one_page(content: dict, words: dict, accent: str, candidate: str) -> bytes:
     return buffer.getvalue()
 
 
-def _catalogue(contents: list[dict], words: dict, accent: str, candidate: str, contact: dict) -> bytes:
+def _catalogue(contents: list[dict], words: dict, accent: str, candidate: str, contact: dict, intro: dict | None = None) -> bytes:
     """Several programs in one document: a cover with all of them at a glance, then each one as the brochure tells it."""
     from reportlab.lib.colors import HexColor, white
     from reportlab.lib.pagesizes import A4
@@ -870,7 +969,10 @@ def _catalogue(contents: list[dict], words: dict, accent: str, candidate: str, c
                                 ("ROWBACKGROUNDS", (0, 1), (-1, -1), [HexColor("#ffffff"), _mix(accent, "#ffffff", 0.95)]),
                                 ("LINEBELOW", (0, 1), (-1, -1), 0.5, HexColor("#eee9f5")), ("TOPPADDING", (0, 0), (-1, -1), 6),
                                 ("BOTTOMPADDING", (0, 0), (-1, -1), 6), ("LEFTPADDING", (0, 0), (-1, -1), 8), ("ROUNDEDCORNERS", [8, 8, 0, 0])]))
-    story = [NextPageTemplate("later"), Paragraph(escape(words["glance"]), styles["h2"]), glance]
+    story = [NextPageTemplate("later")]
+    if intro:
+        story += _welcome(intro, words, accent, styles, inner) + [PageBreak()]
+    story += [Paragraph(escape(words["glance"]), styles["h2"]), glance]
 
     for number, content in enumerate(contents, start=1):
         story += [PageBreak(), Head(number, content["name"]), Spacer(1, 12)]
@@ -878,6 +980,7 @@ def _catalogue(contents: list[dict], words: dict, accent: str, candidate: str, c
         if tiles:
             story.append(Tiles(tiles, height=58, border=HexColor("#ebe5f3")))
         story += _program_story(content, words, accent, styles, inner)
+        story.append(_more_link(content, words, accent))
     story += [Spacer(1, 18), _closing(page_content, words, styles, inner)]
     document.build(story)
     return buffer.getvalue()
@@ -892,7 +995,7 @@ def _short(text: str, most: int = 260) -> str:
     return cut + "…"
 
 
-def _summary(contents: list[dict], words: dict, accent: str, candidate: str, contact: dict) -> bytes:
+def _summary(contents: list[dict], words: dict, accent: str, candidate: str, contact: dict, intro: dict | None = None) -> bytes:
     """Every program in a few lines: what it teaches, how long, the path, the tools and the two prices."""
     from reportlab.lib.colors import HexColor
     from reportlab.lib.pagesizes import A4
@@ -929,6 +1032,10 @@ def _summary(contents: list[dict], words: dict, accent: str, candidate: str, con
     price_note = ParagraphStyle("note", parent=styles["small"], fontSize=7.6, leading=9.5, alignment=2)
 
     story = [NextPageTemplate("later")]
+    if intro:
+        from reportlab.platypus import PageBreak
+
+        story += _welcome(intro, words, accent, styles, inner) + [PageBreak()]
     for number, content in enumerate(contents, start=1):
         facts = {key: value for key, _, value, _ in content["facts"]}
         said = " · ".join(part for part in (facts.get("duration"), facts.get("pace"), facts.get("level"), facts.get("mode")) if part)
@@ -943,6 +1050,7 @@ def _summary(contents: list[dict], words: dict, accent: str, candidate: str, con
                                     else f"<b>{escape(words['path'])}</b>: {escape(_short(path, 180))}", path_style))
         if content["tools"]:
             middle.append(Paragraph(escape(" · ".join(content["tools"][:7])), tools_style))
+        middle.append(_more_link(content, words, accent))
         prices = []
         for item in content["prices"]:
             prices += [Paragraph(escape(item["value"]), price_big), Paragraph(escape(f"{item['label']} {item['note']}".strip()), price_note), Spacer(1, 6)]
@@ -986,14 +1094,15 @@ def _chosen(db: Session, programs) -> list[Program]:
     return sorted(chosen, key=lambda program: (program.name or "").lower())
 
 
-def build_catalogue(db: Session, programs=None, lang: str = "fr", candidate_name: str | None = None) -> bytes:
-    """Several programs, or all of them, in one PDF."""
+def build_catalogue(db: Session, programs=None, lang: str = "fr", candidate_name: str | None = None, welcome: bool = True) -> bytes:
+    """Several programs, or all of them, in one PDF, after a welcome page about 9antra."""
     lang = clean_language(lang)
     chosen = _chosen(db, programs)
     if not chosen:
         raise ValueError("There is no program to put in the PDF.")
     contents = [content_of(db, program, lang) for program in chosen]
-    return _catalogue(contents, _WORDS[lang], accent_of(db), plain(candidate_name)[:60], contents[0]["contact"])
+    intro = intro_of(db, chosen) if welcome else None
+    return _catalogue(contents, _WORDS[lang], accent_of(db), plain(candidate_name)[:60], contents[0]["contact"], intro)
 
 
 def store_catalogue(db: Session, programs=None, lang: str = "fr", candidate_name: str | None = None, summary: bool = False) -> EmailFile:
@@ -1005,14 +1114,15 @@ def store_catalogue(db: Session, programs=None, lang: str = "fr", candidate_name
     return _kept(db, data, "program:summary-" if summary else "program:catalogue-", catalogue_filename(lang, len(chosen), everything, summary))
 
 
-def build_summary(db: Session, programs=None, lang: str = "fr", candidate_name: str | None = None) -> bytes:
-    """Several programs, or all of them, in short: the essentials of each on a few pages."""
+def build_summary(db: Session, programs=None, lang: str = "fr", candidate_name: str | None = None, welcome: bool = True) -> bytes:
+    """Several programs, or all of them, in short: a welcome page about 9antra, then the essentials of each."""
     lang = clean_language(lang)
     chosen = _chosen(db, programs)
     if not chosen:
         raise ValueError("There is no program to put in the PDF.")
     contents = [content_of(db, program, lang) for program in chosen]
-    return _summary(contents, _WORDS[lang], accent_of(db), plain(candidate_name)[:60], contents[0]["contact"])
+    intro = intro_of(db, chosen) if welcome else None
+    return _summary(contents, _WORDS[lang], accent_of(db), plain(candidate_name)[:60], contents[0]["contact"], intro)
 
 
 def message_for_summary(count: int) -> dict:

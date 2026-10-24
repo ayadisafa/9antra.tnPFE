@@ -13,6 +13,10 @@
     url.searchParams.delete('notice');
     url.searchParams.delete('error');
     window.history.replaceState({}, '', url.pathname + url.search + url.hash);
+    document.querySelectorAll('.page-flash').forEach((note) => {
+      const leave = () => { if (note.matches(':hover')) { setTimeout(leave, 2000); return; } note.classList.add('is-leaving'); setTimeout(() => note.remove(), 520); };
+      setTimeout(leave, note.classList.contains('alert-danger') ? 14000 : 7000);
+    });
   })();
 </script>
 {% endif %}

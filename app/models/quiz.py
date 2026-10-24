@@ -52,6 +52,7 @@ class Quiz(Base):
     kind = Column(String, default="level", nullable=True)
     class_group_id = Column(String, nullable=True, index=True)
     week_number = Column(Integer, nullable=True)
+    class_session_id = Column(String, nullable=True, index=True)     # the questions after one session (session_check)
     access_token = Column(String, nullable=True, index=True)
     # A level check left unanswered is reminded once: when that was.
     reminded_at = Column(DateTime, nullable=True)

@@ -1,0 +1,730 @@
+{
+"never": [
+"jamais",
+"أبدا"
+],
+"yesterday": [
+"hier",
+"أمس"
+],
+"less than an hour ago": [
+"il y a moins d'une heure",
+"منذ أقل من ساعة"
+],
+"{0} hour{1} ago": [
+"il y a {0} h",
+"منذ {0} ساعة"
+],
+"{0} days ago": [
+"il y a {0} jours",
+"منذ {0} أيام"
+],
+"This candidate": [
+"Ce candidat",
+"هذا المترشح"
+],
+"{0} due": [
+"{0} dus",
+"{0} مستحقة"
+],
+"{0} owes {1}": [
+"{0} doit {1}",
+"{0} عليه {1}"
+],
+"Read and send": [
+"Lire et envoyer",
+"اقرأ وأرسل"
+],
+" Since then they also registered for {0}.": [
+" Depuis, il s'est aussi inscrit à {0}.",
+" منذ ذلك الحين سجّل أيضا في {0}."
+],
+"Add this week's course to {{count}} classes": [
+"Ajouter le cours de cette semaine à {{count}} classes",
+"إضافة درس هذا الأسبوع إلى {{count}} أقسام"
+],
+"With the course files (or a few lines about what was covered) the system writes the questions that measure what candidates understood. Nothing was added yet for: {{names}}.": [
+"Avec les fichiers du cours (ou quelques lignes sur ce qui a été vu), le système écrit les questions qui mesurent ce que les candidats ont compris. Rien n'a encore été ajouté pour : {{names}}.",
+"بملفات الدرس (أو بضعة أسطر عمّا تمّ تناوله) يكتب النظام الأسئلة التي تقيس ما فهمه المترشحون. لم يُضف شيء بعد لـ: {{names}}."
+],
+"Set the session time of {{count}} classes": [
+"Fixer l'heure de séance de {{count}} classes",
+"ضبط ساعة الحصة لـ {{count}} أقسام"
+],
+"Their emails and reminders cannot tell candidates what time to come: {{names}}.": [
+"Leurs emails et rappels ne peuvent pas dire aux candidats à quelle heure venir : {{names}}.",
+"لا تستطيع رسائلها وتذكيراتها إخبار المترشحين بساعة الحضور: {{names}}."
+],
+"{{count}} classes have no weekly plan": [
+"{{count}} classes n'ont pas de plan hebdomadaire",
+"{{count}} أقسام بلا خطة أسبوعية"
+],
+"Their programs have no week-by-week content yet, so candidates were told nothing about what they will study: {{names}}.": [
+"Leurs formations n'ont pas encore de contenu semaine par semaine, donc on n'a rien dit aux candidats sur ce qu'ils vont étudier : {{names}}.",
+"برامجها ليس لها محتوى أسبوعا بأسبوع بعد، لذا لم يُخبر المترشحون بشيء عمّا سيدرسونه: {{names}}."
+],
+"{{count}} classes have no candidate, so they do not start": [
+"{{count}} classes n'ont aucun candidat, donc elles ne démarrent pas",
+"{{count}} أقسام بلا مترشحين، لذا لا تبدأ"
+],
+"A class runs only with somebody in it. These keep a place on the timetable: delete them, or move candidates into them: {{names}}.": [
+"Une classe ne tourne qu'avec quelqu'un dedans. Celles-ci gardent une place dans l'emploi du temps : supprimez-les, ou déplacez-y des candidats : {{names}}.",
+"القسم لا يشتغل إلا بوجود أحد فيه. هذه تحجز مكانا في جدول الحصص: احذفها، أو انقل إليها مترشحين: {{names}}."
+],
+"a program": [
+"une formation",
+"برنامج"
+],
+"{0} already paid": [
+"{0} déjà payés",
+"{0} مدفوعة مسبقا"
+],
+"{0} sent": [
+"{0} envoyé(s)",
+"{0} أُرسلت"
+],
+"no reminder yet": [
+"pas encore de rappel",
+"لا تذكير بعد"
+],
+" on {0} programs ({1})": [
+" sur {0} formations ({1})",
+" على {0} برامج ({1})"
+],
+" for {0}": [
+" pour {0}",
+" لـ {0}"
+],
+"{0} has not answered for {1} days: send the payment reminder again?": [
+"{0} n'a pas répondu depuis {1} jours : renvoyer le rappel de paiement ?",
+"{0} لم يُجب منذ {1} أيام: إعادة إرسال تذكير الدفع؟"
+],
+"A candidate": [
+"Un candidat",
+"مترشح"
+],
+"Answer {0}'s email": [
+"Répondre à l'email de {0}",
+"الرد على بريد {0}"
+],
+"Answer {0} candidate emails": [
+"Répondre à {0} emails de candidats",
+"الرد على {0} رسائل من المترشحين"
+],
+"The oldest, from {0}, has waited since {1}. The system was not sure enough to answer them alone.": [
+"Le plus ancien, de {0}, attend depuis {1}. Le système n'était pas assez sûr pour y répondre seul.",
+"الأقدم، من {0}، ينتظر منذ {1}. لم يكن النظام متأكدا بما يكفي ليجيب عنها وحده."
+],
+"was due to start {0} and waits": [
+"devait démarrer le {0} et attend",
+"كان من المفترض أن يبدأ في {0} وينتظر"
+],
+" They wrote: “{0}”": [
+" Il a écrit : « {0} »",
+" كتب: «{0}»"
+],
+" (You set this aside on the dashboard for a few days.)": [
+" (Vous l'avez mis de côté sur le tableau de bord pour quelques jours.)",
+" (أجّلت هذا في لوحة القيادة لبضعة أيام.)"
+],
+"Read {0}'s message before reminding again": [
+"Lire le message de {0} avant de relancer",
+"اقرأ رسالة {0} قبل التذكير مجددا"
+],
+"{0}. They wrote to you after the last reminder ({1}).": [
+"{0}. Il vous a écrit après le dernier rappel ({1}).",
+"{0}. كتب إليك بعد آخر تذكير ({1})."
+],
+"Send {0} a payment reminder": [
+"Envoyer un rappel de paiement à {0}",
+"أرسل تذكير دفع إلى {0}"
+],
+"Give {0} time to answer": [
+"Laisser à {0} le temps de répondre",
+"امنح {0} وقتا للرد"
+],
+"{0}. The reminder went out {1}. Nothing more is sent by itself; if there is still no payment and no answer on {2:%A %d %b}, you will be offered to send it again.{3}": [
+"{0}. Le rappel est parti {1}. Rien de plus n'est envoyé tout seul ; s'il n'y a toujours ni paiement ni réponse le {2:%A %d %b}, on vous proposera de le renvoyer.{3}",
+"{0}. أُرسل التذكير {1}. لا يُرسل شيء آخر تلقائيا؛ إذا لم يكن هناك دفع ولا رد في {2:%A %d %b}، سيُقترح عليك إعادة إرساله.{3}"
+],
+"{0}. {1} went out, the last {2}, with no payment and no answer. Another email is unlikely to change that.{3}": [
+"{0}. {1} sont partis, le dernier {2}, sans paiement ni réponse. Un autre email a peu de chances d'y changer quelque chose.{3}",
+"{0}. أُرسلت {1}، آخرها {2}، دون دفع أو رد. من غير المرجّح أن يغيّر بريد آخر ذلك.{3}"
+],
+"{0}. The reminder of {1:%d %b} brought no payment and no answer.{2} Nothing is sent unless you decide: read the message, change it if you want, then send.": [
+"{0}. Le rappel du {1:%d %b} n'a apporté ni paiement ni réponse.{2} Rien n'est envoyé sans votre décision : lisez le message, changez-le si vous voulez, puis envoyez.",
+"{0}. تذكير {1:%d %b} لم يأتِ بدفع ولا رد.{2} لا يُرسل شيء دون قرارك: اقرأ الرسالة، غيّرها إن أردت، ثم أرسل."
+],
+"starts {0}": [
+"démarre le {0}",
+"يبدأ في {0}"
+],
+"is running": [
+"est en cours",
+"جارٍ"
+],
+"Place {0} in a class": [
+"Placer {0} dans une classe",
+"ضع {0} في قسم"
+],
+"{0} paid in full and {1} no class yet, so no date was announced to them.": [
+"{0} ont payé en totalité et n'ont pas encore de classe, donc aucune date ne leur a été annoncée.",
+"{0} دفعوا بالكامل وليس لهم قسم بعد، لذا لم يُعلن لهم أي تاريخ."
+],
+"Open the discussion": [
+"Ouvrir la discussion",
+"فتح المحادثة"
+],
+"Nothing to do yet for {0}'s payment": [
+"Rien à faire pour l'instant pour le paiement de {0}",
+"لا شيء للقيام به بعد لدفع {0}"
+],
+"{0}, registered {1}. One reminder goes out by itself 24 hours after the registration.": [
+"{0}, inscrit {1}. Un rappel part tout seul 24 heures après l'inscription.",
+"{0}، سجّل {1}. يُرسل تذكير تلقائيا 24 ساعة بعد التسجيل."
+],
+"{0} and has not been reminded since registering {1}.": [
+"{0} et n'a reçu aucun rappel depuis son inscription {1}.",
+"{0} ولم يُذكَّر منذ تسجيله {1}."
+],
+": the reminders are not working": [
+" : les rappels ne fonctionnent pas",
+": التذكيرات لا تعمل"
+],
+" The class starts {0}.": [
+" La classe démarre {0}.",
+" يبدأ القسم {0}."
+],
+"{0} has no candidate, so it does not start": [
+"{0} n'a aucun candidat, donc elle ne démarre pas",
+"{0} ليس فيه مترشحون، لذا لا يبدأ"
+],
+"A class runs only with somebody in it. This one keeps a place on the timetable: remove it, or move candidates into it.": [
+"Une classe ne tourne qu'avec quelqu'un dedans. Celle-ci garde une place dans l'emploi du temps : retirez-la, ou déplacez-y des candidats.",
+"القسم لا يشتغل إلا بوجود أحد فيه. هذا يحجز مكانا في جدول الحصص: أزله، أو انقل إليه مترشحين."
+],
+"{0}: absent {1} in a row or more. A call now is the best chance to keep them in the class.": [
+"{0} : absent {1} fois de suite ou plus. Un appel maintenant est la meilleure chance de le garder dans la classe.",
+"{0}: غاب {1} مرات متتالية أو أكثر. الاتصال الآن هو أفضل فرصة لإبقائه في القسم."
+],
+"{0} has no weekly plan": [
+"{0} n'a pas de plan hebdomadaire",
+"{0} ليس له خطة أسبوعية"
+],
+"Its program, {0}, has no week-by-week content yet, so candidates were told nothing about what they will study.": [
+"Sa formation, {0}, n'a pas encore de contenu semaine par semaine, donc on n'a rien dit aux candidats sur ce qu'ils vont étudier.",
+"برنامجه، {0}، ليس له محتوى أسبوعا بأسبوع بعد، لذا لم يُخبر المترشحون بشيء عمّا سيدرسونه."
+],
+"Add week {0}'s course to {1}": [
+"Ajouter le cours de la semaine {0} à {1}",
+"إضافة درس الأسبوع {0} إلى {1}"
+],
+"The class is in week {0} of {1}. With the course files (or a few lines about what was covered) the system writes the questions that measure what candidates understood.": [
+"La classe est en semaine {0} sur {1}. Avec les fichiers du cours (ou quelques lignes sur ce qui a été vu), le système écrit les questions qui mesurent ce que les candidats ont compris.",
+"القسم في الأسبوع {0} من {1}. بملفات الدرس (أو بضعة أسطر عمّا تمّ تناوله) يكتب النظام الأسئلة التي تقيس ما فهمه المترشحون."
+],
+"Talk to {0}: week {1} of {2} went badly": [
+"Parler à {0} : la semaine {1} de {2} s'est mal passée",
+"تحدّث إلى {0}: الأسبوع {1} من {2} سار بشكل سيئ"
+],
+"Before the next session of {0}": [
+"Avant la prochaine séance de {0}",
+"قبل الحصة القادمة لـ {0}"
+],
+"Approve {0}": [
+"Approuver {0}",
+"الموافقة على {0}"
+],
+"Paid in full for {0} and still without a class, so no start date was announced.": [
+"Payé en totalité pour {0} et toujours sans classe, donc aucune date de début n'a été annoncée.",
+"دفع بالكامل لـ {0} وما زال دون قسم، لذا لم يُعلن تاريخ بداية."
+],
+"Talk to {0}: week {1} went badly": [
+"Parler à {0} : la semaine {1} s'est mal passée",
+"تحدّث إلى {0}: الأسبوع {1} سار بشكل سيئ"
+],
+"{0} has not answered {1} sets of weekly questions": [
+"{0} n'a pas répondu à {1} séries de questions hebdomadaires",
+"{0} لم يُجب عن {1} مجموعات من الأسئلة الأسبوعية"
+],
+"{0} is not registered to any program": [
+"{0} n'est inscrit à aucune formation",
+"{0} غير مسجّل في أي برنامج"
+],
+"Add a program below to start their file.": [
+"Ajoutez une formation ci-dessous pour commencer son dossier.",
+"أضف برنامجا أدناه لبدء ملفه."
+],
+"Nothing needs you for {0}": [
+"Rien ne vous attend pour {0}",
+"لا شيء ينتظرك لـ {0}"
+],
+"Payments are settled, no email is waiting and no result is worrying.": [
+"Les paiements sont réglés, aucun email n'attend et aucun résultat n'inquiète.",
+"الدفوعات مسوّاة، لا بريد ينتظر ولا نتيجة مقلقة."
+],
+"Call {0}": [
+"Appeler {0}",
+"اتصل بـ {0}"
+],
+"Write anyway": [
+"Écrire quand même",
+"اكتب رغم ذلك"
+],
+"No subject": [
+"Sans objet",
+"بلا موضوع"
+],
+"{0} waiting": [
+"{0} en attente",
+"{0} في الانتظار"
+],
+"Open the inbox": [
+"Ouvrir la boîte de réception",
+"فتح البريد الوارد"
+],
+"Open it": [
+"L'ouvrir",
+"افتحه"
+],
+"Give {0} a professor": [
+"Donner un formateur à {0}",
+"إسناد مكوّن إلى {0}"
+],
+"The class {0} with {1} and nobody is assigned to teach it. A class starts only with a professor of its speciality.": [
+"La classe {0} avec {1} et personne n'est désigné pour l'enseigner. Une classe ne démarre qu'avec un formateur de sa spécialité.",
+"القسم {0} مع {1} ولم يُعيّن أحد لتدريسه. لا يبدأ القسم إلا بمكوّن من اختصاصه."
+],
+"Set the session time of {0}": [
+"Fixer l'heure de séance de {0}",
+"ضبط ساعة الحصة لـ {0}"
+],
+"The class {0}, but its emails and reminders cannot tell candidates what time to come.": [
+"La classe {0}, mais ses emails et rappels ne peuvent pas dire aux candidats à quelle heure venir.",
+"القسم {0}، لكن رسائله وتذكيراته لا تستطيع إخبار المترشحين بساعة الحضور."
+],
+"Open the class": [
+"Ouvrir la classe",
+"فتح القسم"
+],
+"{0} missed the last {1} sessions of {2}": [
+"{0} a manqué les {1} dernières séances de {2}",
+"{0} تغيّب عن آخر {1} حصص من {2}"
+],
+"{0} candidates stopped coming to {1}": [
+"{0} candidats ne viennent plus à {1}",
+"{0} مترشحين توقفوا عن الحضور إلى {1}"
+],
+"See the presence sheet": [
+"Voir la feuille de présence",
+"عرض ورقة الحضور"
+],
+"Review the program": [
+"Revoir la formation",
+"مراجعة البرنامج"
+],
+"{0} · week {1}": [
+"{0} · semaine {1}",
+"{0} · الأسبوع {1}"
+],
+"Add the course": [
+"Ajouter le cours",
+"إضافة الدرس"
+],
+"Send week {0}'s questions to {1}": [
+"Envoyer les questions de la semaine {0} à {1}",
+"أرسل أسئلة الأسبوع {0} إلى {1}"
+],
+"Go over week {0} again with {1}": [
+"Revoir la semaine {0} avec {1}",
+"مراجعة الأسبوع {0} مع {1}"
+],
+"{0} of {1} have not answered week {2}'s questions in {3}": [
+"{0} sur {1} n'ont pas répondu aux questions de la semaine {2} dans {3}",
+"{0} من {1} لم يجيبوا عن أسئلة الأسبوع {2} في {3}"
+],
+"They were sent {0}. A reminder sends each of them their own questions again.": [
+"Elles ont été envoyées {0}. Un rappel renvoie à chacun ses propres questions.",
+"أُرسلت {0}. التذكير يعيد إرسال أسئلة كل واحد إليه."
+],
+"Write to them": [
+"Leur écrire",
+"اكتب إليهم"
+],
+"What they said": [
+"Ce qu'ils ont dit",
+"ما قالوه"
+],
+"See how they feel": [
+"Voir comment ils se sentent",
+"انظر كيف يشعرون"
+],
+"Confirm the proposal for {0}": [
+"Confirmer la proposition pour {0}",
+"تأكيد المقترح لـ {0}"
+],
+"Confirm the proposals for {0} programs": [
+"Confirmer les propositions pour {0} formations",
+"تأكيد المقترحات لـ {0} برامج"
+],
+"Open the programs": [
+"Ouvrir les formations",
+"فتح البرامج"
+],
+"All classes": [
+"Toutes les classes",
+"كل الأقسام"
+],
+"Help {0} with week {1} of {2}": [
+"Aider {0} avec la semaine {1} de {2}",
+"ساعد {0} في الأسبوع {1} من {2}"
+],
+". A candidate who stops answering often stopped following.": [
+". Un candidat qui arrête de répondre a souvent arrêté de suivre.",
+". المترشح الذي يتوقف عن الإجابة غالبا ما توقف عن المتابعة."
+],
+"Place in a class": [
+"Placer dans une classe",
+"وضع في قسم"
+],
+"Paid for {0} and has no class yet.": [
+"A payé {0} et n'a pas encore de classe.",
+"دفع {0} وليس له قسم بعد."
+],
+" on {0}": [
+" au {0}",
+" على {0}"
+],
+"Choose a professor": [
+"Choisir un formateur",
+"اختر مكوّنا"
+],
+"{0} is not one of {1}'s specialities": [
+"{0} n'est pas une des spécialités de {1}",
+"{0} ليس من اختصاصات {1}"
+],
+"Set the time": [
+"Fixer l'heure",
+"ضبط الساعة"
+],
+". {0} will each get a few of them.": [
+". {0} en recevront chacun quelques-unes.",
+". سيستلم كل واحد من {0} بعضها."
+],
+"Check and send": [
+"Vérifier et envoyer",
+"راجع وأرسل"
+],
+"Review week {0}'s questions for {1}": [
+"Relire les questions de la semaine {0} pour {1}",
+"مراجعة أسئلة الأسبوع {0} لـ {1}"
+],
+"The system wrote {0} but could not confirm any of them against the course, so none will be sent until you check them.": [
+"Le système a écrit {0} mais n'a pu en confirmer aucune avec le cours, donc aucune ne sera envoyée avant que vous les vérifiiez.",
+"كتب النظام {0} لكنه لم يتمكن من تأكيد أي منها من الدرس، لذا لن يُرسل أي منها قبل أن تراجعها."
+],
+"{0} of {1} answered and the average is {2:.0f}%.": [
+"{0} sur {1} ont répondu et la moyenne est de {2:.0f} %.",
+"{0} من {1} أجابوا والمعدّل {2:.0f}%."
+],
+"See the answers": [
+"Voir les réponses",
+"عرض الإجابات"
+],
+"Remind them": [
+"Les relancer",
+"ذكّرهم"
+],
+"See who": [
+"Voir qui",
+"انظر من"
+],
+" And {0} more point{1} from what the candidates said.": [
+" Et {0} point(s) de plus d'après ce que les candidats ont dit.",
+" و{0} نقطة إضافية حسب ما قاله المترشحون."
+],
+"{0} said how the week went": [
+"{0} ont dit comment s'est passée la semaine",
+"{0} قالوا كيف مرّ الأسبوع"
+],
+"Their description, hours or weekly plan were missing. The system prepared them; nothing is saved until you accept: ": [
+"Leur description, leurs heures ou leur plan hebdomadaire manquaient. Le système les a préparés ; rien n'est enregistré avant que vous acceptiez : ",
+"كان ينقصها الوصف أو الساعات أو الخطة الأسبوعية. حضّرها النظام؛ لا يُحفظ شيء قبل أن تقبل:"
+],
+"Waiting for your approval: ": [
+"En attente de votre approbation : ",
+"في انتظار موافقتك:"
+],
+"Start with ": [
+"Commencer par ",
+"ابدأ بـ"
+],
+"this candidate": [
+"ce candidat",
+"هذا المترشح"
+],
+"{0} {1} with {2}. Only a professor of the speciality teaches a class: add it to their profile if they do teach it, or choose another professor.": [
+"{0} {1} avec {2}. Seul un formateur de la spécialité enseigne une classe : ajoutez-la à son profil s'il l'enseigne, ou choisissez un autre formateur.",
+"{0} {1} مع {2}. لا يدرّس القسم إلا مكوّن من الاختصاص: أضفه إلى ملفه إن كان يدرّسه، أو اختر مكوّنا آخر."
+],
+"The week is over and {0} are ready": [
+"La semaine est terminée et {0} sont prêtes",
+"انتهى الأسبوع و{0} جاهزة"
+],
+" Most missed: “{0}”": [
+" Le plus raté : « {0} »",
+" الأكثر خطأ: «{0}»"
+],
+"Send the questions again to the {0} candidate(s) who have not answered?": [
+"Renvoyer les questions aux {0} candidat(s) qui n'ont pas répondu ?",
+"إعادة إرسال الأسئلة إلى {0} مترشح(ين) لم يجيبوا؟"
+],
+"{0} out of 5": [
+"{0} sur 5",
+"{0} من 5"
+],
+"Scored {0:.0f}% on the week's questions": [
+"{0:.0f} % aux questions de la semaine",
+"{0:.0f}% في أسئلة الأسبوع"
+],
+". The previous weeks went better, so this topic is the problem.": [
+". Les semaines précédentes se sont mieux passées, donc ce sujet est le problème.",
+". الأسابيع السابقة كانت أفضل، لذا هذا الموضوع هو المشكلة."
+],
+" Until then the class does not start.": [
+" D'ici là la classe ne démarre pas.",
+" إلى ذلك الحين لا يبدأ القسم."
+],
+" ({0} more wait for your review)": [
+" ({0} de plus attendent votre relecture)",
+" ({0} إضافية تنتظر مراجعتك)"
+],
+"{0:.0f}% on the questions": [
+"{0:.0f} % aux questions",
+"{0:.0f}% في الأسئلة"
+],
+"; missed “{0}”": [
+" ; « {0} » raté",
+"؛ أخطؤوا في «{0}»"
+],
+"“{0}” has waited since {1}. The system was not sure enough to answer alone.": [
+"« {0} » attend depuis {1}. Le système n'était pas assez sûr pour répondre seul.",
+"«{0}» ينتظر منذ {1}. لم يكن النظام متأكدا بما يكفي ليجيب وحده."
+],
+"{0} did not reach {1}": [
+"{0} non livré(s) à {1}",
+"{0} لم تصل إلى {1}"
+],
+"The latest is “{0}”, {1}. Open it and use “Send again” once the email settings are right.": [
+"Le dernier est « {0} », {1}. Ouvrez-le et utilisez « Renvoyer » une fois les réglages email corrects.",
+"آخرها «{0}»، {1}. افتحه واستعمل «إعادة الإرسال» بعد ضبط إعدادات البريد."
+],
+"“{0}” is waiting for your answer.": [
+"« {0} » attend votre réponse.",
+"«{0}» ينتظر إجابتك."
+],
+"the candidates": [
+"les candidats",
+"المترشحين"
+],
+"{0} programs wait for your approval": [
+"{0} formations attendent votre accord",
+"{0} برامج تنتظر موافقتك"
+],
+"{0} programs have no weekly plan": [
+"{0} formations n'ont pas de plan hebdomadaire",
+"{0} برامج بلا خطة أسبوعية"
+],
+"{0} programs have no description": [
+"{0} formations n'ont pas de description",
+"{0} برامج بلا وصف"
+],
+"{0} programs have no price": [
+"{0} formations n'ont pas de prix",
+"{0} برامج بلا سعر"
+],
+"{0} programs have fewer than three professors": [
+"{0} formations ont moins de trois formateurs",
+"{0} برامج لها أقل من ثلاثة مكوّنين"
+],
+"{0} classes have no professor": [
+"{0} classes n'ont pas de formateur",
+"{0} أقسام بلا مكوّن"
+],
+"{0} classes have no session time": [
+"{0} classes n'ont pas d'horaire de séance",
+"{0} أقسام بلا توقيت للحصص"
+],
+"{0} weeks of the next seven days have no resources yet": [
+"{0} semaines des sept prochains jours n'ont pas encore de ressources",
+"{0} أسابيع من الأيام السبعة القادمة بلا موارد بعد"
+],
+"{0} places of professors still to name": [
+"{0} places de formateurs encore à nommer",
+"{0} أماكن مكوّنين ما زالت بلا اسم"
+],
+"{0} professors have no email": [
+"{0} formateurs n'ont pas d'email",
+"{0} مكوّنين بلا بريد"
+],
+"{0} professors have no phone": [
+"{0} formateurs n'ont pas de téléphone",
+"{0} مكوّنين بلا هاتف"
+],
+"{0} professors cannot sign in yet": [
+"{0} formateurs ne peuvent pas encore se connecter",
+"{0} مكوّنين لا يستطيعون الدخول بعد"
+],
+"{0} paid candidates wait for a class": [
+"{0} candidats ayant payé attendent une classe",
+"{0} مترشحين دفعوا وينتظرون قسما"
+],
+"{0} candidates have no phone number (no WhatsApp, no SMS)": [
+"{0} candidats n'ont pas de numéro (ni WhatsApp, ni SMS)",
+"{0} مترشحين بلا رقم هاتف (لا WhatsApp ولا SMS)"
+],
+"No email can leave: the sending address is not set": [
+"Aucun email ne peut partir : l'adresse d'envoi n'est pas réglée",
+"لا يمكن إرسال أي بريد: عنوان الإرسال غير مضبوط"
+],
+"Candidates' emails are not read: the mailbox is not connected": [
+"Les emails des candidats ne sont pas lus : la boîte mail n'est pas connectée",
+"رسائل المترشحين لا تُقرأ: صندوق البريد غير متصل"
+],
+"No WhatsApp Business number: WhatsApp messages wait for your phone": [
+"Pas de numéro WhatsApp Business : les messages WhatsApp attendent votre téléphone",
+"لا يوجد رقم WhatsApp Business: رسائل WhatsApp تنتظر هاتفك"
+],
+"No Android phone for SMS: SMS wait for your phone": [
+"Pas de téléphone Android pour les SMS : les SMS attendent votre téléphone",
+"لا يوجد هاتف Android للـSMS: الـSMS تنتظر هاتفك"
+],
+"The centre's RIB is not written: payment proofs cannot be checked against it": [
+"Le RIB du centre n'est pas écrit : les preuves de paiement ne peuvent pas être vérifiées avec lui",
+"RIB المركز غير مكتوب: لا يمكن مقارنة إثباتات الدفع به"
+],
+"The centre's phone is not written under the emails": [
+"Le téléphone du centre n'est pas écrit sous les emails",
+"هاتف المركز غير مكتوب تحت الرسائل"
+],
+"Links in emails only open on this computer: set the address for candidates": [
+"Les liens des emails ne s'ouvrent que sur cet ordinateur : réglez l'adresse pour les candidats",
+"روابط الرسائل لا تفتح إلا على هذا الحاسوب: اضبط العنوان للمترشحين"
+],
+"The Facebook page's posts and reviews are not read: its access token is missing": [
+"Les publications et avis de la page Facebook ne sont pas lus : sa clé d'accès manque",
+"منشورات صفحة Facebook وآراؤها لا تُقرأ: مفتاح الدخول ناقص"
+],
+"Your phone number is missing": [
+"Votre numéro de téléphone manque",
+"رقم هاتفك ناقص"
+],
+"Programs": [
+"Formations",
+"البرامج"
+],
+"Classes": [
+"Classes",
+"الأقسام"
+],
+"Professors": [
+"Formateurs",
+"المكوّنون"
+],
+"Candidates": [
+"Candidats",
+"المترشحون"
+],
+"Connections and settings": [
+"Connexions et réglages",
+"الاتصالات والإعدادات"
+],
+"{0} programs have no teacher yet": [
+"{0} formations n'ont pas encore de formateur",
+"{0} برامج بلا مكوّن بعد"
+],
+"{0} program waits for your approval": [
+"{0} formation attend votre accord",
+"برنامج واحد ينتظر موافقتك ({0})"
+],
+"{0} program has no weekly plan": [
+"{0} formation n'a pas de plan hebdomadaire",
+"برنامج واحد بلا خطة أسبوعية ({0})"
+],
+"{0} program has no description": [
+"{0} formation n'a pas de description",
+"برنامج واحد بلا وصف ({0})"
+],
+"{0} program has no price": [
+"{0} formation n'a pas de prix",
+"برنامج واحد بلا سعر ({0})"
+],
+"{0} program has no teacher yet": [
+"{0} formation n'a pas encore de formateur",
+"برنامج واحد بلا مكوّن بعد ({0})"
+],
+"{0} class has no professor": [
+"{0} classe n'a pas de formateur",
+"قسم واحد بلا مكوّن ({0})"
+],
+"{0} class has no session time": [
+"{0} classe n'a pas d'horaire de séance",
+"قسم واحد بلا توقيت للحصص ({0})"
+],
+"{0} week of the next seven days has no resources yet": [
+"{0} semaine des sept prochains jours n'a pas encore de ressources",
+"أسبوع واحد من الأيام السبعة القادمة بلا موارد بعد ({0})"
+],
+"{0} place of a professor still to name": [
+"{0} place de formateur encore à nommer",
+"مكان مكوّن واحد ما زال بلا اسم ({0})"
+],
+"{0} professor has no email": [
+"{0} formateur n'a pas d'email",
+"مكوّن واحد بلا بريد ({0})"
+],
+"{0} professor has no phone": [
+"{0} formateur n'a pas de téléphone",
+"مكوّن واحد بلا هاتف ({0})"
+],
+"{0} professor cannot sign in yet": [
+"{0} formateur ne peut pas encore se connecter",
+"مكوّن واحد لا يستطيع الدخول بعد ({0})"
+],
+"{0} paid candidate waits for a class": [
+"{0} candidat ayant payé attend une classe",
+"مترشح واحد دفع وينتظر قسما ({0})"
+],
+"{0} candidate has no phone number (no WhatsApp, no SMS)": [
+"{0} candidat n'a pas de numéro (ni WhatsApp, ni SMS)",
+"مترشح واحد بلا رقم هاتف (لا WhatsApp ولا SMS) ({0})"
+],
+"The professor chosen for {0} was not found.": [
+"Le formateur choisi pour {0} est introuvable.",
+"المكوّن المختار للقسم {0} غير موجود."
+],
+"{0} does not teach {1}: choose someone else for {2}.": [
+"{0} n'enseigne pas {1} : choisissez quelqu'un d'autre pour {2}.",
+"{0} لا يدرّس {1}: اختر شخصا آخر للقسم {2}."
+],
+"{0} is deleted.": [
+"{0} est supprimé(e).",
+"تم حذف {0}."
+],
+"{0} now goes to {1}.": [
+"{0} est maintenant confiée à {1}.",
+"أصبح القسم {0} عند {1}."
+],
+"Waiting for a professor: {0}.": [
+"En attente d'un formateur : {0}.",
+"في انتظار مكوّن: {0}."
+],
+"Their access is removed.": [
+"Son accès est retiré.",
+"سُحب دخوله."
+],
+"{0} question(s) of candidates that waited for them are back in your inbox.": [
+"{0} question(s) de candidats qui l'attendaient sont revenues dans votre boîte de réception.",
+"عاد {0} سؤال (أسئلة) من المترشحين كانت تنتظره إلى بريدك الوارد."
+]
+}

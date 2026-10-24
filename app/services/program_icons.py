@@ -5,6 +5,12 @@ catalogue of open-source icons), saved in the program icons folder
 (PROGRAM_ICONS_DIR, default: data/program_icons) and served from here
 afterwards, so pages keep their pictures when the network is down. The
 admin can choose another one from the same catalogue or upload their own.
+
+Every program gets one, whatever its name: the website's technologies for it
+help the search; when nothing fits, a general picture of learning is used;
+when the web cannot be reached, one is drawn here (its initials on its
+colours) and a better one is looked for later. It starts the moment a
+program is created, by anyone or anything (install_hooks).
 """
 from __future__ import annotations
 
@@ -71,6 +77,11 @@ _SVG_OPEN = re.compile(rb"<svg\b[^>]*>", re.IGNORECASE)
 _VIEWBOX = re.compile(rb'viewBox="\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)\s*"', re.IGNORECASE)
 _REF = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*:[a-z0-9]+(?:-[a-z0-9]+)*$")
 _ACTIVE_CONTENT = re.compile(rb"<script|\bon[a-z]+\s*=|javascript:|<foreignObject", re.IGNORECASE)
+
+# When nothing on the web fits the name: a general picture of learning, the same one for the same name.
+GENERIC = ["fluent-emoji-flat:graduation-cap", "fluent-emoji-flat:laptop", "fluent-emoji-flat:books", "fluent-emoji-flat:light-bulb",
+           "fluent-emoji-flat:rocket", "fluent-emoji-flat:direct-hit", "fluent-emoji-flat:gear", "fluent-emoji-flat:trophy"]
+DRAWN = "generated"          # the ref of a picture drawn here, looked for again on the web later
 
 # Shown when a program has no picture: its initials on one of these colours.
 _TILES = [
@@ -304,14 +315,18 @@ def assign_from_web(db: Session, program: Program, ref: str | None = None) -> st
         db.commit()
         return "ok"
 
-    found = find_on_web(program.name or "")
-    program.icon_checked_at = datetime.now(timezone.utc)
-    if not found:
-        db.commit()
-        return "nothing" if found is None else "offline"
-    _store(program, found[1], "svg", found[0])
+    program_id, name, extra = program.id, program.name or "", extra_words(db, program)
+    db.rollback()                       # nothing held while the web answers (SQLite: other saves must not wait)
+    ref, data, outcome = picture_for(name, extra)
+    program = db.get(Program, program_id)
+    if program is None:
+        return outcome
+    if program.icon_ref in ("upload", "none") or (has_icon(program) and program.icon_ref not in (DRAWN, None) and outcome != "ok"):
+        db.rollback()                   # the admin chose meanwhile, or a real picture is already there
+        return outcome
+    _store(program, data, "svg", ref)
     db.commit()
-    return "ok"
+    return outcome
 
 
 def save_upload(db: Session, program: Program, filename: str, data: bytes) -> None:
@@ -360,8 +375,8 @@ def remove(db: Session, program: Program) -> None:
 
 
 def needs_icon(program: Program, now: datetime | None = None) -> bool:
-    """Whether the web should be asked for this program's picture."""
-    if has_icon(program) or program.icon_ref == "none":
+    """Whether the web should be asked for this program's picture (also when it only has one drawn here)."""
+    if program.icon_ref == "none" or (has_icon(program) and program.icon_ref != DRAWN):
         return False
     if program.icon_checked_at is None:
         return True
@@ -372,12 +387,113 @@ def needs_icon(program: Program, now: datetime | None = None) -> bool:
 
 
 def assign_missing(db: Session, limit: int = 4) -> int:
-    """Give a picture to programs that have none yet. Returns how many got one."""
+    """Give a picture to programs that have none yet (or only one drawn here). Returns how many got one from the web."""
     done = 0
-    waiting = [program for program in db.query(Program).order_by(Program.name.asc()).all() if needs_icon(program)]
-    for program in waiting[:limit]:
+    waiting = [program.id for program in db.query(Program).order_by(Program.name.asc()).all() if needs_icon(program)]
+    db.rollback()
+    for program_id in waiting[:limit]:
+        program = db.get(Program, program_id)
+        if program is None:
+            continue
         outcome = assign_from_web(db, program)
-        if outcome == "offline":
-            break       # no point asking for the others now
         done += outcome == "ok"
+        if outcome == "offline":
+            break       # the others get a drawn picture next time; no point asking the web now
     return done
+
+
+def extra_words(db: Session, program: Program) -> str:
+    """What else names the program's subject: the technologies 9antra.tn lists for it."""
+    if not getattr(program, "website_slug", None):
+        return ""
+    try:
+        from app.models.website import WebsiteItem
+
+        item = (db.query(WebsiteItem).filter(WebsiteItem.kind == "formation", WebsiteItem.slug == program.website_slug)
+                .order_by(WebsiteItem.gone_at.isnot(None)).first())
+        import json
+
+        data = json.loads(item.data or "{}") if item is not None else {}
+        technologies = data.get("technologies") if isinstance(data, dict) else None
+    except Exception:
+        return ""
+    if isinstance(technologies, str):
+        return technologies
+    return " ".join(str(word) for word in (technologies or [])[:8])
+
+
+def drawn_svg(name: str) -> bytes:
+    """A picture drawn here: the initials on the program's own colours, with a mortarboard."""
+    from html import escape
+
+    look = tile(Program(name=name))
+    initials = escape(look["initials"][:2])
+    return (
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+        f'<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{look["colour"]}"/>'
+        f'<stop offset="1" stop-color="{look["colour"]}" stop-opacity=".72"/></linearGradient></defs>'
+        '<rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/>'
+        '<path d="M32 13 50 21 32 29 14 21Z" fill="#fff" fill-opacity=".92"/>'
+        '<path d="M21 25v6c0 3 5 5 11 5s11-2 11-5v-6l-11 5Z" fill="#fff" fill-opacity=".7"/>'
+        f'<text x="32" y="54" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="15" font-weight="700" fill="#fff">{initials}</text>'
+        '</svg>'
+    ).encode()
+
+
+def picture_for(name: str, extra: str = "") -> tuple[str, bytes, str]:
+    """(ref, svg, outcome) for a program called `name`: always a picture. outcome: "ok" (it fits the name), "nothing"
+    (a general picture: nothing on the web fits), "offline" (drawn here: the web could not be reached)."""
+    found = find_on_web(f"{name} {extra}".strip())
+    if found:
+        return found[0], found[1], "ok"
+    if found is None:
+        ref = GENERIC[sum(ord(char) for char in name) % len(GENERIC)]
+        svg = download(ref)
+        if svg is not None:
+            return ref, svg, "nothing"
+    return DRAWN, drawn_svg(name), "offline"
+
+
+# ------------------------------------------------------------------
+# A new program: its picture is looked for at once
+# ------------------------------------------------------------------
+
+def give_new(program_id: str) -> None:
+    """For a program that was just created (in the background: it opens its own session)."""
+    from app.database import SessionLocal
+
+    db = SessionLocal()
+    try:
+        program = db.get(Program, program_id)
+        if program is not None and needs_icon(program):
+            assign_from_web(db, program)
+    except Exception:
+        db.rollback()
+        logger.exception("The picture of the new program %s could not be given.", program_id)
+    finally:
+        db.close()
+
+
+def install_hooks(session_factory) -> None:
+    """Whatever creates a program (the admin, the website, a catalogue, a registration), its picture follows."""
+    from sqlalchemy import event
+
+    @event.listens_for(session_factory, "after_flush")
+    def _collect(session, flush_context):
+        new = [obj.id for obj in session.new if isinstance(obj, Program) and obj.id]
+        if new:
+            session.info.setdefault("new_programs", []).extend(new)
+
+    @event.listens_for(session_factory, "after_commit")
+    def _give(session):
+        new = session.info.pop("new_programs", [])
+        if not new or os.getenv("PROGRAM_ICONS_ON_CREATE", "1") == "0":
+            return
+        from app.services.background import run_in_background
+
+        for program_id in dict.fromkeys(new):
+            run_in_background(give_new, program_id)
+
+    @event.listens_for(session_factory, "after_rollback")
+    def _forget(session):
+        session.info.pop("new_programs", None)

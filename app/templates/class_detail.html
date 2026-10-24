@@ -26,6 +26,44 @@
   @media (max-width: 767px) { .cd-stat { border-right: 0; border-bottom: 1px solid var(--border-color); } }
 
   .cd-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; }
+  /* How this class is doing */
+  .cd-dyn { position:relative; overflow:hidden; }
+  .cd-dyn::before { content:""; position:absolute; right:-60px; top:-60px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, var(--berry-subtle), transparent 70%); pointer-events:none; }
+  .cd-dyn-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; }
+  .cd-dyn-tile { display:flex; gap:14px; align-items:center; padding:14px; border-radius:18px; background:#faf8fd; border:1px solid var(--border-color); --c:var(--primary-berry); }
+  .cd-dyn-tile.t-sky { --c:var(--sky); } .cd-dyn-tile.t-violet { --c:#6d28d9; } .cd-dyn-tile.t-mint { --c:var(--mint); }
+  .cd-dyn-ring { --pct:0; width:66px; height:66px; border-radius:50%; flex:none; display:grid; place-items:center; background:conic-gradient(var(--c) calc(var(--pct) * 1%), #ebe5f3 0); }
+  .cd-dyn-ring b { width:50px; height:50px; border-radius:50%; background:#fff; display:flex; align-items:center; justify-content:center; gap:1px; font-size:1.05rem; font-weight:800; color:var(--ink-text); }
+  .cd-dyn-ring small { font-size:.62rem; }
+  .cd-dyn-label { font-weight:800; font-size:.86rem; color:var(--ink-text); } .cd-dyn-of { font-weight:600; color:var(--muted); font-size:.72rem; }
+  .cd-dyn-sub { font-size:.74rem; color:var(--muted); margin-top:2px; line-height:1.35; }
+  .cd-dyn-charts { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:14px; margin-top:14px; }
+  .cd-dyn-chart { border:1px solid var(--border-color); border-radius:18px; padding:14px 16px; }
+  .cd-dyn-chart-title { font-weight:800; font-size:.82rem; color:var(--ink-text); display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
+  .cd-dyn-chart-title span { font-weight:600; font-size:.7rem; color:var(--muted); display:flex; gap:8px; align-items:center; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:3px; margin-right:2px; }
+  .dot.sky, .cd-dyn-pair .sky { background:var(--sky); } .dot.berry, .cd-dyn-pair .berry { background:var(--primary-berry); }
+  .dot.grey, .cd-dyn-pair .grey { background:#cfc8e0; } .dot.violet, .cd-dyn-pair .violet { background:#6d28d9; }
+  .cd-dyn-bars { display:flex; gap:8px; align-items:flex-end; height:120px; }
+  .cd-dyn-col { flex:1 1 0; min-width:0; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:4px; }
+  .cd-dyn-col small { font-size:.62rem; color:var(--muted); white-space:nowrap; }
+  .cd-dyn-pair { flex:1; width:100%; display:flex; gap:3px; align-items:flex-end; justify-content:center; background:linear-gradient(transparent 49.5%, #f1edf7 49.5%, #f1edf7 50.5%, transparent 50.5%); border-radius:6px; }
+  .cd-dyn-pair span { width:min(14px, 42%); height:var(--h); min-height:2px; border-radius:5px 5px 2px 2px; transform-origin:bottom; }
+  .cd-dyn-advice { display:grid; gap:8px; margin-top:14px; }
+  .cd-dyn-tip { display:flex; gap:10px; align-items:flex-start; padding:10px 14px; border-radius:14px; font-size:.84rem; line-height:1.45; background:#f6f3fb; color:#3a3350; }
+  .cd-dyn-tip i { margin-top:2px; } .cd-dyn-tip.tone-bad { background:#fff1f2; } .cd-dyn-tip.tone-bad i { color:#be123c; }
+  .cd-dyn-tip.tone-warn { background:#fffaf0; } .cd-dyn-tip.tone-warn i { color:var(--accent-gold-dark); }
+  .cd-dyn-tip.tone-ok { background:var(--mint-subtle); } .cd-dyn-tip.tone-ok i { color:var(--mint); } .cd-dyn-tip.tone-info i { color:var(--sky); }
+  .cd-dyn-people { display:flex; flex-wrap:wrap; gap:6px; margin-top:12px; } .cd-dyn-people .ui-chip { white-space:normal; }
+  .cd-dyn-empty { display:flex; gap:16px; align-items:center; flex-wrap:wrap; padding:16px 18px; border:1px dashed #ddd6ea; border-radius:18px; background:#fbfaff; }
+  .cd-dyn-empty > i { font-size:2rem; color:var(--primary-berry); } .cd-dyn-empty > div { flex:1 1 280px; } .cd-dyn-empty b { display:block; color:var(--ink-text); } .cd-dyn-empty span { font-size:.82rem; color:var(--muted); }
+  @media (prefers-reduced-motion: no-preference) {
+    .cd-dyn-pair span { animation:dynGrow .9s cubic-bezier(.2,.8,.2,1) both; } .cd-dyn-col:nth-child(2n) .cd-dyn-pair span { animation-delay:.08s; }
+    .cd-dyn-ring { animation:dynRing 1s ease both; }
+  }
+  @keyframes dynGrow { from { transform:scaleY(0); } to { transform:none; } }
+  @keyframes dynRing { from { opacity:0; transform:scale(.85) rotate(-40deg); } to { opacity:1; transform:none; } }
+
   .cd-card-title { font-weight: 800; font-size: 1rem; color: var(--ink-text); }
   .cd-card-sub { font-size: .8rem; color: var(--muted); }
 
@@ -212,6 +250,94 @@
   </div>
   {% endif %}
 </div>
+
+
+<!-- ============ How this class is doing ============ -->
+{% set dyn = dynamics.figures %}
+<section class="cd-card cd-dyn mb-4" id="dynamics" data-live-region>
+  <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+    <div>
+      <div class="cd-card-title"><i class="bi bi-activity me-2" style="color:var(--primary-berry);"></i>How this class is doing</div>
+      <div class="cd-card-sub">Counted from the presence sheets, what the professor noted there, the weekly questions and the opinions. Nothing is guessed.</div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a class="btn btn-sm btn-light border rounded-pill px-3" href="/classes/{{ cls.id }}/pdf" target="_blank" rel="noopener"><i class="bi bi-file-earmark-pdf me-1"></i>Class report (PDF)</a>
+      <a class="btn btn-sm btn-light border rounded-pill px-3" href="/classes/{{ cls.id }}/attendance/pdf" target="_blank" rel="noopener"><i class="bi bi-printer me-1"></i>Presence sheet to print</a>
+    </div>
+  </div>
+  {% if dynamics.has_data %}
+  <div class="cd-dyn-tiles">
+    <div class="cd-dyn-tile t-sky">
+      <div class="cd-dyn-ring" style="--pct:{{ dyn.attendance or 0 }};"><b>{{ dyn.attendance if dyn.attendance is not none else '-' }}<small>{{ '%' if dyn.attendance is not none }}</small></b></div>
+      <div><div class="cd-dyn-label">Presence</div>
+        <div class="cd-dyn-sub">{% if dyn.recent_attendance is not none %}Last sessions: <b>{{ dyn.recent_attendance }}%</b>{% if dyn.earlier_attendance is not none %} · before: {{ dyn.earlier_attendance }}%{% endif %}{% else %}No session marked yet{% endif %}</div></div>
+    </div>
+    <div class="cd-dyn-tile t-berry">
+      <div class="cd-dyn-ring" style="--pct:{{ dyn.interactivity or 0 }};"><b>{{ dyn.interactivity if dyn.interactivity is not none else '-' }}</b></div>
+      <div><div class="cd-dyn-label">Interactivity <span class="cd-dyn-of">/100</span></div>
+        <div class="cd-dyn-sub">{% if dyn.interactivity is not none %}{{ dyn.questions_each }} question(s) per person and session{% else %}The professor has not noted participation yet{% endif %}</div></div>
+    </div>
+    <div class="cd-dyn-tile t-violet">
+      <div class="cd-dyn-ring" style="--pct:{{ dyn.answer_rate or 0 }};"><b>{{ dyn.answer_rate if dyn.answer_rate is not none else '-' }}<small>{{ '%' if dyn.answer_rate is not none }}</small></b></div>
+      <div><div class="cd-dyn-label">Weekly answers</div><div class="cd-dyn-sub">{{ dyn.answered }} of {{ dyn.sent }} answered</div></div>
+    </div>
+    <div class="cd-dyn-tile t-mint">
+      <div class="cd-dyn-ring" style="--pct:{{ dyn.understanding or 0 }};"><b>{{ (dyn.understanding | round | int) if dyn.understanding is not none else '-' }}<small>{{ '%' if dyn.understanding is not none }}</small></b></div>
+      <div><div class="cd-dyn-label">Understanding</div><div class="cd-dyn-sub">{% if dyn.last_week_score is not none %}Last week: <b>{{ dyn.last_week_score | round | int }}%</b>{% else %}No weekly answer yet{% endif %}</div></div>
+    </div>
+  </div>
+
+  <div class="cd-dyn-charts">
+    {% if dynamics.sessions %}
+    <div class="cd-dyn-chart">
+      <div class="cd-dyn-chart-title">Session by session <span><i class="dot sky"></i>presence <i class="dot berry"></i>participation</span></div>
+      <div class="cd-dyn-bars">
+        {% for row in dynamics.sessions[-10:] %}
+        <div class="cd-dyn-col" title="{{ row.date.strftime('%d %b') if row.date else '' }}: {{ row.rate or 0 }}% present{% if row.participation is not none %}, participation {{ row.participation | round | int }}/100{% endif %}{% if row.questions %}, {{ row.questions }} question(s){% endif %}">
+          <div class="cd-dyn-pair"><span class="sky" style="--h:{{ row.rate or 0 }}%;"></span><span class="berry" style="--h:{{ row.participation or 0 }}%;"></span></div>
+          <small>{{ row.date.strftime('%d/%m') if row.date else 'W' ~ row.week }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+    {% if dynamics.weeks %}
+    <div class="cd-dyn-chart">
+      <div class="cd-dyn-chart-title">Week by week <span><i class="dot grey"></i>answered <i class="dot violet"></i>understood</span></div>
+      <div class="cd-dyn-bars">
+        {% for row in dynamics.weeks %}
+        <div class="cd-dyn-col" title="Week {{ row.week }}: {{ row.answered }} of {{ row.sent }} answered{% if row.score is not none %}, {{ row.score | round | int }}% understood{% endif %}">
+          <div class="cd-dyn-pair"><span class="grey" style="--h:{{ row.answer_rate or 0 }}%;"></span><span class="violet" style="--h:{{ row.score or 0 }}%;"></span></div>
+          <small>W{{ row.week }}</small>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if dynamics.advice %}
+  <div class="cd-dyn-advice">
+    {% for item in dynamics.advice %}
+    <div class="cd-dyn-tip tone-{{ item.tone }}"><i class="bi {{ {'bad': 'bi-exclamation-octagon-fill', 'warn': 'bi-lightbulb-fill', 'info': 'bi-info-circle-fill', 'ok': 'bi-check-circle-fill'}[item.tone] }}"></i><span>{{ item.text }}</span></div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% if dynamics.leaders or dynamics.to_watch %}
+  <div class="cd-dyn-people">
+    {% for person in dynamics.leaders %}<span class="ui-chip ok" title="Very active, {{ person.questions }} question(s) asked"><i class="bi bi-star-fill"></i>{{ person.name }} leads</span>{% endfor %}
+    {% for item in dynamics.to_watch %}<span class="ui-chip {{ 'bad' if item.tone == 'bad' else 'warn' if item.tone == 'warn' else 'muted' }}" title="{{ item.why }}"><i class="bi bi-chat-heart"></i>{{ item.name }}: {{ item.why }}</span>{% endfor %}
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="cd-dyn-empty">
+    <i class="bi bi-clipboard2-pulse"></i>
+    <div><b>The analysis starts with the first presence sheet.</b>
+      <span>Mark who came, and note participation and questions with one click per candidate: presence, interactivity and what to improve then show here, and in the class report.</span></div>
+    <a class="btn btn-sm btn-berry px-3" href="/classes/{{ cls.id }}/attendance">Open the presence sheet</a>
+  </div>
+  {% endif %}
+</section>
 
 <!-- ============ The candidate you came for ============ -->
 {% if focus %}

@@ -1,0 +1,259 @@
+{% extends "base.html" %}
+{% block title %}Team chat · 9antra{% endblock %}
+{% block page_title %}Team chat{% endblock %}
+{% block live_topics %}team{% endblock %}
+
+{% block content %}
+{% include "_ui.html" %}
+<style>
+  .tm-layout { display:grid; grid-template-columns:330px minmax(0, 1fr); gap:18px; align-items:start; }
+  @media (max-width: 991px) { .tm-layout { grid-template-columns:1fr; } .tm-layout.has-chosen .tm-people { display:none; } .tm-layout:not(.has-chosen) .tm-talk { display:none; } }
+  .tm-card { background:#fff; border:1px solid var(--border-color); border-radius:20px; }
+  .tm-people { padding:12px; overflow-x:hidden; position:sticky; top:var(--stick-top, 96px); max-height:calc(100vh - var(--stick-top, 96px) - 20px); overflow:auto; }
+  @media (max-width: 991px) { .tm-people { position:static; max-height:none; } }
+  .tm-find { width:100%; border:1px solid var(--border-color); border-radius:999px; padding:8px 14px; font-size:.84rem; margin-bottom:8px; }
+  .tm-find:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.12); }
+  .tm-group { font-size:.66rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:12px 8px 6px; }
+  .tm-row { display:flex; gap:10px; align-items:center; padding:9px 10px; border-radius:14px; text-decoration:none; color:var(--ink-text); }
+  .tm-row:hover { background:var(--berry-subtle); }
+  .tm-row.is-on { background:var(--berry-subtle); box-shadow:inset 3px 0 0 var(--primary-berry); }
+  .tm-avatar { width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:.8rem; flex:none; color:#fff; background:linear-gradient(135deg, var(--primary-berry), #e07aa8); }
+  .tm-avatar.is-team { background:linear-gradient(135deg, #6366f1, #a5b4fc); }
+  .tm-row-main { min-width:0; flex:1; display:block; }
+  .tm-row-name { font-weight:800; font-size:.86rem; display:flex; gap:6px; align-items:center; }
+  .tm-row-last { display:block; font-size:.76rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .tm-row-count { min-width:22px; height:22px; border-radius:999px; background:#e11d48; color:#fff; font-size:.7rem; font-weight:800; display:grid; place-items:center; padding:0 6px; }
+  .tm-ways { display:inline-flex; gap:3px; color:var(--muted); font-size:.72rem; }
+
+  .tm-talk { display:flex; flex-direction:column; min-height:60vh; }
+  .tm-head { display:flex; gap:12px; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border-color); flex-wrap:wrap; }
+  .tm-head h2 { font-size:1.02rem; font-weight:800; margin:0; }
+  .tm-head small { color:var(--muted); font-weight:600; font-size:.76rem; }
+  .tm-back { display:none; }
+  @media (max-width: 991px) { .tm-back { display:inline-flex; } }
+  .tm-contact { margin-left:auto; display:flex; gap:6px; flex-wrap:wrap; }
+  .tm-contact a, .tm-contact button, .tm-contact span { display:inline-flex; gap:5px; align-items:center; font-size:.74rem; font-weight:700; border:1px solid var(--border-color); border-radius:999px; padding:4px 10px; background:#fff; color:#5b5470; text-decoration:none; }
+  .tm-contact a:hover, .tm-contact button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .tm-edit { padding:12px 18px; border-bottom:1px solid var(--border-color); background:#fbfaff; display:grid; grid-template-columns:1fr 1fr auto; gap:8px; align-items:end; }
+  @media (max-width: 575px) { .tm-edit { grid-template-columns:1fr; } }
+  .tm-edit label { font-size:.72rem; font-weight:800; color:var(--muted); display:block; margin-bottom:3px; }
+  .tm-edit input { width:100%; border:1px solid var(--border-color); border-radius:12px; padding:7px 11px; font-size:.84rem; }
+
+  .tm-messages { padding:18px; flex:1; }
+  .tm-msg { max-width:80%; margin-bottom:16px; }
+  @media (max-width: 575px) { .tm-msg { max-width:92%; } }
+  .tm-msg.out { margin-left:auto; }
+  .tm-meta { font-size:.7rem; color:var(--muted); font-weight:600; margin-bottom:4px; display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .tm-msg.out .tm-meta { justify-content:flex-end; }
+  .tm-bubble { border-radius:16px; padding:11px 14px; font-size:.87rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .tm-msg.in .tm-bubble { background:#fff; border:1px solid var(--border-color); border-top-left-radius:5px; }
+  .tm-msg.out .tm-bubble { background:var(--berry-subtle); border:1px solid #f6d8e6; border-top-right-radius:5px; }
+  .tm-msg.by-assistant .tm-bubble { background:#eef2ff; border-color:#dbe1fe; }
+  .tm-way-list { display:flex; gap:5px; flex-wrap:wrap; justify-content:flex-end; margin-top:6px; }
+  .tm-way { display:inline-flex; gap:5px; align-items:center; font-size:.7rem; font-weight:700; border-radius:999px; padding:3px 9px; background:#fff; border:1px solid var(--border-color); color:#5b5470; }
+  .tm-way.sent i { color:var(--mint); } .tm-way.failed { background:#fff1f2; border-color:#fecdd3; color:#be123c; }
+  .tm-way.to_send { background:var(--gold-subtle); border-color:#f3d9a4; color:var(--gold-dark); }
+  .tm-way form { display:inline; margin:0; } .tm-way button, .tm-way a { border:0; background:none; padding:0; font:inherit; color:inherit; text-decoration:underline; cursor:pointer; }
+  .tm-found { margin-top:8px; border:1px dashed #c7d2fe; background:#f5f7ff; border-radius:14px; padding:10px 12px; font-size:.8rem; }
+  .tm-found b { color:#4338ca; font-size:.72rem; text-transform:uppercase; letter-spacing:.05em; }
+  .tm-found p { margin:4px 0 8px; white-space:pre-wrap; }
+  .tm-empty { text-align:center; color:var(--muted); padding:40px 10px; font-size:.88rem; }
+  .tm-empty i { font-size:2rem; color:var(--primary-berry); display:block; margin-bottom:8px; }
+
+  .tm-write { border-top:1px solid var(--border-color); padding:14px 18px; position:sticky; bottom:0; background:#fff; border-radius:0 0 20px 20px; }
+  @media (max-width: 991px) { .tm-write { bottom:calc(76px + env(safe-area-inset-bottom, 0px)); } }
+  .tm-write textarea { width:100%; border:1px solid var(--border-color); border-radius:14px; padding:10px 13px; font-size:.88rem; min-height:76px; resize:vertical; }
+  .tm-write textarea:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.12); }
+  .tm-write-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .tm-pick { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); border-radius:999px; padding:5px 11px; font-size:.76rem; font-weight:700; cursor:pointer; user-select:none; }
+  .tm-pick input { accent-color:var(--primary-berry); }
+  .tm-pick:has(input:checked) { border-color:var(--primary-berry); background:var(--berry-subtle); color:var(--primary-berry); }
+  .tm-pick.is-off { opacity:.45; cursor:not-allowed; }
+  .tm-send { margin-left:auto; }
+  .tm-learn { font-size:.76rem; color:#5b5470; display:flex; gap:6px; align-items:center; margin-top:8px; }
+  .tm-auto { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:12px 16px; margin-top:14px; }
+  .tm-auto i.bi-robot { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:#eef2ff; color:#4338ca; font-size:1.1rem; flex:none; }
+  .tm-auto b { display:block; font-size:.86rem; } .tm-auto span { font-size:.78rem; color:#5b5470; }
+  .tm-auto form { margin:0 0 0 auto; }
+</style>
+
+{% set inbox_side = "team" %}
+{% include "_inbox_switch.html" %}
+{% include "_flash.html" %}
+
+{% macro initials(name) %}{{ ((name or "?").split(" ") | map("first") | join(""))[:2] | upper }}{% endmacro %}
+{% set way_icons = {"app": "bi-phone", "email": "bi-envelope", "whatsapp": "bi-whatsapp", "sms": "bi-chat-dots"} %}
+
+<div class="tm-layout {{ 'has-chosen' if chosen }}">
+  <aside class="tm-card tm-people" id="live-team-list" data-live-region>
+    <input class="tm-find" type="search" placeholder="Find someone…" aria-label="Find someone" data-tm-find>
+    {% set professors = people | selectattr("kind", "equalto", "professor") | list %}
+    {% set team = people | rejectattr("kind", "equalto", "professor") | list %}
+    {% for group, members in [("Professors", professors), ("Team", team)] %}
+      {% if members %}
+      <div class="tm-group">{{ group }} · {{ members | length }}</div>
+      {% for one in members %}
+      <a class="tm-row {{ 'is-on' if chosen and chosen.key == one.key }}" href="/inbox/team?person={{ one.key | urlencode }}" data-tm-name="{{ one.name | lower }}">
+        <span class="tm-avatar {{ 'is-team' if one.kind != 'professor' }}">{{ initials(one.name) }}</span>
+        <span class="tm-row-main">
+          <span class="tm-row-name">{{ one.name }}
+            <span class="tm-ways">{% for way in one.ways %}<i class="bi {{ way_icons[way] }}" title="{{ channel_names[way] }}"></i>{% endfor %}</span></span>
+          <span class="tm-row-last" data-no-i18n>{% if one.last %}{{ "You: " if one.last.direction == "out" }}{{ one.last.body[:80] }}{% else %}{{ one.role }}{% if one.detail %} · {{ one.detail[:60] }}{% endif %}{% endif %}</span>
+        </span>
+        {% if one.unread %}<span class="tm-row-count">{{ one.unread }}</span>{% endif %}
+      </a>
+      {% endfor %}
+      {% endif %}
+    {% else %}
+      <div class="tm-empty"><i class="bi bi-person-plus"></i>No professor or team member yet. Add professors in Classes, team members in Settings.</div>
+    {% endfor %}
+  </aside>
+
+  <section class="tm-card tm-talk">
+    {% if chosen %}
+    <header class="tm-head">
+      <a class="ui-btn ghost sm tm-back" href="/inbox/team?person=" aria-label="Back to the team"><i class="bi bi-arrow-left"></i></a>
+      <span class="tm-avatar {{ 'is-team' if chosen.kind != 'professor' }}">{{ initials(chosen.name) }}</span>
+      <div>
+        <h2>{{ chosen.name }}</h2>
+        <small>{{ chosen.role }}{% if chosen.detail %} · {{ chosen.detail[:90] }}{% endif %}{% if not chosen.user_id %} · no account in the application{% endif %}</small>
+      </div>
+      <div class="tm-contact">
+        {% if chosen.email %}<a href="mailto:{{ chosen.email }}" title="Their email"><i class="bi bi-envelope"></i>{{ chosen.email }}</a>{% endif %}
+        {% if chosen.number %}<a href="tel:{{ chosen.number }}" title="Call them"><i class="bi bi-telephone"></i>{{ chosen.phone }}</a>{% endif %}
+        <button type="button" data-tm-edit aria-expanded="false"><i class="bi bi-pencil"></i>Their details</button>
+      </div>
+    </header>
+    <form class="tm-edit" method="post" action="/inbox/team/contact" hidden data-tm-edit-form>
+      <input type="hidden" name="person" value="{{ chosen.key }}">
+      <div><label for="tm-email">Email</label>
+        <input id="tm-email" name="email" type="email" value="{{ chosen.email or '' }}" {{ 'readonly title="Their email is how they sign in: change it on the team page"' | safe if chosen.kind == 'user' }}></div>
+      <div><label for="tm-phone">Phone and WhatsApp</label><input id="tm-phone" name="phone" value="{{ chosen.phone or '' }}" placeholder="+216 98 123 456"></div>
+      <button class="ui-btn primary sm">Save</button>
+    </form>
+
+    <div class="tm-messages" id="live-team-messages" data-live-region>
+      {% for item in messages %}
+      <div class="tm-msg {{ item.direction }} {{ 'by-assistant' if item.author == 'The assistant' }}">
+        <div class="tm-meta">
+          <b>{{ item.author or (chosen.name if item.direction == 'in' else 'You') }}</b>
+          <span>{{ (item.created_at | local).strftime("%d %b, %H:%M") if item.created_at }}</span>
+          {% if item.direction == "in" %}<span><i class="bi {{ way_icons[item.ways[0].channel] }}"></i> {{ item.ways[0].name }}</span>{% endif %}
+        </div>
+        <div class="tm-bubble" data-no-i18n>{{ item.body }}</div>
+        {% if item.direction == "out" %}
+        <div class="tm-way-list">
+          {% for way in item.ways %}
+          <span class="tm-way {{ way.status }}" {% if way.error %}title="{{ way.error }}"{% endif %}>
+            <i class="bi {{ way_icons[way.channel] }}"></i>{{ way.name }}
+            {% if way.status == "sent" %}<i class="bi bi-check2{{ '-all' if way.read_at }}" title="{{ 'Read' if way.read_at else 'Sent' }}"></i>
+            {% elif way.status == "failed" %}· not sent
+            {% elif way.status == "to_send" %}
+              {% if way.link %}· <a href="{{ way.link }}" target="_blank" rel="noopener">Open</a>{% endif %}
+              · <form method="post" action="/inbox/team/message/{{ way.id }}/sent"><input type="hidden" name="person" value="{{ chosen.key }}"><button>Sent</button></form>
+              · <form method="post" action="/inbox/team/message/{{ way.id }}/sent"><input type="hidden" name="person" value="{{ chosen.key }}"><input type="hidden" name="remove" value="1"><button>Remove</button></form>
+            {% endif %}
+          </span>
+          {% endfor %}
+        </div>
+        {% elif item.suggestion and item is sameas last_in %}
+        <div class="tm-found">
+          <b><i class="bi bi-stars"></i> The assistant found an answer{{ " you taught" if item.suggestion_source == "taught" else " on the website" if item.suggestion_source == "website" else "" }}</b>
+          <p>{{ item.suggestion }}</p>
+          <button type="button" class="ui-btn sm" data-tm-use="{{ item.suggestion }}"><i class="bi bi-reply"></i>Use this answer</button>
+        </div>
+        {% endif %}
+      </div>
+      {% else %}
+      <div class="tm-empty"><i class="bi bi-chat-heart"></i>No message with {{ chosen.name }} yet. Write the first one below.</div>
+      {% endfor %}
+    </div>
+
+    <form class="tm-write" method="post" action="/inbox/team/send" data-tm-write>
+      <input type="hidden" name="person" value="{{ chosen.key }}">
+      <input type="hidden" name="question" value="{{ last_in.body if last_in else '' }}">
+      <textarea name="body" required placeholder="Write to {{ chosen.name.split(' ')[0] }}…" aria-label="Your message"></textarea>
+      <div class="tm-write-row">
+        {% set default_way = "app" if "app" in chosen.ways else (chosen.ways[0] if chosen.ways else "") %}
+        {% for way in ["app", "email", "whatsapp", "sms"] %}
+        {% set can = way in chosen.ways %}
+        <label class="tm-pick {{ 'is-off' if not can }}" title="{% if not can %}{{ 'They have no account in the application' if way == 'app' else 'Add their email' if way == 'email' else 'Add their phone number' }}{% elif way == 'whatsapp' and not whatsapp_ready %}No Business number: it opens WhatsApp on your phone, written{% elif way == 'sms' %}It opens the messages of your phone, written: it goes from your number{% endif %}">
+          <input type="checkbox" name="channels" value="{{ way }}" {{ 'checked' if way == default_way }} {{ 'disabled' if not can }}>
+          <i class="bi {{ way_icons[way] }}"></i>{{ channel_names[way] }}
+        </label>
+        {% endfor %}
+        {% if last_in %}<button type="button" class="ui-btn ghost sm" data-tm-ask><i class="bi bi-stars"></i>Ask the assistant</button>{% endif %}
+        <button type="button" class="ui-btn ghost sm" data-tm-reword title="Write a few words, even in Tunisian: they become a proper message"><i class="bi bi-magic"></i>Reword</button>
+        <select class="form-select form-select-sm rounded-pill" data-tm-lang style="width:auto;" aria-label="Language of the reworded message"><option value="fr">in French</option><option value="en">in English</option></select>
+        <button class="ui-btn primary tm-send"><i class="bi bi-send-fill"></i>Send</button>
+      </div>
+      {% if last_in %}
+      <label class="tm-learn"><input type="checkbox" name="learn" value="true"> Remember this answer: next time the assistant knows what to answer to “{{ last_in.body[:70] }}{{ '…' if last_in.body | length > 70 }}”</label>
+      {% endif %}
+    </form>
+    {% else %}
+    <div class="tm-empty" style="margin:auto;"><i class="bi bi-chat-square-heart"></i>Choose someone to write to.<br>A message can go in the application, by email, on WhatsApp or by SMS, all at once.</div>
+    {% endif %}
+  </section>
+</div>
+
+<div class="tm-card tm-auto">
+  <i class="bi bi-robot"></i>
+  <div>
+    {% if auto_reply %}<b>The assistant answers the team alone</b><span>Only with an answer you taught, when the question is surely the same. Everything else waits for you, with the answer it found.</span>
+    {% else %}<b>The assistant prepares, you send</b><span>When someone of the team asks something, the assistant shows the answer it found. You send it with one click, or change it.</span>{% endif %}
+  </div>
+  <form method="post" action="/inbox/team/assistant">
+    <input type="hidden" name="person" value="{{ chosen.key if chosen else '' }}">
+    <input type="hidden" name="on" value="{{ '0' if auto_reply else '1' }}">
+    <button class="ui-btn sm">{% if auto_reply %}<i class="bi bi-pause-fill"></i>Only prepare{% else %}<i class="bi bi-play-fill"></i>Let it answer alone{% endif %}</button>
+  </form>
+</div>
+
+<script>
+(() => {
+  const find = document.querySelector("[data-tm-find]");
+  if (find) find.addEventListener("input", () => {
+    const words = find.value.trim().toLowerCase();
+    document.querySelectorAll("[data-tm-name]").forEach(row => { row.hidden = words && !row.dataset.tmName.includes(words); });
+  });
+  const edit = document.querySelector("[data-tm-edit]"), editForm = document.querySelector("[data-tm-edit-form]");
+  if (edit && editForm) edit.addEventListener("click", () => { editForm.hidden = !editForm.hidden; edit.setAttribute("aria-expanded", String(!editForm.hidden)); });
+  const write = document.querySelector("[data-tm-write]");
+  const box = write ? write.querySelector("textarea") : null;
+  document.addEventListener("click", event => {
+    const use = event.target.closest("[data-tm-use]");
+    if (use && box) { box.value = use.dataset.tmUse; box.focus(); box.scrollIntoView({ block: "center", behavior: "smooth" }); }
+  });
+  const ask = document.querySelector("[data-tm-ask]");
+  if (ask && box) ask.addEventListener("click", async () => {
+    const question = write.querySelector("[name=question]").value;
+    ask.disabled = true; const label = ask.innerHTML; ask.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Looking…';
+    try {
+      const response = await fetch("/assistant/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: question, history: [] }) });
+      const answer = response.ok ? await response.json() : null;
+      if (answer && answer.reply) { box.value = answer.reply; box.focus(); }
+    } catch (error) {}
+    ask.disabled = false; ask.innerHTML = label;
+  });
+  // "Reword": a few words (Tunisian, French or English) become a proper message in the language chosen; you read it first.
+  const reword = document.querySelector("[data-tm-reword]");
+  if (reword && box) reword.addEventListener("click", async () => {
+    if (box.value.trim().length < 2) { box.focus(); return; }
+    reword.disabled = true; const label = reword.innerHTML; reword.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Writing…';
+    try {
+      const response = await fetch("/inbox/reformulate", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: box.value.trim().slice(0, 2000), language: document.querySelector("[data-tm-lang]").value,
+                               first_name: {{ (chosen.name.split(' ')[0] if chosen else '') | tojson }} }) });
+      const answer = await response.json();
+      if (response.ok && answer.reply) { box.value = answer.reply; box.focus(); if (answer.warning) alert(answer.warning); }
+      else alert(answer.detail || "The message could not be reworded.");
+    } catch (error) {}
+    reword.disabled = false; reword.innerHTML = label;
+  });
+  // The newest message in view, as in any chat.
+  const list = document.getElementById("live-team-messages");
+  if (list && list.lastElementChild && window.innerWidth > 991) list.lastElementChild.scrollIntoView({ block: "nearest" });
+})();
+</script>
+{% endblock %}

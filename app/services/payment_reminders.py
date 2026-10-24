@@ -23,7 +23,19 @@ from app.services.email_templates import money
 
 logger = logging.getLogger(__name__)
 
-FIRST_AFTER = timedelta(hours=24)           # after the registration
+FIRST_AFTER = timedelta(hours=24)           # after the registration, unless the admin changed it (welcome.reminder_hours)
+
+
+def welcome_hours(db: Session) -> int:
+    from app.services import welcome
+
+    return welcome.reminder_hours(db)
+
+
+def first_after(db: Session) -> timedelta:
+    from app.services import welcome
+
+    return timedelta(hours=welcome.reminder_hours(db))
 SUGGEST_AGAIN_AFTER = timedelta(days=3)     # of silence, before proposing another one
 MAX_ATTEMPTS = 3                            # of an email that does not go out
 _MARK = "PAYMENT_REMINDER_SENT_"
@@ -151,8 +163,8 @@ def _attempt(db: Session, candidate: Candidate, registration: Registration) -> C
         registered = _utc(registration.registration_date) or datetime.now(timezone.utc)
         reminder = CandidateReminder(
             candidate_id=candidate.id, registration_id=registration.id,
-            reminder_key="payment_24h", reminder_type="payment", planned_for=registered + FIRST_AFTER,
-            strategy="One reminder for everything the candidate owes, 24 hours after registering. Never repeated by itself.",
+            reminder_key="payment_24h", reminder_type="payment", planned_for=registered + first_after(db),
+            strategy=f"One reminder for everything the candidate owes, {welcome_hours(db)} hours after registering. Never repeated by itself.",
         )
         db.add(reminder)
         db.commit()
@@ -172,6 +184,7 @@ def send_first(db: Session, now: datetime | None = None) -> int:
         .all()
     )
     covered = covered_ids(db, [candidate.id for candidate in candidates])
+    wait = first_after(db)
     sent = 0
     for candidate in candidates:
         debts = owing(candidate)
@@ -179,8 +192,8 @@ def send_first(db: Session, now: datetime | None = None) -> int:
             continue
         if any(item.id in covered[candidate.id] for item in debts):
             continue    # reminded once and still owing: what comes next is the admin's decision
-        if not any((_utc(item.registration_date) or now) <= now - FIRST_AFTER for item in debts):
-            continue    # registered less than a day ago
+        if not any((_utc(item.registration_date) or now) <= now - wait for item in debts):
+            continue    # registered too recently (24 hours unless the admin changed it)
         reminder = _attempt(db, candidate, debts[0])
         if reminder.status == "failed":
             continue

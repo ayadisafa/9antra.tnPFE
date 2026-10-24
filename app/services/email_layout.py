@@ -105,9 +105,14 @@ def branding(settings=None, lang: str = "fr") -> dict:
     """Signature, footer and accent colour chosen by the admin in Settings."""
     default = DEFAULT_SIGNATURE_EN if lang == "en" else DEFAULT_SIGNATURE
     signature = (getattr(settings, "email_signature", None) or "").strip() or default
+    note = (getattr(settings, "email_footer_note", None) or "").strip()
+    # The centre's own numbers (Settings, WhatsApp Business): under every email, so candidates can call or write.
+    phone, chat = (getattr(settings, "centre_phone", None) or "").strip(), (getattr(settings, "centre_whatsapp", None) or "").strip()
+    contact = " · ".join(part for part in ((("Phone " if lang == "en" else "Tél. ") + phone) if phone else "",
+                                           ("WhatsApp " + chat) if chat else "") if part)
     return {
         "signature": signature,
-        "footer_note": (getattr(settings, "email_footer_note", None) or "").strip(),
+        "footer_note": "\n".join(part for part in (note, contact) if part),
         "accent": clean_accent(getattr(settings, "email_accent_color", None)),
     }
 

@@ -59,6 +59,13 @@
   .tp-warn { font-size: .78rem; color: #be123c; font-weight: 600; }
   .tp-note { font-size: .78rem; font-weight: 600; color: var(--sky); }
   .tp-note.is-error { color: #be123c; }
+  .tp-channel-opt { position:relative; }
+  .tp-channel-opt input { position:absolute; opacity:0; pointer-events:none; }
+  .tp-channel-opt span { display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:999px; border:1px solid var(--border-color); font-size:.8rem; font-weight:700; color:#5b5670; cursor:pointer; }
+  .tp-channel-opt span i.bi-whatsapp { color:#16a34a; }
+  .tp-channel-opt input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .tp-channel-opt input:checked + span i { color:#fff; }
+  .tp-channel-opt input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
 </style>
 
 {% if current %}
@@ -77,7 +84,14 @@
         <div class="tp-title" style="font-size:1.1rem;">{{ spec.name }}</div>
         {% if current.customized %}<span class="tp-chip own">Changed by you</span>{% else %}<span class="tp-chip orig">Original text</span>{% endif %}
       </div>
+      {% if spec.key == "payment_reminder" %}
+      <div class="tp-sub mb-2">Sent by itself once, after registering, to someone who still owes: one email for everything they owe. It is never repeated by itself; after three days without payment or answer, the dashboard suggests sending it again.</div>
+      <label class="tp-when mb-3">Goes <input type="number" name="hours" min="1" max="336" value="{{ reminder_hours }}" aria-label="Hours after registering"> hours after registering</label>
+      <style>.tp-when { display:inline-flex; gap:8px; align-items:center; font-weight:800; font-size:.86rem; background:var(--gold-subtle); border-radius:12px; padding:7px 12px; }
+             .tp-when input { width:76px; border:1px solid var(--border-color); border-radius:10px; padding:4px 8px; font-weight:700; }</style>
+      {% else %}
       <div class="tp-sub mb-3">{{ spec.when }}</div>
+      {% endif %}
 
       {% if spec.switchable %}
       <div class="tp-auto mb-3 {% if not current.is_active %}is-off{% endif %}" id="auto-box">
@@ -90,6 +104,21 @@
       {% else %}
       <input type="hidden" name="is_active" value="true">
       {% endif %}
+
+
+      {# How it travels: by email, on WhatsApp, or both. #}
+      <div class="tp-channel mb-3">
+        <div class="form-label mb-1">How it reaches the candidate</div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for value, label, help in [("auto", "As chosen above the inbox", "the way chosen at the top of the inbox, and the next one if it does not work"),
+                                        ("both", "Email and WhatsApp", "always both"),
+                                        ("whatsapp", "WhatsApp first", "then email or SMS if WhatsApp cannot reach them")] %}
+          <label class="tp-channel-opt" title="{{ help }}"><input type="radio" name="channel" value="{{ value }}" {{ 'checked' if current.channel == value }}>
+            <span>{% if value == "auto" %}<i class="bi bi-shuffle"></i>{% else %}<i class="bi bi-whatsapp"></i>{% endif %}{{ label }}</span></label>
+          {% endfor %}
+        </div>
+        <div class="small text-muted mt-1">{% if whatsapp_ready %}WhatsApp messages go by themselves from your Business number.{% else %}No WhatsApp Business number yet: WhatsApp messages wait in the inbox (“To send on WhatsApp”), each with a button that opens WhatsApp with the message written.{% endif %}</div>
+      </div>
 
       <label class="form-label" for="template-subject">Subject</label>
       <input class="form-control mb-3" id="template-subject" name="subject" maxlength="200" required value="{{ current.subject }}">

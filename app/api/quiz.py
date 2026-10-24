@@ -113,6 +113,7 @@ def level_checks_page(request: Request, db: Session = Depends(get_db)):
             "email_ready": email_threads.smtp_configured(),
             "public_url": base_url,
             "public_url_local": weekly_questions.is_local_address(base_url),
+            "level_timing": level_check.timing_view(db),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         },
@@ -157,6 +158,15 @@ def send_ready(request: Request, db: Session = Depends(get_db)):
             "Set the address candidates can reach in Settings."
         )
     return _back(notice=notice, error=error)
+
+
+@router.post("/quiz/timing")
+def change_timing(when: str = Form("before"), days: str = Form("7"), db: Session = Depends(get_db)):
+    """When the level check goes by itself: some days before the first session, or as soon as they paid."""
+    plan = level_check.set_timing(db, when, days)
+    if plan["when"] == "paid":
+        return _back(notice="The level check now goes as soon as a candidate has paid in full.")
+    return _back(notice=f"The level check now goes {plan['days']} day{'s' if plan['days'] != 1 else ''} before the first session.")
 
 
 @router.post("/quiz/reminders")

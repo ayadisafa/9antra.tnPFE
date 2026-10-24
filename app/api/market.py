@@ -1,7 +1,7 @@
 """What the market asks: every program against real job offers."""
-from urllib.parse import urlencode
+from urllib.parse import quote_plus, urlencode
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -19,6 +19,28 @@ templates = Jinja2Templates(directory="app/templates", context_processors=[notif
 def _back(notice: str | None = None, error: str | None = None, anchor: str = "") -> RedirectResponse:
     query = urlencode({key: value for key, value in (("notice", notice), ("error", error)) if value})
     return RedirectResponse(f"/programs/market{'?' + query if query else ''}{anchor}", status_code=303)
+
+
+@router.post("/programs/market/recommendations/refresh")
+def refresh_recommendations(background: BackgroundTasks, back: str = Form("/programs/market")):
+    """Read every source of the recommendations again now (in the background: GitHub allows ten questions a minute)."""
+    def work():
+        from app.database import SessionLocal
+        from app.services import recommender
+
+        db = SessionLocal()
+        try:
+            recommender.refresh(db)
+        except Exception:
+            db.rollback()
+        finally:
+            db.close()
+
+    background.add_task(work)
+    target = back if back.startswith("/") and not back.startswith("//") else "/programs/market"
+    path, _, anchor = target.partition("#")
+    return RedirectResponse(path + ("&" if "?" in path else "?") + "notice=" + quote_plus("Reading every source again: the recommendations are renewed in a few minutes.")
+                            + ("#" + anchor if anchor else ""), status_code=303)
 
 
 @router.get("/programs/market", response_class=HTMLResponse)

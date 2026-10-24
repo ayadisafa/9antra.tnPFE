@@ -90,7 +90,7 @@ def preview(payload: Preview, db: Session = Depends(get_db)):
 @router.post("/reminders/create")
 def create(request: Request, audience: str = Form(""), to_candidate: str = Form(""), to_class: str = Form(""), to_program: str = Form(""),
            subject: str = Form(""), title: str = Form(""), body: str = Form(""), style: str = Form("brand"),
-           when: str = Form("later"), date: str = Form(""), time: str = Form(""), db: Session = Depends(get_db)):
+           when: str = Form("later"), date: str = Form(""), time: str = Form(""), channel: str = Form("email"), db: Session = Depends(get_db)):
     target = {"candidate": to_candidate, "class": to_class, "program": to_program}.get(audience, "")
     unknown = email_composer.unknown_variables(subject, title, body)
     if unknown:
@@ -107,7 +107,7 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
     user = auth.current(request)
     try:
         reminder = reminders.create(db, audience=audience, audience_id=target or None, subject=subject, title=title, body=body,
-                                    style=style, send_at=send_at, by=getattr(user, "name", None))
+                                    style=style, send_at=send_at, by=getattr(user, "name", None), channel=channel)
     except ValueError as problem:
         return _back(error=str(problem), anchor="#new")
     people = len(reminders.recipients(db, reminder.audience, reminder.audience_id))

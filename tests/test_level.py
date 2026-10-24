@@ -211,6 +211,8 @@ def payer(name, email, prog):
                      payment_status=PaymentStatus.UNPAID, status=RegistrationStatus.PENDING, registration_date=datetime.utcnow())
     db.add(r); db.commit(); return r
 python = program("Python")
+# Here the admin chose "as soon as they pay" (by default it goes 7 days before the first session: see test_team).
+lc.set_timing(db, "paid", 7)
 r3 = payer("Lina Paye", "lina.level@example.com", python)
 sent_mail.clear()
 payment_service.confirm_payment(db, r3.id, 190)
@@ -221,6 +223,7 @@ q3 = lc.current(db, r3.id)
 subjects = [str(m.get("subject")) for m in sent_mail]
 check("paying in full prepares the level check and sends it", q3 is not None and q3.sent_at is not None and any("où en êtes-vous" in s for s in subjects), subjects)
 check("once", sum(1 for s in subjects if "où en êtes-vous" in s) == 1, subjects)
+lc.set_timing(db, "before", 7)
 check("the Python form asks the Python questions", any("print(len(" in item["question"] for item in lc.items_of(q3)))
 
 settings = get_settings(db); settings.public_base_url = None; db.commit()

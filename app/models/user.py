@@ -23,6 +23,7 @@ class User(Base):
     last_login_at = Column(DateTime, nullable=True)
     # A team member's access: {part: none | view | edit} as JSON (see services/access.py).
     permissions = Column(Text, nullable=True)
+    phone = Column(String, nullable=True)        # for WhatsApp and SMS from the team chat
 
     professor = relationship("Professor")
 

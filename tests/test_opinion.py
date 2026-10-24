@@ -145,7 +145,7 @@ check("it also goes on WhatsApp once a business number is there", "feedback_requ
 # ======================================================================
 page = client.get("/")
 check("dashboard: four pictures, three things to do, the week's figures", page.status_code == 200 and page.text.count('class="db-tile ') == 4 and "What needs you today" in page.text and page.text.count('class="db-part ') == 6 and "New on 9antra.tn this week" in page.text, page.status_code)
-check("dashboard: the long lists are folded away", page.text.count('<details class="db-fold') == 4 and "Lately" not in page.text)
+check("dashboard: the long lists are folded away, in two folds", page.text.count('<details class="db-fold') == 2 and "Lately" not in page.text)
 parts = {part["label"]: part["count"] for part in overview.activity_parts(db, datetime.utcnow())}
 check("history: the week is counted by part of the work", set(parts) == {"New registrations", "Payments received", "Reminders sent", "Placed in a class", "Weekly answers", "Emails sent"} and parts["Emails sent"] >= 4, parts)
 news = ws.week_news(db, datetime.utcnow())

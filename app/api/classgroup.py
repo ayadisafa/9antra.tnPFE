@@ -311,6 +311,41 @@ def edit_professor(
     return _redirect("/classes/?tab=professors", notice=f"{professor.name} saved.")
 
 
+TO_NAME = "À nommer"          # a place for a professor still to find (made before 22 October 2026): never given a class
+
+
+def is_place_to_name(professor: Professor) -> bool:
+    return (professor.name or "").startswith(TO_NAME)
+
+
+def professors_coverage(db: Session, programs: list, professors: list) -> list[dict]:
+    """Each program and who teaches it (as many professors as the admin likes); the programs nobody teaches yet first."""
+    found = []
+    for program in programs:
+        mine = [professor for professor in professors if teaches(professor, program)]
+        real = [professor for professor in mine if not is_place_to_name(professor)]
+        found.append({"program": program, "real": real, "places": [professor for professor in mine if is_place_to_name(professor)],
+                      "nobody": not real,
+                      "others": [professor for professor in professors if professor not in mine and not is_place_to_name(professor)]})
+    found.sort(key=lambda item: (not item["nobody"], len(item["real"]), item["program"].name))
+    return found
+
+
+@router.post("/professors/resource-reminders")
+def save_resource_reminders(on: str = Form(""), days: str = Form("2"), text: str = Form(""), send_now: str = Form(""), db: Session = Depends(get_db)):
+    """The reminders to professors to add their resources: on or off, how many days before, and their words."""
+    from app.services import resource_reminders
+    from app.services.settings_service import public_base_url
+
+    plan = resource_reminders.save_settings(db, on=bool(on), days=days, text=text)
+    sent = resource_reminders.send_due(db, base_url=public_base_url(db)) if send_now and plan["on"] else 0
+    notice = (f"Professors are reminded {plan['days']} day{'s' if plan['days'] != 1 else ''} before a week that has no resource yet."
+              if plan["on"] else "The resource reminders are stopped.")
+    if send_now:
+        notice += f" {sent} reminder{'s' if sent != 1 else ''} sent now."
+    return _redirect("/classes/?tab=professors#resources", notice=notice)
+
+
 @router.post("/professors/{professor_id}/specialty")
 def add_professor_specialty(
     request: Request,
@@ -377,6 +412,38 @@ def remove_professor_access(professor_id: str, db: Session = Depends(get_db)):
         db.delete(account)
         db.commit()
     return _redirect("/classes/?tab=professors", notice=f"{professor.name} can no longer sign in.")
+
+
+@router.get("/professors/{professor_id}/delete", response_class=HTMLResponse)
+def professor_delete_form(professor_id: str, request: Request, db: Session = Depends(get_db)):
+    """What deleting this professor will do, for the dialog: each class with who could take it, their access, their questions."""
+    from app.services import course_questions, professor_removal
+
+    professor = _get_professor(db, professor_id)
+    rows = [{"class": group, "successors": professor_removal.successors(db, professor, group)}
+            for group in professor_removal.classes_of(db, professor)]
+    return templates.TemplateResponse(request=request, name="_professor_delete.html", context={
+        "professor": professor, "rows": rows,
+        "account": db.query(User).filter(User.professor_id == professor.id).first(),
+        "questions": len(course_questions.waiting_for(db, f"professor:{professor.id}")),
+    })
+
+
+@router.post("/professors/{professor_id}/delete")
+async def delete_professor(professor_id: str, request: Request, db: Session = Depends(get_db)):
+    """A professor removed for good: each of their classes goes to the professor chosen for it, or waits for one."""
+    from app.services import professor_removal
+
+    professor = _get_professor(db, professor_id)
+    form = await request.form()
+    handover = {key[len("give_"):]: value for key, value in form.items() if key.startswith("give_")}
+    user = auth.current(request)
+    try:
+        done = professor_removal.remove(db, professor, handover, who=user.name if user else None)
+    except ValueError as exc:
+        return _redirect("/classes/?tab=professors", error=str(exc))
+    sync_class_lifecycle(db)          # a class left without its professor is held until it has one
+    return _redirect("/classes/?tab=professors", notice=professor_removal.notice(done))
 
 
 @router.post("/professors/{professor_id}/absences")
@@ -605,8 +672,8 @@ def decide_registration_assignment(
                 reasons = {
                     "no_program": "This registration is not linked to a program yet.",
                     "no_open_class": "No open class exists and automatic class creation is off. Create a new class instead.",
-                    "busy": "They already follow another class on the same hours, so they start this program when it ends. "
-                            "To start them now anyway, choose a class or create a new one.",
+                    "busy": "They already follow another class: one program at a time. They start this program in a class "
+                            "some days after it ends (Settings, Classes). To start them now anyway, choose a class or create a new one.",
                 }
                 raise ValueError(reasons.get(result.reason, "The registration could not be assigned."))
         elif decision == "assign_existing":
@@ -716,6 +783,7 @@ def list_classes(request: Request, db: Session = Depends(get_db)):
             "candidates": sum(summaries[item.id]["enrolled"] for item in mine),
             "hours": round(hours, 1),
             "account": accounts.get(professor.id),
+            "reviews": __import__("app.services.program_feedback", fromlist=["of_professor"]).of_professor(db, professor.name),
             "absences": sorted(
                 (item for item in professor.absences if item.absence_date >= now.date()), key=lambda item: item.absence_date,
             )[:3],
@@ -737,6 +805,11 @@ def list_classes(request: Request, db: Session = Depends(get_db)):
             "all_professors": all_professors,
             "waiting_counts": waiting_counts,
             "teachers": teachers,
+            "coverage": professors_coverage(db, programs, all_professors),
+            "resource_plan": __import__("app.services.resource_reminders", fromlist=["settings_of"]).settings_of(db),
+            "resource_due": __import__("app.services.resource_reminders", fromlist=["due"]).due(db),
+            "resource_recent": __import__("app.services.resource_reminders", fromlist=["recent"]).recent(db),
+
             "today": date.today(),
             "specialty_suggestions": specialty_suggestions,
             "used_programs": used_programs,
@@ -849,6 +922,7 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
             "selected_days": [DAY_KEYS[index] for index in parse_days(class_group.days_of_week)],
             "course": weekly_questions.class_overview(db, class_group),
             "presence": attendance.class_summary(db, class_group),
+            "dynamics": __import__("app.services.class_dynamics", fromlist=["of_class"]).of_class(db, class_group),
             "look": class_looks.look(class_group),
             "symbols": class_looks.SYMBOLS,
             "colours": class_looks.COLOURS,

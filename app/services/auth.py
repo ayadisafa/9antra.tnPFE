@@ -29,6 +29,8 @@ from app.models.course_material import ClassMaterial
 from app.models.user import User, UserSession
 
 COOKIE = "nantra_session"
+# An admin looking at the application as someone else (a professor, a team member): only to look, nothing can be changed.
+VIEW_AS_COOKIE = "nantra_view_as"
 SESSION_DAYS = 14
 MIN_PASSWORD = 8
 _ITERATIONS = 240_000
@@ -40,9 +42,11 @@ ADMIN, PROFESSOR, STAFF = "admin", "professor", "staff"
 # "/opinion/" is the candidate's private page to say what they thought of their program,
 # "/level/" the one where they say where they stand before it starts.
 # "/app.webmanifest" lets a phone put the application on its home screen.
-_OPEN_PREFIXES = ("/login", "/logout", "/setup", "/static/", "/learn/", "/opinion/", "/level/", "/join/", "/favicon", "/app.webmanifest")
+# "/whatsapp/webhook" is Meta's: it proves each message with the app's secret (see api/whatsapp.py).
+_OPEN_PREFIXES = ("/login", "/logout", "/setup", "/static/", "/learn/", "/opinion/", "/level/", "/join/", "/favicon", "/app.webmanifest",
+                  "/whatsapp/webhook", "/sms/webhook")
 # What a professor may open besides the pages of their own classes.
-_PROFESSOR_PREFIXES = ("/teacher", "/account", "/guide", "/language", "/i18n/")
+_PROFESSOR_PREFIXES = ("/teacher", "/account", "/guide", "/language", "/i18n/", "/events/stream")
 _CLASS_PAGE = re.compile(r"^/classes/([^/]+)/(course|attendance)(/|$)")
 _CLASS_FILE = re.compile(r"^/classes/files/([^/]+)$")
 _PROGRAM_ICON = re.compile(r"^/programs/[^/]+/icon$")
@@ -57,6 +61,8 @@ class CurrentUser:
     role: str
     professor_id: str | None = None
     permissions: dict | None = None          # a team member's access, by part of the application
+    viewing_as: str | None = None            # set when an admin looks as this person: the admin's name (looking only)
+    viewer_id: str | None = None
 
     @property
     def is_admin(self) -> bool:
@@ -255,6 +261,22 @@ def user_for(db: Session, token: str | None) -> CurrentUser | None:
     return CurrentUser(id=user.id, name=user.name, email=user.email, role=user.role, professor_id=user.professor_id, permissions=permissions)
 
 
+def seen_as(db: Session, admin: CurrentUser, user_id: str | None) -> CurrentUser | None:
+    """The person an admin chose to look as: everything as they see it, nothing they could change."""
+    if not user_id or not admin.is_admin:
+        return None
+    user = db.get(User, user_id)
+    if user is None or not user.is_active or user.role == ADMIN or user.id == admin.id:
+        return None
+    permissions = None
+    if user.role == STAFF:
+        from app.services import access
+
+        permissions = access.clean(user.permissions)
+    return CurrentUser(id=user.id, name=user.name, email=user.email, role=user.role, professor_id=user.professor_id, permissions=permissions,
+                       viewing_as=admin.name, viewer_id=admin.id)
+
+
 def sessions_of(db: Session, user_id: str, token: str | None) -> list[dict]:
     """Where this account is signed in, the browser asking first."""
     mine = _fingerprint(token) if token else ""
@@ -393,13 +415,20 @@ class AccessGate:
             return
 
         request = Request(scope)
+        # The sentences services write for this page (the advice…) come out in the page's language.
+        __import__("app.services.ui_words", fromlist=["use"]).use(request.cookies.get("lang"))
         db = SessionLocal()
         try:
             if not has_admin(db):
                 response = self._refuse(request, "/setup")
             else:
                 user = user_for(db, request.cookies.get(COOKIE))
-                if user is None:
+                looking = seen_as(db, user, request.cookies.get(VIEW_AS_COOKIE)) if user is not None and not path.startswith("/account/view-as") else None
+                if looking is not None:
+                    user = looking
+                if looking is not None and scope.get("method", "GET") not in ("GET", "HEAD", "OPTIONS") and not path.startswith("/i18n/seen"):
+                    response = self._refuse_looking(request, looking)
+                elif user is None:
                     wanted = path + (("?" + scope["query_string"].decode()) if scope.get("query_string") else "")
                     response = self._refuse(request, "/login" + (f"?next={quote(wanted, safe='')}" if path != "/" else ""))
                 elif user.is_professor and not professor_may_open(db, user, path):
@@ -416,6 +445,17 @@ class AccessGate:
             await response(scope, receive, send)
             return
         await self.app(scope, receive, send)
+
+    @staticmethod
+    def _refuse_looking(request: Request, user: CurrentUser):
+        """An admin looking as someone else: nothing is changed in their name."""
+        if "application/json" in request.headers.get("content-type", "") or "x-live-refresh" in request.headers:
+            return JSONResponse({"detail": f"You are looking as {user.name}: nothing can be changed. Go back to your own view first."}, status_code=403)
+        back = request.headers.get("referer") or "/"
+        back = back if back.startswith(("/", str(request.base_url))) else "/"
+        joiner = "&" if "?" in back else "?"
+        return RedirectResponse(back + joiner + "error=" + quote(f"You are looking as {user.name}: nothing can be changed. Go back to your own view first."),
+                                status_code=303)
 
     @staticmethod
     def _refuse_staff(request: Request, user: CurrentUser):

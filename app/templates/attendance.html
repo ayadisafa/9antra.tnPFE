@@ -3,6 +3,7 @@
 
 {% block title %}Presence · {{ cls.name }}{% endblock %}
 {% block page_title %}Presence{% endblock %}
+{% block live_topics %}class:{{ cls.id }}{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -149,6 +150,13 @@
     {% if not sheet %}
     <div class="ui-empty"><i class="bi bi-people"></i><strong>No candidate in this class yet</strong></div>
     {% else %}
+    {% if check_summary and check_summary.asked %}
+    <div class="at-checks" id="live-session-check" data-live-region><i class="bi bi-patch-question"></i><span><b>After the session:</b> {{ check_summary.asked }} asked what they learnt, {{ check_summary.answered }} answered{% if check_summary.average is not none %} ({{ check_summary.average }}% right on average){% endif %}.</span></div>
+    {% elif check_plan.on and not selected_is_future %}
+    <div class="at-checks soft"><i class="bi bi-clock-history"></i><span>Each candidate is asked what they learnt <b>{{ check_plan.hours }} h</b> after the session ends (Settings, Classes).</span></div>
+    {% endif %}
+    <style>.at-checks { display:flex; gap:10px; align-items:center; background:var(--mint-subtle); color:#0f5132; border-radius:14px; padding:10px 14px; margin-bottom:12px; font-size:.82rem; }
+           .at-checks.soft { background:#f6f3fb; color:#5b5670; } .at-checks i { font-size:1.05rem; }</style>
     <form method="post" action="/classes/{{ cls.id }}/attendance/{{ selected.id }}" id="presenceForm">
       {% for row in sheet %}
       {% set current = row.status or 'present' %}
@@ -170,6 +178,8 @@
         </div>
         <input class="form-control form-control-sm at-note" name="note_{{ row.registration.id }}" value="{{ row.note or '' }}" placeholder="Note (optional)" aria-label="Note about {{ row.name }}" {{ 'disabled' if selected_is_future }}>
         <div class="at-seen">
+          {% if row.check and row.check.answered %}<span class="ui-chip {{ 'ok' if (row.check.score or 0) >= 50 else 'warn' }}" title="The questions after this session"><i class="bi bi-patch-check"></i>Answered after the session · {{ row.check.right }}/{{ row.check.total }}</span>
+          {% elif row.check and row.check.sent %}<span class="ui-chip muted" title="The questions after this session"><i class="bi bi-hourglass-split"></i>Questions sent · not answered yet</span>{% endif %}
           {% if row.join and row.join.joined %}<span class="ui-chip {{ 'warn' if row.join.late else 'ok' }}" title="By their own link{% if row.join.joins > 1 %}, used {{ row.join.joins }} times{% endif %}"><i class="bi bi-box-arrow-in-right"></i>Came in {{ row.join.joined.strftime('%H:%M') }}{% if row.join.late %} · {{ row.join.minutes_late }} min late{% endif %}</span>
           {% elif row.join and row.join.sent %}<span class="ui-chip muted"><i class="bi bi-envelope"></i>Has their link · not come in</span>
           {% elif meeting.url %}<span class="ui-chip muted">Link not sent yet</span>{% endif %}

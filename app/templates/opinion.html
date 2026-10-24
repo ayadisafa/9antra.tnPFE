@@ -74,7 +74,23 @@
     <p class="lead">Votre avis est bien arrivé. Il nous aide à améliorer la formation pour les suivants.</p>
     {% if row.rating %}<div class="given" role="img" aria-label="{{ row.rating }} étoiles sur 5">{% for n in range(5) %}<span class="{{ '' if n < row.rating else 'off' }}">★</span>{% endfor %}</div>{% endif %}
     {% if row.comment %}<div class="quote">“{{ row.comment }}”</div>{% endif %}
-    <div><a class="more" href="{{ facebook }}" target="_blank" rel="noopener">Partager aussi mon avis sur Facebook</a></div>
+    <div class="fb-go">
+      <p class="lead" style="margin:14px 0 8px;">Une dernière chose : laissez aussi votre avis sur notre page Facebook, il aide d'autres personnes à nous choisir.</p>
+      <a class="more" id="fb-go" href="{{ facebook }}" rel="noopener">Donner mon avis sur Facebook</a>
+      {% if thanks %}<p class="foot" id="fb-count" style="margin-top:8px;">Vous y serez conduit(e) dans <b id="fb-seconds">8</b> secondes… <a href="#" id="fb-stay" style="color:var(--berry); font-weight:700;">Rester ici</a></p>
+      <script>
+        (() => {
+          let seconds = 8, stop = false;
+          const shown = document.getElementById("fb-seconds");
+          document.getElementById("fb-stay").addEventListener("click", event => { event.preventDefault(); stop = true; document.getElementById("fb-count").remove(); });
+          const tick = setInterval(() => {
+            if (stop) { clearInterval(tick); return; }
+            seconds -= 1; if (shown) shown.textContent = seconds;
+            if (seconds <= 0) { clearInterval(tick); window.location.href = document.getElementById("fb-go").href; }
+          }, 1000);
+        })();
+      </script>{% endif %}
+    </div>
     <p class="foot" style="margin-top:14px;">Vous souhaitez le modifier ? <a href="?edit=1" style="color:var(--berry); font-weight:700;">Changer mon avis</a></p>
   </div>
 
@@ -88,7 +104,7 @@
     </svg>
     <span class="eyebrow">{{ row.program_name or 'Votre formation' }}</span>
     <h1>{{ first_name }}, comment s'est passée votre formation ?</h1>
-    <p class="lead">Une minute suffit : des étoiles, et quelques mots si vous le voulez.</p>
+    <p class="lead">Deux minutes suffisent : la formation, ce qu'il faut améliorer, votre formateur. Ensuite, vous pourrez aussi laisser un avis sur notre page Facebook.</p>
 
     <fieldset class="stars" aria-label="Combien d'étoiles donnez-vous à cette formation ?">
       {% for value, label in [(5, 'Excellent'), (4, 'Très bien'), (3, 'Correct'), (2, 'Décevant'), (1, 'Mauvais')] %}
@@ -99,9 +115,45 @@
     <div class="said" id="said" aria-live="polite"></div>
 
     <div class="field">
-      <label class="q" for="words">Qu'avez-vous le plus apprécié, et que faudrait-il améliorer ?</label>
-      <textarea id="words" name="words" maxlength="2000" placeholder="Le formateur, le contenu, le rythme, l'ambiance, l'organisation…">{{ row.comment or '' }}</textarea>
+      <span class="q">Êtes-vous content(e) de votre formation ?</span>
+      <div class="faces" role="radiogroup" aria-label="Êtes-vous content(e) ?">
+        {% for value, face, label in [(1, '😞', 'Pas du tout'), (2, '😕', 'Peu'), (3, '😐', 'Moyennement'), (4, '🙂', 'Content(e)'), (5, '😄', 'Très content(e)')] %}
+        <label title="{{ label }}"><input type="radio" name="happy" value="{{ value }}" {{ 'checked' if given.happy == value }}><span>{{ face }}</span><small>{{ label }}</small></label>
+        {% endfor %}
+      </div>
     </div>
+    <div class="field">
+      <label class="q" for="words">Qu'avez-vous le plus apprécié ?</label>
+      <textarea id="words" name="words" maxlength="2000" placeholder="Le contenu, le rythme, l'ambiance, les projets…">{{ row.comment or '' }}</textarea>
+    </div>
+    <div class="field">
+      <label class="q" for="improve">Que devrions-nous améliorer dans la formation ?</label>
+      <textarea id="improve" name="improve" maxlength="2000" placeholder="Ce qui manquait, ce qui était trop rapide ou trop lent, un sujet à ajouter…">{{ given.improve or '' }}</textarea>
+    </div>
+    <div class="field">
+      <span class="q">Votre formateur{% if professor %}, {{ professor }}{% endif %}</span>
+      <div class="pstars" role="radiogroup" aria-label="Combien d'étoiles pour votre formateur ?">
+        {% for value in [5, 4, 3, 2, 1] %}<input type="radio" name="prof_stars" id="pstar{{ value }}" value="{{ value }}" {{ 'checked' if given.prof_stars == value }}><label for="pstar{{ value }}" title="{{ value }} sur 5">★</label>{% endfor %}
+      </div>
+      <textarea name="prof_words" maxlength="2000" placeholder="Ses explications, sa disponibilité, son aide…" aria-label="Quelques mots sur votre formateur">{{ given.prof_words or '' }}</textarea>
+    </div>
+    <div class="field">
+      <span class="q">Recommanderiez-vous 9antra à un(e) ami(e) ?</span>
+      <div class="reco">
+        {% for value, label in [('yes', 'Oui'), ('maybe', 'Peut-être'), ('no', 'Non')] %}<label><input type="radio" name="recommend" value="{{ value }}" {{ 'checked' if given.recommend == value }}><span>{{ label }}</span></label>{% endfor %}
+      </div>
+    </div>
+    <style>
+      .faces { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+      .faces label { display:flex; flex-direction:column; align-items:center; gap:2px; cursor:pointer; border:1px solid #ebe5f3; border-radius:14px; padding:6px 8px; min-width:62px; }
+      .faces input, .reco input { position:absolute; opacity:0; pointer-events:none; }
+      .faces span { font-size:1.6rem; } .faces small { font-size:.66rem; color:#6b6480; }
+      .faces label:has(input:checked), .reco label:has(input:checked) { border-color:var(--berry); background:#fdf2f7; }
+      .pstars { display:inline-flex; flex-direction:row-reverse; gap:2px; margin:4px 0 6px; }
+      .pstars input { position:absolute; opacity:0; } .pstars label { font-size:1.6rem; color:#ddd7ea; cursor:pointer; }
+      .pstars input:checked ~ label, .pstars label:hover, .pstars label:hover ~ label { color:#f5b301; }
+      .reco { display:flex; gap:6px; margin-top:6px; } .reco label { border:1px solid #ebe5f3; border-radius:999px; padding:6px 14px; cursor:pointer; font-weight:700; font-size:.86rem; }
+    </style>
     <label class="check"><input type="checkbox" name="publish" value="true" {% if may_publish %}checked{% endif %}><span>J'accepte que mon avis soit publié avec mon prénom (site, page Facebook).</span></label>
     {% if problem %}<div class="problem">{{ problem }}</div>{% endif %}
     <button class="submit" type="submit">Envoyer mon avis</button>

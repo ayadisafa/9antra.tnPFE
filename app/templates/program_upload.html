@@ -68,7 +68,7 @@
                 </div>
                 <div id="pStep2" class="d-flex align-items-center gap-3 opacity-40">
                     <i class="bi bi-circle fs-6"></i>
-                    <span>[2/4] Executing Schema Extraction via Gemini AI</span>
+                    <span>[2/4] Reading the catalogue on this computer</span>
                 </div>
                 <div id="pStep3" class="d-flex align-items-center gap-3 opacity-40">
                     <i class="bi bi-circle fs-6"></i>
@@ -259,7 +259,7 @@
 
             setTimeout(() => {
                 progressBar.style.width = '35%';
-                currentTask.innerText = 'Extracting structured program entities with Gemini...';
+                currentTask.innerText = 'Reading each program: prices, hours, levels and weeks...';
                 setStepState('pStep1', 'pStep2');
             }, 1000);
 

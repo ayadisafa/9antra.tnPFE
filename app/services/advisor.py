@@ -28,6 +28,7 @@ from app.models.registration import PaymentStatus, Registration, RegistrationSta
 from app.services import attendance, enrollment_service, payment_reminders, program_assistant, week_insights, weekly_questions
 from app.services.email_templates import money
 from app.services.schedule_utils import class_start_dt, format_date_en, local_now, utc_to_local
+from app.services.ui_words import plural as _counted, t as _t      # the sentences below come out in the page's language
 
 SNOOZE_DAYS = 3
 REMIND_AGAIN_AFTER = payment_reminders.SUGGEST_AGAIN_AFTER   # of silence, before proposing another reminder
@@ -59,15 +60,15 @@ class Advice:
 
 def _ago(moment: datetime | None, now: datetime) -> str:
     if moment is None:
-        return "never"
+        return _t("never")
     seconds = max(0, (now - moment).total_seconds())
     if seconds < 3600:
-        return "less than an hour ago"
+        return _t('less than an hour ago')
     if seconds < 86400:
         hours = int(seconds // 3600)
-        return f"{hours} hour{'s' if hours != 1 else ''} ago"
+        return _t('{0} hour{1} ago', hours, 's' if hours != 1 else '')
     days = int(seconds // 86400)
-    return "yesterday" if days == 1 else f"{days} days ago"
+    return _t("yesterday") if days == 1 else _t('{0} days ago', days)
 
 
 def _naive_utc(moment: datetime | None) -> datetime | None:
@@ -78,11 +79,11 @@ def _naive_utc(moment: datetime | None) -> datetime | None:
 
 
 def _plural(count: int, word: str) -> str:
-    return f"{count} {word}{'' if count == 1 else 's'}"
+    return _counted(count, word)
 
 
 def _name(candidate: Candidate) -> str:
-    return candidate.full_name or candidate.email or "This candidate"
+    return candidate.full_name or candidate.email or _t('This candidate')
 
 
 def _short_name(candidate: Candidate) -> str:
@@ -97,7 +98,7 @@ def _short_name(candidate: Candidate) -> str:
 
 
 def _program(registration: Registration) -> str:
-    return registration.program.name if registration.program else (registration.program_name or "a program")
+    return registration.program.name if registration.program else (registration.program_name or _t('a program'))
 
 
 def _owing(candidate: Candidate) -> list[Registration]:
@@ -169,52 +170,51 @@ def payment_advice(candidate: Candidate, history: dict, now_utc: datetime, now_l
     soon = min((start for start in starts if start >= now_local), default=None)
     pressing = soon is not None and soon - now_local <= timedelta(days=3)
 
-    facts = [f"{money(total)} due", _plural(len(owing), "program")]
+    facts = [_t('{0} due', money(total)), _plural(len(owing), "program")]
     if paid_part:
-        facts.append(f"{money(paid_part)} already paid")
-    facts.append(f"{_plural(sent, 'reminder')} sent" if sent else "no reminder yet")
-    owes = f"{name} owes {money(total)}" + (f" on {len(owing)} programs ({programs})" if len(owing) > 1 else f" for {programs}")
+        facts.append(_t('{0} already paid', money(paid_part)))
+    facts.append(_t('{0} sent', _plural(sent, 'reminder')) if sent else _t('no reminder yet'))
+    owes = _t('{0} owes {1}', name, money(total)) + (_t(' on {0} programs ({1})', len(owing), programs) if len(owing) > 1 else _t(' for {0}', programs))
     profile = f"/candidate/{candidate.id}"
     # Nothing goes out from a recommendation: the admin reads the message first.
-    write = _go("Read and send", f"{profile}/payment-reminder")
+    write = _go(_t('Read and send'), f"{profile}/payment-reminder")
     key = f"pay:{candidate.id}:{sent}:{len(owing)}"
     base = 55 + min(20, int(total // 100)) + (15 if pressing else 0)
     newer = [item for item in owing if item.id not in history.get("covered", set())] if sent else []
     also = (
-        f" Since then they also registered for {', '.join(dict.fromkeys(_program(item) for item in newer))}."
+        _t(' Since then they also registered for {0}.', ', '.join(dict.fromkeys(_program(item) for item in newer)))
         if newer and len(newer) < len(owing) else ""
     )
 
     if history["wrote_since"]:
         return Advice(
             key=key + ":wrote", priority=base - 5, tone="important", icon="bi-chat-left-text",
-            title=f"Read {first}'s message before reminding again",
-            why=f"{owes}. They wrote to you after the last reminder ({_ago(last, now_utc)}).",
-            facts=facts, action=_go("Open the discussion", f"/inbox?candidate={candidate.id}"),
+            title=_t("Read {0}'s message before reminding again", first),
+            why=_t('{0}. They wrote to you after the last reminder ({1}).', owes, _ago(last, now_utc)),
+            facts=facts, action=_go(_t('Open the discussion'), f"/inbox?candidate={candidate.id}"),
             link={"label": "Profile", "url": profile},
         )
     if sent == 0:
         if age < FIRST_REMINDER_AFTER:
             return Advice(
                 key=key + ":new", priority=20, tone="info", icon="bi-hourglass-split",
-                title=f"Nothing to do yet for {first}'s payment",
-                why=f"{owes}, registered {_ago(registered, now_utc)}. One reminder goes out by itself 24 hours after the registration.",
+                title=_t("Nothing to do yet for {0}'s payment", first),
+                why=_t('{0}, registered {1}. One reminder goes out by itself 24 hours after the registration.', owes, _ago(registered, now_utc)),
                 facts=facts, link={"label": "Profile", "url": profile}, can_snooze=False,
             )
         return Advice(
             key=key, priority=base + 5, tone="urgent" if pressing else "important", icon="bi-cash-coin",
-            title=f"Send {first} a payment reminder",
-            why=f"{owes} and has not been reminded since registering {_ago(registered, now_utc)}."
-                + (f" The class starts {format_date_en(soon)}." if pressing else ""),
+            title=_t('Send {0} a payment reminder', first),
+            why=_t('{0} and has not been reminded since registering {1}.', owes, _ago(registered, now_utc))
+                + (_t(' The class starts {0}.', format_date_en(soon)) if pressing else ""),
             facts=facts, action=write, link={"label": "Profile", "url": profile},
         )
     if last is not None and now_utc - last < REMIND_AGAIN_AFTER:
         again = utc_to_local(last + REMIND_AGAIN_AFTER)
         return Advice(
             key=key + ":wait", priority=15, tone="info", icon="bi-hourglass-split",
-            title=f"Give {first} time to answer",
-            why=f"{owes}. The reminder went out {_ago(last, now_utc)}. Nothing more is sent by itself; "
-                f"if there is still no payment and no answer on {again:%A %d %b}, you will be offered to send it again.{also}",
+            title=_t('Give {0} time to answer', first),
+            why=_t('{0}. The reminder went out {1}. Nothing more is sent by itself; if there is still no payment and no answer on {2:%A %d %b}, you will be offered to send it again.{3}', owes, _ago(last, now_utc), again, also),
             facts=facts, link={"label": "Profile", "url": profile}, can_snooze=False,
         )
     silent_days = max(REMIND_AGAIN_AFTER.days, (now_utc - last).days) if last is not None else REMIND_AGAIN_AFTER.days
@@ -222,19 +222,17 @@ def payment_advice(candidate: Candidate, history: dict, now_utc: datetime, now_l
         phone = (candidate.phone or "").strip()
         return Advice(
             key=key + ":call", priority=base + 10, tone="urgent" if pressing else "important", icon="bi-telephone-outbound",
-            title=f"Call {first}" + (f" on {phone}" if phone else "") + ": the reminders are not working",
-            why=f"{owes}. {_plural(sent, 'reminder')} went out, the last {_ago(last, now_utc)}, with no payment and no answer. "
-                f"Another email is unlikely to change that.{also}",
+            title=_t('Call {0}', first) + (_t(' on {0}', phone) if phone else "") + _t(': the reminders are not working'),
+            why=_t('{0}. {1} went out, the last {2}, with no payment and no answer. Another email is unlikely to change that.{3}', owes, _plural(sent, 'reminder'), _ago(last, now_utc), also),
             facts=facts,
             action=_go("Call", f"tel:{quote(phone)}") if phone else write,
-            link={"label": "Write anyway", "url": f"{profile}/payment-reminder"} if phone else {"label": "Profile", "url": profile},
+            link={"label": _t('Write anyway'), "url": f"{profile}/payment-reminder"} if phone else {"label": "Profile", "url": profile},
         )
     return Advice(
         key=key, priority=base, tone="urgent" if pressing else "important", icon="bi-cash-coin",
-        title=f"{first} has not answered for {silent_days} days: send the payment reminder again?",
-        why=f"{owes}. The reminder of {utc_to_local(last):%d %b} brought no payment and no answer.{also} "
-            "Nothing is sent unless you decide: read the message, change it if you want, then send."
-            + (f" The class starts {format_date_en(soon)}." if pressing else ""),
+        title=_t('{0} has not answered for {1} days: send the payment reminder again?', first, silent_days),
+        why=_t('{0}. The reminder of {1:%d %b} brought no payment and no answer.{2} Nothing is sent unless you decide: read the message, change it if you want, then send.', owes, utc_to_local(last), also)
+            + (_t(' The class starts {0}.', format_date_en(soon)) if pressing else ""),
         facts=facts, action=write, link={"label": "Profile", "url": profile},
     )
 
@@ -253,21 +251,21 @@ def inbox_advice(db: Session, now_utc: datetime, candidate_id: str | None = None
         oldest = waiting[0]
         since = _naive_utc(oldest.last_message_at)
         hours = (now_utc - since).total_seconds() / 3600 if since else 0
-        who = _name(oldest.candidate) if oldest.candidate else "A candidate"
+        who = _name(oldest.candidate) if oldest.candidate else _t('A candidate')
         if len(waiting) == 1:
-            title = f"Answer {who.split()[0].capitalize()}'s email"
-            why = f"“{oldest.subject or 'No subject'}” has waited since {_ago(since, now_utc)}. The system was not sure enough to answer alone."
+            title = _t("Answer {0}'s email", who.split()[0].capitalize())
+            why = _t('“{0}” has waited since {1}. The system was not sure enough to answer alone.', oldest.subject or _t('No subject'), _ago(since, now_utc))
             url = f"/inbox?filter=todo&thread={oldest.id}"
         else:
-            title = f"Answer {len(waiting)} candidate emails"
-            why = f"The oldest, from {who}, has waited since {_ago(since, now_utc)}. The system was not sure enough to answer them alone."
+            title = _t('Answer {0} candidate emails', len(waiting))
+            why = _t('The oldest, from {0}, has waited since {1}. The system was not sure enough to answer them alone.', who, _ago(since, now_utc))
             url = "/inbox?filter=todo"
         found.append(Advice(
             key=f"inbox:{candidate_id or 'all'}:{len(waiting)}:{oldest.id}",
             # A candidate waiting for an answer comes before everything else.
             priority=min(98, 86 + int(hours // 4)), tone="urgent" if hours >= 24 else "important",
             icon="bi-envelope-exclamation", title=title, why=why,
-            facts=[f"{_plural(len(waiting), 'email')} waiting"], action=_go("Open the inbox", url), can_snooze=False,
+            facts=[_t('{0} waiting', _plural(len(waiting), 'email'))], action=_go(_t('Open the inbox'), url), can_snooze=False,
         ))
 
     failed_query = db.query(CandidateEmail).filter(
@@ -282,10 +280,9 @@ def inbox_advice(db: Session, now_utc: datetime, candidate_id: str | None = None
         found.append(Advice(
             key=f"failed:{candidate_id or 'all'}:{len(failed)}:{newest.id}",
             priority=70, tone="important", icon="bi-send-x",
-            title=f"{_plural(len(failed), 'email')} did not reach {'this candidate' if candidate_id else 'candidates'}",
-            why=f"The latest is “{newest.subject or 'No subject'}”, {_ago(_naive_utc(newest.received_at), now_utc)}. "
-                "Open it and use “Send again” once the email settings are right.",
-            action=_go("Open it", f"/inbox?filter=all&thread={newest.thread_id}" if newest.thread_id else "/inbox?filter=all"),
+            title=_t('{0} did not reach {1}', _plural(len(failed), 'email'), _t('this candidate') if candidate_id else _t('the candidates')),
+            why=_t('The latest is “{0}”, {1}. Open it and use “Send again” once the email settings are right.', newest.subject or _t('No subject'), _ago(_naive_utc(newest.received_at), now_utc)),
+            action=_go(_t('Open it'), f"/inbox?filter=all&thread={newest.thread_id}" if newest.thread_id else "/inbox?filter=all"),
         ))
     return found
 
@@ -314,44 +311,42 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
     soon = waiting or (starting and days_to_start <= 3)
 
     if members and (starting or class_group.status == ClassStatus.ONGOING):
-        when = (f"was due to start {format_date_en(start)} and waits" if waiting
-                else f"starts {format_date_en(start)}" if starting else "is running")
+        when = (_t('was due to start {0} and waits', format_date_en(start)) if waiting
+                else _t('starts {0}', format_date_en(start)) if starting else _t('is running'))
         professor = class_group.professor
         if professor is None and not class_group.professor_name:
             found.append(Advice(
                 key=f"class:{class_group.id}:professor", priority=88 if soon else 72,
                 tone="urgent" if soon else "important", icon="bi-person-exclamation",
-                title=f"Give {class_group.name} a professor",
-                why=f"The class {when} with {_plural(len(members), 'candidate')} and nobody is assigned to teach it. "
-                    "A class starts only with a professor of its speciality.",
-                action=_go("Choose a professor", url + "#parameters"),
+                title=_t('Give {0} a professor', class_group.name),
+                why=_t('The class {0} with {1} and nobody is assigned to teach it. A class starts only with a professor of its speciality.', when, _plural(len(members), 'candidate')),
+                action=_go(_t('Choose a professor'), url + "#parameters"),
             ))
         elif professor is not None and class_group.program is not None and not enrollment_service.teaches(professor, class_group.program):
             found.append(Advice(
                 key=f"class:{class_group.id}:speciality:{professor.id}", priority=86 if soon and not_started else 60,
                 tone="urgent" if soon and not_started else "important", icon="bi-mortarboard",
-                title=f"{class_group.program.name} is not one of {professor.name}'s specialities",
-                why=f"{class_group.name} {when} with {_plural(len(members), 'candidate')}. Only a professor of the speciality "
-                    "teaches a class: add it to their profile if they do teach it, or choose another professor."
-                    + (" Until then the class does not start." if not_started else ""),
-                action=_go("Open the class", url),
+                title=_t("{0} is not one of {1}'s specialities", class_group.program.name, professor.name),
+                why=_t('{0} {1} with {2}. Only a professor of the speciality teaches a class: add it to their profile if they do teach it, or choose another professor.', class_group.name, when, _plural(len(members), 'candidate'))
+                    + (_t(' Until then the class does not start.') if not_started else ""),
+                action=_go(_t('Open the class'), url),
             ))
         if not class_group.start_time:
             found.append(Advice(
                 key=f"class:{class_group.id}:time", priority=66, tone="important", icon="bi-clock",
-                title=f"Set the session time of {class_group.name}",
-                why=f"The class {when}, but its emails and reminders cannot tell candidates what time to come.",
+                title=_t('Set the session time of {0}', class_group.name),
+                why=_t('The class {0}, but its emails and reminders cannot tell candidates what time to come.', when),
                 facts=[class_group.name],
-                action=_go("Set the time", url + "#parameters"),
+                action=_go(_t('Set the time'), url + "#parameters"),
             ))
 
     if not members and (waiting or class_group.status == ClassStatus.ONGOING):
         found.append(Advice(
             key=f"class:{class_group.id}:empty", priority=38, tone="info", icon="bi-people",
-            title=f"{class_group.name} has no candidate, so it does not start",
-            why="A class runs only with somebody in it. This one keeps a place on the timetable: remove it, or move candidates into it.",
+            title=_t('{0} has no candidate, so it does not start', class_group.name),
+            why=_t('A class runs only with somebody in it. This one keeps a place on the timetable: remove it, or move candidates into it.'),
             facts=[class_group.name],
-            action=_go("Open the class", url),
+            action=_go(_t('Open the class'), url),
         ))
 
     if class_group.status != ClassStatus.ONGOING or not members:
@@ -365,11 +360,10 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
         found.append(Advice(
             key=f"class:{class_group.id}:absent:" + ",".join(sorted(f"{person['registration'].id}:{person['absent_in_a_row']}" for person in missing)),
             priority=66, tone="important", icon="bi-person-x",
-            title=(f"{missing[0]['name']} missed the last {missing[0]['absent_in_a_row']} sessions of {class_group.name}" if len(missing) == 1
-                   else f"{len(missing)} candidates stopped coming to {class_group.name}"),
-            why=f"{names}: absent {'twice' if most == 2 else str(most) + ' times'} in a row or more. "
-                "A call now is the best chance to keep them in the class.",
-            action=_go("See the presence sheet", f"{url}/attendance"),
+            title=(_t('{0} missed the last {1} sessions of {2}', missing[0]['name'], missing[0]['absent_in_a_row'], class_group.name) if len(missing) == 1
+                   else _t('{0} candidates stopped coming to {1}', len(missing), class_group.name)),
+            why=_t('{0}: absent {1} in a row or more. A call now is the best chance to keep them in the class.', names, 'twice' if most == 2 else str(most) + ' times'),
+            action=_go(_t('See the presence sheet'), f"{url}/attendance"),
             link={"label": "Profile", "url": f"/candidate/{missing[0]['registration'].candidate_id}"} if len(missing) == 1 else None,
         ))
 
@@ -379,10 +373,10 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
     if not class_group.sessions and program is not None and not program_assistant.has_curriculum(program):
         found.append(Advice(
             key=f"class:{class_group.id}:plan", priority=58, tone="important", icon="bi-list-check",
-            title=f"{class_group.name} has no weekly plan",
-            why=f"Its program, {program.name}, has no week-by-week content yet, so candidates were told nothing about what they will study.",
+            title=_t('{0} has no weekly plan', class_group.name),
+            why=_t('Its program, {0}, has no week-by-week content yet, so candidates were told nothing about what they will study.', program.name),
             facts=[class_group.name],
-            action=_go("Review the program", f"/programs/all?review={program.id}"),
+            action=_go(_t('Review the program'), f"/programs/all?review={program.id}"),
         ))
 
     weeks = {row.week_number: row for row in db.query(ClassWeek).filter(ClassWeek.class_group_id == class_group.id).all()}
@@ -401,11 +395,10 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
     if not files.get(current) and not (week_row and (week_row.notes or "").strip()) and not questions.get(current):
         found.append(Advice(
             key=f"class:{class_group.id}:files:{current}", priority=46, tone="info", icon="bi-folder-plus",
-            title=f"Add week {current}'s course to {class_group.name}",
-            why=f"The class is in week {current} of {class_group.total_weeks or 12}. With the course files (or a few lines about "
-                "what was covered) the system writes the questions that measure what candidates understood.",
-            facts=[f"{class_group.name} · week {current}"],
-            action=_go("Add the course", f"{course}?week={current}"),
+            title=_t("Add week {0}'s course to {1}", current, class_group.name),
+            why=_t('The class is in week {0} of {1}. With the course files (or a few lines about what was covered) the system writes the questions that measure what candidates understood.', current, class_group.total_weeks or 12),
+            facts=[_t('{0} · week {1}', class_group.name, current)],
+            action=_go(_t('Add the course'), f"{course}?week={current}"),
         ))
 
     for week_number in sorted(questions):
@@ -416,18 +409,17 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
         if not sent and ready and weekly_questions.week_is_over(db, class_group, week_number, now_local):
             found.append(Advice(
                 key=f"class:{class_group.id}:send:{week_number}:{ready}", priority=64, tone="important", icon="bi-send-check",
-                title=f"Send week {week_number}'s questions to {class_group.name}",
-                why=f"The week is over and {_plural(ready, 'question')} are ready"
-                    + (f" ({review} more wait for your review)" if review else "")
-                    + f". {_plural(len(members), 'candidate')} will each get a few of them.",
-                action=_go("Check and send", f"{course}?week={week_number}"),
+                title=_t("Send week {0}'s questions to {1}", week_number, class_group.name),
+                why=_t('The week is over and {0} are ready', _plural(ready, 'question'))
+                    + (_t(' ({0} more wait for your review)', review) if review else "")
+                    + _t('. {0} will each get a few of them.', _plural(len(members), 'candidate')),
+                action=_go(_t('Check and send'), f"{course}?week={week_number}"),
             ))
         elif not sent and review and not ready:
             found.append(Advice(
                 key=f"class:{class_group.id}:review:{week_number}:{review}", priority=52, tone="important", icon="bi-patch-question",
-                title=f"Review week {week_number}'s questions for {class_group.name}",
-                why=f"The system wrote {_plural(review, 'question')} but could not confirm any of them against the course, "
-                    "so none will be sent until you check them.",
+                title=_t("Review week {0}'s questions for {1}", week_number, class_group.name),
+                why=_t('The system wrote {0} but could not confirm any of them against the course, so none will be sent until you check them.', _plural(review, 'question')),
                 action=_go("Review", f"{course}?week={week_number}"),
             ))
 
@@ -440,10 +432,10 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
             hardest = results["hardest"][0]["question"] if results["hardest"] else None
             found.append(Advice(
                 key=f"class:{class_group.id}:low:{week_number}:{results['answered']}", priority=74, tone="important", icon="bi-graph-down-arrow",
-                title=f"Go over week {week_number} again with {class_group.name}",
-                why=f"{results['answered']} of {results['sent']} answered and the average is {results['average']:.0f}%."
-                    + (f" Most missed: “{hardest}”" if hardest else ""),
-                action=_go("See the answers", f"{course}?week={week_number}"),
+                title=_t('Go over week {0} again with {1}', week_number, class_group.name),
+                why=_t('{0} of {1} answered and the average is {2:.0f}%.', results['answered'], results['sent'], results['average'])
+                    + (_t(' Most missed: “{0}”', hardest) if hardest else ""),
+                action=_go(_t('See the answers'), f"{course}?week={week_number}"),
             ))
         if results["answered"] and week_number == max(weeks):
             found += feeling_advice(db, class_group, week_number, results)
@@ -452,11 +444,11 @@ def class_advice(db: Session, class_group: ClassGroup, now_local: datetime, now_
         if silent and sent_at and now_utc - sent_at >= ANSWER_WAIT:
             found.append(Advice(
                 key=f"class:{class_group.id}:silent:{week_number}:{silent}", priority=44, tone="info", icon="bi-bell",
-                title=f"{silent} of {results['sent']} have not answered week {week_number}'s questions in {class_group.name}",
-                why=f"They were sent {_ago(sent_at, now_utc)}. A reminder sends each of them their own questions again.",
-                action=_post("Remind them", f"{course}/{week_number}/send", {"remind": "1"},
-                             confirm=f"Send the questions again to the {silent} candidate(s) who have not answered?"),
-                link={"label": "See who", "url": f"{course}?week={week_number}"},
+                title=_t("{0} of {1} have not answered week {2}'s questions in {3}", silent, results['sent'], week_number, class_group.name),
+                why=_t('They were sent {0}. A reminder sends each of them their own questions again.', _ago(sent_at, now_utc)),
+                action=_post(_t('Remind them'), f"{course}/{week_number}/send", {"remind": "1"},
+                             confirm=_t('Send the questions again to the {0} candidate(s) who have not answered?', silent)),
+                link={"label": _t('See who'), "url": f"{course}?week={week_number}"},
             ))
     return found
 
@@ -472,19 +464,19 @@ def feeling_advice(db: Session, class_group: ClassGroup, week_number: int, resul
             continue
         candidate = row["candidate"]
         first = _short_name(candidate)
-        words = f" They wrote: “{insight['words'][:160]}”" if insight.get("words") else ""
+        words = _t(' They wrote: “{0}”', insight['words'][:160]) if insight.get("words") else ""
         found.append(Advice(
             key=f"feel:{candidate.id}:{week_number}:{insight['attention']['points']}",
             priority=82 if insight.get("giving_up") else 72, tone="urgent" if insight.get("giving_up") else "important",
             icon="bi-heart-pulse",
-            title=f"Talk to {first}: week {week_number} of {class_group.name} went badly",
+            title=_t('Talk to {0}: week {1} of {2} went badly', first, week_number, class_group.name),
             why=(", ".join(insight["attention"]["reasons"]).capitalize() + "." + words),
             facts=[fact for fact in (
-                f"{insight['score']:.0f}% on the questions" if insight.get("score") is not None else "",
+                _t('{0:.0f}% on the questions', insight['score']) if insight.get("score") is not None else "",
                 insight["mood_view"]["label"] if insight.get("mood_view") else "",
             ) if fact],
-            action=_go("Write to them", f"/inbox/compose?candidate={candidate.id}"),
-            link={"label": "What they said", "url": f"/candidate/{candidate.id}#feelings"},
+            action=_go(_t('Write to them'), f"/inbox/compose?candidate={candidate.id}"),
+            link={"label": _t('What they said'), "url": f"/candidate/{candidate.id}#feelings"},
         ))
     if feelings["advice"]:
         first_line = feelings["advice"][0]["text"]
@@ -492,10 +484,10 @@ def feeling_advice(db: Session, class_group: ClassGroup, week_number: int, resul
         found.append(Advice(
             key=f"class:{class_group.id}:feel:{week_number}:{feelings['answers']}:{len(feelings['advice'])}",
             priority=58, tone="info", icon="bi-emoji-smile",
-            title=f"Before the next session of {class_group.name}",
-            why=first_line + (f" And {more} more point{'s' if more != 1 else ''} from what the candidates said." if more else ""),
-            facts=[f"{feelings['felt']} said how the week went"] + ([f"{feelings['mood']['average']} out of 5"] if feelings["mood"]["average"] else []),
-            action=_go("See how they feel", course),
+            title=_t('Before the next session of {0}', class_group.name),
+            why=first_line + (_t(' And {0} more point{1} from what the candidates said.', more, 's' if more != 1 else '') if more else ""),
+            facts=[_t('{0} said how the week went', feelings['felt'])] + ([_t('{0} out of 5', feelings['mood']['average'])] if feelings["mood"]["average"] else []),
+            action=_go(_t('See how they feel'), course),
         ))
     return found
 
@@ -517,8 +509,8 @@ def placement_advice(db: Session) -> list[Advice]:
     names = ", ".join(dict.fromkeys(_name(item.candidate) for item in waiting if item.candidate))
     return [Advice(
         key=f"placement:{len(waiting)}:{waiting[0].id}", priority=82, tone="important", icon="bi-person-plus",
-        title=f"Place {_plural(len(waiting), 'paid candidate')} in a class",
-        why=f"{names} paid in full and {'has' if len(waiting) == 1 else 'have'} no class yet, so no date was announced to them.",
+        title=_t('Place {0} in a class', _plural(len(waiting), 'paid candidate')),
+        why=_t('{0} paid in full and {1} no class yet, so no date was announced to them.', names, 'has' if len(waiting) == 1 else 'have'),
         action=_go("Decide", "/classes/?tab=decisions"),
     )]
 
@@ -536,9 +528,9 @@ def program_advice(db: Session) -> list[Advice]:
         first = ready[0]
         found.append(Advice(
             key=f"proposals:{len(ready)}:{first.id}", priority=50, tone="important", icon="bi-magic",
-            title=(f"Confirm the proposal for {first.name}" if len(ready) == 1
-                   else f"Confirm the proposals for {len(ready)} programs"),
-            why=("Their description, hours or weekly plan were missing. The system prepared them; nothing is saved until you accept: "
+            title=(_t('Confirm the proposal for {0}', first.name) if len(ready) == 1
+                   else _t('Confirm the proposals for {0} programs', len(ready))),
+            why=(_t('Their description, hours or weekly plan were missing. The system prepared them; nothing is saved until you accept: ')
                  + ", ".join(program.name for program in ready) + "."),
             action=_go("Review", f"/programs/all?review={first.id}"),
         ))
@@ -546,9 +538,9 @@ def program_advice(db: Session) -> list[Advice]:
     if pending:
         found.append(Advice(
             key=f"approve:{len(pending)}", priority=34, tone="info", icon="bi-check2-square",
-            title=f"Approve {_plural(len(pending), 'program')}",
-            why="Waiting for your approval: " + ", ".join(program.name for program in pending[:4]) + ("…" if len(pending) > 4 else "."),
-            action=_go("Open the programs", "/programs/all?status=pending"),
+            title=_t('Approve {0}', _plural(len(pending), 'program')),
+            why=_t('Waiting for your approval: ') + ", ".join(program.name for program in pending[:4]) + ("…" if len(pending) > 4 else "."),
+            action=_go(_t('Open the programs'), "/programs/all?status=pending"),
         ))
     return found
 
@@ -613,17 +605,14 @@ def for_dashboard(db: Session) -> list[Advice]:
 # The same need in several classes is one recommendation naming them, not one line each:
 # kind -> (title, what it means, icon).
 _SAME_NEED = {
-    "files": ("Add this week's course to {count} classes",
-              "With the course files (or a few lines about what was covered) the system writes the questions "
-              "that measure what candidates understood. Nothing was added yet for: {names}.", "bi-folder-plus"),
-    "time": ("Set the session time of {count} classes",
-             "Their emails and reminders cannot tell candidates what time to come: {names}.", "bi-clock"),
-    "plan": ("{count} classes have no weekly plan",
-             "Their programs have no week-by-week content yet, so candidates were told nothing about what "
-             "they will study: {names}.", "bi-list-check"),
-    "empty": ("{count} classes have no candidate, so they do not start",
-              "A class runs only with somebody in it. These keep a place on the timetable: delete them, or move "
-              "candidates into them: {names}.",
+    "files": (_t("Add this week's course to {{count}} classes"),
+              _t('With the course files (or a few lines about what was covered) the system writes the questions that measure what candidates understood. Nothing was added yet for: {{names}}.'), "bi-folder-plus"),
+    "time": (_t('Set the session time of {{count}} classes'),
+             _t('Their emails and reminders cannot tell candidates what time to come: {{names}}.'), "bi-clock"),
+    "plan": (_t('{{count}} classes have no weekly plan'),
+             _t('Their programs have no week-by-week content yet, so candidates were told nothing about what they will study: {{names}}.'), "bi-list-check"),
+    "empty": (_t('{{count}} classes have no candidate, so they do not start'),
+              _t('A class runs only with somebody in it. These keep a place on the timetable: delete them, or move candidates into them: {{names}}.'),
               "bi-people"),
 }
 
@@ -644,8 +633,8 @@ def _one_line_per_need(items: list[Advice]) -> list[Advice]:
             icon=icon,
             title=title.format(count=len(same)),
             why=why.format(names=", ".join(names)),
-            action=_go("Start with " + names[0].split(" · ")[0], same[0].action["url"]),
-            link={"label": "All classes", "url": "/classes/"},
+            action=_go(_t('Start with ') + names[0].split(" · ")[0], same[0].action["url"]),
+            link={"label": _t('All classes'), "url": "/classes/"},
         ))
     return kept
 
@@ -668,8 +657,8 @@ def for_candidate(db: Session, candidate: Candidate) -> list[Advice]:
     if unplaced:
         items.append(Advice(
             key=f"place:{candidate.id}:{len(unplaced)}", priority=80, tone="important", icon="bi-person-plus",
-            title=f"Place {first} in a class",
-            why=f"Paid in full for {', '.join(_program(item) for item in unplaced)} and still without a class, so no start date was announced.",
+            title=_t('Place {0} in a class', first),
+            why=_t('Paid in full for {0} and still without a class, so no start date was announced.', ', '.join(_program(item) for item in unplaced)),
             action=_go("Decide", f"/classes/registration/{unplaced[0].id}"),
         ))
 
@@ -681,12 +670,12 @@ def for_candidate(db: Session, candidate: Candidate) -> list[Advice]:
             missed = last["missed"][0] if last["missed"] else None
             items.append(Advice(
                 key=f"learn:{candidate.id}:{last['quiz'].id}", priority=68, tone="important", icon="bi-life-preserver",
-                title=f"Help {first} with week {last['week']} of {last['class_name']}",
-                why=f"Scored {last['score']:.0f}% on the week's questions"
-                    + (f"; missed “{missed}”" if missed else "")
-                    + (". The previous weeks went better, so this topic is the problem." if learning["trend"] == "down" else "."),
-                action=_go("Write to them", f"/inbox/compose?candidate={candidate.id}"),
-                link={"label": "See the answers", "url": f"/classes/{last['class_id']}/course?week={last['week']}"},
+                title=_t('Help {0} with week {1} of {2}', first, last['week'], last['class_name']),
+                why=_t("Scored {0:.0f}% on the week's questions", last['score'])
+                    + (_t('; missed “{0}”', missed) if missed else "")
+                    + (_t('. The previous weeks went better, so this topic is the problem.') if learning["trend"] == "down" else "."),
+                action=_go(_t('Write to them'), f"/inbox/compose?candidate={candidate.id}"),
+                link={"label": _t('See the answers'), "url": f"/classes/{last['class_id']}/course?week={last['week']}"},
             ))
     feelings = week_insights.candidate_feelings(db, candidate.id)
     latest = feelings["latest"]
@@ -695,26 +684,26 @@ def for_candidate(db: Session, candidate: Candidate) -> list[Advice]:
         items.append(Advice(
             key=f"feel:{candidate.id}:{latest['week']}:{insight['attention']['points']}",
             priority=82 if insight.get("giving_up") else 72, tone="urgent" if insight.get("giving_up") else "important",
-            icon="bi-heart-pulse", title=f"Talk to {first}: week {latest['week']} went badly",
+            icon="bi-heart-pulse", title=_t('Talk to {0}: week {1} went badly', first, latest['week']),
             why=", ".join(insight["attention"]["reasons"]).capitalize() + "."
-                + (f" They wrote: “{insight['words'][:160]}”" if insight.get("words") else ""),
-            action=_go("Write to them", f"/inbox/compose?candidate={candidate.id}"),
-            link={"label": "What they said", "url": f"{profile}#feelings"},
+                + (_t(' They wrote: “{0}”', insight['words'][:160]) if insight.get("words") else ""),
+            action=_go(_t('Write to them'), f"/inbox/compose?candidate={candidate.id}"),
+            link={"label": _t('What they said'), "url": f"{profile}#feelings"},
         ))
     waiting = [week for week in learning["weeks"] if week["sent"] and not week["done"]]
     if len(waiting) >= 2:
         items.append(Advice(
             key=f"silent:{candidate.id}:{len(waiting)}", priority=48, tone="info", icon="bi-bell",
-            title=f"{first} has not answered {len(waiting)} sets of weekly questions",
-            why="Weeks " + ", ".join(str(week["week"]) for week in waiting) + ". A candidate who stops answering often stopped following.",
-            action=_go("Write to them", f"/inbox/compose?candidate={candidate.id}"),
+            title=_t('{0} has not answered {1} sets of weekly questions', first, len(waiting)),
+            why="Weeks " + ", ".join(str(week["week"]) for week in waiting) + _t('. A candidate who stops answering often stopped following.'),
+            action=_go(_t('Write to them'), f"/inbox/compose?candidate={candidate.id}"),
         ))
 
     if not candidate.registrations:
         items.append(Advice(
             key=f"noreg:{candidate.id}", priority=40, tone="info", icon="bi-journal-plus",
-            title=f"{first} is not registered to any program",
-            why="Add a program below to start their file.", can_snooze=False,
+            title=_t('{0} is not registered to any program', first),
+            why=_t('Add a program below to start their file.'), can_snooze=False,
         ))
 
     # On the candidate's own page every step is shown: "not now" only quiets the
@@ -723,14 +712,14 @@ def for_candidate(db: Session, candidate: Candidate) -> list[Advice]:
     for item in items:
         if item.key in snoozed:
             item.set_aside = True
-            item.why += " (You set this aside on the dashboard for a few days.)"
+            item.why += _t(' (You set this aside on the dashboard for a few days.)')
         item.can_snooze = False
     items.sort(key=lambda item: (-item.priority, TONES.get(item.tone, 9), item.title))
     if not items:
         items = [Advice(
             key=f"fine:{candidate.id}", priority=0, tone="good", icon="bi-check2-circle",
-            title=f"Nothing needs you for {first}",
-            why="Payments are settled, no email is waiting and no result is worrying.", can_snooze=False,
+            title=_t('Nothing needs you for {0}', first),
+            why=_t('Payments are settled, no email is waiting and no result is worrying.'), can_snooze=False,
         )]
     return items
 
@@ -762,8 +751,8 @@ def for_candidates(db: Session, candidates: list[Candidate]) -> dict[str, Advice
         if thread is not None:
             options.append(Advice(
                 key=f"inbox:{candidate.id}:{thread.id}", priority=90, tone="important", icon="bi-envelope-exclamation",
-                title=f"Answer {first}'s email",
-                why=f"“{thread.subject or 'No subject'}” is waiting for your answer.",
+                title=_t("Answer {0}'s email", first),
+                why=_t('“{0}” is waiting for your answer.', thread.subject or _t('No subject')),
                 action=_go("Answer", f"/inbox?filter=todo&thread={thread.id}"), can_snooze=False,
             ))
         unplaced = [
@@ -774,7 +763,7 @@ def for_candidates(db: Session, candidates: list[Candidate]) -> dict[str, Advice
         if unplaced:
             options.append(Advice(
                 key=f"place:{candidate.id}:{len(unplaced)}", priority=80, tone="important", icon="bi-person-plus",
-                title="Place in a class", why=f"Paid for {_program(unplaced[0])} and has no class yet.",
+                title=_t('Place in a class'), why=_t('Paid for {0} and has no class yet.', _program(unplaced[0])),
                 action=_go("Decide", f"/classes/registration/{unplaced[0].id}"),
             ))
         payment = payment_advice(candidate, history[candidate.id], now_utc, now_local)

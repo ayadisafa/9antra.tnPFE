@@ -177,7 +177,7 @@ def _weekly_scores(db: Session, candidate_ids: list[str]) -> dict[str, dict]:
     scores: dict[str, list[float]] = {}
     if candidate_ids:
         rows = db.query(Quiz.candidate_id, Quiz.score).filter(
-            Quiz.kind == "weekly", Quiz.completed_at.isnot(None), Quiz.candidate_id.in_(candidate_ids),
+            Quiz.kind.in_(("weekly", "session")), Quiz.completed_at.isnot(None), Quiz.candidate_id.in_(candidate_ids),
         ).all()
         for candidate_id, score in rows:
             scores.setdefault(candidate_id, []).append(score or 0.0)
@@ -188,12 +188,8 @@ def _weekly_scores(db: Session, candidate_ids: list[str]) -> dict[str, dict]:
     return found
 
 
-@router.get("/all")
-def list_candidates(
-    request: Request,
-    search: Optional[str] = None,
-    db: Session = Depends(get_db),
-):
+def candidate_rows(db: Session) -> tuple[list[dict], dict]:
+    """Every candidate as the list shows them (what needs the admin first), and the totals."""
     candidates = (
         db.query(Candidate)
         .options(
@@ -247,21 +243,31 @@ def list_candidates(
         -(row["advice"].priority if row["needs_you"] else 0),
         -(row["registered"].timestamp() if row["registered"] else 0),
     ))
+    totals = {
+        "candidates": len(rows),
+        "needs_you": sum(1 for row in rows if row["needs_you"]),
+        "owing": sum(1 for row in rows if row["due"] > 0),
+        "due": sum(row["due"] for row in rows),
+        "in_class": sum(1 for row in rows if row["in_class"]),
+        "new": sum(1 for row in rows if row["is_new"]),
+    }
+    return rows, totals
 
+
+@router.get("/all")
+def list_candidates(
+    request: Request,
+    search: Optional[str] = None,
+    db: Session = Depends(get_db),
+):
+    rows, totals = candidate_rows(db)
     return templates.TemplateResponse(
         name="candidates.html",
         request=request,
         context={
             "active_page": "candidates",
             "rows": rows,
-            "totals": {
-                "candidates": len(rows),
-                "needs_you": sum(1 for row in rows if row["needs_you"]),
-                "owing": sum(1 for row in rows if row["due"] > 0),
-                "due": sum(row["due"] for row in rows),
-                "in_class": sum(1 for row in rows if row["in_class"]),
-                "new": sum(1 for row in rows if row["is_new"]),
-            },
+            "totals": totals,
             "search": (search or "").strip(),
             "show": request.query_params.get("show") or "all",
             "add_open": request.query_params.get("add") == "1",
@@ -351,9 +357,23 @@ def accept_request(notification_id: str, db: Session = Depends(get_db)):
     return RedirectResponse(f"/candidate/{candidate.id}?{urlencode({'notice': notice})}", status_code=status.HTTP_303_SEE_OTHER)
 
 
-# --- CANDIDATE PROFILE & QUICK ACTIONS VIEW ---
-@router.get("/{candidate_id}")
-def profile(request: Request, candidate_id: str, db: Session = Depends(get_db)):
+# Where a program's payment stands, as the candidate's file groups them.
+PAYMENT_GROUPS = (
+    ("paid", "Paid in full", "bi-check2-circle", "ok", "The programs fully paid: their class, their professor, their sessions."),
+    ("partial", "Paid in part", "bi-hourglass-split", "warn", "Some of the price was paid; record the rest when it comes."),
+    ("registered", "Just registered, not paid yet", "bi-person-plus", "bad",
+     "Signed up, nothing paid so far. The place in a class comes once they pay."),
+)
+
+
+def payment_group_of(card: dict) -> str:
+    if card["is_paid"] or (card["total"] and card["due"] <= 0):
+        return "paid"
+    return "partial" if card["paid"] > 0 else "registered"
+
+
+def profile_data(db: Session, candidate_id: str) -> dict:
+    """Everything the candidate's file shows, for the page and for its PDF."""
     candidate = (
         db.query(Candidate)
         .options(
@@ -430,7 +450,7 @@ def profile(request: Request, candidate_id: str, db: Session = Depends(get_db)):
     session_agenda.sort(key=lambda item: (item["date"], str(item["start_time"] or "")))
 
     # One card per program the candidate signed up for, newest first.
-    program_cards = []
+    program_cards = []  # filled below; grouped by where their payment stands afterwards
     for registration in registration_history:
         if registration.status == RegistrationStatus.CANCELLED:
             continue
@@ -450,13 +470,19 @@ def profile(request: Request, candidate_id: str, db: Session = Depends(get_db)):
             "reminders": enrollment.get("reminders", []),
             "options": enrollment.get("options", []),
             "registered": utc_to_local(registration.registration_date),
+            "days_waiting": (local_time.date() - utc_to_local(registration.registration_date).date()).days
+            if registration.registration_date else None,
         })
+    for card in program_cards:
+        card["group"] = payment_group_of(card)
+    groups = []
+    for key, label, icon, tone, why in PAYMENT_GROUPS:
+        cards = [card for card in program_cards if card["group"] == key]
+        groups.append({"key": key, "label": label, "icon": icon, "tone": tone, "why": why, "cards": cards,
+                       "total": sum(card["total"] for card in cards), "paid": sum(card["paid"] for card in cards),
+                       "due": sum(card["due"] for card in cards)})
 
-    return templates.TemplateResponse(
-        name="candidate_profile.html",
-        request=request,
-        context={
-            "active_page": "candidates",
+    return {
             "candidate": candidate,
             "name": candidate.full_name or candidate.email,
             "advice": advisor.for_candidate(db, candidate),
@@ -472,14 +498,31 @@ def profile(request: Request, candidate_id: str, db: Session = Depends(get_db)):
             "session_agenda": session_agenda[:6],
             "class_professors": list(professors_by_id.values()),
             "today": local_time.date(),
-            "notice": request.query_params.get("notice"),
-            "error": request.query_params.get("error"),
             "level_checks": level_checks,
             "behaviour": behaviour.profile(db, candidate),
+            "insights": __import__("app.services.candidate_insights", fromlist=["of_candidate"]).of_candidate(db, candidate),
             "candidate_metrics": candidate_metrics,
             "reminders": reminders,
             "email_conversation": email_conversation,
             "emails_waiting": sum(1 for email in email_conversation if email.requires_admin and email.direction == "inbound"),
+            "proofs_waiting": __import__("app.services.payment_proofs", fromlist=["waiting"]).waiting(db, candidate_id=candidate_id),
+            "reviews": __import__("app.services.program_feedback", fromlist=["of_candidate"]).of_candidate(db, candidate_id),
+            "proofs_done": __import__("app.services.payment_proofs", fromlist=["recent"]).recent(db, candidate_id=candidate_id),
+            "payment_groups": groups,
+    }
+
+
+@router.get("/{candidate_id}")
+def profile(request: Request, candidate_id: str, db: Session = Depends(get_db)):
+    data = profile_data(db, candidate_id)
+    return templates.TemplateResponse(
+        name="candidate_profile.html",
+        request=request,
+        context={
+            "active_page": "candidates",
+            **data,
+            "notice": request.query_params.get("notice"),
+            "error": request.query_params.get("error"),
         },
     )
 

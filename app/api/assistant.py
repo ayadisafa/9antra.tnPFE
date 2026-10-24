@@ -1,6 +1,6 @@
 import json
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -22,10 +22,11 @@ class AssistantMessage(BaseModel):
     message: str = Field(min_length=1, max_length=4000)
     history: list[dict[str, str]] = Field(default_factory=list)
     candidate_id: str | None = None
+    lang: str | None = None          # chosen in the window: en, fr, ar, tn (none: the language of the question)
 
 
 @router.post("/chat")
-def chat_with_assistant(payload: AssistantMessage, db: Session = Depends(get_db)):
+def chat_with_assistant(payload: AssistantMessage, request: Request, db: Session = Depends(get_db)):
     # optional candidate context enables the assistant to return structured recommendations
     message = payload.message.strip()
     if not message:
@@ -102,9 +103,28 @@ def chat_with_assistant(payload: AssistantMessage, db: Session = Depends(get_db)
 
     # The answer comes from the application's own data, its guides and what it knows of the website
     # (see chatbot); the language model is only its last resort.
-    found = chatbot.answer(db, message, payload.history)
+    from app.services import auth
+
+    found = chatbot.answer(db, message, payload.history, user=auth.current(request), lang=payload.lang)
     return {"reply": found["reply"], "links": found.get("links") or [], "source": found.get("source"),
-            "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations}
+            "sources": found.get("sources") or [], "resources": found.get("resources") or [],
+            "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations,
+            "schema": found.get("schema")}
+
+
+@router.post("/auto-send")
+def switch_auto_send(request: Request, on: str = Form("1"), db: Session = Depends(get_db)):
+    """“Send at once”: what the admin asks the assistant to send goes at once (on), or is only prepared (off)."""
+    from app.services import auth
+    from app.services.settings_service import get_settings
+
+    user = auth.current(request)
+    if user is None or not (user.is_admin or (user.permissions or {}).get("assistant") == "edit"):
+        raise HTTPException(status_code=403, detail="Only someone who may change things decides this.")
+    settings = get_settings(db)
+    settings.assistant_auto_send = on == "1"
+    db.commit()
+    return {"on": bool(settings.assistant_auto_send)}
 
 
 @router.get("/suggestions")

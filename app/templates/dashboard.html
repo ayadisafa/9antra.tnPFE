@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "_ui_macros.html" as ui %}
+{% import "_emoji.html" as emo %}
 {% import "_ui_art.html" as art %}
 
 {% block title %}Dashboard · {{ app_brand.name }}{% endblock %}
@@ -10,6 +11,21 @@
 {% include "_ui.html" %}
 <style>
   .db-hello { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .db-reports { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:14px; margin:0 0 26px; }
+  .db-report { display:flex; gap:14px; align-items:center; padding:16px 18px; border-radius:20px; background:#fff; border:1px solid var(--border-color); text-decoration:none; color:var(--ink-text);
+               position:relative; overflow:hidden; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .db-report::after { content:""; position:absolute; right:-30px; bottom:-40px; width:110px; height:110px; border-radius:50%; background:var(--berry-subtle); opacity:.7; transition:transform .35s ease; }
+  .db-report:hover { transform:translateY(-3px); box-shadow:0 18px 36px -22px rgba(60,20,90,.5); border-color:var(--primary-berry); color:var(--ink-text); }
+  .db-report:hover::after { transform:scale(1.25); }
+  .db-report-ico { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; font-size:1.25rem; flex:none; position:relative; z-index:1; }
+  .db-report-ico.t-brand { background:var(--berry-subtle); color:var(--primary-berry); } .db-report-ico.t-gold { background:var(--gold-subtle); color:var(--gold-dark); }
+  .db-report-ico.t-mint { background:var(--mint-subtle); color:var(--mint); }
+  .db-report-text { flex:1; min-width:0; position:relative; z-index:1; } .db-report-text b { display:block; font-size:.92rem; }
+  .db-report-text small { display:block; font-size:.76rem; color:var(--muted); line-height:1.35; margin-top:2px; }
+  .db-report-go { font-size:1.2rem; color:var(--primary-berry); position:relative; z-index:1; transition:transform .2s ease; } .db-report:hover .db-report-go { transform:translateY(2px); }
+  @media (prefers-reduced-motion: no-preference) { .db-report { animation:rowIn .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 70ms + .25s); } }
+  @media (max-width: 1099px) { .db-reports { grid-template-columns:1fr; } }
+
   .db-date { font-size:.8rem; font-weight:700; color:var(--primary-berry); background:var(--berry-subtle); border-radius:999px; padding:4px 12px; }
 
   /* Four pictures: where things stand */
@@ -150,29 +166,311 @@
   .db-fold > summary .chev { margin-left:auto; color:#b5afc8; transition:transform .2s ease; }
   .db-fold[open] > summary .chev { transform:rotate(180deg); color:var(--primary-berry); }
   .db-fold-body { padding:4px 22px 20px; }
-  .db-class { padding:13px 0; border-top:1px solid var(--border-color); }
-  .db-class:first-child { border-top:0; }
-  .db-class-name { font-weight:800; font-size:.9rem; color:var(--ink-text); text-decoration:none; }
-  .db-class-name:hover { color:var(--primary-berry); }
+  /* The classes and their week, in one fold: each class once, at its hours. */
+  @property --ring { syntax:'<number>'; inherits:false; initial-value:0; }
+  .wb > summary, .pp > summary { align-items:center; }
+  .wb-sum-text { min-width:0; flex:1; }
+  .wb-sum-facts { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .wb-fact { display:inline-flex; align-items:center; gap:5px; font-size:.74rem; font-weight:700; color:#4a445e; background:#f7f4fb; border-radius:999px; padding:3px 10px 3px 6px; }
+  .wb-fact b { color:var(--ink-text); font-size:.8rem; }
+  .wb-fact .emo { font-size:.86rem; }
+  .wb-fact.is-bad { background:#fff1f2; color:#9f1239; } .wb-fact.is-bad b { color:#9f1239; }
+  .wb-fact.is-ok { background:var(--mint-subtle); color:#166534; }
+  .wb-fact.is-warn { background:var(--gold-subtle); color:#7c4a03; }
+  .wb-fact.is-live { background:#ffe4e6; color:#be123c; } .wb-fact.is-live b { color:#be123c; }
+  .wb-strip { display:flex; gap:3px; align-items:flex-end; padding:6px; border-radius:16px; background:#faf8fd; flex:none; }
+  .wb-strip-day { width:30px; display:flex; flex-direction:column; align-items:center; gap:4px; padding:4px 0 3px; border-radius:11px; }
+  .wb-strip-dots { height:34px; display:grid; grid-template-columns:repeat(2, 7px); grid-auto-rows:7px; gap:2px; align-content:end; justify-content:center; }
+  .wb-strip-dots i { width:7px; height:7px; border-radius:50%; background:hsl(var(--hue) 62% 50%); }
+  .wb-strip-dots:empty::after { content:""; grid-column:1 / -1; width:10px; height:2px; border-radius:2px; background:#e3dcec; justify-self:center; }
+  .wb-strip-day b { font-size:.56rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#9b95b0; }
+  .wb-strip-day.is-today { background:var(--berry-subtle); } .wb-strip-day.is-today b { color:var(--primary-berry); }
 
-  /* The week at a glance */
-  .wk-grid { display:grid; grid-template-columns:repeat(7, minmax(118px, 1fr)); gap:8px; overflow-x:auto; padding-bottom:4px; }
-  .wk-day { background:#faf8fd; border-radius:14px; padding:8px; min-height:120px; }
-  .wk-day-name { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#8d88a3; text-align:center; padding:3px 0 7px; }
-  .wk-day.is-today { background:var(--berry-subtle); }
-  .wk-day.is-today .wk-day-name { color:var(--primary-berry); }
-  .wk-chip { display:block; background:#fff; border:1px solid var(--border-color); border-left:3px solid var(--primary-berry); border-radius:10px; padding:7px 8px; margin-bottom:6px; text-decoration:none; color:inherit; }
-  .wk-chip:hover { border-color:var(--primary-berry); color:inherit; }
-  .wk-chip.is-conflict { border-left-color:#e11d48; background:#fff5f6; }
-  .wk-chip-time { font-size:.66rem; font-weight:800; color:var(--primary-berry); }
-  .wk-chip-title { font-size:.76rem; font-weight:700; color:var(--ink-text); line-height:1.25; overflow-wrap:anywhere; }
-  .wk-chip-meta { font-size:.66rem; color:var(--muted); margin-top:2px; }
-  .wk-empty { font-size:.7rem; color:#c2bbd2; text-align:center; padding-top:18px; }
+  .wb-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .wb-profs { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .wb-tools-label { font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#9b95b0; margin-inline-end:2px; }
+  .wb-prof { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:3px 10px 3px 3px; font-size:.76rem; font-weight:700;
+             color:#4a445e; cursor:pointer; transition:transform .15s ease, border-color .15s ease, background-color .15s ease; }
+  .wb-prof:hover { transform:translateY(-1px); border-color:hsl(var(--hue) 55% 48%); }
+  .wb-prof.is-on { background:hsl(var(--hue) 70% 95%); border-color:hsl(var(--hue) 55% 48%); color:var(--ink-text); }
+  .wb-prof-face { width:24px; height:24px; border-radius:50%; display:grid; place-items:center; font-size:.6rem; font-weight:800; color:#fff; background:hsl(var(--hue) 55% 48%); }
+  .wb-prof.is-clash .wb-prof-face { box-shadow:0 0 0 2px #fff, 0 0 0 4px #fda4af; }
+  .wb-prof em { font-style:normal; font-size:.68rem; color:#9b95b0; }
+
+  /* How to read it: five small scenes that play one after the other. */
+  .wb-help { display:grid; grid-template-columns:repeat(5, minmax(0, 1fr)); gap:10px; margin-bottom:14px; padding:14px; border-radius:20px;
+             background:linear-gradient(120deg, #fdf2f7 0%, #f6efff 55%, #eef6ff 100%); border:1px solid #f1e3ee; }
+  .wb-help-step { background:rgba(255,255,255,.88); border-radius:15px; padding:12px; display:flex; flex-direction:column; gap:4px; animation:wbRise .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--s) * 380ms); }
+  .wb-help-step b { font-size:.8rem; color:var(--ink-text); } .wb-help-step small { font-size:.72rem; color:#5b5670; line-height:1.4; }
+  .wb-demo { position:relative; height:42px; margin-bottom:4px; direction:ltr; }
+  .wb-demo-band { border-radius:10px; background:repeating-linear-gradient(90deg, #ece6f4 0 1px, transparent 1px 20%), #fcfbfe; overflow:hidden; }
+  .wb-demo-band .slot { position:absolute; top:13px; left:22%; width:46%; height:16px; border-radius:99px; background:linear-gradient(90deg, #a42c67, #e07aa8, #f59e0b); animation:wbDemoSlide 4s cubic-bezier(.2,.8,.2,1) infinite; }
+  .wb-demo-band .now { position:absolute; top:0; bottom:0; width:2px; background:#e11d48; animation:wbDemoSweep 4s linear infinite; }
+  .wb-demo-weeks, .wb-demo-seats { display:flex; flex-wrap:wrap; gap:4px; align-content:center; }
+  .wb-demo-weeks i { width:15px; height:15px; border-radius:5px; background:#ece6f4; animation:wbDemoLight 4s ease infinite; animation-delay:calc(var(--d) * 220ms); }
+  .wb-demo-seats i { width:10px; height:10px; border-radius:50%; background:#ece6f4; animation:wbDemoSeat 4s ease infinite; animation-delay:calc(var(--d) * 160ms); }
+  .wb-demo-clash span { position:absolute; top:8px; width:58%; height:26px; border-radius:9px; background:#fff; border:2px solid #fda4af; }
+  .wb-demo-clash span:first-child { left:4%; } .wb-demo-clash span:last-child { right:4%; animation:wbDemoClash 4s ease infinite; }
+  .wb-demo-open .card { position:absolute; left:8%; right:22%; top:4px; height:18px; border-radius:7px; background:#f3eef9; border:1px solid #e4d9f0; box-shadow:inset 4px 0 0 #a42c67, 0 6px 14px -10px rgba(40,20,60,.6); transform-origin:top; animation:wbDemoUnfold 4s ease infinite; }
+  .wb-demo-open i { position:absolute; right:10%; top:12px; font-size:1.1rem; color:var(--primary-berry); animation:wbDemoTap 4s ease infinite; }
+
+  .wb-clashes { display:grid; gap:6px; margin-bottom:12px; }
+  .wb-clash { display:flex; align-items:center; gap:10px; flex-wrap:wrap; background:#fff1f2; border:1px solid #fecdd3; border-radius:14px; padding:8px 12px; font-size:.8rem; color:#9f1239; transition:box-shadow .2s ease, transform .2s ease; }
+  .wb-clash:hover, .wb-clash:focus-within { box-shadow:0 12px 24px -18px rgba(159,18,57,.7); transform:translateY(-1px); }
+  .wb-clash-links { display:flex; gap:6px; flex-wrap:wrap; }
+  .wb-clash-links a { font-weight:800; color:#9f1239; background:#fff; border:1px solid #fecdd3; border-radius:999px; padding:1px 9px; text-decoration:none; transition:background-color .15s ease, color .15s ease; }
+  .wb-clash-links a:hover { background:#be123c; color:#fff; }
+  .wb-clash small { color:#b4536e; margin-inline-start:auto; }
+
+  .wb-week { display:grid; gap:10px; }
+  .wb-free { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:8px 14px; border:1px dashed #e7e0f0; border-radius:14px; background:#fcfbfe; font-size:.76rem; font-weight:700; color:#a59fb8; }
+  .wb-free-days { color:#6b6480; font-weight:800; }
+  .wb-free.is-today { border-color:var(--primary-berry); }
+  .wb-day { display:grid; grid-template-columns:96px minmax(0, 1fr); gap:12px; align-items:start; }
+  .wb-day-tag { border-radius:16px; background:#faf8fd; padding:12px 8px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:2px; }
+  .wb-day-tag > b { font-size:.82rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#6b6480; }
+  .wb-day-tag small, .wb-day-count { font-size:.7rem; font-weight:700; color:var(--muted); }
+  .wb-day-count { margin-top:4px; }
+  .wb-day-tag em { font-style:normal; font-size:.62rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; background:#fff; color:var(--primary-berry); border-radius:999px; padding:1px 8px; margin-top:3px; }
+  .wb-day.is-today .wb-day-tag { background:linear-gradient(160deg, var(--primary-berry), #e07aa8); box-shadow:0 14px 26px -18px rgba(164,44,103,.8); }
+  .wb-day.is-today .wb-day-tag > b, .wb-day.is-today .wb-day-tag small, .wb-day.is-today .wb-day-count { color:#fff; }
+  .wb-day-main { min-width:0; display:grid; gap:10px; }
+  .wb-line { position:relative; direction:ltr; background:#fcfbfe; border:1px dashed #ebe5f3; border-radius:14px; overflow:hidden; }
+  .wb-hour { position:absolute; top:0; bottom:0; border-left:1px solid #f1edf7; pointer-events:none; }
+  .wb-hour em { position:absolute; top:3px; left:4px; font-style:normal; font-size:.6rem; font-weight:700; color:#b3abc6; }
+  .wb-band { position:absolute; height:26px; border:0; border-radius:999px; padding:0 12px 3px; display:flex; align-items:center; gap:7px; background:#fff; overflow:hidden; cursor:pointer; z-index:2;
+             font-size:.72rem; color:var(--ink-text); box-shadow:0 6px 14px -10px rgba(40,20,60,.6), inset 0 0 0 1px #eadff2; transition:transform .18s ease, box-shadow .18s ease; }
+  .wb-band::after { content:""; position:absolute; left:0; right:0; bottom:0; height:4px; background:var(--stripes); }
+  .wb-band::before { content:""; position:absolute; inset:0; background:linear-gradient(100deg, transparent 35%, rgba(255,255,255,.9) 50%, transparent 65%); transform:translateX(-100%); }
+  .wb-band:hover { transform:translateY(-1px); box-shadow:0 12px 22px -12px rgba(40,20,60,.6), inset 0 0 0 1px var(--primary-berry); }
+  .wb-band b { font-weight:800; position:relative; } .wb-band span { color:#6b6480; font-weight:700; white-space:nowrap; position:relative; }
+  .wb-band.is-clash { box-shadow:0 6px 14px -10px rgba(159,18,57,.6), inset 0 0 0 1.5px #fda4af; }
+  .wb-now { position:absolute; top:0; bottom:0; width:2px; background:#e11d48; box-shadow:0 0 0 3px rgba(225,29,72,.14); z-index:3; transition:left .6s ease; pointer-events:none; }
+  .wb-now::before { content:""; position:absolute; top:2px; left:-4px; width:10px; height:10px; border-radius:50%; background:#e11d48; }
+  .wb-slot-head { display:flex; align-items:center; gap:6px; font-size:.72rem; font-weight:800; color:#6b6480; margin:0 2px 6px; }
+  .wb-cards { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
+
+  .wb-card { --c:hsl(var(--hue) 62% 44%); --t:hsl(var(--hue) 70% 97%); position:relative; border-radius:16px; background:#fff; border:1px solid #eee8f5;
+             box-shadow:0 8px 20px -18px rgba(40,20,60,.6); transition:transform .2s ease, box-shadow .2s ease, opacity .25s ease, filter .25s ease; }
+  .wb-card::before { content:""; position:absolute; inset-inline-start:0; top:12px; bottom:12px; width:4px; border-radius:0 4px 4px 0; background:var(--c); }
+  [dir="rtl"] .wb-card::before { border-radius:4px 0 0 4px; }
+  .wb-card:hover { transform:translateY(-2px); box-shadow:0 18px 30px -20px rgba(40,20,60,.55); }
+  .wb-card-head { width:100%; border:0; background:none; text-align:start; display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:12px; align-items:center;
+                  padding:12px 12px 16px; padding-inline-start:16px; color:inherit; cursor:pointer; position:relative; border-radius:16px; }
+  .wb-card-head:focus-visible { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .wb-card-icon { display:grid; transition:transform .25s ease; } .wb-card:hover .wb-card-icon { transform:rotate(-6deg) scale(1.06); }
+  .wb-card-text { min-width:0; display:flex; flex-direction:column; gap:1px; }
+  .wb-card-name { display:flex; align-items:center; gap:6px; min-width:0; }
+  .wb-card-name b { font-size:.9rem; font-weight:800; color:var(--ink-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  .wb-card-name .emo { font-size:.8rem; flex:none; }
+  .wb-card-text > small { font-size:.72rem; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .wb-card-meta { display:flex; align-items:center; gap:8px; margin-top:3px; font-size:.7rem; color:#5b5670; min-width:0; }
+  .wb-card-prof { flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--muted); }
+  .wb-card-seats { font-weight:800; white-space:nowrap; flex:none; }
+  .wb-card-meta .wb-week-tag { flex:none; font-weight:800; white-space:nowrap; }
+  .wb-none { color:#be123c; font-weight:700; }
+  .wb-week-tag { background:var(--t); color:var(--c); border-radius:999px; padding:2px 8px; }
+  .wb-week-tag.is-soon { background:#eef6ff; color:#1d4ed8; }
+  .wb-live-tag { flex:none; display:inline-flex; align-items:center; gap:4px; font-size:.6rem; font-weight:800; color:#fff; background:#e11d48; border-radius:999px; padding:1px 7px; }
+  .wb-live-tag::before { content:""; width:6px; height:6px; border-radius:50%; background:#fff; }
+  .wb-card-chev { color:#b5afc8; transition:transform .25s ease, color .25s ease; }
+  .wb-card-bar { position:absolute; left:16px; right:12px; bottom:8px; height:3px; border-radius:3px; background:#f1edf7; overflow:hidden; }
+  .wb-card-bar span { display:block; height:100%; width:calc(var(--p) * 1%); border-radius:inherit; background:linear-gradient(90deg, var(--c), hsl(var(--hue) 70% 64%)); transform-origin:left; }
+  [dir="rtl"] .wb-card-bar span { transform-origin:right; margin-inline-start:0; }
+  .wb-card.is-soon { border-style:dashed; }
+  .wb-card.is-clash { border-color:#fecdd3; } .wb-card.is-clash::before { background:repeating-linear-gradient(180deg, #e11d48 0 6px, #fda4af 6px 12px); }
+  .wb-card.is-live { box-shadow:0 0 0 2px rgba(225,29,72,.3), 0 14px 26px -20px rgba(159,18,57,.6); }
+  .wb-card.is-open { grid-column:1 / -1; border-color:hsl(var(--hue) 50% 82%); box-shadow:0 24px 44px -28px rgba(40,20,60,.6); }
+  .wb-card.is-open .wb-card-chev { transform:rotate(180deg); color:var(--primary-berry); }
+  .wb-card-more { display:none; padding:2px 16px 16px; }
+  .wb-card.is-open .wb-card-more { display:block; animation:wbUnfold .4s cubic-bezier(.2,.8,.2,1) both; }
+  .wb-more-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; }
+  .wb-more-box { background:var(--t); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:8px; min-width:0; }
+  .wb-more-label { font-size:.66rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#6b6480; display:flex; gap:6px; align-items:center; }
+  .wb-more-label i { color:var(--c); }
+  .wb-more-say { font-size:.76rem; color:#4a445e; line-height:1.45; } .wb-more-say b { color:var(--ink-text); }
+  .wb-blocks { display:flex; flex-wrap:wrap; gap:4px; }
+  .wb-blocks i { width:16px; height:16px; border-radius:5px; background:#fff; box-shadow:inset 0 0 0 1px hsl(var(--hue) 40% 84%); }
+  .wb-blocks i.is-done { background:var(--c); box-shadow:none; }
+  .wb-blocks i.is-now { box-shadow:inset 0 0 0 2px var(--c); background:hsl(var(--hue) 70% 90%); }
+  .wb-seats { display:flex; flex-wrap:wrap; gap:3px; }
+  .wb-seats i { width:9px; height:9px; border-radius:50%; background:#fff; box-shadow:inset 0 0 0 1px hsl(var(--hue) 40% 82%); }
+  .wb-seats i.is-taken { background:var(--c); box-shadow:none; }
+  .wb-ring { --ring:var(--pct); width:62px; height:62px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--c) calc(var(--ring) * 1%), #fff 0); }
+  .wb-ring span { width:47px; height:47px; border-radius:50%; background:var(--t); display:grid; place-items:center; font-weight:800; font-size:.84rem; color:var(--ink-text); }
+  .wb-ring.is-empty { background:#fff; } .wb-ring.is-empty span { color:#b5afc8; }
+  .wb-more-clash { display:flex; gap:10px; align-items:flex-start; margin-top:10px; border-radius:14px; padding:10px 14px; background:#fff1f2; color:#9f1239; font-size:.78rem; }
+  .wb-more-actions { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .wb-unplaced { margin-top:4px; }
+  .wb.has-focus .wb-card:not(.is-match) { opacity:.3; filter:grayscale(.7); transform:scale(.98); }
+  .wb.has-focus .wb-card.is-match { box-shadow:0 0 0 2px hsl(var(--hue) 55% 62%), 0 18px 30px -20px rgba(40,20,60,.55); }
+  .wb-card.is-pointed { box-shadow:0 0 0 2px #e11d48, 0 18px 30px -18px rgba(159,18,57,.6); }
+
+  /* Everything moves when the fold opens, once; a class's weeks and places light up when it unfolds. */
+  @media (prefers-reduced-motion: no-preference) {
+    .wb-strip-dots i { animation:wbPop .4s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--d) * 50ms + 200ms); }
+    .pp-stack > span { animation:wbPop .4s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 80ms + 200ms); }
+    .wb[open] .wb-free, .wb[open] .wb-day { animation:wbRise .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 80ms); }
+    .wb[open] .wb-card { animation:wbPop .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--k, 0) * 55ms + 150ms); }
+    .wb[open] .wb-card-bar span { animation:wbFill 1s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--k, 0) * 55ms + 400ms); }
+    .wb[open] .wb-band::before { animation:wbSheen 3.6s ease-in-out infinite 1s; }
+    .wb[open] .wb-band.is-clash { animation:wbBreath 2.2s ease-in-out infinite; }
+    .wb-now::before, .wb-live-tag::before { animation:wbPulse 1.4s ease-in-out infinite; }
+    .wb-card.is-open .wb-blocks i { animation:wbPop .35s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--d) * 45ms); }
+    .wb-card.is-open .wb-blocks i.is-now { animation:wbPop .35s cubic-bezier(.2,.8,.2,1) both calc(var(--d) * 45ms), wbNowWeek 1.4s ease-in-out infinite calc(var(--d) * 45ms + .4s); }
+    .wb-card.is-open .wb-seats i { animation:wbPop .3s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--d) * 16ms + 100ms); }
+    .wb-card.is-open .wb-ring { animation:wbRing 1.1s cubic-bezier(.2,.8,.2,1) both .25s; }
+    .wb-card.is-pointed { animation:wbShake .5s ease; }
+    .wb-card.is-lit { animation:wbLit 1.6s ease; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wb-help-step, .wb-demo *, .wb-card-more { animation:none !important; }
+    .wb-card, .wb-prof, .wb-band, .wb-clash { transition:none; }
+  }
+  @keyframes wbRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes wbPop { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
+  @keyframes wbFill { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  @keyframes wbUnfold { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  @keyframes wbRing { from { --ring:0; } }
+  @keyframes wbSheen { 0%, 60% { transform:translateX(-100%); } 100% { transform:translateX(100%); } }
+  @keyframes wbBreath { 50% { box-shadow:0 6px 14px -10px rgba(159,18,57,.6), inset 0 0 0 2px #e11d48; } }
+  @keyframes wbPulse { 50% { transform:scale(1.5); opacity:.5; } }
+  @keyframes wbNowWeek { 50% { transform:scale(1.18); background:var(--c); } }
+  @keyframes wbShake { 20%, 60% { transform:translateX(-3px); } 40%, 80% { transform:translateX(3px); } }
+  @keyframes wbLit { 0%, 100% { box-shadow:0 8px 20px -18px rgba(40,20,60,.6); } 30% { box-shadow:0 0 0 3px var(--c), 0 18px 30px -18px rgba(40,20,60,.55); transform:translateY(-3px); } }
+  @keyframes wbDemoSlide { 0% { transform:translateX(-160%); opacity:0; } 25%, 100% { transform:none; opacity:1; } }
+  @keyframes wbDemoSweep { 0% { left:0; } 100% { left:100%; } }
+  @keyframes wbDemoLight { 0%, 8% { background:#ece6f4; } 18%, 80% { background:#a42c67; } 100% { background:#ece6f4; } }
+  @keyframes wbDemoSeat { 0%, 6% { background:#ece6f4; transform:scale(.6); } 14%, 82% { background:#a42c67; transform:none; } 100% { background:#ece6f4; } }
+  @keyframes wbDemoClash { 0%, 20% { transform:translateX(30%); opacity:.4; } 40% { transform:none; opacity:1; } 46%, 58% { transform:translateX(-3px); border-color:#e11d48; } 52%, 64% { transform:translateX(3px); border-color:#e11d48; } 70%, 100% { transform:none; border-color:#e11d48; } }
+  @keyframes wbDemoUnfold { 0%, 30% { height:18px; } 45%, 85% { height:36px; } 100% { height:18px; } }
+  @keyframes wbDemoTap { 0% { transform:translate(30px, 16px); opacity:0; } 20% { transform:none; opacity:1; } 28% { transform:scale(.8); } 34%, 85% { transform:none; opacity:1; } 100% { opacity:0; } }
+
+  /* The newest registrations and the most chosen programs, side by side. */
+  .pp-teaser { display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-top:7px; }
+  .pp-stack { display:inline-flex; }
+  .pp-stack > span { display:inline-flex; border-radius:50%; box-shadow:0 0 0 2px #fff; margin-inline-start:-8px; }
+  .pp-stack > span:first-child { margin-inline-start:0; }
+  .pp-top { display:inline-flex; align-items:center; gap:7px; }
+  .pp-grid { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:16px; }
+  .pp-col { background:#fcfbfe; border:1px solid #f0ebf6; border-radius:20px; padding:16px; min-width:0; }
+  .pp-head { display:flex; gap:12px; align-items:center; margin-bottom:10px; }
+  .pp-head-ico { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; flex:none; background:var(--berry-subtle); color:var(--primary-berry); }
+  .pp-head-ico.is-gold { background:var(--gold-subtle); color:var(--gold-dark); }
+  .pp-head b { display:block; font-size:.92rem; color:var(--ink-text); } .pp-head small { display:block; font-size:.72rem; color:var(--muted); line-height:1.35; }
+  .pp-head .ui-link { margin-inline-start:auto; white-space:nowrap; font-size:.8rem; }
+  .pp-time, .pp-race { list-style:none; margin:0; padding:0; position:relative; }
+  .pp-time::before { content:""; position:absolute; top:22px; bottom:22px; inset-inline-start:21px; width:2px; border-radius:2px; background:linear-gradient(180deg, var(--primary-berry), #e9d5ff); transform-origin:top; }
+  .pp-person { display:grid; grid-template-columns:44px minmax(0, 1fr) auto auto; gap:12px; align-items:center; padding:9px 8px 9px 0; border-radius:14px; text-decoration:none; color:var(--ink-text);
+               transition:background-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+  .pp-person:hover { background:#fff; transform:translateX(3px); box-shadow:0 12px 24px -20px rgba(40,20,60,.55); color:var(--ink-text); }
+  [dir="rtl"] .pp-person:hover { transform:translateX(-3px); }
+  .pp-face { position:relative; display:grid; place-items:center; z-index:1; } .pp-face .ui-avatar { box-shadow:0 0 0 3px #fcfbfe; }
+  .pp-new { position:absolute; bottom:-7px; left:50%; transform:translateX(-50%); font-size:.55rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#fff; background:var(--primary-berry); border-radius:999px; padding:0 6px; white-space:nowrap; }
+  .pp-main { min-width:0; display:flex; flex-direction:column; gap:3px; }
+  .pp-main > b { font-size:.88rem; font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .pp-main small { font-size:.7rem; color:var(--muted); }
+  .pp-chips { display:flex; flex-wrap:wrap; gap:4px; }
+  .pp-chips em { font-style:normal; font-size:.66rem; font-weight:700; padding:1px 8px; border-radius:999px; background:#f3eff9; color:#5b5470; white-space:nowrap; max-width:200px; overflow:hidden; text-overflow:ellipsis; }
+  .pp-pay { display:flex; flex-direction:column; align-items:center; gap:3px; min-width:72px; }
+  .pp-ring { --ring:var(--pct); width:42px; height:42px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(#f59e0b calc(var(--ring) * 1%), #f1eef6 0); }
+  .pp-pay.is-done .pp-ring { background:conic-gradient(#22c55e calc(var(--ring) * 1%), #f1eef6 0); }
+  .pp-ring > span { width:32px; height:32px; border-radius:50%; background:#fff; display:grid; place-items:center; font-size:.64rem; font-weight:800; color:var(--ink-text); }
+  .pp-pay.is-done .pp-ring > span { color:#15803d; font-size:.95rem; }
+  .pp-pay small { font-size:.64rem; color:var(--muted); white-space:nowrap; } .pp-pay small b { color:#b45309; } .pp-pay.is-done small { color:#15803d; font-weight:700; }
+  .pp-feel { min-width:86px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; font-size:.72rem; text-align:end; }
+  .pp-feel small { font-size:.64rem; color:var(--muted); }
+  .pp-stars { color:#f59e0b; font-size:.76rem; white-space:nowrap; } .pp-stars b { color:var(--ink-text); margin-inline-start:3px; }
+  .pp-none { font-size:.7rem; font-weight:700; color:#9b95b0; white-space:nowrap; }
+  .pp-prog { display:grid; grid-template-columns:28px 38px minmax(0, 1fr) auto; gap:10px; align-items:center; padding:9px 10px; border-radius:14px; text-decoration:none; color:var(--ink-text);
+             transition:background-color .18s ease, transform .18s ease, box-shadow .18s ease; }
+  .pp-prog:hover { background:#fff; transform:translateY(-2px); box-shadow:0 12px 24px -20px rgba(40,20,60,.55); color:var(--ink-text); }
+  .pp-race-item + .pp-race-item { margin-top:4px; }
+  .pp-medal { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:900; font-size:.78rem; color:var(--primary-berry); background:var(--berry-subtle); position:relative; overflow:hidden; }
+  .pp-medal.r1 { background:linear-gradient(135deg, #fde68a, #f59e0b); color:#5b3b00; }
+  .pp-medal.r2 { background:linear-gradient(135deg, #f8fafc, #94a3b8); color:#1e293b; }
+  .pp-medal.r3 { background:linear-gradient(135deg, #fed7aa, #c2410c); color:#fff; }
+  .pp-medal.r1::after, .pp-medal.r2::after, .pp-medal.r3::after { content:""; position:absolute; inset:0; background:linear-gradient(110deg, transparent 30%, rgba(255,255,255,.8) 50%, transparent 70%); transform:translateX(-120%); }
+  .pp-picon { display:grid; transition:transform .25s ease; } .pp-prog:hover .pp-picon { transform:rotate(-6deg) scale(1.08); }
+  .pp-track { position:relative; height:10px; border-radius:999px; background:#f1eef6; overflow:hidden; margin:2px 0; }
+  .pp-fill { position:absolute; top:0; bottom:0; inset-inline-start:0; width:var(--w); border-radius:inherit; background:linear-gradient(90deg, var(--primary-berry), #e879a9); transform-origin:left; }
+  [dir="rtl"] .pp-fill { transform-origin:right; }
+  .pp-race-item:first-child .pp-fill { background:linear-gradient(90deg, #f59e0b, var(--primary-berry)); }
+  .pp-count { font-size:.7rem; color:var(--muted); } .pp-count b { color:var(--ink-text); font-size:.78rem; }
+  @media (prefers-reduced-motion: no-preference) {
+    .pp[open] .pp-time::before { animation:wbDraw .9s cubic-bezier(.2,.8,.2,1) both; }
+    .pp[open] .pp-item, .pp[open] .pp-race-item { animation:wbRise .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 80ms + 80ms); }
+    .pp[open] .pp-ring { animation:wbRing 1.1s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 80ms + 250ms); }
+    .pp[open] .pp-fill { animation:wbFill 1.1s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 90ms + 250ms); }
+    .pp[open] .pp-medal::after { animation:wbShine 3.4s ease-in-out infinite; animation-delay:calc(var(--i) * 450ms + 1.2s); }
+    .pp-prog:hover .pp-stars i { animation:wbPop .5s ease; }
+  }
+  @keyframes wbDraw { from { transform:scaleY(0); } to { transform:scaleY(1); } }
+  @keyframes wbShine { 0%, 55% { transform:translateX(-120%); } 100% { transform:translateX(120%); } }
+
+  @media (max-width: 1199px) { .wb-help { grid-template-columns:repeat(3, minmax(0, 1fr)); } .pp-grid { grid-template-columns:1fr; } }
+  @media (max-width: 991px) { .wb-strip { display:none; } .wb-more-grid { grid-template-columns:1fr 1fr; } }
+  @media (max-width: 760px) {
+    .wb-day { grid-template-columns:1fr; }
+    .wb-day-tag { flex-direction:row; justify-content:flex-start; gap:8px; padding:7px 12px; }
+    .wb-day-tag em, .wb-day-count { margin:0; } .wb-day-count { margin-inline-start:auto; }
+    .wb-band span { display:none; }
+    .wb-help { grid-template-columns:1fr 1fr; } .wb-more-grid { grid-template-columns:1fr; }
+    .wb-cards { grid-template-columns:1fr; }
+  }
+  @media (max-width: 560px) {
+    .wb-help { grid-template-columns:1fr; }
+    .pp-person { grid-template-columns:40px minmax(0, 1fr) auto; } .pp-person .pp-feel { display:none; }
+    .pp-prog { grid-template-columns:24px 34px minmax(0, 1fr); } .pp-prog .pp-feel { display:none; }
+    .wb-sum-facts .wb-fact:nth-child(n+4) { display:none; }
+  }
 
   @media (max-width: 1299px) { .db-tiles { grid-template-columns:repeat(2, minmax(0, 1fr)); } .db-todo { grid-template-columns:1fr; } .db-parts { grid-template-columns:repeat(3, minmax(0, 1fr)); } }
   @media (max-width: 991px) { .db-two { grid-template-columns:1fr; } }
   @media (max-width: 520px) { .db-tiles { grid-template-columns:1fr; } .db-parts { grid-template-columns:repeat(2, minmax(0, 1fr)); } .db-needs, .db-card { padding:18px; } }
   @media (prefers-reduced-motion: reduce) { .db-tile, .db-part { transition:none; } }
+
+  /* The day at a glance, at the top */
+  .db-hero { position:relative; overflow:hidden; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; flex-wrap:wrap;
+             background:linear-gradient(120deg, #fdf2f7 0%, #f6efff 55%, #eef6ff 100%); border:1px solid #f1e3ee; border-radius:26px; padding:22px 24px; margin-bottom:20px; }
+  .db-hero::before, .db-hero::after { content:""; position:absolute; border-radius:50%; pointer-events:none; }
+  .db-hero::before { width:220px; height:220px; right:-60px; top:-90px; background:radial-gradient(circle, rgba(164,44,103,.14), transparent 70%); animation:dbFloat 9s ease-in-out infinite; }
+  .db-hero::after { width:160px; height:160px; left:38%; bottom:-90px; background:radial-gradient(circle, rgba(29,78,216,.10), transparent 70%); animation:dbFloat 11s ease-in-out infinite reverse; }
+  @keyframes dbFloat { 50% { transform:translate(-14px, 10px) scale(1.06); } }
+  .db-hero > * { position:relative; z-index:1; }
+  .db-hero h2 { font-weight:800; font-size:1.55rem; margin:0; color:var(--ink-text); letter-spacing:-.01em; }
+  .db-hero p { margin:4px 0 0; color:#5b5670; font-size:.88rem; }
+  .db-glance { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .db-glance a { display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,.85); border:1px solid rgba(164,44,103,.12); border-radius:999px;
+                 padding:6px 12px 6px 6px; font-size:.78rem; font-weight:700; color:var(--ink-text); text-decoration:none; transition:transform .15s ease, box-shadow .15s ease; }
+  .db-glance a:hover { transform:translateY(-2px); box-shadow:0 10px 20px -14px rgba(36,26,56,.5); color:var(--ink-text); }
+  .db-glance a b { font-size:.86rem; }
+  .db-glance i { width:26px; height:26px; border-radius:50%; display:inline-grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:.82rem; }
+  .db-glance a.is-ok i { background:var(--mint-subtle); color:var(--mint); }
+  .db-glance a.is-warn i { background:var(--gold-subtle); color:var(--gold-dark); }
+  .db-glance a.is-bad { border-color:#fecdd3; } .db-glance a.is-bad i { background:#ffe4e6; color:#be123c; }
+
+  /* The programs nobody teaches yet */
+  .db-stack { display:grid; gap:18px; align-content:start; }
+  .db-teach { border-color:#fecdd3; background:linear-gradient(180deg, #fff 0%, #fff8f8 100%); }
+  .db-teach .db-head-pic { background:#ffe4e6; color:#be123c; display:grid; place-items:center; font-size:1.4rem; }
+  .db-teach-list { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 12px; }
+  .db-teach-list a { font-size:.76rem; font-weight:700; color:#be123c; background:#fff; border:1px solid #fecdd3; border-radius:999px; padding:4px 11px; text-decoration:none; transition:background-color .15s ease, color .15s ease; }
+  .db-teach-list a:hover { background:#be123c; color:#fff; }
+  .db-quiet { display:flex; align-items:center; gap:10px; padding:12px 14px; border:1px dashed var(--border-color); border-radius:16px; color:#6b6680; font-size:.8rem; }
+  .db-quiet i { color:var(--mint); font-size:1.05rem; }
+
+  /* Each figure of the week, day by day */
+  .db-spark { display:flex; align-items:flex-end; justify-content:center; gap:3px; height:26px; margin:8px auto 2px; width:80%; }
+  .db-spark i { flex:1 1 0; width:auto !important; height:var(--h) !important; min-height:3px; border-radius:3px !important; background:currentColor !important; opacity:.28;
+                display:block !important; transform-origin:bottom; animation:dbGrow .6s ease both; animation-delay:calc(var(--d) * 60ms); }
+  .db-spark i.is-today { opacity:.85; }
+  @keyframes dbGrow { from { transform:scaleY(0); } }
+  .db-part.t-brand .db-spark { color:var(--primary-berry); } .db-part.t-ok .db-spark { color:var(--mint); }
+  .db-part.t-warn .db-spark { color:var(--gold-dark); } .db-part.t-info .db-spark { color:var(--sky); }
+  .db-part.is-none .db-spark { color:#d8d2e4; }
+  .db-time-unset { font-size:.68rem; font-weight:800; color:var(--gold-dark); background:var(--gold-subtle); border-radius:999px; padding:1px 8px; }
+  @media (prefers-reduced-motion: reduce) { .db-hero::before, .db-hero::after, .db-spark i { animation:none; } }
 </style>
 {% endblock %}
 
@@ -180,20 +478,28 @@
 {% include "_flash.html" %}
 {% set hour = now.hour %}
 
-<div class="ui-head">
+{% set sessions_today = sessions | selectattr('is_today') | list | length %}
+<section class="db-hero">
   <div>
     <div class="db-hello">
+      {% if app_brand and app_brand.logo %}<img class="db-logo" src="{{ app_brand.icon_big or app_brand.logo }}" alt="">{% endif %}
       <h2>Good {{ 'morning' if hour < 12 else ('afternoon' if hour < 18 else 'evening') }}</h2>
       <span class="db-date">{{ now.strftime('%A %d %B') }}</span>
     </div>
-    <p>Four pictures of where things stand, then what needs you today.</p>
+    <p>Your day at a glance: each line opens its place.</p>
+    <div class="db-glance" id="live-dashboard-glance" data-live-region>
+      <a href="#live-dashboard-sessions" class="{{ 'is-ok' if not sessions_today }}"><i class="bi bi-calendar-event"></i><b>{{ sessions_today }}</b><span>{{ 'session today' if sessions_today == 1 else 'sessions today' }}</span></a>
+      <a href="/inbox" class="{{ 'is-warn' if figures.emails_waiting else 'is-ok' }}"><i class="bi bi-envelope"></i><b>{{ figures.emails_waiting }}</b><span>{{ 'email waiting' if figures.emails_waiting == 1 else 'emails waiting' }}</span></a>
+      <a href="#live-dashboard-advice" class="{{ 'is-warn' if advice else 'is-ok' }}"><i class="bi bi-list-check"></i><b>{{ advice | length }}</b><span>{{ 'thing to do' if advice | length == 1 else 'things to do' }}</span></a>
+      {% if no_teacher %}<a href="/classes/?tab=professors#coverage" class="is-bad"><i class="bi bi-person-exclamation"></i><b>{{ no_teacher | length }}</b><span>{{ 'program without a teacher' if no_teacher | length == 1 else 'programs without a teacher' }}</span></a>{% endif %}
+    </div>
   </div>
   <div class="ui-actions">
     <a href="/inbox/compose" class="ui-btn"><i class="bi bi-pencil-square"></i>Write an email</a>
     <a href="/candidate/all?add=1" class="ui-btn"><i class="bi bi-person-plus"></i>Add a candidate</a>
     <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#createClassModal"><i class="bi bi-calendar-plus"></i>Create a class</button>
   </div>
-</div>
+</section>
 
 <!-- Where things stand, in four pictures -->
 <section class="db-tiles" id="live-dashboard-figures" data-live-region>
@@ -266,7 +572,7 @@
   <div class="db-todo">{% for item in advice[:3] %}{{ todo(item) }}{% endfor %}</div>
   {% if advice | length > 3 %}
   <details class="db-more">
-    <summary><span class="ui-btn sm"><i class="bi bi-chevron-down"></i>Show the {{ advice | length - 3 }} other{{ 's' if advice | length - 3 != 1 }}</span></summary>
+    <summary><span class="ui-btn sm"><i class="bi bi-chevron-down"></i>Show the others ({{ advice | length - 3 }})</span></summary>
     <div class="db-todo">{% for item in advice[3:] %}{{ todo(item) }}{% endfor %}</div>
   </details>
   {% endif %}
@@ -276,6 +582,26 @@
     <div><strong>Nothing needs you right now</strong><span>No email is waiting, payments are being followed and every class has what it needs.</span></div>
   </div>
   {% endif %}
+</section>
+
+
+<!-- Reports to download: this week, the analysis, the candidates' progress -->
+<section class="db-reports" id="reports">
+  <a class="db-report" href="/dashboard/pdf" target="_blank" rel="noopener" style="--i:0;">
+    <span class="db-report-ico t-brand"><i class="bi bi-calendar-week-fill"></i></span>
+    <span class="db-report-text"><b>This week, as a PDF</b><small>Day-by-day chart, money, classes and what needs you</small></span>
+    <i class="bi bi-file-earmark-arrow-down db-report-go"></i>
+  </a>
+  <a class="db-report" href="/dashboard/analysis/pdf" target="_blank" rel="noopener" style="--i:1;">
+    <span class="db-report-ico t-gold"><i class="bi bi-graph-up-arrow"></i></span>
+    <span class="db-report-text"><b>Analysis: what to improve</b><small>How we progress over 8 weeks, opinions, classes side by side</small></span>
+    <i class="bi bi-file-earmark-arrow-down db-report-go"></i>
+  </a>
+  <a class="db-report" href="/candidate/all/analysis/pdf" target="_blank" rel="noopener" style="--i:2;">
+    <span class="db-report-ico t-mint"><i class="bi bi-mortarboard-fill"></i></span>
+    <span class="db-report-text"><b>Candidates' progress</b><small>Are they learning? Last sessions, results and reviews</small></span>
+    <i class="bi bi-file-earmark-arrow-down db-report-go"></i>
+  </a>
 </section>
 
 <!-- Reminders: the ones planned, and the ones worth writing -->
@@ -315,7 +641,7 @@
       {% if session.program_icon %}{{ ui.program_icon(session.program_icon, 38) }}{% endif %}
       <div class="flex-grow-1" style="min-width:0;">
         <div class="db-row-title text-truncate">{{ session.topic or (session.class.program.name if session.class.program else session.class.name) }}</div>
-        <div class="db-row-sub"><i class="bi bi-clock"></i> {% if session.start_time %}{{ session.start_time.strftime('%H:%M') }}{% else %}Time not set{% endif %} · {{ session.class.name }}</div>
+        <div class="db-row-sub"><i class="bi bi-clock"></i> {% if session.start_time %}{{ session.start_time.strftime('%H:%M') }}{% else %}<span class="db-time-unset">Time not set</span>{% endif %} · {{ session.class.name }}</div>
       </div>
       {% if not session.class.professor_name %}<span class="ui-chip bad">No professor</span>{% endif %}
       <span class="db-people" title="{{ session.members }} candidate{{ 's' if session.members != 1 }}"><i class="bi bi-people-fill"></i>{{ session.members }}</span>
@@ -325,6 +651,22 @@
     <div class="ui-empty"><i class="bi bi-calendar-x"></i><strong>No session in the next 7 days</strong>They appear here once a class has a start date.</div>
     {% endfor %}
   </section>
+
+  <div class="db-stack">
+  {% if no_teacher %}
+  <!-- The programs nobody teaches yet: as many professors as you like can be added -->
+  <section class="db-card db-teach" id="live-dashboard-teachers" data-live-region>
+    <div class="db-card-head db-head-art">
+      <div class="db-head-pic" aria-hidden="true"><i class="bi bi-person-exclamation"></i></div>
+      <div style="min-width:0; flex:1;">
+        <div class="db-title">No teacher yet</div>
+        <div class="db-sub"><b>{{ no_teacher | length }}</b> · {{ 'It cannot open a class until someone teaches it.' if no_teacher | length == 1 else 'They cannot open a class until someone teaches them.' }}</div>
+      </div>
+    </div>
+    <div class="db-teach-list">{% for program in no_teacher %}<a href="/classes/?tab=professors#cover-{{ program.id }}">{{ program.name }}</a>{% endfor %}</div>
+    <a class="ui-btn sm primary" href="/classes/?tab=professors#coverage"><i class="bi bi-person-plus"></i>Add a professor</a>
+  </section>
+  {% endif %}
 
   <!-- What is new on the website and the Facebook page -->
   <section class="db-card" id="live-dashboard-news">
@@ -347,9 +689,10 @@
       <i class="bi bi-arrow-right db-go" aria-hidden="true"></i>
     </a>
     {% else %}
-    <div class="ui-empty"><i class="bi bi-check2-circle"></i><strong>Nothing new these last {{ news.days }} days</strong>The website is read again by itself every six hours.</div>
+    <div class="db-quiet"><i class="bi bi-check2-circle"></i><span><b>Nothing new these last {{ news.days }} days.</b> The website is read again by itself every six hours.</span></div>
     {% endfor %}
   </section>
+  </div>
 </div>
 
 <!-- The last seven days in a few figures -->
@@ -363,84 +706,302 @@
     <i class="bi {{ part.icon }}"></i>
     <b>{{ part.count }}</b>
     <span>{{ part.label }}</span>
+    {% set top = (part.days | max) if part.days else 0 %}
+    <span class="db-spark" aria-hidden="true">{% for count in part.days or [] %}<i class="{{ 'is-today' if loop.last }}" style="--h:{{ (100 * count / top) | round | int if top else 0 }}%; --d:{{ loop.index0 }};"></i>{% endfor %}</span>
   </a>
   {% endfor %}
 </section>
 
-<!-- The lists, opened when asked for -->
-<details class="db-fold" id="live-dashboard-classes" data-live-region>
-  <summary><i class="bi bi-collection-play"></i><div><div class="db-fold-title">Classes</div><div class="db-sub">Where each class is, and what candidates understood so far.</div></div><i class="bi bi-chevron-down chev"></i></summary>
-  <div class="db-fold-body">
-    {% for row in classes %}
-    {% set cls = row.class %}
-    <div class="db-class">
-      <div class="d-flex align-items-center gap-3">
-        {% if row.program_icon %}{{ ui.program_icon(row.program_icon, 40) }}{% endif %}
-        <div class="flex-grow-1" style="min-width:0;">
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <a class="db-class-name" href="/classes/{{ cls.id }}">{{ cls.name }}</a>
-            {% if cls.status.value == 'ongoing' %}<span class="ui-chip brand">Week {{ row.summary.current_week }} of {{ row.summary.total_weeks }}</span>
-            {% else %}<span class="ui-chip info">{{ ('Starts ' ~ row.summary.countdown) if row.summary.countdown else row.summary.starts_label }}</span>{% endif %}
-            {% if row.course.average is not none %}{{ ui.level_chip(row.course.level, row.course.average) }}{% endif %}
-          </div>
-          <div class="db-row-sub">{{ cls.program.name if cls.program else 'No program' }} · {{ row.summary.enrolled }}/{{ row.summary.capacity }} candidates · {{ cls.professor_name or 'no professor yet' }}</div>
-        </div>
-        <a class="ui-btn sm" href="/classes/{{ cls.id }}/course" title="Course files and weekly questions"><i class="bi bi-folder2-open"></i>Course</a>
+{% macro class_card(card, k=0) %}
+<article class="wb-card {{ 'is-clash' if card.clash_with }} {{ 'is-soon' if not card.running }}" data-class="{{ card.id }}" data-prof="{{ card.professor | lower }}"
+         data-running="{{ 1 if card.running else 0 }}" data-days="{{ card.days | join(',') }}" data-start="{{ card.start if card.start is not none else '' }}" data-end="{{ card.end if card.end is not none else '' }}"
+         style="--hue:{{ card.hue }}; --p:{{ card.progress }}; --k:{{ k }};">
+  <button type="button" class="wb-card-head" aria-expanded="false" aria-controls="wb-more-{{ card.id }}">
+    <span class="wb-card-icon">{% if card.icon %}{{ ui.program_icon(card.icon, 38) }}{% endif %}</span>
+    <span class="wb-card-text">
+      <span class="wb-card-name"><b data-no-i18n>{{ card.name }}</b>{% if card.clash_with %}<span class="emo emo-shake" title="{{ card.professor }} · {{ card.clash_with | join(', ') }}" data-no-i18n>⚠️</span>{% endif %}<span class="wb-live-tag" hidden>Live</span></span>
+      <small>{{ card.program or 'No program' }}</small>
+      <span class="wb-card-meta">
+        <span class="wb-card-prof">{% if card.professor %}<i class="bi bi-person"></i> <span data-no-i18n>{{ card.professor }}</span>{% else %}<span class="wb-none">No professor yet</span>{% endif %}</span>
+        <span class="wb-card-seats" title="Candidates / places"><i class="bi bi-people-fill"></i> {{ card.enrolled }}/{{ card.capacity }}</span>
+        {% if card.running %}<span class="wb-week-tag"><span>Week</span> {{ card.week }}/{{ card.weeks }}</span>
+        {% else %}<span class="wb-week-tag is-soon">{% if card.countdown %}<span>Starts</span> {{ card.countdown }}{% else %}{{ card.starts_label }}{% endif %}</span>{% endif %}
+      </span>
+    </span>
+    <i class="bi bi-chevron-down wb-card-chev" aria-hidden="true"></i>
+    <span class="wb-card-bar" aria-hidden="true"><span></span></span>
+  </button>
+  <div class="wb-card-more" id="wb-more-{{ card.id }}">
+    <div class="wb-more-grid">
+      <div class="wb-more-box">
+        <div class="wb-more-label"><i class="bi bi-signpost-split"></i>How far along</div>
+        <div class="wb-blocks">{% for state in card.blocks %}<i class="is-{{ state }}" style="--d:{{ loop.index0 }}"></i>{% endfor %}</div>
+        <div class="wb-more-say">{% if card.running %}<b><span>Week</span> {{ card.week }} of {{ card.weeks }}</b> · {{ card.progress }}% <span>of the program done</span>
+          {% else %}<b>{% if card.countdown %}<span>Starts</span> {{ card.countdown }}{% else %}{{ card.starts_label }}{% endif %}</b> · {{ card.weeks }} weeks{% endif %}</div>
       </div>
-      {% if cls.status.value == 'ongoing' %}<div class="ui-bar mt-2"><span style="width:{{ row.progress }}%;"></span></div>{% endif %}
+      <div class="wb-more-box">
+        <div class="wb-more-label"><i class="bi bi-people"></i>How full</div>
+        {% if card.capacity and card.capacity <= 40 %}
+        <div class="wb-seats">{% for number in range(card.capacity) %}<i class="{{ 'is-taken' if number < card.enrolled }}" style="--d:{{ number }}"></i>{% endfor %}</div>
+        {% else %}
+        <div class="ui-bar"><span style="width:{{ card.fill_pct }}%;"></span></div>
+        {% endif %}
+        <div class="wb-more-say"><b>{{ card.enrolled }} of {{ card.capacity }}</b> <span>places taken</span>{% if card.capacity and card.enrolled < card.capacity %} · {{ card.capacity - card.enrolled }} <span>still free</span>{% endif %}</div>
+      </div>
+      <div class="wb-more-box">
+        <div class="wb-more-label"><i class="bi bi-lightbulb"></i>What they understood</div>
+        <div class="d-flex align-items-center gap-3">
+          {% if card.course.average is not none %}
+          <div class="wb-ring" style="--pct:{{ card.course.average | round | int }};"><span>{{ card.course.average | round | int }}%</span></div>
+          <div class="wb-more-say">{{ ui.level_chip(card.course.level) }}<br>{{ card.course.answers }} <span>answers to the weekly questions</span></div>
+          {% else %}
+          <div class="wb-ring is-empty" style="--pct:0;"><span>–</span></div>
+          <div class="wb-more-say">No weekly answers yet<br><small class="text-muted">They come once the questions of a week are sent.</small></div>
+          {% endif %}
+        </div>
+      </div>
     </div>
+    {% if card.clash_with %}
+    <div class="wb-more-clash"><span class="emo emo-shake" data-no-i18n>⚠️</span><span><b data-no-i18n>{{ card.professor }}</b> <span>also teaches at the same time:</span> <b data-no-i18n>{{ card.clash_with | join(', ') }}</b>. <span>Change the professor or the hours of one of them.</span></span></div>
+    {% endif %}
+    <div class="wb-more-actions">
+      <a class="ui-btn primary sm" href="/classes/{{ card.id }}"><i class="bi bi-box-arrow-up-right"></i>Open the class</a>
+      <a class="ui-btn sm" href="/classes/{{ card.id }}/course" title="Course files and weekly questions"><i class="bi bi-folder2-open"></i>Course</a>
+    </div>
+  </div>
+</article>
+{% endmacro %}
+
+<!-- The classes and their week, in one place: each class once, at its hours. A class unfolds when clicked. -->
+{% set wb = board %}
+<details class="db-fold wb" id="live-dashboard-classes" data-live-region>
+  <summary>
+    <i class="bi bi-collection-play"></i>
+    <div class="wb-sum-text">
+      <div class="db-fold-title">Classes and weekly timetable</div>
+      <div class="wb-sum-facts">
+        <span class="wb-fact"><span class="emo" data-no-i18n>🔥</span><b>{{ wb.running }}</b><span>running</span></span>
+        {% if wb.upcoming %}<span class="wb-fact"><span class="emo" data-no-i18n>🚀</span><b>{{ wb.upcoming }}</b><span>about to start</span></span>{% endif %}
+        <span class="wb-fact"><span class="emo" data-no-i18n>📅</span><b>{{ wb.sessions }}</b><span>{{ 'session a week' if wb.sessions == 1 else 'sessions a week' }}</span></span>
+        <span class="wb-fact"><span class="emo" data-no-i18n>🧑‍🏫</span><b>{{ wb.professors | length }}</b><span>{{ 'professor' if wb.professors | length == 1 else 'professors' }}</span></span>
+        <span class="wb-fact is-live wb-live-count" hidden><span class="emo emo-pulse" data-no-i18n>🔴</span><b>0</b><span>live now</span></span>
+        {% if wb.clashes %}<span class="wb-fact is-bad"><span class="emo emo-shake" data-no-i18n>⚠️</span><b>{{ wb.clashes | length }}</b><span>{{ 'professor booked twice' if wb.clashes | length == 1 else 'professors booked twice' }}</span></span>
+        {% elif wb.cards %}<span class="wb-fact is-ok"><span class="emo" data-no-i18n>✅</span><span>No professor booked twice</span></span>{% endif %}
+        {% if wb.no_professor %}<span class="wb-fact is-warn"><span class="emo" data-no-i18n>🙋</span><b>{{ wb.no_professor }}</b><span>{{ 'class without a professor' if wb.no_professor == 1 else 'classes without a professor' }}</span></span>{% endif %}
+      </div>
+    </div>
+    <span class="wb-strip" aria-hidden="true">
+      {% for day in wb.strip %}
+      {% set day_index = loop.index0 %}
+      <span class="wb-strip-day {{ 'is-today' if day.is_today }}" title="{{ day.name }} {{ day.date.strftime('%d/%m') }} · {{ day.count }}">
+        <span class="wb-strip-dots">{% for hue in day.hues[:8] %}<i style="--hue:{{ hue }}; --d:{{ day_index * 2 + loop.index0 }};"></i>{% endfor %}</span>
+        <b>{{ day.name }}</b>
+      </span>
+      {% endfor %}
+    </span>
+    <i class="bi bi-chevron-down chev"></i>
+  </summary>
+  <div class="db-fold-body">
+    {% if wb.cards %}
+    <div class="wb-tools">
+      <div class="wb-profs" role="group" aria-label="Show the classes of one professor">
+        <span class="wb-tools-label">Professors</span>
+        {% for prof in wb.professors %}
+        <button type="button" class="wb-prof {{ 'is-clash' if prof.clash }}" data-prof="{{ prof.name | lower }}" aria-pressed="false" style="--hue:{{ prof.hue }};">
+          <span class="wb-prof-face" data-no-i18n>{{ prof.initials }}</span><span data-no-i18n>{{ prof.name }}</span><em>{{ prof.count }}</em>
+        </button>
+        {% endfor %}
+      </div>
+      <div class="ui-actions">
+        <button type="button" class="ui-btn sm" data-wb-help aria-expanded="false"><i class="bi bi-magic"></i>How to read it</button>
+        <a class="ui-btn sm" href="/api/dashboard/calendar/export.ics"><i class="bi bi-download"></i>Calendar file</a>
+        <a class="ui-btn sm" href="/classes/"><i class="bi bi-sliders"></i>Manage the classes</a>
+      </div>
+    </div>
+
+    <div class="wb-help" hidden>
+      <div class="wb-help-step" style="--s:0;">
+        <div class="wb-demo wb-demo-band" aria-hidden="true"><span class="slot"></span><span class="now"></span></div>
+        <b>When they meet</b><small>The band sits on the hours of the classes. The red line is the time now.</small>
+      </div>
+      <div class="wb-help-step" style="--s:1;">
+        <div class="wb-demo wb-demo-weeks" aria-hidden="true">{% for number in range(8) %}<i style="--d:{{ number }};"></i>{% endfor %}</div>
+        <b>How far along</b><small>One block for each week of the program. The coloured ones are done.</small>
+      </div>
+      <div class="wb-help-step" style="--s:2;">
+        <div class="wb-demo wb-demo-seats" aria-hidden="true">{% for number in range(12) %}<i style="--d:{{ number }};"></i>{% endfor %}</div>
+        <b>How full</b><small>One dot for each place. The coloured ones are taken.</small>
+      </div>
+      <div class="wb-help-step" style="--s:3;">
+        <div class="wb-demo wb-demo-clash" aria-hidden="true"><span></span><span></span></div>
+        <b>Booked twice</b><small>A red class: its professor teaches another one at the same hours.</small>
+      </div>
+      <div class="wb-help-step" style="--s:4;">
+        <div class="wb-demo wb-demo-open" aria-hidden="true"><span class="card"></span><i class="bi bi-hand-index-thumb-fill"></i></div>
+        <b>Everything about a class</b><small>Click a class: it unfolds with its weeks, its places and what its candidates understood.</small>
+      </div>
+    </div>
+
+    {% if wb.clashes %}
+    <div class="wb-clashes">
+      {% for clash in wb.clashes %}
+      <div class="wb-clash" data-clash="{{ clash.classes | map(attribute='id') | join(' ') }}" tabindex="0">
+        <span class="emo emo-shake" data-no-i18n>⚠️</span>
+        <span><b data-no-i18n>{{ clash.professor }}</b> · <b>{{ clash.classes | length }}</b> <span>classes at the same time</span> · {{ clash.when }}</span>
+        <span class="wb-clash-links">{% for item in clash.classes %}<a href="/classes/{{ item.id }}" data-no-i18n>{{ item.name }}</a>{% endfor %}</span>
+        <small>Open one and change its professor or its hours.</small>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="wb-week" data-from="{{ wb.from }}" data-to="{{ wb.to }}">
+      {% set counter = namespace(k=0) %}
+      {% for row in wb.rows %}
+      {% if row.kind == 'free' %}
+      <div class="wb-free {{ 'is-today' if row.is_today }}" style="--i:{{ loop.index0 }};">
+        <span class="wb-free-days">{{ row.first.name }} {{ row.first.date.strftime('%d/%m') }}{% if row.last.index != row.first.index %} → {{ row.last.name }} {{ row.last.date.strftime('%d/%m') }}{% endif %}</span>
+        <span>{{ 'Free day: no class' if row.last.index == row.first.index else 'Free days: no class' }}</span>
+      </div>
+      {% else %}
+      <section class="wb-day {{ 'is-today' if row.is_today }}" style="--i:{{ loop.index0 }};">
+        <div class="wb-day-tag">
+          <b>{{ row.name }}</b><small>{{ row.date.strftime('%d/%m') }}</small>
+          {% if row.is_today %}<em>Today</em>{% endif %}
+          <span class="wb-day-count">{{ row.classes | length }} {{ 'class' if row.classes | length == 1 else 'classes' }}</span>
+        </div>
+        <div class="wb-day-main">
+          {% if row.bands %}
+          <div class="wb-line" style="height:{{ row.lanes * 32 + 22 }}px;">
+            {% for mark in wb.ruler %}<span class="wb-hour" style="left:{{ mark.left }}%;"><em>{{ mark.label }}</em></span>{% endfor %}
+            {% for slot in row.bands %}
+            {% set count = slot.classes | length %}
+            <button type="button" class="wb-band {{ 'is-clash' if slot.clash }}" data-slot="{{ slot.key }}" title="{{ slot.hours }} · {{ count }} {{ 'class' if count == 1 else 'classes' }}"
+                    style="left:calc({{ slot.left }}% + 2px); width:calc({{ slot.width }}% - 4px); top:{{ slot.lane * 32 + 20 }}px; --stripes:linear-gradient(90deg{% for card in slot.classes %}, hsl({{ card.hue }} 62% 50%) {{ (100 * loop.index0 / count) | round(1) }}% {{ (100 * loop.index / count) | round(1) }}%{% endfor %});">
+              <b>{{ slot.hours }}</b><span>{{ count }} {{ 'class' if count == 1 else 'classes' }}</span>
+            </button>
+            {% endfor %}
+            {% if row.is_today %}<span class="wb-now" hidden title="Now"></span>{% endif %}
+          </div>
+          {% endif %}
+          {% for slot in row.slots %}
+          <div class="wb-slot" id="wb-slot-{{ slot.key }}">
+            {% if row.slots | length > 1 or not slot.timed %}<div class="wb-slot-head"><i class="bi bi-clock"></i>{% if slot.timed %}{{ slot.hours }}{% else %}<span>Time not set</span>{% endif %}</div>{% endif %}
+            <div class="wb-cards">
+              {% for card in slot.classes %}{{ class_card(card, counter.k) }}{% set counter.k = counter.k + 1 %}{% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+      {% endif %}
+      {% endfor %}
+    </div>
+
+    {% if wb.unplaced %}
+    <div class="wb-unplaced">
+      <div class="wb-slot-head"><i class="bi bi-calendar-x"></i><span>Not in the week yet: no day or hours set</span></div>
+      <div class="wb-cards">{% for card in wb.unplaced %}{{ class_card(card, loop.index0) }}{% endfor %}</div>
+    </div>
+    {% endif %}
     {% else %}
     <div class="ui-empty"><i class="bi bi-mortarboard"></i><strong>No class yet</strong>A class is created when a candidate pays, or with “Create a class”.</div>
-    {% endfor %}
-    <a class="ui-link d-inline-block mt-2" href="/classes/">Manage the classes</a>
+    {% endif %}
   </div>
 </details>
 
-<details class="db-fold" id="timetable">
-  <summary><i class="bi bi-grid-3x3-gap"></i><div><div class="db-fold-title">Weekly timetable</div><div class="db-sub">Which class meets on which day. A red line means the same professor is booked twice.</div></div><i class="bi bi-chevron-down chev"></i></summary>
-  <div class="db-fold-body">
-    <div class="ui-actions mb-3">
-      <select id="wk-status" class="form-select form-select-sm" style="width:auto; border-radius:10px;" aria-label="Show classes">
-        <option value="">All classes</option><option value="ongoing">Running</option><option value="not_started">Not started</option><option value="completed">Completed</option>
-      </select>
-      <select id="wk-professor" class="form-select form-select-sm" style="width:auto; border-radius:10px;" aria-label="Show a professor"><option value="">All professors</option></select>
-      <a class="ui-btn sm" href="/api/dashboard/calendar/export.ics"><i class="bi bi-download"></i>Calendar file</a>
-    </div>
-    <div class="wk-grid" id="weekGrid"><div class="ui-card-sub">Loading the timetable…</div></div>
-  </div>
-</details>
-
-<details class="db-fold" id="live-dashboard-registrations" data-live-region>
-  <summary><i class="bi bi-person-plus"></i><div><div class="db-fold-title">Newest registrations</div><div class="db-sub">The last candidates who registered, and what they still owe.</div></div><i class="bi bi-chevron-down chev"></i></summary>
-  <div class="db-fold-body">
-    {% for item in registrations %}
-    <a class="db-row" href="/candidate/{{ item.candidate.id }}">
-      {{ ui.avatar(item.name, 38) }}
-      <div class="flex-grow-1" style="min-width:0;">
-        <div class="db-row-title">{{ item.name }}</div>
-        <div class="db-row-sub text-truncate">{{ item.programs | join(', ') }}</div>
+<!-- The newest registrations and the most chosen programs, side by side in one fold -->
+<details class="db-fold pp mb-4" id="live-dashboard-registrations" data-live-region>
+  <summary>
+    <i class="bi bi-people"></i>
+    <div class="wb-sum-text">
+      <div class="db-fold-title">Newest registrations and most chosen programs</div>
+      <div class="pp-teaser">
+        {% if registrations %}
+        <span class="pp-stack" data-no-i18n>{% for item in registrations[:5] %}<span style="--i:{{ loop.index0 }};" title="{{ item.name }}">{{ ui.avatar(item.name, 26) }}</span>{% endfor %}</span>
+        <span class="db-sub"><span>Last one:</span> <b data-no-i18n>{{ registrations[0].name }}</b>{% if registrations[0].when %} · {{ registrations[0].when.strftime('%d %b') }}{% endif %}</span>
+        {% endif %}
+        {% if programs and programs[0].registrations %}
+        <span class="pp-top">{{ ui.program_icon(programs[0].icon, 22) }}<span class="db-sub"><span>Most chosen:</span> <b>{{ programs[0].program.name }}</b> · {{ programs[0].registrations }} <span>registered</span></span></span>
+        {% endif %}
       </div>
-      {% if item.owes > 0 %}<span class="ui-chip warn">{{ "%.0f"|format(item.owes) }} DT due</span>{% else %}<span class="ui-chip ok">Paid</span>{% endif %}
-    </a>
-    {% else %}
-    <div class="ui-empty"><i class="bi bi-people"></i><strong>No candidate yet</strong>They appear here as soon as they register.</div>
-    {% endfor %}
-  </div>
-</details>
-
-<details class="db-fold mb-4" id="live-dashboard-programs" data-live-region>
-  <summary><i class="bi bi-journal-bookmark"></i><div><div class="db-fold-title">Most chosen programs</div><div class="db-sub">The programs candidates register for the most.</div></div><i class="bi bi-chevron-down chev"></i></summary>
+    </div>
+    <i class="bi bi-chevron-down chev"></i>
+  </summary>
   <div class="db-fold-body">
-    {% for item in programs %}
-    <a class="db-row" href="/programs/{{ item.program.id }}">
-      {{ ui.program_icon(item.icon, 38) }}
-      <div class="flex-grow-1" style="min-width:0;"><div class="db-row-title text-truncate">{{ item.program.name }}</div>
-        <div class="db-row-sub">{{ "%.0f"|format(item.program.price_online or 0) }} DT online · {{ "%.0f"|format(item.program.price_onsite or 0) }} DT on site</div></div>
-      <span class="ui-chip">{{ item.registrations }} registered</span>
-    </a>
-    {% else %}
-    <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong></div>
-    {% endfor %}
+    <div class="pp-grid">
+      <section class="pp-col">
+        <div class="pp-head">
+          <span class="pp-head-ico"><i class="bi bi-person-plus"></i></span>
+          <div><b>Newest registrations</b><small>The last candidates who registered, what they paid, and what they said.</small></div>
+          <a class="ui-link" href="/candidate/all">All candidates</a>
+        </div>
+        <ol class="pp-time">
+          {% for item in registrations %}
+          <li class="pp-item" style="--i:{{ loop.index0 }};">
+            <a class="pp-person" href="/candidate/{{ item.candidate.id }}">
+              <span class="pp-face">{{ ui.avatar(item.name, 40) }}{% if loop.first %}<span class="pp-new">New</span>{% endif %}</span>
+              <span class="pp-main">
+                <b data-no-i18n>{{ item.name }}</b>
+                <span class="pp-chips" data-no-i18n>{% for name in item.programs[:2] %}<em>{{ name }}</em>{% endfor %}{% if item.programs | length > 2 %}<em>+{{ item.programs | length - 2 }}</em>{% endif %}</span>
+                {% if item.when %}<small><i class="bi bi-clock-history"></i> {{ item.when.strftime('%d %b, %H:%M') }}</small>{% endif %}
+              </span>
+              <span class="pp-pay {{ 'is-done' if item.owes <= 0 }}" style="--pct:{{ item.paid_pct if item.owes > 0 else 100 }};">
+                <span class="pp-ring"><span>{% if item.owes > 0 %}{{ item.paid_pct }}%{% else %}<i class="bi bi-check-lg"></i>{% endif %}</span></span>
+                {% if item.owes > 0 %}<small><b>{{ "%.0f"|format(item.owes) }} DT</b> <span>still due</span></small>{% else %}<small>Paid in full</small>{% endif %}
+              </span>
+              <span class="pp-feel">
+                {% if item.feedback and item.feedback.kind == 'review' %}
+                <span class="pp-stars" title="{{ item.feedback.words }}">{% for number in range(5) %}<i class="bi bi-star{{ '-fill' if item.feedback.stars and number < item.feedback.stars else '' }}"></i>{% endfor %}</span><small>Their review</small>
+                {% elif item.feedback and item.feedback.kind == 'feeling' %}
+                <span>{{ emo.feel(item.feedback.key) }} {{ item.feedback.label }}</span><small>From their messages</small>
+                {% else %}
+                <span class="pp-none"><i class="bi bi-chat-square-dots"></i> No feedback yet</span>
+                {% endif %}
+              </span>
+            </a>
+          </li>
+          {% else %}
+          <li class="ui-empty"><i class="bi bi-people"></i><strong>No candidate yet</strong>They appear here as soon as they register.</li>
+          {% endfor %}
+        </ol>
+      </section>
+
+      <section class="pp-col" id="live-dashboard-programs">
+        <div class="pp-head">
+          <span class="pp-head-ico is-gold"><i class="bi bi-trophy"></i></span>
+          <div><b>Most chosen programs</b><small>The programs candidates register for the most, and what those who finished them said.</small></div>
+          <a class="ui-link" href="/programs">All programs</a>
+        </div>
+        <ol class="pp-race">
+          {% for item in programs %}
+          <li class="pp-race-item" style="--i:{{ loop.index0 }}; --w:{{ [item.share, 3] | max }}%;">
+            <a class="pp-prog" href="/programs/{{ item.program.id }}">
+              <span class="pp-medal {{ 'r' ~ loop.index if loop.index <= 3 }}">{{ loop.index }}</span>
+              <span class="pp-picon">{{ ui.program_icon(item.icon, 38) }}</span>
+              <span class="pp-main">
+                <b>{{ item.program.name }}</b>
+                <span class="pp-track" aria-hidden="true"><span class="pp-fill"></span></span>
+                <span class="pp-count"><b>{{ item.registrations }}</b> <span>registered</span> · <b>{{ item.paid }}</b> <span>paid</span>{% if item.running %} · <b>{{ item.running }}</b> <span>running</span>{% endif %}</span>
+              </span>
+              <span class="pp-feel">
+                {% if item.feedback.answered %}
+                <span class="pp-stars">{% for number in range(5) %}<i class="bi bi-star{{ '-fill' if item.feedback.stars and number < item.feedback.stars | round(0, 'floor') else ('-half' if item.feedback.stars and number < item.feedback.stars else '') }}"></i>{% endfor %}<b>{{ item.feedback.stars }}</b></span>
+                <small>{{ item.feedback.answered }} {{ 'review' if item.feedback.answered == 1 else 'reviews' }}{% if item.feedback.happy_pct is not none %} · {{ emo.happy(item.feedback.happy_pct) }} {{ item.feedback.happy_pct }}%{% endif %}</small>
+                {% elif item.feedback.asked %}
+                <span class="pp-none"><i class="bi bi-hourglass-split"></i> No feedback yet</span><small>{{ item.feedback.asked }} <span>asked, waiting for their answer</span></small>
+                {% else %}
+                <span class="pp-none"><i class="bi bi-chat-square-dots"></i> No feedback yet</span><small>Asked when a class finishes</small>
+                {% endif %}
+              </span>
+            </a>
+          </li>
+          {% else %}
+          <li class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong></li>
+          {% endfor %}
+        </ol>
+      </section>
+    </div>
   </div>
 </details>
 
@@ -562,64 +1123,121 @@
 </div>
 
 <script>
+// The classes and their week: a class unfolds when clicked, a professor's classes stand out, a clash pointed at lights its
+// two classes, a band shows its classes; the red line of the time now and the classes live now are kept up to date.
 (() => {
-  const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
-  const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-  const grid = document.getElementById("weekGrid");
-  const statusFilter = document.getElementById("wk-status");
-  const professorFilter = document.getElementById("wk-professor");
-  let events = [];
+  const opened = new Set();
+  let focus = "", helpOpen = false, pointed = null;
+  const board = () => document.getElementById("live-dashboard-classes");
 
-  function chip(event) {
-    const week = event.current_week && event.total_weeks ? ` · week ${event.current_week}/${event.total_weeks}` : "";
-    const body = `
-      <div class="wk-chip-time">${escapeHtml(event.startTime || "")}${event.endTime ? "–" + escapeHtml(event.endTime) : ""}</div>
-      <div class="wk-chip-title">${escapeHtml(event.title)}</div>
-      <div class="wk-chip-meta">${escapeHtml(event.professor || "No professor")} · ${event.enrolled || 0}/${event.capacity || "—"}${week}</div>
-      ${event.conflict ? '<div class="wk-chip-meta" style="color:#be123c; font-weight:700;">Professor booked twice</div>' : ""}`;
-    return event.url
-      ? `<a class="wk-chip ${event.conflict ? "is-conflict" : ""}" href="${escapeHtml(event.url)}">${body}</a>`
-      : `<div class="wk-chip ${event.conflict ? "is-conflict" : ""}">${body}</div>`;
+  function tick() {
+    const root = board();
+    if (!root) return;
+    const now = new Date(), today = (now.getDay() + 6) % 7, minutes = now.getHours() * 60 + now.getMinutes();
+    let live = 0;
+    root.querySelectorAll(".wb-card").forEach(card => {
+      const days = (card.dataset.days || "").split(",").filter(Boolean).map(Number);
+      const start = parseInt(card.dataset.start, 10), end = parseInt(card.dataset.end, 10);
+      const on = card.dataset.running === "1" && days.includes(today) && minutes >= start && minutes < end;
+      card.classList.toggle("is-live", on);
+      const tag = card.querySelector(".wb-live-tag");
+      if (tag) tag.hidden = !on;
+      if (on) live += 1;
+    });
+    root.querySelectorAll(".wb-live-count").forEach(chip => {
+      chip.hidden = !live;
+      const figure = chip.querySelector("b");
+      if (figure && figure.textContent !== String(live)) figure.textContent = live;
+    });
+    const week = root.querySelector(".wb-week");
+    const from = week ? parseInt(week.dataset.from, 10) : 0, to = week ? parseInt(week.dataset.to, 10) : 0;
+    root.querySelectorAll(".wb-now").forEach(line => {
+      const inside = to > from && minutes >= from && minutes <= to;
+      line.hidden = !inside;
+      if (inside) line.style.left = ((minutes - from) / (to - from) * 100) + "%";
+    });
   }
 
-  function draw() {
-    const shown = events.filter(event =>
-      (!statusFilter.value || event.status === statusFilter.value) &&
-      (!professorFilter.value || event.professor === professorFilter.value));
-    const today = (new Date().getDay() + 6) % 7;   // Monday first
-    grid.innerHTML = DAYS.map((name, index) => {
-      const weekday = (index + 1) % 7;             // the server counts from Sunday = 0
-      const day = shown
-        .filter(event => (event.daysOfWeek || []).includes(weekday))
-        .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
-      return `<div class="wk-day ${index === today ? "is-today" : ""}">
-        <div class="wk-day-name">${name}</div>
-        ${day.length ? day.map(chip).join("") : '<div class="wk-empty">—</div>'}
-      </div>`;
-    }).join("");
+  function apply() {
+    const root = board();
+    if (!root) return;
+    root.querySelectorAll(".wb-card").forEach(card => {
+      const open = opened.has(card.dataset.class);
+      card.classList.toggle("is-open", open);
+      const head = card.querySelector(".wb-card-head");
+      if (head) head.setAttribute("aria-expanded", open ? "true" : "false");
+      card.classList.toggle("is-match", Boolean(focus) && card.dataset.prof === focus);
+    });
+    root.classList.toggle("has-focus", Boolean(focus) && Boolean(root.querySelector(`.wb-prof[data-prof="${CSS.escape(focus)}"]`)));
+    root.querySelectorAll(".wb-prof").forEach(button => {
+      const on = button.dataset.prof === focus;
+      button.classList.toggle("is-on", on);
+      button.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const help = root.querySelector(".wb-help"), button = root.querySelector("[data-wb-help]");
+    if (help) help.hidden = !helpOpen;
+    if (button) button.setAttribute("aria-expanded", helpOpen ? "true" : "false");
+    tick();
   }
 
-  async function load() {
-    try {
-      const response = await fetch("/api/dashboard/calendar/events");
-      if (!response.ok) throw new Error();
-      events = await response.json();
-      const chosen = professorFilter.value;
-      const professors = [...new Set(events.map(event => event.professor).filter(Boolean))].sort();
-      professorFilter.innerHTML = '<option value="">All professors</option>' +
-        professors.map(name => `<option ${name === chosen ? "selected" : ""}>${escapeHtml(name)}</option>`).join("");
-      draw();
-    } catch (error) {
-      grid.innerHTML = '<div class="ui-card-sub">The timetable could not be loaded.</div>';
+  function light(cards) {
+    cards.forEach(card => {
+      card.classList.remove("is-lit");
+      void card.offsetWidth;
+      card.classList.add("is-lit");
+      setTimeout(() => card.classList.remove("is-lit"), 1700);
+    });
+  }
+
+  document.addEventListener("click", event => {
+    const root = board();
+    if (!root || !root.contains(event.target)) return;
+    const head = event.target.closest(".wb-card-head");
+    if (head) {
+      const id = head.closest(".wb-card").dataset.class;
+      if (opened.has(id)) opened.delete(id); else opened.add(id);
+      apply();
+      return;
     }
-  }
-  statusFilter.addEventListener("change", draw);
-  professorFilter.addEventListener("change", draw);
-  document.addEventListener("live:change", event => {
-    const topics = (event.detail && event.detail.topics) || [];
-    if (topics.some(topic => topic === "classes" || topic === "dashboard")) load();
+    const prof = event.target.closest(".wb-prof");
+    if (prof) { focus = focus === prof.dataset.prof ? "" : prof.dataset.prof; apply(); return; }
+    const band = event.target.closest(".wb-band");
+    if (band) {
+      const slot = document.getElementById("wb-slot-" + band.dataset.slot);
+      if (slot) { slot.scrollIntoView({ behavior: "smooth", block: "nearest" }); light(slot.querySelectorAll(".wb-card")); }
+      return;
+    }
+    if (event.target.closest("[data-wb-help]")) { helpOpen = !helpOpen; apply(); }
   });
-  load();
+
+  // A professor booked twice, pointed at: their two classes light up in the week.
+  const point = event => {
+    const root = board();
+    if (!root) return;
+    const line = event.target.closest ? event.target.closest(".wb-clash") : null;
+    if (line === pointed) return;
+    pointed = line;
+    root.querySelectorAll(".wb-card.is-pointed").forEach(card => card.classList.remove("is-pointed"));
+    if (!line) return;
+    line.dataset.clash.split(" ").forEach(id => {
+      const card = root.querySelector(`.wb-card[data-class="${CSS.escape(id)}"]`);
+      if (card) card.classList.add("is-pointed");
+    });
+  };
+  document.addEventListener("mouseover", point);
+  document.addEventListener("focusin", point);
+
+  // The first time the fold is opened, the short explanation plays by itself.
+  const fold = board();
+  if (fold) fold.addEventListener("toggle", () => {
+    if (!fold.open) return;
+    try {
+      if (!localStorage.getItem("dashboard:wb-help-seen")) { helpOpen = true; localStorage.setItem("dashboard:wb-help-seen", "1"); apply(); }
+    } catch (error) {}
+  });
+  document.addEventListener("live:refreshed", apply);
+  setInterval(tick, 30000);
+  apply();
 })();
 // A list that was opened stays open (also after the page refreshes itself).
 document.querySelectorAll("details.db-fold").forEach(fold => {

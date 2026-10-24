@@ -170,6 +170,29 @@ def listing(db: Session, key: str, search: str = "", page: int = 1) -> dict:
     }
 
 
+def everything(db: Session, key: str, search: str = "", limit: int = 2000) -> dict:
+    """Every record of a kind as its list shows it (the same columns, linked records by their names), all pages at once: for a PDF."""
+    name, model, icon, shown_columns, _ = TABLES[key]
+    query = db.query(model)
+    words = [word for word in (search or "").split() if word]
+    if words:
+        text_columns = [column for column in inspect(model).columns if isinstance(column.type, (String, Text)) and column.key not in _HIDDEN]
+        for word in words[:4]:
+            query = query.filter(or_(*[column.ilike(f"%{word}%") for column in text_columns]))
+    total = query.count()
+    order = next((getattr(model, field) for field in ("created_at", "registration_date", "payment_date", "added_at", "send_at", "marked_at") if hasattr(model, field)), None)
+    rows = (query.order_by(order.desc()) if order is not None else query).limit(limit).all()
+    fields = {field["name"]: field for field in columns(model)}
+    labels = {column: dict(choices_for(db, (fields.get(column) or {}).get("target")) or []) for column in shown_columns
+              if (fields.get(column) or {}).get("target")}
+    return {
+        "name": name, "total": total, "shown": len(rows),
+        "columns": [fields[column]["label"] if column in fields else column for column in shown_columns],
+        "rows": [[labels.get(column, {}).get(shown(getattr(row, column, None)), shown(getattr(row, column, None)))[:120] for column in shown_columns]
+                 for row in rows],
+    }
+
+
 def export(db: Session, key: str, search: str = "") -> tuple[str, bytes]:
     """(file name, content) of every record of a kind, for Excel: one column per field, linked records by their names."""
     import csv
@@ -269,6 +292,14 @@ def save(db: Session, key: str, row, values: dict, who: str) -> tuple[object | N
 
 
 def remove(db: Session, key: str, row, who: str) -> str | None:
+    if key == "professors":         # never leaves a class pointing at nobody: services/professor_removal.py
+        from app.services import professor_removal
+
+        try:
+            professor_removal.remove(db, row, {}, who=who)
+        except ValueError as exc:
+            return str(exc)
+        return None
     model = TABLES[key][1]
     row_id, label = str(getattr(row, _key_of(model).key)), _label(row)
     try:

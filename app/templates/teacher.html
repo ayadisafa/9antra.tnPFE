@@ -3,6 +3,7 @@
 
 {% block title %}My classes · 9antra{% endblock %}
 {% block page_title %}My classes{% endblock %}
+{% block live_topics %}classes,dashboard,team:professor:{{ professor.id }}{% endblock %}
 
 {% block extra_head %}
 {% include "_ui.html" %}
@@ -44,7 +45,7 @@
   <div class="ui-actions"><a class="ui-btn" href="/teacher/profile"><i class="bi bi-person-badge"></i>My profile</a></div>
 </div>
 
-<div class="ui-stats mb-3">
+<div class="ui-stats mb-3" id="tc-stats" data-live-region>
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-collection-play-fill"></i></div><div><div class="ui-stat-num">{{ totals.classes }}</div><div class="ui-stat-label">Class{{ 'es' if totals.classes != 1 }} to teach</div></div></div>
   <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people-fill"></i></div><div><div class="ui-stat-num">{{ totals.candidates }}</div><div class="ui-stat-label">Candidate{{ 's' if totals.candidates != 1 }}</div></div></div>
   <div class="ui-stat {{ 't-gold' if totals.today else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-calendar-check"></i></div><div><div class="ui-stat-num">{{ totals.today }}</div><div class="ui-stat-label">Session{{ 's' if totals.today != 1 }} today</div></div></div>
@@ -89,7 +90,7 @@
   </div>
 
   <div>
-    <section class="ui-card">
+    <section class="ui-card" id="tc-next" data-live-region>
       <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-event"></i>Your next sessions</div><div class="ui-card-sub">The two weeks to come.</div></div></div>
       {% for item in coming %}
       <a class="tc-row" href="/classes/{{ item.class.id }}/attendance?session={{ item.session.id }}">

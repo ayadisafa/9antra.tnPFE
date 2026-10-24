@@ -1,0 +1,71 @@
+{# How-to answers drawn as a diagram: numbered steps joined by arrows (or a checklist whose lines lead where to complete
+   them). Used by Yasmine and by the assistant: window.drawSchema(schema) returns the element. #}
+<style>
+  .sch { margin-top:8px; }
+  .sch-title { display:flex; align-items:center; gap:7px; font-weight:800; font-size:.84rem; color:var(--ink-text, #2a2433); margin-bottom:6px; }
+  .sch-title i { color:var(--primary-berry); }
+  .sch-flow { list-style:none; margin:0; padding:0; }
+  .sch-step { position:relative; display:flex; gap:10px; align-items:flex-start; padding-bottom:14px; animation:schIn .38s ease both; animation-delay:calc(var(--i) * 110ms); }
+  .sch-step:last-child { padding-bottom:2px; }
+  .sch-step:not(:last-child)::before { content:""; position:absolute; inset-inline-start:13px; top:30px; bottom:4px; width:2px;
+    background:linear-gradient(var(--primary-berry), rgba(164,44,103,.25)); border-radius:2px; }
+  .sch-step:not(:last-child)::after { content:""; position:absolute; inset-inline-start:9px; bottom:0; border:5px solid transparent;
+    border-top-color:rgba(164,44,103,.55); border-bottom-width:0; }
+  .sch-dot { flex:0 0 28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:800; font-size:.78rem; color:#fff;
+    background:var(--primary-berry); box-shadow:0 0 0 4px rgba(164,44,103,.12); }
+  .sch-card { flex:1; min-width:0; background:#fbf7fb; border:1px solid var(--border-color, #eee); border-radius:12px; padding:7px 10px;
+    font-size:.79rem; line-height:1.42; color:#3c3548; overflow-wrap:anywhere; }
+  .sch-check .sch-dot { background:#f4b740; box-shadow:0 0 0 4px rgba(244,183,64,.18); color:#5b3b00; }
+  .sch-check .sch-step::before, .sch-check .sch-step::after { display:none; }
+  .sch-check .sch-step { padding-bottom:7px; }
+  a.sch-card { display:block; text-decoration:none; }
+  a.sch-card:hover { border-color:var(--primary-berry); background:#fff; }
+  .sch-go { display:inline-flex; align-items:center; gap:6px; margin-top:4px; border-radius:999px; padding:5px 12px; font-size:.75rem; font-weight:800;
+    text-decoration:none; color:#fff; background:var(--primary-berry); }
+  [dir="rtl"] .sch-go i { transform:scaleX(-1); }
+  @keyframes schIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { .sch-step { animation:none; } }
+</style>
+<script>
+window.drawSchema = function (schema) {
+  var box = document.createElement("div");
+  box.className = "sch";
+  var checklist = schema.kind === "checklist";
+  var title = document.createElement("div");
+  title.className = "sch-title";
+  title.innerHTML = '<i class="bi ' + (checklist ? "bi-list-check" : "bi-diagram-3") + '"></i>';
+  title.appendChild(document.createTextNode(schema.title || ""));
+  box.appendChild(title);
+  var flow = document.createElement("ol");
+  flow.className = "sch-flow" + (checklist ? " sch-check" : "");
+  (schema.steps || []).forEach(function (step, index) {
+    var text = typeof step === "string" ? step : (step.text || "");
+    var url = typeof step === "string" ? null : step.url;
+    var item = document.createElement("li");
+    item.className = "sch-step";
+    item.style.setProperty("--i", index);
+    var dot = document.createElement("span");
+    dot.className = "sch-dot";
+    dot.textContent = checklist ? "!" : String(index + 1);
+    var card = document.createElement(url ? "a" : "div");
+    card.className = "sch-card";
+    if (url) card.href = url;
+    card.textContent = text;
+    item.appendChild(dot);
+    item.appendChild(card);
+    flow.appendChild(item);
+  });
+  box.appendChild(flow);
+  if (schema.url) {
+    var go = document.createElement("a");
+    go.className = "sch-go";
+    go.href = schema.url;
+    go.textContent = schema.label || "Open";
+    var arrow = document.createElement("i");
+    arrow.className = "bi bi-arrow-right";
+    go.appendChild(arrow);
+    box.appendChild(go);
+  }
+  return box;
+};
+</script>

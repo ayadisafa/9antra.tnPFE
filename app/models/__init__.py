@@ -32,12 +32,23 @@ from .market_offer import MarketOffer
 from .admin_reminder import AdminReminder
 from .ui_translation import UiTranslation
 from .edit_log import EditLog
+from .team_message import TeamMessage
+from .payment_proof import PaymentProof
+from .market_signal import MarketSignal
+from .resource_reminder import ResourceReminder
+from app.services.professor_announcements import ProfessorAnnouncement  # noqa: F401  (its table is made at start)
+from app.services.session_check import SessionCheck  # noqa: F401  (its table is made at start)
+from app.services.resends import PlannedResend  # noqa: F401  (its table is made at start)
 
 __all__ = [
     "MarketOffer",
     "AdminReminder",
     "UiTranslation",
     "EditLog",
+    "TeamMessage",
+    "PaymentProof",
+    "MarketSignal",
+    "ResourceReminder",
     "SessionJoin",
     "WebsiteItem",
     "WebsiteCheck",

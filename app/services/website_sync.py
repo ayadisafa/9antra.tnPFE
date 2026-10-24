@@ -45,6 +45,7 @@ KINDS = {
     "video": {"label": "Videos", "one": "video", "icon": "bi-play-btn-fill"},
     "feedback": {"label": "Feedback", "one": "feedback", "icon": "bi-chat-heart-fill"},
     "post": {"label": "Facebook posts", "one": "Facebook post", "icon": "bi-facebook"},
+    "linkedin": {"label": "LinkedIn posts", "one": "LinkedIn post", "icon": "bi-linkedin"},
 }
 FACEBOOK_PAGE = os.getenv("FACEBOOK_PAGE_NAME", "9antra.tn")
 
@@ -171,6 +172,10 @@ def fetch() -> dict[str, list[dict]]:
     }
     for kind, rows in _facebook().items():
         published[kind] = published.get(kind, []) + rows
+    from app.services import linkedin
+
+    if linkedin.configured():
+        published["linkedin"] = linkedin.fetch_posts()       # only once LinkedIn's keys are given; else nothing is touched
     return published
 
 
@@ -207,6 +212,11 @@ def normalise(kind: str, raw: dict) -> dict | None:
     """One thing of the website in the shape it is kept in. None when it has no name."""
     if raw.get("_facebook"):
         return _normalise_facebook(kind, raw)
+    if raw.get("_linkedin"):
+        from app.services import linkedin
+
+        item = linkedin.normalise(raw)
+        return _finish(item) if item else None
     external_id = _text(raw.get("_id") or raw.get("slug"), 80)
     title = _text(raw.get("title"), 300)
     if not external_id or not title:
@@ -897,7 +907,11 @@ def overview(db: Session) -> dict:
         "videos": [entry for entry in items if entry.kind == "video"],
         "feedback": sorted((entry for entry in items if entry.kind == "feedback"), key=lambda entry: (entry.details.get("order") or 0, entry.title)),
         "posts": sorted((entry for entry in items if entry.kind == "post"), key=lambda entry: entry.starts_at or datetime.min, reverse=True),
+        "linkedin_posts": sorted((entry for entry in items if entry.kind == "linkedin"), key=lambda entry: entry.starts_at or datetime.min, reverse=True),
         "facebook": facebook_connected(),
+        "linkedin": __import__("app.services.linkedin", fromlist=["configured"]).configured(),
+        "readings": {entry.id: __import__("app.services.social_analysis", fromlist=["analyze"]).analyze(db, entry.summary or entry.title)
+                     for entry in items if entry.kind in ("post", "linkedin")},
         "all_programs": sorted(programs.values(), key=lambda program: program.name or ""),
         "own_programs": sorted((program for program in programs.values() if program.id not in followed), key=lambda program: program.name or ""),
         "checks": checks,
@@ -1002,6 +1016,17 @@ def knowledge_chunks(db: Session, now: datetime | None = None) -> list[dict]:
     news = sorted((item for item in items if item.kind == "news"), key=lambda item: item.starts_at or datetime.min, reverse=True)[:6]
     one("news", "Actualités de 9antra", ["Actualités récentes (news) publiées sur 9antra.tn :"] + [f"« {item.title} » : {item.summary or ''}" for item in news] if news else [])
     posts = sorted((item for item in items if item.kind == "post"), key=lambda item: item.starts_at or datetime.min, reverse=True)[:10]
+    # Each post of the Facebook and LinkedIn pages, with what it was read to announce: the assistant knows them one by one.
+    from app.services import social_analysis
+
+    social = sorted((item for item in items if item.kind in ("post", "linkedin")), key=lambda item: item.starts_at or datetime.min, reverse=True)[:40]
+    for item in social:
+        text = item.summary or item.title or ""
+        found = social_analysis.analyze(db, text)
+        source = "LinkedIn" if item.kind == "linkedin" else "Facebook"
+        chunks.append({"source_key": f"website:social:{item.external_id}", "kind": "social", "program_id": None,
+                       "title": f"Publication {source}" + (f" du {item.starts_at:%d/%m/%Y}" if item.starts_at else "") + f" : {item.title[:80]}",
+                       "content": social_analysis.knowledge_line(source, item.starts_at, text, found)})
     one("facebook", "Dernières publications de la page Facebook", ["Dernières publications de la page Facebook de 9antra :"] + [f"Le {item.starts_at:%d/%m/%Y} : {(item.summary or item.title)[:600]}" for item in posts if item.starts_at] if posts else [])
     # What former participants say, once their published feedback has been read (see feedback).
     from app.services import feedback

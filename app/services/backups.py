@@ -109,14 +109,16 @@ def due(now: datetime | None = None) -> bool:
     return last is None or (now or datetime.now()) - last["made"] >= EVERY
 
 
-def _prune(where: Path, now: datetime) -> int:
-    """Keep one a day for two weeks, then one a week for two months."""
+def _prune(where: Path, now: datetime, keep_name: str | None = None) -> int:
+    """Keep one a day for two weeks, then one a week for two months. The copy just made (`keep_name`) always stays."""
     removed, days, weeks = 0, set(), set()
     for item in listing(where):
         age = now - item["made"]
         day, week = item["made"].date(), item["made"].isocalendar()[:2]
         keep = False
-        if age <= timedelta(days=KEEP_DAILY) and day not in days:
+        if item["name"] == keep_name:
+            keep = True
+        elif age <= timedelta(days=KEEP_DAILY) and day not in days:
             keep = True
         elif age <= timedelta(weeks=KEEP_WEEKLY + 2) and week not in weeks and len(weeks) < KEEP_WEEKLY + 2:
             keep = True
@@ -166,13 +168,13 @@ def make(db: Session | None = None, now: datetime | None = None) -> dict:
                     if path.is_file():
                         archive.write(path, path.relative_to(base).as_posix())
     result = {"ok": True, "name": name, "size": target.stat().st_size, "second": None, "problem": None}
-    _prune(folder(), now)
+    _prune(folder(), now, keep_name=name)
     other = second_folder(db) if db is not None else None
     if other is not None:
         try:
             other.mkdir(parents=True, exist_ok=True)
             shutil.copy2(target, other / name)
-            _prune(other, now)
+            _prune(other, now, keep_name=name)
             result["second"] = str(other)
         except OSError as exc:
             result["problem"] = f"The copy was made, but not in the second folder ({other}): {exc.__class__.__name__}. Is the disk connected?"

@@ -76,7 +76,7 @@
         <div class="kb-also is-waiting"><i class="bi bi-hourglass-split"></i><span>The system is thinking of other ways this could be asked (a few minutes).</span></div>
         {% endif %}
         <div class="kb-meta">
-          <span class="kb-chip {{ entry.origin }}">{{ "Saved from an answer you sent" if entry.origin == "learned" else "Written here" }}</span>
+          <span class="kb-chip {{ entry.origin }}">{{ "Saved from an answer you sent" if entry.origin == "learned" else "Learnt by itself from your answer: a draft until you send it once" if entry.origin == "auto" else "Written here" }}</span>
           <span>Used {{ entry.use_count or 0 }} time(s)</span>
           <a class="kb-linkbtn" href="/inbox/knowledge?edit={{ entry.id }}#write">Edit</a>
           <form method="post" action="/inbox/knowledge/{{ entry.id }}/delete">
@@ -137,6 +137,32 @@
       </form>
     </section>
 
+    <!-- ============ Learn from a link or a text ============ -->
+    <section class="kb-card mb-4" id="learn">
+      <div class="kb-title"><i class="bi bi-globe2"></i> Learn from a link or a text</div>
+      <div class="kb-sub mb-3">What is said about 9antra elsewhere: Google, LinkedIn, Facebook, a partner's site, an article, your own documents. Give a public link and the page is read once; LinkedIn, Facebook and Google do not let applications read them: copy the text there and paste it here. The assistant then answers from it, with its source.</div>
+      <form method="post" action="/inbox/knowledge/import">
+        <label class="form-label" for="kb-url">Link (optional when you paste the text)</label>
+        <input class="form-control mb-2" id="kb-url" name="url" inputmode="url" placeholder="https://…">
+        <label class="form-label" for="kb-import-title">Name (optional)</label>
+        <input class="form-control mb-2" id="kb-import-title" name="title" maxlength="150" placeholder="9antra on LinkedIn">
+        <label class="form-label" for="kb-text">Text (paste it from the page)</label>
+        <textarea class="form-control mb-3" id="kb-text" name="text" rows="5" placeholder="About us · Services · …"></textarea>
+        <button class="btn btn-berry rounded-pill px-4">Learn it</button>
+      </form>
+      {% if imported %}
+      <div class="kb-sub mt-3 mb-1 fw-bold">Already learnt</div>
+      {% for item in imported %}
+      <form method="post" action="/inbox/knowledge/import/forget" class="d-flex align-items-center gap-2 py-1 border-top" data-confirm="Forget this source?">
+        <i class="bi bi-file-earmark-text text-muted"></i>
+        <span class="small flex-grow-1" data-no-i18n>{{ item.title }} <span class="text-muted">· {{ item.parts }}</span></span>
+        <input type="hidden" name="key" value="{{ item.key }}">
+        <button class="btn btn-sm btn-light border rounded-pill">Forget</button>
+      </form>
+      {% endfor %}
+      {% endif %}
+    </section>
+
     <!-- ============ Test ============ -->
     <section class="kb-card">
       <div class="kb-title">Check what the system would find</div>
@@ -154,7 +180,7 @@
 (() => {
   const form = document.getElementById("kb-test-form");
   const results = document.getElementById("kb-test-results");
-  const origins = { system: "from your programs and classes", admin: "written by you", learned: "saved from your answer" };
+  const origins = { system: "from your programs and classes", admin: "written by you", learned: "saved from your answer", auto: "learnt by itself, to confirm" };
 
   form.addEventListener("submit", async event => {
     event.preventDefault();

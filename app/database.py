@@ -1,14 +1,49 @@
+import logging
 import os
+import time
+import traceback
 
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
+logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
+# SQLite lets one writer at a time: another one waits up to this long (it used to give up after 5 s: "database is locked").
+WAIT_FOR_WRITER_SECONDS = 30
+# A write held longer than this keeps the others waiting: it is written in the log with where it began.
+LONG_WRITE_SECONDS = 5
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False, "timeout": WAIT_FOR_WRITER_SECONDS}
 )
+
+
+def _where() -> str:
+    """The application's own lines that led to this write (innermost last)."""
+    here = os.path.join("app", "")
+    frames = [frame for frame in traceback.extract_stack()[:-3]
+              if here in frame.filename.replace("/", os.sep) and not frame.filename.endswith("database.py")]
+    return " < ".join(f"{os.path.relpath(frame.filename).replace(os.sep, '/')}:{frame.lineno} {frame.name}" for frame in reversed(frames[-4:])) or "?"
+
+
+if engine.dialect.name == "sqlite":
+    @event.listens_for(engine, "before_cursor_execute")
+    def _note_first_write(conn, cursor, statement, parameters, context, executemany):
+        # SQLite takes the write lock at the first change of a transaction and keeps it until the commit.
+        if "write_started" not in conn.info and statement.lstrip()[:6].upper() in ("INSERT", "UPDATE", "DELETE", "REPLAC"):
+            conn.info["write_started"] = (time.monotonic(), _where())
+
+    def _report(info: dict) -> None:
+        started = info.pop("write_started", None)
+        if started is not None and time.monotonic() - started[0] > LONG_WRITE_SECONDS:
+            logger.warning("The database was held for writing %.1f s (other writers waited meanwhile); it began at %s",
+                           time.monotonic() - started[0], started[1])
+
+    event.listen(engine, "commit", lambda conn: _report(conn.info))
+    event.listen(engine, "rollback", lambda conn: _report(conn.info))
+    # A connection given back without a commit or a rollback of its own is rolled back by the pool: it ends there.
+    event.listen(engine, "checkin", lambda dbapi_connection, record: _report(record.info))
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -173,6 +208,14 @@ def ensure_sqlite_compatibility():
         # Each browser signed in is a session: which device, and when it was last used.
         "users": {
             "permissions": "TEXT",
+            "phone": "VARCHAR",
+        },
+        "team_messages": {
+            "question_message_id": "VARCHAR",
+            "question_candidate_id": "VARCHAR",
+            "answered_at": "DATETIME",
+            "reminded_at": "DATETIME",
+            "admin_told_at": "DATETIME",
         },
         "user_sessions": {
             "device": "VARCHAR",
@@ -207,13 +250,46 @@ def ensure_sqlite_compatibility():
             "ui_menu_side": "VARCHAR",
             "ui_mode": "VARCHAR",
             "ui_background": "VARCHAR",
+            "report_email_on": "BOOLEAN DEFAULT 1",
+            "report_every_days": "INTEGER DEFAULT 7",
+            "report_recipients": "TEXT",
+            "report_sent_at": "DATETIME",
+            "report_since": "DATETIME",
+            "whatsapp_auto_reply": "VARCHAR DEFAULT 'auto'",
+            "assistant_never": "TEXT",
+            "assistant_notes": "TEXT",
+            "team_auto_reply": "BOOLEAN DEFAULT 0",
+            "level_check_when": "VARCHAR DEFAULT 'before'",
+            "level_check_days_before": "INTEGER DEFAULT 7",
+            "centre_phone": "VARCHAR",
+            "centre_whatsapp": "VARCHAR",
+            "send_way": "VARCHAR DEFAULT 'auto'",
+            "send_fallback": "BOOLEAN DEFAULT 1",
+            "payment_reminder_hours": "INTEGER DEFAULT 24",
+            "welcome_since": "DATETIME",
+            "centre_ribs": "TEXT",
+            "reword_and_send": "BOOLEAN DEFAULT 0",
+            "assistant_auto_send": "BOOLEAN DEFAULT 1",
+            "resource_reminder_on": "BOOLEAN DEFAULT 1",
+            "resource_reminder_days": "INTEGER DEFAULT 2",
+            "resource_reminder_text": "TEXT",
+            "registration_form_url": "VARCHAR",
+            "next_class_gap_days": "INTEGER DEFAULT 10",
+            "session_check_on": "BOOLEAN DEFAULT 1",
+            "session_check_hours": "INTEGER DEFAULT 24",
+            "session_check_since": "DATETIME",
+            "prospect_answers_on": "BOOLEAN DEFAULT 1",
+            "centre_address": "VARCHAR",
         },
 
         "email_threads": {
             "last_status": "VARCHAR",
+            "channel": "VARCHAR DEFAULT 'email'",
         },
+        "admin_reminders": {"channel": "VARCHAR DEFAULT 'email'"},
 
         "candidate_emails": {
+            "emotions": "TEXT",
             "author": "VARCHAR",
             "html_body": "TEXT",
             "in_reply_to": "VARCHAR",
@@ -223,6 +299,8 @@ def ensure_sqlite_compatibility():
             "suggested_reply": "TEXT",
             "escalation_reason": "TEXT",
             "attachments": "TEXT",
+            "channel": "VARCHAR DEFAULT 'email'",
+            "admin_score": "INTEGER",
         },
 
         # Automatic emails are stored next to the admin's own templates.
@@ -236,6 +314,7 @@ def ensure_sqlite_compatibility():
             "is_active": "BOOLEAN DEFAULT 1",
             "cta_label": "VARCHAR",
             "cta_url": "VARCHAR",
+            "channel": "VARCHAR",
         },
 
         # The picture shown next to a program: found on the web or uploaded.
@@ -254,6 +333,7 @@ def ensure_sqlite_compatibility():
         "attendance": {"participation": "INTEGER", "questions": "INTEGER"},
         "quizzes": {
             "kind": "VARCHAR DEFAULT 'level'",
+            "class_session_id": "VARCHAR",      # the questions after one session (session_check)
             "class_group_id": "VARCHAR",
             "week_number": "INTEGER",
             "access_token": "VARCHAR",

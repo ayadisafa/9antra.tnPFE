@@ -125,7 +125,39 @@
     .cp-name { font-size:1.3rem; }
     .cp-cover { height:84px; }
   }
-  @media (prefers-reduced-motion: reduce) { .cp-cover span, .cp-cover i, .cp-tabbed .cp-pane.is-on { animation:none; } }
+  /* Where the money stands: three tiles, then paid in full, then a folder per other state. */
+  .cp-money { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:18px; }
+  .cp-money-tile { display:flex; gap:11px; align-items:center; padding:12px 14px; border-radius:16px; border:1px solid var(--border-color); text-decoration:none; color:var(--ink-text); background:#fff; transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .cp-money-tile:hover { transform:translateY(-2px); box-shadow:0 14px 28px -20px rgba(60,20,90,.5); color:var(--ink-text); }
+  .cp-money-tile.is-empty { opacity:.55; }
+  .cp-money-ico { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; flex:none; font-size:1.05rem; }
+  .cp-money-text { font-size:.8rem; font-weight:700; line-height:1.25; min-width:0; } .cp-money-text b { font-size:1.15rem; font-weight:800; }
+  .cp-money-text small { display:block; font-size:.72rem; font-weight:600; color:var(--muted); margin-top:2px; }
+  .tone-ok .cp-money-ico, .cp-group-ico.tone-ok { background:var(--mint-subtle); color:var(--mint); } .cp-money-tile.tone-ok:hover { border-color:var(--mint); }
+  .tone-warn .cp-money-ico { background:var(--gold-subtle); color:var(--gold-dark); } .cp-money-tile.tone-warn:hover { border-color:var(--accent-gold-dark); }
+  .tone-bad .cp-money-ico { background:#fff1f2; color:#be123c; } .cp-money-tile.tone-bad:hover { border-color:#e11d48; }
+  .cp-group { margin-bottom:16px; }
+  .cp-group-head { display:flex; gap:12px; align-items:center; margin-bottom:12px; } .cp-group-head b { font-size:.98rem; color:var(--ink-text); }
+  .cp-group-ico { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; flex:none; font-size:1.05rem; }
+  .cp-group-none { padding:12px 14px; border:1px dashed #e4ddf0; border-radius:14px; }
+  .cp-folder { border:1px solid var(--border-color); border-radius:18px; margin-top:12px; background:#fff; overflow:hidden; scroll-margin-top:104px; }
+  .cp-folder > summary { list-style:none; display:flex; gap:12px; align-items:center; padding:14px 16px; cursor:pointer; flex-wrap:wrap; transition:background .15s ease; }
+  .cp-folder > summary::-webkit-details-marker { display:none; }
+  .cp-folder > summary:hover { background:#faf8fd; }
+  .cp-folder > summary:focus-visible { outline:2px solid var(--primary-berry); outline-offset:-2px; }
+  .cp-folder-ico { width:40px; height:40px; border-radius:12px; display:grid; place-items:center; flex:none; font-size:1.15rem; }
+  .cp-folder.tone-warn .cp-folder-ico { background:var(--gold-subtle); color:var(--gold-dark); } .cp-folder.tone-warn { border-left:4px solid var(--accent-gold-dark); }
+  .cp-folder.tone-bad .cp-folder-ico { background:#fff1f2; color:#be123c; } .cp-folder.tone-bad { border-left:4px solid #e11d48; }
+  .cp-folder.tone-muted .cp-folder-ico { background:#f1eff5; color:#85809c; }
+  .cp-folder .cp-opened, .cp-folder[open] .cp-closed { display:none; } .cp-folder[open] .cp-opened { display:inline; }
+  .cp-folder-text { flex:1 1 260px; min-width:0; font-size:.92rem; color:var(--ink-text); }
+  .cp-folder-why { display:block; font-size:.76rem; color:var(--muted); margin-top:2px; }
+  .cp-folder-sum { font-size:.8rem; color:#5b5670; white-space:nowrap; } .cp-folder-sum b { color:var(--ink-text); }
+  .cp-folder-chev { color:#b5afc8; transition:transform .2s ease; } .cp-folder[open] .cp-folder-chev { transform:rotate(180deg); color:var(--primary-berry); }
+  .cp-folder-body { padding:0 16px 16px; }
+  .cp-folder[open] .cp-folder-body { animation:cpPane .3s ease both; }
+  @media (max-width: 640px) { .cp-money { grid-template-columns:1fr; } .cp-folder-sum { flex-basis:100%; padding-left:52px; } }
+  @media (prefers-reduced-motion: reduce) { .cp-cover span, .cp-cover i, .cp-tabbed .cp-pane.is-on, .cp-folder[open] .cp-folder-body { animation:none; } .cp-money-tile { transition:none; } }
 </style>
 {% endblock %}
 
@@ -242,8 +274,8 @@
             </div>
           </div>
           {% if card.is_paid %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Paid</span>
-          {% elif card.paid > 0 %}<span class="ui-chip warn">Partly paid</span>
-          {% else %}<span class="ui-chip bad">Not paid</span>{% endif %}
+          {% elif card.paid > 0 %}<span class="ui-chip warn">Paid in part</span>
+          {% else %}<span class="ui-chip bad">Just registered</span>{% endif %}
           <i class="bi bi-chevron-right"></i>
         </a>
         {% else %}
@@ -297,25 +329,9 @@
   </div>
 </div>
 
-<!-- Programs and payments -->
-<div class="cp-pane" data-pane="programs" role="tabpanel" aria-label="Programs and payments">
-    <section class="ui-card mb-3" id="programs">
-      <div class="ui-card-head">
-        <div><div class="ui-card-title"><i class="bi bi-journal-bookmark"></i>Programs</div><div class="ui-card-sub">What {{ name.split()[0] }} signed up for, with the payment and the class of each.</div></div>
-        {% set adding = request.query_params.get('add') %}
-        <form method="post" action="/candidate/{{ candidate.id }}/registrations" class="d-flex gap-2 flex-wrap">
-          <select name="program_id" class="form-select form-select-sm" style="border-radius:10px; max-width:230px;" aria-label="Program to add" required>
-            <option value="">Add a program…</option>
-            {% for program in all_programs %}<option value="{{ program.id }}" {{ 'selected' if program.id == adding }}>{{ program.name }}</option>{% endfor %}
-          </select>
-          <select name="delivery_mode" class="form-select form-select-sm" style="border-radius:10px; width:auto;" aria-label="Online or on site"><option value="online">Online</option><option value="onsite">On site</option></select>
-          <button class="ui-btn soft sm"><i class="bi bi-plus-lg"></i>Add</button>
-        </form>
-      </div>
-
-      <div id="live-candidate-programs" data-live-region>
-        {% for card in program_cards %}
-        {% set reg = card.registration %}
+{# One program the candidate signed up for: its payment, its class, what can be done. #}
+{% macro program_card(card) %}
+{% set reg = card.registration %}
         <div class="cp-program {{ 'is-due' if card.due > 0 }}" id="registration-{{ reg.id }}">
           <div class="d-flex gap-3 align-items-start">
             {% if card.icon %}{{ ui.program_icon(card.icon, 46) }}{% endif %}
@@ -323,8 +339,8 @@
               <div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">
                 <div class="cp-program-name">{{ card.name }}</div>
                 {% if card.is_paid %}<span class="ui-chip ok"><i class="bi bi-check2"></i>Paid</span>
-                {% elif card.paid > 0 %}<span class="ui-chip warn">Partly paid</span>
-                {% else %}<span class="ui-chip bad">Not paid</span>{% endif %}
+                {% elif card.paid > 0 %}<span class="ui-chip warn">Paid in part</span>
+                {% else %}<span class="ui-chip bad">Just registered</span>{% endif %}
               </div>
               <div class="cp-meta">{{ 'On site' if reg.delivery_mode == 'onsite' else 'Online' }}{% if card.registered %} · registered {{ card.registered.strftime('%d %b %Y') }}{% endif %}{% if reg.status.value == 'completed' %} · completed{% endif %}</div>
               <div class="d-flex align-items-center gap-2 mt-2">
@@ -389,11 +405,104 @@
             {% endif %}
           </div>
         </div>
+{% endmacro %}
+
+<!-- Programs and payments -->
+<div class="cp-pane" data-pane="programs" role="tabpanel" aria-label="Programs and payments">
+    {% if reviews %}
+    <section class="ui-card mb-3" id="reviews">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-star"></i>Their reviews</div>
+        <div class="ui-card-sub">At the end of each program {{ name.split()[0] }} is asked once what they thought (email, WhatsApp or SMS, as chosen above the inbox).</div></div></div>
+      {% for item in reviews %}
+      <div class="d-flex flex-wrap gap-2 align-items-center py-2" style="border-top:1px solid var(--border-color);">
+        <b style="font-size:.88rem;">{{ item.registration.program_name }}</b>
+        {% if item.review and item.review.answered %}
+          <span class="ui-chip ok">{{ ('★' * item.review.stars) if item.review.stars else 'Answered' }}</span>
+          <span class="small text-muted" style="flex:1 1 260px;">{{ item.review.words[:220] }}</span>
+        {% else %}
+          <span class="ui-chip muted">{{ 'Asked, no answer yet' if item.review and item.review.asked else 'Not asked yet' }}</span>
+          <form method="post" action="/candidate/{{ candidate.id }}/ask-review/{{ item.registration.id }}" class="ms-auto">
+            <button class="ui-btn sm"><i class="bi bi-send"></i>{{ 'Ask again' if item.review and item.review.asked else 'Ask for their review' }}</button></form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </section>
+    {% endif %}
+    {% import "_proofs.html" as proofs_ui %}
+    <section class="ui-card mb-3" id="proofs">
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-receipt"></i>Payment proofs</div>
+          <div class="ui-card-sub">Receipts {{ name.split()[0] }} sent by email or WhatsApp are read and checked here; you confirm or refuse. Add one they gave you another way.</div></div>
+        <form method="post" action="/candidate/{{ candidate.id }}/proof" enctype="multipart/form-data" class="d-flex gap-2 flex-wrap align-items-center">
+          <input type="file" name="file" accept="image/*,application/pdf" class="form-control form-control-sm" style="border-radius:10px; max-width:240px;" required aria-label="Photo or PDF of the receipt">
+          <button class="ui-btn soft sm"><i class="bi bi-upload"></i>Read it</button>
+        </form>
+      </div>
+      {% if proofs_waiting %}{{ proofs_ui.list(proofs_waiting, "/candidate/" ~ candidate.id ~ "#proofs", show_candidate=False) }}
+      {% elif not proofs_done %}<div class="ui-card-sub">No payment proof yet.</div>{% endif %}
+      {% if proofs_done %}<details class="mt-2"><summary class="small fw-bold text-muted">{{ proofs_done | length }} already decided</summary>
+        <div class="mt-2">{{ proofs_ui.list(proofs_done, "/candidate/" ~ candidate.id ~ "#proofs", show_candidate=False) }}</div></details>{% endif %}
+    </section>
+    <section class="ui-card mb-3" id="programs">
+      <div class="ui-card-head">
+        <div><div class="ui-card-title"><i class="bi bi-journal-bookmark"></i>Programs</div><div class="ui-card-sub">What {{ name.split()[0] }} signed up for, with the payment and the class of each.</div></div>
+        {% set adding = request.query_params.get('add') %}
+        <form method="post" action="/candidate/{{ candidate.id }}/registrations" class="d-flex gap-2 flex-wrap">
+          <select name="program_id" class="form-select form-select-sm" style="border-radius:10px; max-width:230px;" aria-label="Program to add" required>
+            <option value="">Add a program…</option>
+            {% for program in all_programs %}<option value="{{ program.id }}" {{ 'selected' if program.id == adding }}>{{ program.name }}</option>{% endfor %}
+          </select>
+          <select name="delivery_mode" class="form-select form-select-sm" style="border-radius:10px; width:auto;" aria-label="Online or on site"><option value="online">Online</option><option value="onsite">On site</option></select>
+          <button class="ui-btn soft sm"><i class="bi bi-plus-lg"></i>Add</button>
+        </form>
+      </div>
+
+      <div id="live-candidate-programs" data-live-region>
+        {% if program_cards %}
+        {# Where the money stands, in three tiles: each one opens its group below. #}
+        <div class="cp-money" role="list">
+          {% for group in payment_groups %}
+          <a class="cp-money-tile tone-{{ group.tone }} {{ 'is-empty' if not group.cards }}" href="#folder-{{ group.key }}" role="listitem">
+            <span class="cp-money-ico"><i class="bi {{ group.icon }}"></i></span>
+            <span class="cp-money-text"><b>{{ group.cards | length }}</b> {{ group.label }}
+              <small>{% if group.key == 'paid' %}{{ "%.0f"|format(group.paid) }} DT paid{% elif group.cards %}{{ "%.0f"|format(group.due) }} DT still due{% else %}none{% endif %}</small></span>
+          </a>
+          {% endfor %}
+        </div>
+        {% for group in payment_groups %}
+        {% if group.key == 'paid' %}
+        <section class="cp-group" id="folder-paid">
+          <div class="cp-group-head"><span class="cp-group-ico tone-ok"><i class="bi bi-check2-circle"></i></span>
+            <div><b>Paid in full</b> <span class="ui-chip ok">{{ group.cards | length }}</span><div class="cp-meta">{{ group.why }}</div></div></div>
+          {% for card in group.cards %}{{ program_card(card) }}{% else %}
+          <div class="cp-meta cp-group-none"><i class="bi bi-info-circle me-1"></i>No program is fully paid yet. The others are in the folders below.</div>
+          {% endfor %}
+        </section>
+        {% elif group.cards %}
+        <details class="cp-folder tone-{{ group.tone }}" id="folder-{{ group.key }}" data-folder="{{ group.key }}">
+          <summary>
+            <span class="cp-folder-ico"><i class="bi bi-folder-fill cp-closed"></i><i class="bi bi-folder2-open cp-opened"></i></span>
+            <span class="cp-folder-text"><b>{{ group.label }}</b> <span class="ui-chip {{ 'warn' if group.key == 'partial' else 'bad' }}">{{ group.cards | length }}</span>
+              <span class="cp-folder-why">{{ group.why }}</span></span>
+            <span class="cp-folder-sum">{% if group.key == 'partial' %}{{ "%.0f"|format(group.paid) }} DT paid · {% endif %}<b>{{ "%.0f"|format(group.due) }} DT</b> still due</span>
+            <i class="bi bi-chevron-down cp-folder-chev"></i>
+          </summary>
+          <div class="cp-folder-body">
+            {% for card in group.cards %}{{ program_card(card) }}{% endfor %}
+          </div>
+        </details>
+        {% endif %}
+        {% endfor %}
         {% else %}
         <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong>Add the first one with the list above.</div>
-        {% endfor %}
+        {% endif %}
         {% if cancelled %}
-        <div class="cp-meta mt-3">Cancelled: {% for reg in cancelled %}{{ reg.program.name if reg.program else reg.program_name }}{{ ', ' if not loop.last }}{% endfor %}.</div>
+        <details class="cp-folder tone-muted" id="folder-cancelled">
+          <summary><span class="cp-folder-ico"><i class="bi bi-folder-x"></i></span>
+            <span class="cp-folder-text"><b>Cancelled</b> <span class="ui-chip muted">{{ cancelled | length }}</span></span>
+            <i class="bi bi-chevron-down cp-folder-chev ms-auto"></i></summary>
+          <div class="cp-folder-body cp-meta">{% for reg in cancelled %}{{ reg.program.name if reg.program else reg.program_name }}{{ ', ' if not loop.last }}{% endfor %}.</div>
+        </details>
         {% endif %}
       </div>
     </section>
@@ -511,7 +620,7 @@
       <div class="bh-top">
         <div class="bh-ring tone-{{ behaviour.tone }}" style="--pct:{{ behaviour.score or 0 }};"><div>{% if behaviour.score is not none %}{{ behaviour.score }}<small>/100</small>{% else %}–{% endif %}</div></div>
         <div style="min-width:0;">
-          <div class="bh-headline">{{ behaviour.headline }}</div>
+          {% import "_emoji.html" as emo_b %}<div class="bh-headline">{{ emo_b.score(behaviour.score, behaviour.headline) }} {{ behaviour.headline }}</div>
           <div class="cp-line-sub">From {{ behaviour.used }} of {{ behaviour.of }} parameters{% if behaviour.score is none %}: two are needed for a score{% endif %}.</div>
           <div class="bh-traits">{% for trait in behaviour.traits %}<span class="ui-chip {{ trait.tone }}" title="{{ trait.why }}">{{ trait.label }}</span>{% endfor %}</div>
         </div>
@@ -529,6 +638,41 @@
         </div>
         {% endfor %}
       </details>
+    </section>
+
+    {# Motivation, use of the programs, loyalty: each a score from counted parameters, each saying how and from what. #}
+    {% import "_emoji.html" as emo %}
+    {% for key, title, icon in [("motivation", "Motivation", "bi-fire"), ("usage", "How much they use their programs", "bi-bar-chart-line"), ("loyalty", "Loyalty", "bi-heart")] %}
+    {% set part = insights[key] %}
+    <section class="ui-card mb-3" id="{{ key }}">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi {{ icon }}"></i>{{ title }}</div>
+        <div class="ui-card-sub">{{ part.how }}</div></div></div>
+      <div class="bh-top">
+        <div class="bh-ring tone-{{ part.tone }}" style="--pct:{{ part.score or 0 }};"><div>{% if part.score is not none %}{{ part.score }}<small>/100</small>{% else %}–{% endif %}</div></div>
+        <div style="min-width:0;"><div class="bh-headline">{{ emo.score(part.score, part.headline) }} {{ part.headline }}</div>
+          <div class="cp-line-sub">From {{ part.used }} of {{ part.of }} parameters{% if part.score is none %}: two are needed for a score{% endif %}.</div></div>
+      </div>
+      <details class="bh-params" {{ 'open' if part.score is not none }}>
+        <summary>How it was counted, and from what</summary>
+        {% for param in part.params %}
+        <div class="bh-param {{ 'is-none' if param.score is none }}" title="{{ param.rule }}">
+          <div style="min-width:0;"><b>{{ param.label }}</b><span>{{ param.value }}</span><em>{{ param.rule }} · Read in: {{ param.source }}</em></div>
+          <div class="bh-bar"><span style="width:{{ param.score or 0 }}%;"></span></div>
+          <div class="bh-points">{% if param.score is not none %}{{ param.score }}<small>/100 · counts for {{ param.share }}%</small>{% else %}<small>not measured yet</small>{% endif %}</div>
+        </div>
+        {% endfor %}
+      </details>
+    </section>
+    {% endfor %}
+    <section class="ui-card mb-3" id="feelings-written">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-emoji-smile"></i>What they felt when writing to you</div>
+        <div class="ui-card-sub">{{ insights.feelings.how }}</div></div></div>
+      {% if insights.feelings.emotions %}
+      <div class="d-flex flex-wrap gap-2">
+        {% for item in insights.feelings.emotions %}<span class="ui-chip {{ 'bad' if item.key in ('frustrated', 'disappointed') else 'warn' if item.key in ('worried', 'confused', 'urgent') else 'ok' }}" title="Last words that showed it: {{ item.words | join(', ') }}">{{ emo.feel(item.key) }} {{ item.label }} · {{ item.count }}</span>{% endfor %}
+      </div>
+      <div class="ui-card-sub mt-2">In {{ insights.feelings.messages }} message{{ 's' if insights.feelings.messages != 1 }} where a feeling showed.</div>
+      {% else %}<div class="ui-card-sub">No feeling showed in their messages yet.</div>{% endif %}
     </section>
 </div>
 
@@ -555,7 +699,7 @@
           {% elif email.intent == "reply" %}Answered by the system{% if email.confidence is not none %} ({{ (email.confidence * 100) | round | int }}% confidence){% endif %}
           {% else %}Sent by the system{% endif %}
         </div>
-        <div class="cp-email-body">{{ email.body | truncate(900) }}</div>
+        <div class="cp-email-body" data-no-i18n>{{ email.body | truncate(900) }}</div>
         {% if email.thread_id %}<a class="ui-link" href="/inbox?filter=all&thread={{ email.thread_id }}">Open the discussion</a>{% endif %}
       </details>
       {% else %}
@@ -641,10 +785,26 @@
     panes.forEach(pane => pane.classList.toggle("is-on", pane.dataset.pane === name));
     if (remember) { try { sessionStorage.setItem(memory, name); } catch (error) {} }
   };
+  const folders = "candidate-folders:{{ candidate.id }}";
+  const openFolders = () => { try { return JSON.parse(sessionStorage.getItem(folders) || "[]"); } catch (error) { return []; } };
+  const reopen = () => openFolders().forEach(id => { const folder = document.getElementById(id); if (folder) folder.open = true; });
+  document.addEventListener("toggle", event => {
+    const folder = event.target;
+    if (!folder.matches || !folder.matches("details.cp-folder")) return;
+    const kept = new Set(openFolders());
+    folder.open ? kept.add(folder.id) : kept.delete(folder.id);
+    try { sessionStorage.setItem(folders, JSON.stringify([...kept])); } catch (error) {}
+  }, true);
+  document.addEventListener("live:refreshed", reopen);
+  reopen();
   const go = (id, smooth) => {
     const name = paneOf(id);
     if (!name) return false;
     show(name);
+    const inside = document.getElementById(id);
+    const folder = inside && inside.closest("details.cp-folder");
+    if (folder) folder.open = true;
+    if (inside && inside.matches("details.cp-folder")) inside.open = true;
     const target = names.includes(id) ? file : document.getElementById(id);
     if (target) requestAnimationFrame(() => target.scrollIntoView({ behavior: smooth ? "smooth" : "auto", block: "start" }));
     return true;

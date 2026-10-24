@@ -48,6 +48,14 @@ def _signed_in(request: Request, token: str, target: str) -> RedirectResponse:
 # First time: the admin creates their account
 # ------------------------------------------------------------------
 
+@router.get("/account/view-as/stop")
+def stop_viewing_as(request: Request, next: str = "/settings/team"):
+    """Back to the admin's own view."""
+    response = RedirectResponse(auth.safe_next(next, "/settings/team"), status_code=303)
+    response.delete_cookie(auth.VIEW_AS_COOKIE, path="/")
+    return response
+
+
 @router.get("/setup", response_class=HTMLResponse)
 def setup_page(request: Request, db: Session = Depends(get_db)):
     if auth.has_admin(db):
