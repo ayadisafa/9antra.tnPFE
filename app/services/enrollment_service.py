@@ -309,6 +309,75 @@ def professor_clash(db: Session, professor_id: str | None, days: list[int], star
     return None
 
 
+def able_to_take(db: Session, class_group: ClassGroup, exclude_id: str | None = None) -> list[Professor]:
+    """The professors who can take this class: its program among their specialities, available (their switch and their
+    dates when it runs), and free at its hours in its weeks. The closest speciality first, then the least busy."""
+    program = class_group.program
+    if program is None:
+        return []
+    start, today = class_start_dt(class_group), local_now().date()
+    on_date = start.date() if start and start.date() > today else today
+    first, _ = _weeks_of(class_group)
+    days = parse_days(class_group.days_of_week)
+    ranked = []
+    for professor in db.query(Professor).filter(Professor.is_available.is_(True)).all():
+        if professor.id == exclude_id or (professor.name or "").startswith("À nommer"):
+            continue
+        rank = _specialty_rank(professor, program.name)
+        if rank is None:
+            continue
+        if (professor.available_from and professor.available_from > on_date) or (professor.available_until and professor.available_until < on_date):
+            continue
+        if professor_clash(db, professor.id, days, class_group.start_time, class_group.end_time, first, class_group.total_weeks,
+                           exclude_id=class_group.id) is not None:
+            continue
+        load = db.query(ClassGroup).filter(ClassGroup.professor_id == professor.id, ClassGroup.status != ClassStatus.COMPLETED).count()
+        ranked.append((rank, load, professor.name.lower(), professor))
+    ranked.sort(key=lambda item: item[:3])
+    return [item[3] for item in ranked]
+
+
+def assign_waiting_professors(db: Session) -> list[tuple[ClassGroup, Professor]]:
+    """A class waiting for a professor (with somebody in it) takes, by itself, the first professor who can teach it,
+    as soon as there is one. Follows Settings › “Pick a professor automatically”. Returns what was given."""
+    if not get_settings(db).auto_assign_professor:
+        return []
+    waiting = (db.query(ClassGroup)
+               .filter(ClassGroup.professor_id.is_(None), ClassGroup.status != ClassStatus.COMPLETED, ClassGroup.program_id.isnot(None))
+               .all())
+    given = []
+    for group in sorted(waiting, key=lambda item: (class_start_dt(item) or datetime.max, item.name or "")):
+        known = (db.query(Professor).filter(Professor.name == group.professor_name).first()
+                 if (group.professor_name or "").strip() else None)
+        if known is not None:              # an old class that has its professor by name only: linked, not changed
+            group.professor_id = known.id
+            continue
+        if not enrolled_count(db, group.id):
+            continue
+        choices = able_to_take(db, group)
+        if not choices:
+            continue
+        professor = choices[0]
+        group.professor_id, group.professor_name = professor.id, professor.name
+        db.flush()                         # the next class sees this professor busy at these hours
+        db.add(Notification(recipient_role="admin", category="CLASS", title="A class took its professor by itself",
+                            message=f"{group.name} · {professor.name}. " + "It was waiting for a professor: this one teaches its program "
+                                    "and is free at its hours. Its candidates are told how to reach them.",
+                            action_url=f"/classes/{group.id}"))
+        given.append((group, professor))
+    return given
+
+
+def tell_class_of_professor(db: Session, class_ids) -> int:
+    """“Your professor”: every candidate of these classes is told who teaches them and how to write to them."""
+    told = 0
+    for class_id in class_ids:
+        for registration in class_members(db, class_id):
+            run_in_background(class_emails.send_professor_email_task, registration.id)
+            told += 1
+    return told
+
+
 def clash_message(professor: Professor, other: ClassGroup) -> str:
     hours = f"{other.start_time:%H:%M}–{other.end_time:%H:%M}" if other.start_time and other.end_time else ""
     return (f"{professor.name} already teaches {other.name} on the same days and hours ({other.days_of_week} {hours}). "
@@ -706,6 +775,8 @@ def sync_class_lifecycle(db: Session) -> int:
     newly_scheduled: list[str] = []
     with _lifecycle_lock:
         now = local_now()
+        given = assign_waiting_professors(db)          # a class waiting for a professor takes the first one who can
+        changed += len(given)
         for class_group in db.query(ClassGroup).populate_existing().all():
             if schedule_by_enrollment(db, class_group, now):
                 newly_scheduled.append(class_group.id)
@@ -716,6 +787,7 @@ def sync_class_lifecycle(db: Session) -> int:
     for class_id in newly_scheduled:
         for registration in class_members(db, class_id):
             run_in_background(class_emails.send_class_update_email_task, registration.id, "scheduled")
+    tell_class_of_professor(db, [group.id for group, _ in given])
     return changed
 
 

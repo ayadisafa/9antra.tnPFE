@@ -24,6 +24,8 @@ from app.services.enrollment_service import (
     START_AFTER_DAYS,
     START_FIXED_DATE,
     START_MIN_ENROLLMENT,
+    able_to_take,
+    assign_waiting_professors,
     class_members,
     complete_class,
     create_class,
@@ -39,6 +41,7 @@ from app.services.enrollment_service import (
     sync_members,
     teachers_of,
     teaches,
+    tell_class_of_professor,
     unassign_registration,
     update_class_parameters,
 )
@@ -114,11 +117,11 @@ def _parameters_context(db: Session, class_group: ClassGroup, now: datetime) -> 
 
 
 def _professor_choices(db: Session, class_group: ClassGroup) -> list[Professor]:
-    """Who can teach this class: the professors of its speciality. The one
-    teaching it today stays in the list even when it is not theirs, marked so."""
-    choices = teachers_of(db, class_group.program)
+    """Who can take this class: the professors of its program who are available and free at its hours (able_to_take).
+    The one teaching it today stays first, marked when that is no longer so."""
+    choices = able_to_take(db, class_group, exclude_id=class_group.professor_id)
     current = class_group.professor
-    if current is not None and current not in choices:
+    if current is not None:
         choices = [current] + choices
     for professor in choices:
         professor.fits = teaches(professor, class_group.program)
@@ -267,6 +270,7 @@ def create_professor(
         available_until=date.fromisoformat(available_until) if available_until else None,
     ))
     db.commit()
+    sync_class_lifecycle(db)          # a class waiting for a professor of this program takes them at once
     return _redirect("/classes/?tab=professors", notice=f"{clean_name} added.")
 
 
@@ -308,6 +312,7 @@ def edit_professor(
     if account is not None:
         account.name = professor.name
     db.commit()
+    sync_class_lifecycle(db)          # available again, or a new speciality: a waiting class takes them at once
     return _redirect("/classes/?tab=professors", notice=f"{professor.name} saved.")
 
 
@@ -423,7 +428,7 @@ def professor_delete_form(professor_id: str, request: Request, db: Session = Dep
     rows = [{"class": group, "successors": professor_removal.successors(db, professor, group)}
             for group in professor_removal.classes_of(db, professor)]
     return templates.TemplateResponse(request=request, name="_professor_delete.html", context={
-        "professor": professor, "rows": rows,
+        "professor": professor, "rows": rows, "auto": get_settings(db).auto_assign_professor,
         "account": db.query(User).filter(User.professor_id == professor.id).first(),
         "questions": len(course_questions.waiting_for(db, f"professor:{professor.id}")),
     })
@@ -442,7 +447,12 @@ async def delete_professor(professor_id: str, request: Request, db: Session = De
         done = professor_removal.remove(db, professor, handover, who=user.name if user else None)
     except ValueError as exc:
         return _redirect("/classes/?tab=professors", error=str(exc))
-    sync_class_lifecycle(db)          # a class left without its professor is held until it has one
+    for group, taker in assign_waiting_professors(db):        # left waiting: the first professor who can takes it
+        done["waiting"] = [name for name in done["waiting"] if name != group.name]
+        done["given"].append({"id": group.id, "class": group.name, "to": taker.name})
+    db.commit()
+    tell_class_of_professor(db, [item["id"] for item in done["given"]])
+    sync_class_lifecycle(db)          # a class still without a professor is held until it has one
     return _redirect("/classes/?tab=professors", notice=professor_removal.notice(done))
 
 

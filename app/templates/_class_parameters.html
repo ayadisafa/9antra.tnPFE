@@ -44,7 +44,7 @@
           </option>
           {% endfor %}
         </select>
-        <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who have {{ cls.program.name if cls.program else 'this program' }} among their specialities. <a href="/classes/?tab=professors" class="ui-link">Professors</a></div>
+        <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who can take it are offered: they teach its program, are available and free at its hours. <a href="/classes/?tab=professors" class="ui-link">Professors</a></div>
       </div>
       <div class="col-sm-5">
         <label class="cp-label" for="param-room-{{ cls.id }}">Room or link</label>

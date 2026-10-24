@@ -342,6 +342,9 @@ def deliver(
 
     error, config_error = (None, False)
     if not dry_run:
+        from app.database import let_others_write
+
+        let_others_write()                  # what led here is saved before the mail server is reached
         error, config_error = _attempt(
             candidate.email, subject, text, html_body, message_id, in_reply_to, references,
             files, inline,
@@ -411,6 +414,9 @@ def resend(db: Session, message: CandidateEmail) -> bool:
     if missing:
         message.analysis = f"Not delivered: the attached file “{missing}” no longer exists."
         return False
+    from app.database import let_others_write
+
+    let_others_write()
     error, config_error = _attempt(
         message.recipient, message.subject or "9antra", message.body,
         message.html_body or message.body, message.message_id or new_message_id(),

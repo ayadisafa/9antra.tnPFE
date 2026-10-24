@@ -38,6 +38,29 @@ def send_class_update_email(db: Session, registration: Registration, reason: str
     return email_templates.delivered(email_templates.send(db, key, registration=registration))
 
 
+def professor_coordinates(professor) -> str:
+    """How a candidate reaches their professor: the email and phone known, and always a reply to the centre's email
+    (a question about the course is forwarded to the professor: see course_questions)."""
+    lines = []
+    if professor.email:
+        lines.append(f"Email : {professor.email}")
+    if professor.phone:
+        lines.append(f"Téléphone / WhatsApp : {professor.phone}")
+    lines.append("Vos questions sur le cours peuvent aussi être envoyées en réponse à cet email : elles lui sont transmises.")
+    return "\n".join(lines)
+
+
+def send_professor_email(db: Session, registration: Registration) -> bool:
+    """“Your professor”: who teaches the candidate's class and how to write to them."""
+    class_group = registration.class_group
+    professor = class_group.professor if class_group else None
+    if professor is None:
+        return False
+    message = email_templates.send(db, "class_professor", registration=registration,
+                                   values={"professor_coordinates": professor_coordinates(professor)})
+    return email_templates.delivered(message)
+
+
 def send_training_reminder(db: Session, registration: Registration, days_before: int | None = None) -> bool:
     """Reminder before the first session, with its exact date and time.
 
@@ -73,6 +96,10 @@ def _with_registration(registration_id: str, action) -> None:
 
 def send_enrollment_email_task(registration_id: str) -> None:
     _with_registration(registration_id, send_enrollment_email)
+
+
+def send_professor_email_task(registration_id: str) -> None:
+    _with_registration(registration_id, send_professor_email)
 
 
 def send_class_update_email_task(registration_id: str, reason: str = "rescheduled") -> None:

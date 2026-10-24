@@ -120,6 +120,9 @@ def send(phone, text: str, *, free: bool = False) -> str | None:
     must be a template that WhatsApp approved: name it in WHATSAPP_TEMPLATE
     (one variable, the text).
     """
+    from app.database import let_others_write
+
+    let_others_write()                      # Meta may take seconds: nobody waits for the database meanwhile
     number = normalise(phone)
     if number is None:
         return "This phone number cannot be used on WhatsApp."
@@ -159,6 +162,9 @@ MAX_MEDIA_BYTES = 12 * 1024 * 1024
 
 def download_media(media_id: str) -> tuple[bytes, str] | None:
     """A photo or a document a candidate sent on WhatsApp: (content, type). Meta gives its address, then the file."""
+    from app.database import let_others_write
+
+    let_others_write()
     if not configured() or not media_id:
         return None
     headers = {"Authorization": f"Bearer {os.getenv('WHATSAPP_TOKEN').strip()}"}

@@ -38,18 +38,10 @@ def _clash(db: Session, successor: Professor, group: ClassGroup) -> ClassGroup |
 
 
 def successors(db: Session, professor: Professor, group: ClassGroup) -> list[Professor]:
-    """Who could take this class instead: teaches its program, can be given classes, and is free at its hours."""
-    found = []
-    for other in (db.query(Professor).filter(Professor.id != professor.id, Professor.is_available.is_(True))
-                  .order_by(Professor.name).all()):
-        if (other.name or "").startswith(PLACE_TO_NAME):
-            continue
-        if group.program is not None and not teaches(other, group.program):
-            continue
-        if _clash(db, other, group) is not None:
-            continue
-        found.append(other)
-    return found
+    """Who could take this class instead: teaches its program, is available, and is free at its hours (the best first)."""
+    from app.services.enrollment_service import able_to_take
+
+    return able_to_take(db, group, exclude_id=professor.id)
 
 
 def remove(db: Session, professor: Professor, handover: dict | None = None, who: str | None = None) -> dict:
@@ -86,7 +78,7 @@ def remove(db: Session, professor: Professor, handover: dict | None = None, who:
             raise ValueError(clash_message(successor, other))
         group.professor_id, group.professor_name = successor.id, successor.name
         db.flush()                                    # the next class's check must see this one (no autoflush here)
-        given.append({"class": group.name, "to": successor.name})
+        given.append({"id": group.id, "class": group.name, "to": successor.name})
     # A finished class keeps the name of who taught it; only the link to the record goes.
     db.query(ClassGroup).filter(ClassGroup.professor_id == professor.id).update({ClassGroup.professor_id: None}, synchronize_session=False)
 

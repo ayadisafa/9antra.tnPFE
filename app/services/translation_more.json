@@ -703,6 +703,10 @@
 "Une classe qui n'existe plus",
 "قسم لم يعد موجودا"
 ],
+"A class took its professor by itself": [
+"Une classe a pris son formateur d'elle-même",
+"قسم أخذ مكوّنه تلقائيا"
+],
 "A colourful cover, the key figures as tiles, then the journey week by week. The one to send to a candidate.": [
 "Une couverture colorée, les chiffres clés en tuiles, puis le parcours semaine par semaine. Celui à envoyer à un candidat.",
 "غلاف ملوّن، الأرقام الرئيسية في مربّعات، ثم المسار أسبوعا بأسبوع. المناسب للإرسال إلى مترشح."
@@ -2042,6 +2046,10 @@
 "Automatic email": [
 "Email automatique",
 "بريد تلقائي"
+],
+"Automatically: the first professor who can take it": [
+"Automatiquement : le premier formateur qui peut la prendre",
+"تلقائيا: أول مكوّن يستطيع أخذه"
 ],
 "Automation": [
 "Automatisation",
@@ -6039,6 +6047,10 @@
 "Il attend votre téléphone (WhatsApp ou SMS).",
 "ينتظر هاتفك (WhatsApp أو SMS)."
 ],
+"It was waiting for a professor: this one teaches its program and is free at its hours. Its candidates are told how to reach them.": [
+"Elle attendait un formateur : celui-ci enseigne sa formation et est libre à ses heures. Ses candidats apprennent comment le joindre.",
+"كان ينتظر مكوّنا: هذا المكوّن يدرّس برنامجه ومتفرّغ في ساعاته. يُعلَم مترشحوه بكيفية التواصل معه."
+],
 "It watches": [
 "Il surveille",
 "يراقب"
@@ -7315,6 +7327,10 @@
 "Aucune formation existante proche",
 "لا يوجد برنامج قريب"
 ],
+"No copy was kept; the earlier ones are untouched.": [
+"Aucune copie n'a été gardée ; les précédentes sont intactes.",
+"لم تُحفظ أي نسخة؛ النسخ السابقة سليمة."
+],
 "No copy yet": [
 "Pas encore de copie",
 "لا توجد نسخة بعد"
@@ -7746,6 +7762,10 @@
 "Nobody answered yet.": [
 "Personne n'a encore répondu.",
 "لم يُجب أحد بعد."
+],
+"Nobody can take it now: it waits, and the first professor who can will take it by itself.": [
+"Personne ne peut la prendre maintenant : elle attend, et le premier formateur qui pourra la prendra de lui-même.",
+"لا أحد يستطيع أخذه الآن: ينتظر، وسيأخذه تلقائيا أول مكوّن يستطيع ذلك."
 ],
 "Nobody for now: it waits for a professor": [
 "Personne pour l'instant : elle attend un formateur",
@@ -8543,6 +8563,10 @@
 "Seuls les formateurs qui enseignent la formation et sont libres à ses heures sont proposés.",
 "لا يُقترح إلا المكوّنون الذين يدرّسون البرنامج ومتفرّغون في ساعاته."
 ],
+"Only professors who teach the program, are available and free at its hours are offered. Its candidates are told who their new professor is and how to write to them.": [
+"Seuls les formateurs qui enseignent la formation, sont disponibles et libres à ses heures sont proposés. Ses candidats apprennent qui est leur nouveau formateur et comment lui écrire.",
+"لا يُقترح إلا المكوّنون الذين يدرّسون البرنامج ومتاحون ومتفرّغون في ساعاته. يُعلَم مترشحوه بمكوّنهم الجديد وكيفية مراسلته."
+],
 "Only public web pages can be read, not this computer or the local network.": [
 "Seules les pages web publiques peuvent être lues, pas cet ordinateur ni le réseau local.",
 "لا تُقرأ إلا صفحات الويب العمومية، لا هذا الحاسوب ولا الشبكة المحلية."
@@ -8558,6 +8582,10 @@
 "Only the page's picture is used: posts and reviews need the page's access key.": [
 "Seule l'image de la page est utilisée : les publications et les avis demandent la clé d'accès de la page.",
 "تُستعمل صورة الصفحة فقط: المنشورات والآراء تحتاج مفتاح دخول الصفحة."
+],
+"Only the professors who can take it are offered: they teach its program, are available and free at its hours.": [
+"Seuls les formateurs qui peuvent la prendre sont proposés : ils enseignent sa formation, sont disponibles et libres à ses heures.",
+"لا يُقترح إلا المكوّنون الذين يستطيعون أخذه: يدرّسون برنامجه ومتاحون ومتفرّغون في ساعاته."
 ],
 "Only the professors who have": [
 "Seuls les formateurs qui ont",
@@ -12567,6 +12595,10 @@
 "Les copies",
 "النسخ"
 ],
+"The copy could not be read back": [
+"La copie n'a pas pu être relue",
+"تعذّرت قراءة النسخة"
+],
 "The copy was made, but not in the second folder": [
 "La copie a été faite, mais pas dans le second dossier",
 "تم إنجاز النسخة، لكن ليس في المجلد الثاني"
@@ -12586,6 +12618,10 @@
 "The data is in": [
 "Les données sont dans",
 "البيانات في"
+],
+"The data is not in a SQLite file nor in PostgreSQL: its copies are made with the database's own tools.": [
+"Les données ne sont ni dans un fichier SQLite ni dans PostgreSQL : leurs copies se font avec les outils de la base.",
+"البيانات ليست في ملف SQLite ولا في PostgreSQL: تُنسخ بأدوات قاعدة البيانات نفسها."
 ],
 "The data is not in a SQLite file: its copies are made with the database's own tools.": [
 "Les données ne sont pas dans un fichier SQLite : leurs copies sont faites avec les propres outils de la base de données.",

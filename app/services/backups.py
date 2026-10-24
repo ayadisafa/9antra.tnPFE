@@ -10,11 +10,13 @@ Passwords of the mailbox and the Firebase key are not put in the copies.
 """
 from __future__ import annotations
 
+import glob
 import logging
 import os
 import re
 import shutil
 import sqlite3
+import subprocess
 import tempfile
 import zipfile
 from datetime import datetime, timedelta
@@ -45,6 +47,41 @@ def database_file() -> Path | None:
     if not DATABASE_URL.startswith("sqlite:///"):
         return None
     return Path(DATABASE_URL[len("sqlite:///"):])
+
+
+def on_postgres() -> bool:
+    return DATABASE_URL.startswith("postgresql")
+
+
+def postgres_tool(name: str) -> str | None:
+    """pg_dump or pg_restore: from PG_BIN, the PATH, or PostgreSQL's own folder (the newest version)."""
+    folders = [os.getenv("PG_BIN") or ""] + sorted(glob.glob(r"C:\Program Files\PostgreSQL\*\bin"), reverse=True)
+    for place in folders:
+        candidate = Path(place) / f"{name}.exe" if place else None
+        if candidate is not None and candidate.is_file():
+            return str(candidate)
+    return shutil.which(name)
+
+
+def _dump_postgres(target: Path) -> str | None:
+    """A copy of the whole PostgreSQL database in pg_dump's own format, checked by reading its list back.
+    Returns the problem, or None when the copy is good."""
+    from sqlalchemy.engine import make_url
+
+    dump, restore = postgres_tool("pg_dump"), postgres_tool("pg_restore")
+    if not dump or not restore:
+        return "pg_dump was not found (PostgreSQL's bin folder): set PG_BIN in .env to that folder."
+    url = make_url(DATABASE_URL)
+    environment = {**os.environ, "PGPASSWORD": url.password or ""}
+    command = [dump, "-h", url.host or "localhost", "-p", str(url.port or 5432), "-U", url.username or "", "-d", url.database or "",
+               "-Fc", "-f", str(target)]
+    done = subprocess.run(command, env=environment, capture_output=True, text=True, timeout=900)
+    if done.returncode != 0 or not target.is_file():
+        return "pg_dump did not make the copy: " + (done.stderr or "").strip()[:200]
+    listed = subprocess.run([restore, "--list", str(target)], capture_output=True, text=True, timeout=300)
+    if listed.returncode != 0:
+        return "The copy could not be read back: " + (listed.stderr or "").strip()[:200]
+    return None
 
 
 def second_folder(db: Session) -> Path | None:
@@ -137,29 +174,36 @@ def make(db: Session | None = None, now: datetime | None = None) -> dict:
     """Make a copy now. Returns {"ok", "name", "size", "second", "problem"}."""
     now = now or datetime.now()
     source = database_file()
-    if source is None:
+    if source is None and not on_postgres():
         return {"ok": False, "name": None, "size": 0, "second": None,
-                "problem": "The data is not in a SQLite file: its copies are made with the database's own tools."}
-    if not source.is_file():
+                "problem": "The data is not in a SQLite file nor in PostgreSQL: its copies are made with the database's own tools."}
+    if source is not None and not source.is_file():
         return {"ok": False, "name": None, "size": 0, "second": None, "problem": f"The database file {source} was not found."}
     name = f"backup-{now:%Y%m%d-%H%M%S}.zip"
     target = folder() / name
     with tempfile.TemporaryDirectory() as scratch:
-        copy = Path(scratch) / "app.db"
-        live = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True, timeout=30)
-        out = sqlite3.connect(str(copy))
-        try:
-            live.backup(out)
-            verdict = out.execute("PRAGMA integrity_check").fetchone()[0]
-        finally:
-            out.close()
-            live.close()
-        if verdict != "ok":
-            return {"ok": False, "name": None, "size": 0, "second": None,
-                    "problem": f"The database did not pass its check ({str(verdict)[:120]}). No copy was kept; the earlier ones are untouched."}
+        if source is None:
+            # PostgreSQL: its own copy (pg_dump), restored with pg_restore.
+            copy, inside, base = Path(scratch) / "app.pgdump", "app.pgdump", Path.cwd()
+            problem = _dump_postgres(copy)
+            if problem:
+                return {"ok": False, "name": None, "size": 0, "second": None,
+                        "problem": problem + " No copy was kept; the earlier ones are untouched."}
+        else:
+            copy, inside, base = Path(scratch) / "app.db", "app.db", source.resolve().parent
+            live = sqlite3.connect(f"file:{source.as_posix()}?mode=ro", uri=True, timeout=30)
+            out = sqlite3.connect(str(copy))
+            try:
+                live.backup(out)
+                verdict = out.execute("PRAGMA integrity_check").fetchone()[0]
+            finally:
+                out.close()
+                live.close()
+            if verdict != "ok":
+                return {"ok": False, "name": None, "size": 0, "second": None,
+                        "problem": f"The database did not pass its check ({str(verdict)[:120]}). No copy was kept; the earlier ones are untouched."}
         with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as archive:
-            archive.write(copy, "app.db")
-            base = source.resolve().parent
+            archive.write(copy, inside)
             for part in _FILES:
                 root = base / part
                 if not root.is_dir():
@@ -201,10 +245,17 @@ def view(db: Session) -> dict:
     last = kept[0] if kept else None
     age = datetime.now() - last["made"] if last else None
     source = database_file()
+    size = source.stat().st_size if source is not None and source.is_file() else 0
+    if source is None and on_postgres():
+        from sqlalchemy import text
+
+        try:
+            size = int(db.execute(text("SELECT pg_database_size(current_database())")).scalar() or 0)
+        except Exception:
+            db.rollback()
     return {
-        "handled": source is not None,
-        "database": {"size": source.stat().st_size if source is not None and source.is_file() else 0,
-                     "kind": "SQLite" if source is not None else DATABASE_URL.split(":")[0]},
+        "handled": source is not None or on_postgres(),
+        "database": {"size": size, "kind": "SQLite" if source is not None else "PostgreSQL" if on_postgres() else DATABASE_URL.split(":")[0]},
         "copies": kept[:6],
         "count": len(kept),
         "last": last,

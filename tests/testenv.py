@@ -56,6 +56,33 @@ def ensure_baseline() -> str:
     return BASELINE
 
 
+def move_to_postgres(database: str, tag: str) -> str:
+    """The same suite on PostgreSQL (TEST_POSTGRES=postgresql://…/nantra_test): the copy is moved into a database of its
+    own, made fresh for this suite, and the application is pointed at it."""
+    import subprocess
+    from urllib.parse import urlsplit
+
+    import psycopg2
+
+    address = os.environ["TEST_POSTGRES"]
+    parts = urlsplit(address)
+    name = f"nantra_t_{tag}".lower()
+    admin = psycopg2.connect(dbname=parts.path.lstrip("/"), user=parts.username, password=parts.password,
+                             host=parts.hostname, port=parts.port or 5432)
+    admin.autocommit = True
+    with admin.cursor() as cursor:
+        cursor.execute(f'DROP DATABASE IF EXISTS "{name}" WITH (FORCE)')
+        cursor.execute(f"CREATE DATABASE \"{name}\" ENCODING 'UTF8' TEMPLATE template0")
+    admin.close()
+    target = address.rsplit("/", 1)[0] + "/" + name
+    moved = subprocess.run([sys.executable, "-m", "app.postgres_move", database, target], cwd=PROJECT, capture_output=True,
+                           text=True, encoding="utf-8", errors="replace", env={**os.environ, "DATABASE_URL": target})
+    if moved.returncode != 0:
+        sys.exit("Moving the copy to PostgreSQL failed: " + moved.stdout[-3000:] + moved.stderr[-3000:])
+    os.environ["DATABASE_URL"] = target
+    return target
+
+
 def prepare(tag: str, *, web: bool = False, source: str | None = None) -> str:
     """Point the application at a fresh copy of `source` (default: the baseline). Returns the copy's path."""
     os.makedirs(WORK, exist_ok=True)
@@ -84,6 +111,8 @@ def prepare(tag: str, *, web: bool = False, source: str | None = None) -> str:
     original.backup(copy)
     copy.close()
     original.close()
+    if os.environ.get("TEST_POSTGRES"):
+        move_to_postgres(database, tag)
 
     import imaplib
     import smtplib

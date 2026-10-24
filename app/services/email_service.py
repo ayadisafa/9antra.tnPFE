@@ -207,6 +207,9 @@ def send_email(
     `attachments` are dicts with `filename`, `content_type`, `data` (bytes)
     and, for a photo shown inside the HTML body as `cid:<cid>`, `cid`.
     """
+    from app.database import let_others_write
+
+    let_others_write()                  # the mail server may take seconds: nobody waits for the database meanwhile
     recipient = _validate_recipient(to_email)
     sender, password = _get_smtp_credentials()
 

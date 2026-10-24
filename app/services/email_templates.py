@@ -310,6 +310,22 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         closing=_CLASS_CLOSING, details=True,
     ),
     AutoEmail(
+        key="class_professor", group="Registration and class",
+        name="Your professor",
+        when="Sent to the whole class when a professor takes it (by itself, or when you hand it over): who they are and how to write to them.",
+        subject="Votre formateur pour {program_name}",
+        title="Votre formateur",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "{professor} est votre formateur pour {program_name} (classe {class_name}).\n\n"
+            "Pour lui poser vos questions :\n{professor_coordinates}"
+        ),
+        details=True,
+        extra=(("professor_coordinates", "How to reach the professor (email, phone, or a reply to this email)",
+                "Email : nour@example.com\nTéléphone / WhatsApp : 22 555 666\n"
+                "Vos questions sur le cours peuvent aussi être envoyées en réponse à cet email : elles lui sont transmises."),),
+    ),
+    AutoEmail(
         key="class_rescheduled", group="Registration and class",
         name="Schedule update",
         when="Sent to the whole class when you change its date, its time or its trainer.",

@@ -170,6 +170,9 @@ def livelier(temperature: float = 0.55):
 
 
 def _chat(system: str, prompt: str, *, as_json: bool, max_tokens: int) -> str | None:
+    from app.database import let_others_write
+
+    let_others_write()          # the model can take a minute (and waits for the one before): nobody waits for the database
     try:
         import ollama
 

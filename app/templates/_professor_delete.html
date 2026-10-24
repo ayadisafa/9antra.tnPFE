@@ -13,13 +13,13 @@
     <div class="pd-class">
       <span><b data-no-i18n>{{ group.name }}</b><small>{{ group.program.name if group.program else 'No program' }}{% if group.status.value == 'ongoing' %} · <span>running</span>{% endif %}</small></span>
       <select name="give_{{ group.id }}" class="form-select form-select-sm" aria-label="Who teaches it now">
-        <option value="">Nobody for now: it waits for a professor</option>
+        <option value="">{{ 'Automatically: the first professor who can take it' if auto else 'Nobody for now: it waits for a professor' }}</option>
         {% for other in row.successors %}<option value="{{ other.id }}" data-no-i18n>{{ other.name }}</option>{% endfor %}
       </select>
     </div>
-    {% if not row.successors %}<div class="pd-warn">No other professor teaches this program and is free at its hours: it will wait for one.</div>{% endif %}
+    {% if not row.successors %}<div class="pd-warn">{{ 'Nobody can take it now: it waits, and the first professor who can will take it by itself.' if auto else 'No other professor teaches this program and is free at its hours: it will wait for one.' }}</div>{% endif %}
     {% endfor %}
-    <div class="ui-hint">Only professors who teach the program and are free at its hours are offered.</div>
+    <div class="ui-hint">Only professors who teach the program, are available and free at its hours are offered. Its candidates are told who their new professor is and how to write to them.</div>
     {% else %}
     <div class="pd-quiet"><i class="bi bi-check2-circle"></i><span>No class to hand over: they teach none at the moment.</span></div>
     {% endif %}

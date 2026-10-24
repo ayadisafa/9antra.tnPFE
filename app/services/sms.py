@@ -38,6 +38,9 @@ def receives() -> bool:
 
 def send(phone: str, text: str) -> str | None:
     """Send an SMS from the phone. Returns the problem, or None when the phone took it."""
+    from app.database import let_others_write
+
+    let_others_write()                      # the phone may take seconds: nobody waits for the database meanwhile
     from app.services import whatsapp
 
     number = whatsapp.normalise(phone)

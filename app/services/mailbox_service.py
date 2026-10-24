@@ -199,6 +199,9 @@ def poll(db: Session) -> dict:
     imported = ignored = 0
     connection = None
     try:
+        from app.database import let_others_write
+
+        let_others_write()                  # the mailbox is far: what is changed so far is saved before reaching it
         connection = _connect(settings)
         validity = _uidvalidity(connection, settings["folder"])
         status, _ = connection.select(settings["folder"], readonly=True)
@@ -217,6 +220,7 @@ def poll(db: Session) -> dict:
         new_uids = [uid for uid in uids if uid > (state.last_uid or 0)][:MAX_PER_RUN]
         own_address = settings["email"].lower()
         for uid in new_uids:
+            let_others_write()              # each email imported is saved before the next is fetched
             status, parts = connection.uid("fetch", str(uid), "(BODY.PEEK[])")
             raw = next((part[1] for part in parts or [] if isinstance(part, tuple) and len(part) > 1), None)
             state.last_uid = uid

@@ -1,22 +1,32 @@
 import logging
 import os
+import threading
 import time
 import traceback
+import weakref
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 logger = logging.getLogger(__name__)
+# The database may be named in .env (DATABASE_URL=postgresql://…): read before the engine is made. What is already set
+# (the tests' copies) is kept.
+load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///app.db")
+IS_SQLITE = DATABASE_URL.startswith("sqlite")
 # SQLite lets one writer at a time: another one waits up to this long (it used to give up after 5 s: "database is locked").
 WAIT_FOR_WRITER_SECONDS = 30
 # A write held longer than this keeps the others waiting: it is written in the log with where it began.
 LONG_WRITE_SECONDS = 5
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False, "timeout": WAIT_FOR_WRITER_SECONDS}
-)
+if IS_SQLITE:
+    engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False, "timeout": WAIT_FOR_WRITER_SECONDS})
+else:
+    # PostgreSQL: many requests at once, each with its own connection from a pool; a connection the server dropped is
+    # noticed before it is used.
+    engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20, pool_pre_ping=True, pool_recycle=1800,
+                           connect_args={"connect_timeout": 10, "options": f"-c lock_timeout={WAIT_FOR_WRITER_SECONDS * 1000}"})
 
 
 def _where() -> str:
@@ -27,23 +37,44 @@ def _where() -> str:
     return " < ".join(f"{os.path.relpath(frame.filename).replace(os.sep, '/')}:{frame.lineno} {frame.name}" for frame in reversed(frames[-4:])) or "?"
 
 
-if engine.dialect.name == "sqlite":
-    @event.listens_for(engine, "before_cursor_execute")
-    def _note_first_write(conn, cursor, statement, parameters, context, executemany):
-        # SQLite takes the write lock at the first change of a transaction and keeps it until the commit.
-        if "write_started" not in conn.info and statement.lstrip()[:6].upper() in ("INSERT", "UPDATE", "DELETE", "REPLAC"):
-            conn.info["write_started"] = (time.monotonic(), _where())
+# The sessions of this thread that hold changes not saved yet (see let_others_write).
+_holding = threading.local()
 
-    def _report(info: dict) -> None:
-        started = info.pop("write_started", None)
-        if started is not None and time.monotonic() - started[0] > LONG_WRITE_SECONDS:
-            logger.warning("The database was held for writing %.1f s (other writers waited meanwhile); it began at %s",
-                           time.monotonic() - started[0], started[1])
 
-    event.listen(engine, "commit", lambda conn: _report(conn.info))
-    event.listen(engine, "rollback", lambda conn: _report(conn.info))
-    # A connection given back without a commit or a rollback of its own is rolled back by the pool: it ends there.
-    event.listen(engine, "checkin", lambda dbapi_connection, record: _report(record.info))
+def _held() -> "weakref.WeakSet":
+    found = getattr(_holding, "sessions", None)
+    if found is None:
+        found = _holding.sessions = weakref.WeakSet()
+    return found
+
+
+@event.listens_for(engine, "before_cursor_execute")
+def _note_first_write(conn, cursor, statement, parameters, context, executemany):
+    # SQLite takes the write lock at the first change of a transaction and keeps it until the commit.
+    if "write_started" not in conn.info and statement.lstrip()[:6].upper() in ("INSERT", "UPDATE", "DELETE", "REPLAC"):
+        conn.info["write_started"] = (time.monotonic(), _where())
+        owner = conn.info.get("session")
+        session = owner() if owner else None
+        if session is not None:
+            _held().add(session)
+
+
+def _report(info: dict) -> None:
+    owner = info.get("session")
+    session = owner() if owner else None
+    if session is not None:
+        _held().discard(session)
+    started = info.pop("write_started", None)
+    if started is not None and time.monotonic() - started[0] > LONG_WRITE_SECONDS:
+        logger.warning("The database was held for writing %.1f s (other writers waited meanwhile); it began at %s",
+                       time.monotonic() - started[0], started[1])
+
+
+# Every database: a change kept open while waiting holds the others back.
+event.listen(engine, "commit", lambda conn: _report(conn.info))
+event.listen(engine, "rollback", lambda conn: _report(conn.info))
+# A connection given back without a commit or a rollback of its own is rolled back by the pool: it ends there.
+event.listen(engine, "checkin", lambda dbapi_connection, record: _report(record.info))
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -52,6 +83,24 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
+
+
+@event.listens_for(SessionLocal, "after_begin")
+def _session_of(session, transaction, connection):
+    connection.info["session"] = weakref.ref(session)
+
+
+def let_others_write() -> int:
+    """About to wait for the network (a mail server, Meta, the Android phone, the model, the mailbox): what this thread
+    changed and has not saved yet is saved now, so the database is not held for everyone meanwhile (SQLite lets one
+    writer at a time). Returns how many sessions were saved."""
+    done = 0
+    for session in list(_held()):
+        if not session.is_active:            # a session that failed is the caller's to roll back
+            continue
+        session.commit()
+        done += 1
+    return done
 
 
 def ensure_sqlite_compatibility():
