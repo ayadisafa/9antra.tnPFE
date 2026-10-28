@@ -30,10 +30,11 @@ from .website import WebsiteCheck, WebsiteItem
 from .session_join import SessionJoin
 from .market_offer import MarketOffer
 from .admin_reminder import AdminReminder
-from .ui_translation import UiTranslation
+from .ui_translation import TextTranslation, UiTranslation
 from .edit_log import EditLog
 from .team_message import TeamMessage
 from .payment_proof import PaymentProof
+from .news_item import NewsItem
 from .market_signal import MarketSignal
 from .resource_reminder import ResourceReminder
 from app.services.professor_announcements import ProfessorAnnouncement  # noqa: F401  (its table is made at start)

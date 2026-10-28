@@ -141,6 +141,8 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "parts": overview.activity_parts(db, now_utc),
             "no_teacher": overview.programs_without_teacher(db),
             "news": website_sync.week_news(db, now_utc),
+            "at_risk": __import__("app.services.dropout", fromlist=["at_risk"]).at_risk(db, limit=6),
+            "journal": __import__("app.services.journal", fromlist=["for_dashboard"]).for_dashboard(db),
             "said": feedback.overview(db),
             "smart": {"ideas": reminders.suggestions(db)[:3],
                       "planned": [{"reminder": item, "when": utc_to_local(item.send_at)} for item in reminders.upcoming(db)[:3]]},
@@ -152,6 +154,45 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "error": request.query_params.get("error"),
         },
     )
+
+
+@router.get("/journal")
+def journal_page(request: Request, db: Session = Depends(get_db)):
+    """What is new in each field the centre teaches, briefly, and what it suggests for the programs."""
+    from app.services import journal
+
+    domain = request.query_params.get("domain") or ""
+    return templates.TemplateResponse(request=request, name="journal.html", context={
+        "active_page": "dashboard", "items": journal.latest(db, domain if domain in journal.DOMAINS else None, limit=60),
+        "domain": domain, "domains": journal.DOMAINS, "suggestions": journal.suggestions(db, most=12), "last": journal.last_read(db),
+        "every": journal.EVERY_HOURS, "notice": request.query_params.get("notice"), "error": request.query_params.get("error"),
+    })
+
+
+@router.post("/journal/paste")
+def journal_paste(text: str = Form(""), url: str = Form(""), domain: str = Form(""), db: Session = Depends(get_db)):
+    """A LinkedIn post or an article the admin pasted: kept in the journal (LinkedIn lets no application read it)."""
+    from urllib.parse import urlencode
+
+    from app.services import journal
+
+    item = journal.add_pasted(db, text, domain, url)
+    if item is None:
+        return RedirectResponse("/journal?" + urlencode({"error": "Paste the text of the post or the article (a few lines at least)."}), status_code=303)
+    return RedirectResponse("/journal?" + urlencode({"notice": "Kept in the journal: what it speaks of counts in the suggestions."}), status_code=303)
+
+
+@router.post("/journal/read")
+def journal_read(db: Session = Depends(get_db)):
+    """Read the news feeds now (at most every six hours otherwise)."""
+    from urllib.parse import urlencode
+
+    from app.services import journal
+
+    outcome = journal.read_all(db)
+    if outcome["failed"] == outcome["feeds"]:
+        return RedirectResponse("/journal?" + urlencode({"error": "No news feed could be reached: is this computer on the internet?"}), status_code=303)
+    return RedirectResponse("/journal?" + urlencode({"notice": f"{outcome['new']} new article(s) read."}), status_code=303)
 
 
 @router.get("/guide")
@@ -212,6 +253,8 @@ def payments_page(request: Request, db: Session = Depends(get_db)):
             "proofs": __import__("app.services.payment_proofs", fromlist=["waiting"]).waiting(db),
             "proofs_done": __import__("app.services.payment_proofs", fromlist=["recent"]).recent(db, limit=6),
             "centre_ribs_set": bool(__import__("app.services.payment_proofs", fromlist=["centre_ribs"]).centre_ribs(db)),
+            "centre_names_set": bool(__import__("app.services.payment_proofs", fromlist=["centre_names"]).centre_names(db)),
+            "who_paid": __import__("app.services.payment_proofs", fromlist=["who_may_have_paid"]).who_may_have_paid(db),
             "notice": request.query_params.get("notice"), "error": request.query_params.get("error"),
         },
     )

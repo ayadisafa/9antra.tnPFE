@@ -106,6 +106,49 @@ def proof_reread(proof_id: str, back: str = Form("/payments"), db: Session = Dep
     return _back(back, notice="Read again.")
 
 
+@router.post("/payments/proofs/upload")
+async def proofs_upload(files: list[UploadFile] = File(default=[]), candidate_id: str = Form(""), db: Session = Depends(get_db)):
+    """Photos or PDFs of cheques, transfers or receipts dropped on the Payments page: each one is read and checked. The
+    candidate is the one chosen, else the one whose name is written on it."""
+    candidate = db.get(Candidate, candidate_id) if candidate_id else None
+    read, refused = [], []
+    for upload in files:
+        if not upload.filename:
+            continue
+        data = await upload.read()
+        content_type = (upload.content_type or "").split(";")[0].strip().lower()
+        if not data or not payment_proofs.is_proof_file(content_type):
+            refused.append(upload.filename)
+            continue
+        kept = email_files.store_inbound(db, [(upload.filename or "preuve", content_type, data)])
+        if not kept:
+            refused.append(upload.filename)
+            continue
+        proof = payment_proofs.create(db, file=kept[0], candidate=candidate, source="upload")
+        payment_proofs.read_now(db, proof)
+        read.append(proof)
+    db.commit()
+    if not read:
+        return _back("/payments#proofs", error="Add a photo (JPG, PNG) or a PDF of the cheque or the receipt.")
+    notice = payment_proofs.summary(read[0]) if len(read) == 1 else f"{len(read)} proofs read: each one is below with what it says."
+    if refused:
+        notice += " Not read (not a photo or a PDF, or too big): " + ", ".join(refused[:3]) + "."
+    return _back("/payments#proofs", notice=notice, proof=read[0].id if len(read) == 1 else None)
+
+
+@router.post("/payments/proofs/{proof_id}/candidate")
+def proof_candidate(proof_id: str, candidate_id: str = Form(""), back: str = Form("/payments"), db: Session = Depends(get_db)):
+    """Who paid, when it could not be found on the proof: then it is matched with what they owe and checked again."""
+    proof = _proof(db, proof_id)
+    candidate = db.get(Candidate, candidate_id) if candidate_id else None
+    if candidate is None:
+        return _back(back, error="Choose who paid.")
+    proof.candidate_id, proof.registration_id = candidate.id, None
+    payment_proofs.read_now(db, proof)
+    db.commit()
+    return _back(back, notice=f"Linked to {candidate.full_name or candidate.email}. " + payment_proofs.summary(proof), proof=proof.id)
+
+
 @router.post("/candidate/{candidate_id}/proof")
 async def proof_upload(candidate_id: str, file: UploadFile = File(...), db: Session = Depends(get_db)):
     """The admin adds a proof a candidate gave another way (a photo on a phone, a paper scanned)."""

@@ -56,8 +56,12 @@ def of_entry(db: Session, entry) -> dict:
         return link(f"9antra.tn: {item.title if item else (entry.title or '').split(' — ')[0]}", (item.url if item and item.url else website_sync.SITE))
     if key.startswith("program:"):
         return link(f"The program in the application: {(entry.title or '').split(' — ')[0]}", f"/programs/{key.split(':')[1]}")
+    if key.startswith("fact:"):
+        return link(f"What you told the assistants: “{(entry.title or '')[:70]}”", "/inbox/knowledge#facts")
+    if key.startswith("program-file:"):
+        return link(f"A file of the program: {(entry.title or '')[:70]}", "/programs/expertise")
     if key == "system:about":
-        return link("About 9antra (Settings and the welcome message)", "/settings#whatsapp")
+        return link("About 9antra (Settings and the welcome message)", "/settings#centre")
     return link(f"The application: {(entry.title or '')[:70]}", "/guide")
 
 
@@ -185,6 +189,26 @@ def about_text(db: Session) -> str:
         lines.append("Contact : " + " · ".join(part for part in (
             f"téléphone {settings.centre_phone}" if settings.centre_phone else "",
             f"WhatsApp {settings.centre_whatsapp}" if settings.centre_whatsapp else "") if part))
+    # Who the centre is on payments (Settings › Your centre): what a cheque is made out to, where a transfer goes.
+    legal = (getattr(settings, "centre_legal_name", None) or "").strip()
+    if legal:
+        lines.append(f"Nom officiel : {legal}" + (f" · matricule fiscal {settings.centre_tax_id}" if getattr(settings, "centre_tax_id", None) else ""))
+    names = [line.strip() for line in (getattr(settings, "centre_beneficiaries", None) or "").splitlines() if line.strip()]
+    if names or legal:
+        lines.append("Chèque ou virement à l'ordre de : " + " ou ".join(dict.fromkeys(names + ([legal] if legal else []))))
+    ribs = [line.strip() for line in (getattr(settings, "centre_ribs", None) or "").splitlines() if line.strip()]
+    if ribs:
+        from app.services import tunisian_banks
+
+        shown = []
+        for rib in ribs:
+            bank = tunisian_banks.bank_of_rib(rib)
+            shown.append(f"{rib} ({bank['name']})" if bank else rib)
+        lines.append("RIB pour payer par virement : " + " ; ".join(shown))
+    for label, value in (("Email", getattr(settings, "centre_email", None)), ("Site", getattr(settings, "centre_website", None)),
+                         ("Adresse", getattr(settings, "centre_address", None))):
+        if value:
+            lines.append(f"{label} : {value}")
     from app.services import registration_form
 
     lines.append(f"Inscription : le formulaire d'inscription {registration_form.url(db)}")
@@ -205,7 +229,7 @@ def about(db: Session, text: str, fr: bool) -> dict | None:
     from app.services import website_sync
 
     return {"reply": about_text(db), "links": [{"label": "9antra.tn", "url": website_sync.SITE}], "source": "system",
-            "sources": [link("Settings: the centre's numbers", "/settings#whatsapp"),
+            "sources": [link("Settings: your centre", "/settings#centre"),
                         link("The welcome message (its words)", "/inbox/templates?key=welcome"),
                         link("9antra.tn", website_sync.SITE), link("The programs", "/programs/all")]}
 

@@ -12,8 +12,9 @@ from app.database import get_db
 from app.models import ClassGroup, ClassStatus
 from app.models.course_material import ClassMaterial, ClassWeek, WeekQuestion
 from app.services import (
-    answer_sync, course_materials, email_assistant, email_threads, program_icons, week_insights, weekly_questions,
+    answer_sync, auth, course_materials, email_assistant, email_threads, program_icons, week_insights, weekly_questions,
 )
+from app.services.ui_words import t as _t
 from app.services.class_views import class_summary
 from app.services.schedule_utils import local_now, utc_to_local
 from app.services.settings_service import public_base_url
@@ -144,7 +145,8 @@ def course_page(class_id: str, request: Request, db: Session = Depends(get_db)):
             "materials": [
                 {"file": item, "learned": course_materials.learned_label(item), "url": course_materials.url_of(item),
                  "icon": course_materials.KIND_ICONS.get(item.kind, "bi-file-earmark"),
-                 "size": course_materials.human_size(item.size)}
+                 "size": course_materials.human_size(item.size),
+                 "review": course_materials.review_view(db, item, class_group.program)}
                 for item in materials
             ],
             "can_learn": sum(len(source["text"]) for source in course_materials.sources(db, class_group.id, selected)) >= weekly_questions.MIN_TO_LEARN,
@@ -186,18 +188,12 @@ def save_course_settings(
     db: Session = Depends(get_db),
 ):
     class_group = _get_class(db, class_id)
-    if weekly_questions_mode not in ("manual", "auto"):
-        return _back(class_id, week, error="Choose how the questions are sent.")
     if not 1 <= weekly_questions_count <= 20:
         return _back(class_id, week, error="Each candidate gets between 1 and 20 questions.")
-    class_group.weekly_questions_mode = weekly_questions_mode
+    class_group.weekly_questions_mode = "auto"            # always on: every week, after its session
     class_group.weekly_questions_count = weekly_questions_count
     db.commit()
-    how = (
-        "sent by the system once each week's session is over" if weekly_questions_mode == "auto"
-        else "sent when you press Send"
-    )
-    return _back(class_id, week, notice=f"Saved: {weekly_questions_count} questions per candidate, {how}.")
+    return _back(class_id, week, notice=f"Saved: {weekly_questions_count} questions per candidate, sent every week after its session.")
 
 
 # ------------------------------------------------------------------
@@ -220,7 +216,8 @@ def add_course_files(
         if not upload.filename:
             continue
         try:
-            added.append(course_materials.save_upload(db, class_group, week, upload, note))
+            user = auth.current(request)
+            added.append(course_materials.save_upload(db, class_group, week, upload, note, by=user.name if user else None))
         except course_materials.UploadRefused as exc:
             db.rollback()
             refused.append(str(exc))
@@ -229,8 +226,18 @@ def add_course_files(
 
     notice = None
     if added:
-        learned = [item for item in added if item.learned_status == "read" or item.note]
+        learned = [item for item in added if (item.learned_status == "read" or item.note) and item.review_status != "waiting"]
         notice = f"{len(added)} file{'s' if len(added) != 1 else ''} added to week {week}."
+        held = [item for item in added if item.review_status == "waiting"]
+        if held:
+            viewer = auth.current(request)
+            notice += " " + _t("“{0}” waits for the admin's approval: it does not look like part of this program.", held[0].filename)
+            if viewer is None or not viewer.is_admin:
+                _tell_admin_file(db, class_group, held[0])
+        from app.services import course_requests
+        from app.services.background import run_in_background
+
+        run_in_background(course_requests.deliver_waiting_task, class_group.id, week)   # those who asked for this week's course
         if learned:
             weekly_questions.queue(db, class_group, week)
             notice += " The system is writing questions from what it read; they appear here in a few minutes."
@@ -242,6 +249,80 @@ def add_course_files(
         return {"ok": bool(added), "notice": notice, "error": error,
                 "url": f"/classes/{class_id}/course?" + urlencode({k: v for k, v in (("week", week), ("notice", notice), ("error", error)) if v})}
     return _back(class_id, week, notice=notice, error=error)
+
+
+def _tell_admin_file(db: Session, class_group: ClassGroup, material: ClassMaterial) -> None:
+    from app.models import Program
+    from app.services.notification_service import create_notification
+
+    own = class_group.program.name if class_group.program else class_group.name
+    other = db.get(Program, material.fit_program_id) if material.fit_program_id and material.fit_program_id != class_group.program_id else None
+    message = (f"A file added to week {material.week_number} of {class_group.name} looks like part of {other.name}, not {own}."
+               if other is not None else f"A file added to week {material.week_number} of {class_group.name} does not look like part of {own}.")
+    create_notification(db, title=f"A course file waits for you: {material.filename}", message=message, category="COURSE_FILE",
+                        action_url=f"/classes/{class_group.id}/course?week={material.week_number}&file={material.id}#course-files")
+
+
+def _admin_only(request: Request) -> str | None:
+    user = auth.current(request)
+    return user.name if user is not None and user.is_admin else None
+
+
+@router.post("/classes/{class_id}/course/files/{material_id}/accept")
+def accept_course_file(class_id: str, material_id: str, request: Request, db: Session = Depends(get_db)):
+    """The admin keeps a file that did not look like part of the program: it is used from now on."""
+    class_group = _get_class(db, class_id)
+    material = db.get(ClassMaterial, material_id)
+    if material is None or material.class_group_id != class_id:
+        raise HTTPException(status_code=404, detail="File not found")
+    who = _admin_only(request)
+    if who is None:
+        return _back(class_id, material.week_number, error="Only the admin decides whether this file is part of the course.")
+    course_materials.accept(db, material, who)
+    if material.learned_status == "read" or material.note:
+        weekly_questions.queue(db, class_group, material.week_number)
+    from app.services import course_requests
+    from app.services.background import run_in_background
+
+    run_in_background(course_requests.deliver_waiting_task, class_group.id, material.week_number)
+    return _back(class_id, material.week_number, notice=_t("“{0}” is part of week {1} now: the system learns from it.", material.filename, material.week_number))
+
+
+@router.post("/classes/{class_id}/course/files/{material_id}/move")
+def move_course_file(class_id: str, material_id: str, request: Request, target: str = Form(""), db: Session = Depends(get_db)):
+    """The admin puts a file where it belongs: a class of the program it is part of, or that program's own files."""
+    from app.models import Program
+    from app.services import program_files
+
+    _get_class(db, class_id)
+    material = db.get(ClassMaterial, material_id)
+    if material is None or material.class_group_id != class_id:
+        raise HTTPException(status_code=404, detail="File not found")
+    who = _admin_only(request)
+    if who is None:
+        return _back(class_id, material.week_number, error="Only the admin decides whether this file is part of the course.")
+    kind, _, rest = target.partition(":")
+    if kind == "program":
+        program = db.get(Program, rest)
+        if program is None:
+            return _back(class_id, material.week_number, error="Choose where the file goes.")
+        name = material.filename
+        program_files.from_material(db, material, program, who)
+        return RedirectResponse(f"/programs/expertise?{urlencode({'notice': _t('“{0}” is a file of {1} now.', name, program.name)})}#ex-{program.id}",
+                                status_code=303)
+    target_id, _, week_text = rest.partition(":")
+    group = db.get(ClassGroup, target_id) if kind == "class" else None
+    if group is None:
+        return _back(class_id, material.week_number, error="Choose where the file goes.")
+    try:
+        week = int(week_text or 1)
+        course_materials.move(db, material, group, week, who)
+    except (ValueError, course_materials.UploadRefused) as exc:
+        db.rollback()
+        return _back(class_id, material.week_number, error=str(exc) or "Choose where the file goes.")
+    if material.learned_status == "read" or material.note:
+        weekly_questions.queue(db, group, week)
+    return _back(group.id, week, notice=_t("“{0}” is in {1}, week {2} now.", material.filename, group.name, week))
 
 
 @router.get("/classes/files/{material_id}")
@@ -407,9 +488,10 @@ def send_week_questions(class_id: str, week: int, request: Request, remind: bool
             "press Send again once email works."
         )
     if weekly_questions.is_local_address(base_url) and outcome["sent"]:
-        error = ((error + " ") if error else "") + (
-            f"The link in these emails starts with {base_url}, which only opens on this computer. "
-            "Set the address candidates can reach in Settings."
+        from app.services.ui_words import t as _t
+
+        notice = ((notice + " ") if notice else "") + _t(
+            "This computer cannot be reached from outside: the questions are written in the emails, and candidates answer by replying."
         )
     return _back(class_id, week, notice=notice, error=error, anchor="#send")
 

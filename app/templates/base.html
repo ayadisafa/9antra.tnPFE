@@ -636,7 +636,9 @@
                     </ul>
                 </div>
                 {% endif %}
-                {% if page_guide %}
+                {% if page_tour %}
+                <button type="button" class="topbar-help" data-tour-show title="What you can do on this page" aria-label="What you can do on this page"><i class="bi bi-question-lg"></i></button>
+                {% elif page_guide %}
                 <button type="button" class="topbar-help" data-guide-show title="How this page works" aria-label="How this page works"><i class="bi bi-question-lg"></i></button>
                 {% endif %}
                 {# The language of the pages, for whoever is signed in; remembered on this browser. #}
@@ -719,7 +721,7 @@
                         <div id="notif-dropdown-list" class="list-group list-group-flush notif-scroll-container">
                             {% if notifications %}
                                 {% for notif in notifications %}
-                                <a href="{{ notif.action_url or ('/candidate/' ~ notif.candidate_id if notif.candidate_id else '#') }}"
+                                <a href="{{ notif.target or notif.action_url or '/' }}"
                                    data-spot="{{ notif.category }}"
                                    onclick="markNotificationReadFromBell('{{ notif.id }}', event)"
                                    class="list-group-item list-group-item-action border-0 p-3 notif-item {% if not notif.is_read %}bg-light-subtle fw-semibold unread-item{% endif %}"
@@ -751,7 +753,7 @@
 
                                         <div class="flex-grow-1">
                                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                                <span class="small text-dark fw-bold">{{ notif.title or 'New Activity' }}</span>
+                                                <span class="small text-dark fw-bold" data-no-i18n>{{ notif.title_shown or notif.title or 'New Activity' }}</span>
                                                 
                                                 <!-- Match Score Badge -->
                                                 {% if notif.payload and notif.payload.get('similarity_score') %}
@@ -760,7 +762,7 @@
                                                 {% endif %}
                                             </div>
 
-                                            <div class="small text-muted mb-1">{{ notif.message or notif.details or notif.category }}</div>
+                                            <div class="small text-muted mb-1" data-no-i18n>{{ notif.message_shown or notif.message or notif.details or notif.category }}</div>
                                             
                                             <small class="text-muted fs-7 d-block">
                                                 {{ notif.created_at.strftime('%m-%d %H:%M') if notif.created_at else 'Just now' }}
@@ -916,6 +918,9 @@
       PROGRAM_PROPOSAL: ["#reviewModal.show .modal-content", "#live-program-grid"],
       WEEK_QUESTIONS: ["#questions"], WEBSITE: ["#formation"], FEEDBACK: ["#feedback"],
       LEVEL: [".lv-row.is-focus", "#live-levels"],
+      PAYMENT_PROOF: ["#proofs .pf", "#proofs"], PROGRAM_APPROVAL: ["#live-program-grid"],
+      COURSE_FILE: [".cf-wait", "#course-files"], PROGRAM_FILE: [".pg-file.is-wait", "#program-files"],
+      TEAM_MESSAGE: ["last:.tm-msg", "#team-chat"], RESEND: ["last:.ix-msg.out .ix-bubble"],
     };
     const SAYS = {
       PAYMENT: "The payment is here", NEW_REGISTRATION: "The new registration", REGISTRATION: "This registration", PROGRAM_MATCH: "The program to confirm",
@@ -924,8 +929,16 @@
       CLASS: "This class", REMINDER: "This class was reminded", ASSIGNMENT: "The candidate placed here", PROGRAM_PROPOSAL: "Read and confirm",
       WEEK_QUESTIONS: "The questions of the week", WEBSITE: "What changed on the website", FEEDBACK: "The new feedback",
       LEVEL: "Where they start from",
+      PAYMENT_PROOF: "The proof to check", PROGRAM_APPROVAL: "The program to approve", COURSE_FILE: "The file waiting for you",
+      PROGRAM_FILE: "The file waiting for you", TEAM_MESSAGE: "The message", RESEND: "What was sent again",
     };
     const find = () => {
+      // A precise item named in the link: the very proof, the very file.
+      for (const [param, prefix] of [["proof", "proof-"], ["file", "file-"]]) {
+        const wanted = params.get(param);
+        const element = wanted && document.getElementById(prefix + wanted);
+        if (element) return element;
+      }
       for (const rule of WHERE[spot] || []) {
         const last = rule.startsWith("last:");
         const found = document.querySelectorAll(last ? rule.slice(5) : rule);
@@ -937,6 +950,9 @@
     const show = () => {
       const element = find();
       if (!element) return;
+      // Inside a fold that is closed (the settings, a program): open it first.
+      if (element.tagName === "DETAILS") element.open = true;
+      for (let fold = element.closest("details:not([open])"); fold; fold = fold.closest("details:not([open])")) fold.open = true;
       // Inside a tab that is not open: open it first.
       const pane = element.closest(".tab-pane");
       if (pane && !pane.classList.contains("active") && window.bootstrap) {
@@ -1136,7 +1152,21 @@ function escapeNotifText(value) {
 function notificationHref(data) {
     // "spot" tells the page which block this news is about, so it can be shown at once.
     if (data.action_url && data.action_url.startsWith('/')) return withSpot(data.action_url, data.category);
-    return data.candidate_id ? withSpot(`/candidate/${data.candidate_id}`, data.category) : "#";
+    return data.candidate_id ? withSpot(`/candidate/${data.candidate_id}`, data.category) : "/";
+}
+
+// A notification that just arrived, as the bell shows the others: in the page's language, with where it leads.
+async function localizedNotif(data) {
+    if (!data || !data.id) return data;
+    try {
+        const response = await fetch(`/admin/api/notifications/${data.id}/fix`);
+        if (!response.ok) return data;
+        const shown = await response.json();
+        return Object.assign({}, data, { title: shown.title || data.title, message: shown.message || data.message,
+                                         action_url: shown.href || data.action_url, fix: shown.fix });
+    } catch (error) {
+        return data;
+    }
 }
 
 // What a notification lets the admin do at once: one button under it (see notification_fixes).
@@ -1333,36 +1363,26 @@ async function markAllNotificationsRead() {
         console.error("Error marking notifications as read:", err);
     }
 
-    async function markNotificationReadFromBell(notificationId, event) {
-        event.preventDefault();
-        const item = document.getElementById(`dropdown-notif-${notificationId}`);
-        try {
-            const response = await fetch(`/admin/api/notifications/${notificationId}/read`, { method: "POST" });
-            if (response.ok) {
-                if (item) item.remove();
-                updateBadgeCount(-1);
-                const href = event.currentTarget.getAttribute("href");
-                if (href && href !== "#") window.location.href = href;
-            }
-        } catch (error) {
-            console.error("Error marking notification as read:", error);
-        }
-    }
 }
 
-async function markNotificationReadFromBell(notificationId, event) {
-    event.preventDefault();
+function markNotificationReadFromBell(notificationId, event) {
+    // Where it leads is read at once: after a wait the browser forgets which link was clicked, and nothing opened.
+    // The page opens without waiting for "read" to be saved, so a slow or refused call never keeps the admin here.
+    const link = event.currentTarget;
+    const href = link && link.getAttribute("href");
     const item = document.getElementById(`dropdown-notif-${notificationId}`);
     try {
-        const response = await fetch(`/admin/api/notifications/${notificationId}/read`, { method: "POST" });
-        if (!response.ok) return;
+        if (navigator.sendBeacon) navigator.sendBeacon(`/admin/api/notifications/${notificationId}/read`);
+        else fetch(`/admin/api/notifications/${notificationId}/read`, { method: "POST", keepalive: true });
+    } catch (error) {}
+    if (item && item.classList.contains("unread-item")) updateBadgeCount(-1);
+    if (event.ctrlKey || event.metaKey || event.shiftKey || event.button === 1) {     // opened in another tab
         if (item) item.remove();
-        updateBadgeCount(-1);
-        const href = event.currentTarget.getAttribute("href");
-        if (href && href !== "#") window.location.href = href;
-    } catch (error) {
-        console.error("Error marking notification as read:", error);
+        return;
     }
+    event.preventDefault();
+    if (item) item.remove();
+    window.location.href = href && href !== "#" ? href : "/";
 }
 
 {% endif %}
@@ -1447,9 +1467,11 @@ document.addEventListener("submit", event => {
     document.addEventListener("focusout", () => { if (refreshQueued) scheduleRefresh(); });
     document.addEventListener("hidden.bs.modal", () => { if (refreshQueued) scheduleRefresh(); });
 
-    function onNotification(event) {
+    async function onNotification(event) {
         if (typeof prependNotificationToList !== "function") return;     // the bell is the admin's
-        const data = JSON.parse(event.data);
+        let data = JSON.parse(event.data);
+        if (document.getElementById(`dropdown-notif-${data.id}`)) return;
+        if (typeof localizedNotif === "function") data = await localizedNotif(data);
         if (document.getElementById(`dropdown-notif-${data.id}`)) return;
         prependNotificationToList(data);
         updateBadgeCount(1);
@@ -1741,7 +1763,8 @@ document.addEventListener("submit", event => {
 })();
 </script>
 {% block extra_scripts %}{% endblock %}
-{% if current_user and current_user.id %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
+{% if current_user and current_user.id %}{% include "_page_tour.html" %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
+{% include "_motion.html" %}
 
 {% if ui_lang != 'en' %}
 <script>

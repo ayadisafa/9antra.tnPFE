@@ -365,6 +365,42 @@ def programs_without_class(db: Session) -> dict:
     return {"reply": reply, "links": [_link("Classes", "/classes/"), _link("Programs", "/programs/all")], "source": "system"}
 
 
+OVERVIEW_WORDS = (r"everything about (9antra|the cent\w+|us|our cent\w+)|overview|where (do|does) (we|the cent\w+|9antra) stand|"
+                  r"state of the cent\w+|summary of (the cent\w+|9antra)|tout sur 9antra|resume (du centre|de 9antra)|etat du centre|"
+                  r"ou en est (le centre|9antra)|vue d ensemble|bilan (du centre|general|de 9antra)|koll chay|kol chay|kolchay")
+
+
+def overview(db: Session) -> dict:
+    """The whole centre in a few lines: people, money, classes, professors, programs, messages and learning."""
+    from app.models import Professor, Program
+    from app.services import overview as centre
+
+    now = datetime.utcnow()
+    figures = centre.figures(db, now)
+    board = centre.week_board(db, local_now())
+    professors = db.query(Professor).all()
+    available = [person for person in professors if person.is_available and not (person.name or "").startswith("À nommer")]
+    nobody = centre.programs_without_teacher(db)
+    lines = ["9antra at a glance:",
+             f"• Candidates: {figures['candidates']} ({figures['new_candidates']} new this week), {figures['registrations']} registrations, "
+             f"{figures['paid_registrations']} paid in full.",
+             f"• Money: {figures['collected']:.0f} DT received, {figures['due']:.0f} DT still due from {figures['owing_candidates']} candidate(s) "
+             f"({figures['collection_rate']}% received).",
+             f"• Classes: {figures['classes_running']} running, {figures['classes_upcoming']} about to start, {board['sessions']} session(s) a week.",
+             f"• Professors: {len(professors)} ({len(available)} available)."
+             + (f" Professors booked twice: {', '.join(item['professor'] for item in board['clashes'])}." if board["clashes"] else ""),
+             f"• Programs: {db.query(Program).count()}" + (f"; without a teacher: {', '.join(program.name for program in nobody)}." if nobody else "."),
+             f"• Emails waiting for your answer: {figures['emails_waiting']}."]
+    if figures["understanding"] is not None:
+        lines.append(f"• Weekly questions: {figures['understanding']:.0f}% understood over {figures['answers']} answer(s).")
+    for card in board["cards"][:6]:
+        lines.append(f"  – {card['name']}: {card['program']}, {card['professor'] or 'no professor'}, "
+                     f"{card['enrolled']}/{card['capacity']}" + (f", week {card['week']}/{card['weeks']}" if card["running"] else ""))
+    return {"reply": "\n".join(lines), "links": [_link("Dashboard", "/"), _link("Candidates", "/candidate/all"), _link("Payments", "/payments"),
+                                                 _link("Classes", "/classes/"), _link("What the assistant knows", "/programs/expertise")],
+            "source": "system"}
+
+
 def today(db: Session) -> dict:
     """What needs the admin today: the dashboard's first recommendations, today's sessions, the emails that wait."""
     from app.models.classsession import ClassSession

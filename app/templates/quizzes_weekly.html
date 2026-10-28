@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Weekly questions · 9antra{% endblock %}
+{% block page_title %}Weekly questions{% endblock %}
+{% block live_topics %}classes,candidates,inbox{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .qz-tabs { display:flex; gap:6px; padding:6px; background:#fff; border:1px solid var(--border-color); border-radius:18px; margin-bottom:16px; width:fit-content; max-width:100%; overflow-x:auto; }
+  .qz-tabs a { display:inline-flex; gap:8px; align-items:center; padding:9px 15px; border-radius:13px; font-weight:700; font-size:.86rem; color:#5b5670; text-decoration:none; white-space:nowrap; }
+  .qz-tabs a:hover { background:#f6f3fb; color:var(--ink-text); } .qz-tabs a.is-on { background:var(--ink-2); color:#fff; }
+  .wk-how { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:12px; margin-bottom:16px; }
+  .wk-box { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; }
+  .wk-box b { display:flex; gap:8px; align-items:center; font-size:.92rem; color:var(--ink-text); } .wk-box b i { color:var(--primary-berry); }
+  .wk-box p { font-size:.78rem; color:var(--muted); margin:4px 0 10px; }
+  .wk-choices { display:grid; gap:6px; }
+  .wk-choice { display:flex; gap:10px; align-items:flex-start; padding:9px 12px; border:1px solid var(--border-color); border-radius:14px; cursor:pointer; transition:border-color .15s ease, background-color .15s ease; }
+  .wk-choice:hover { border-color:#dccfe9; } .wk-choice:has(input:checked) { border-color:var(--primary-berry); background:var(--berry-subtle); }
+  .wk-choice input { accent-color:var(--primary-berry); margin-top:3px; }
+  .wk-choice span { font-size:.82rem; font-weight:700; color:var(--ink-text); } .wk-choice small { display:block; font-size:.72rem; font-weight:600; color:var(--muted); }
+  .wk-spread { flex:2 1 320px; background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:14px 16px; }
+  .wk-spread-head { display:flex; justify-content:space-between; font-size:.76rem; font-weight:800; color:#6b6480; margin-bottom:8px; }
+  .wk-track { display:flex; height:12px; border-radius:99px; overflow:hidden; background:#f1edf7; }
+  .wk-track span { display:block; } .wk-strong { background:#22c55e; } .wk-partial { background:#f59e0b; } .wk-weak { background:#e11d48; }
+  .wk-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:8px; font-size:.72rem; font-weight:700; color:#6b6480; }
+  .wk-legend i { display:inline-block; width:10px; height:10px; border-radius:3px; margin-inline-end:5px; vertical-align:-1px; }
+  .wk-list { display:grid; gap:12px; }
+  .wk-row { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; transition:box-shadow .18s ease, border-color .18s ease; }
+  .wk-row:hover { border-color:#dccfe9; box-shadow:var(--shadow-soft); }
+  .wk-top { display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; gap:14px; align-items:center; }
+  .wk-name { font-weight:800; font-size:.94rem; color:var(--ink-text); text-decoration:none; } .wk-name:hover { color:var(--primary-berry); }
+  .wk-meta { font-size:.76rem; color:var(--muted); }
+  .wk-ring { --pct:0; width:56px; height:56px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--c, #22c55e) calc(var(--pct) * 1%), #f1edf7 0); }
+  .wk-ring span { width:44px; height:44px; border-radius:50%; background:#fff; display:grid; place-items:center; font-weight:800; font-size:.82rem; color:var(--ink-text); }
+  .wk-answers { margin-top:12px; border-top:1px dashed #e4ddf0; padding-top:10px; }
+  .wk-answers > summary { cursor:pointer; list-style:none; font-size:.82rem; font-weight:800; color:var(--primary-berry); display:inline-flex; align-items:center; gap:7px; }
+  .wk-answers > summary::-webkit-details-marker { display:none; }
+  .wk-q { display:grid; grid-template-columns:30px minmax(0, 1fr); gap:10px; padding:10px 0; border-top:1px solid #f3eff8; }
+  .wk-q:first-of-type { border-top:0; }
+  .wk-q-num { width:28px; height:28px; border-radius:9px; display:grid; place-items:center; font-weight:800; font-size:.76rem; color:#fff; background:#c2bbd2; }
+  .wk-q.is-right .wk-q-num { background:#22c55e; } .wk-q.is-wrong .wk-q-num { background:#e11d48; } .wk-q.is-void .wk-q-num { background:#f59e0b; }
+  .wk-void { display:flex; gap:6px; align-items:center; font-size:.74rem; font-weight:700; color:#b45309; margin-top:5px; }
+  .wk-q b { font-size:.84rem; color:var(--ink-text); }
+  .wk-opts { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .wk-opt { font-size:.74rem; font-weight:700; border-radius:999px; padding:3px 10px; background:#f6f3fb; color:#5b5670; border:1px solid transparent; }
+  .wk-opt.is-given { border-color:#e11d48; background:#fff1f2; color:#9f1239; } .wk-opt.is-right { border-color:#22c55e; background:var(--mint-subtle); color:#166534; }
+  .wk-why { font-size:.74rem; color:#6b6480; margin-top:5px; }
+  @media (prefers-reduced-motion: no-preference) { .wk-row { animation:wkIn .4s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 40ms); } }
+  @keyframes wkIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @media (max-width: 860px) { .wk-how { grid-template-columns:1fr; } .wk-top { grid-template-columns:auto minmax(0, 1fr) auto; } .wk-top .wk-ring { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<nav class="qz-tabs" aria-label="Questions to candidates">
+  <a href="/quiz/all"><i class="bi bi-signpost-split"></i>Level checks</a>
+  <a href="/quiz/weekly" class="is-on"><i class="bi bi-patch-question"></i>Weekly questions</a>
+</nav>
+
+<div class="ui-head">
+  <div>
+    <h2>What candidates understood, week after week</h2>
+    <p>Their answers to the questions about what they studied, each one set against the right answer. Choose below how often they go and how candidates answer.</p>
+  </div>
+</div>
+
+<form method="post" action="/quiz/weekly/settings" class="wk-how" id="wk-how">
+  <div class="wk-box">
+    <b><i class="bi bi-calendar2-week"></i>How often</b>
+    <p>After the week's session. Every 2 or 4 weeks, the questions cover all the weeks since the last time.</p>
+    <div class="wk-choices">
+      {% for value, label, hint in [(1, 'Every week', 'The usual rhythm'), (2, 'Every 2 weeks', 'A review of two weeks'), (4, 'Every 4 weeks', 'A review of the month'), (0, 'Stopped', 'No questions are sent')] %}
+      <label class="wk-choice"><input type="radio" name="every" value="{{ value }}" {{ 'checked' if plan.every == value }}><span>{{ label }}<small>{{ hint }}</small></span></label>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="wk-box">
+    <b><i class="bi bi-chat-square-text"></i>How candidates answer</b>
+    <p>{% if public_url_local %}This computer cannot be reached from outside: a link would not open for candidates.{% else %}Candidates can open a link to this application.{% endif %}</p>
+    <div class="wk-choices">
+      {% for value, label, hint in [('auto', 'Automatic', 'A link when candidates can reach the application, else the questions in the email'), ('email', 'In the email', 'They answer by replying: “1-B, 2-A”'), ('link', 'A link to a page', 'Needs an address candidates can reach')] %}
+      <label class="wk-choice"><input type="radio" name="way" value="{{ value }}" {{ 'checked' if plan.way == value }}><span>{{ label }}<small>{{ hint }}</small></span></label>
+      {% endfor %}
+    </div>
+    <button class="ui-btn primary sm mt-3"><i class="bi bi-check2"></i>Save</button>
+  </div>
+</form>
+
+<div id="live-weekly-kpis" data-live-region>
+  <div class="ui-stats mb-3">
+    <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-send"></i></div><div><div class="ui-stat-num">{{ view.counts.sent }}</div><div class="ui-stat-label">Sent</div></div></div>
+    <div class="ui-stat t-mint"><div class="ui-stat-ico"><i class="bi bi-check2-circle"></i></div><div><div class="ui-stat-num">{{ view.counts.answered }}</div><div class="ui-stat-label">Answered</div></div></div>
+    <div class="ui-stat t-gold"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ view.counts.waiting + view.counts.partial }}</div><div class="ui-stat-label">Waiting for answers</div></div></div>
+    <div class="wk-spread">
+      <div class="wk-spread-head"><span>Levels of those who answered</span><span>{% if view.average is not none %}{{ view.average }}% <span>on average</span>{% endif %}</span></div>
+      <div class="wk-track">{% for key in ('strong', 'partial', 'weak') %}{% if view.levels[key] %}<span class="wk-{{ key }}" style="flex:{{ view.levels[key] }} 0 0;"></span>{% endif %}{% endfor %}</div>
+      <div class="wk-legend"><span><i class="wk-strong"></i>Understood · {{ view.levels.strong }}</span><span><i class="wk-partial"></i>Partly understood · {{ view.levels.partial }}</span><span><i class="wk-weak"></i>Needs support · {{ view.levels.weak }}</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="ui-toolbar mb-3" id="wk-filters">
+  <div class="ui-pills" role="group" aria-label="Show">
+    <button type="button" class="ui-pill active" data-wk-state="">All</button>
+    <button type="button" class="ui-pill" data-wk-state="answered">Answered</button>
+    <button type="button" class="ui-pill" data-wk-state="waiting">Waiting</button>
+  </div>
+  <select class="form-select form-select-sm" id="wk-class" style="width:auto; border-radius:10px;" aria-label="Class">
+    <option value="">All classes</option>
+    {% for group in view.classes %}<option value="{{ group.id }}">{{ group.name }}</option>{% endfor %}
+  </select>
+</div>
+
+<div class="wk-list" id="wk-list" data-live-region>
+  {% for row in view.rows %}
+  {% set quiz = row.quiz %}
+  <article class="wk-row" style="--i:{{ loop.index0 if loop.index0 < 20 else 20 }};" data-state="{{ 'answered' if row.state == 'answered' else 'waiting' }}" data-class="{{ quiz.class_group_id }}">
+    <div class="wk-top">
+      {{ ui.avatar(row.candidate.full_name if row.candidate else '?', 42) }}
+      <div style="min-width:0;">
+        {% if row.candidate %}<a class="wk-name" href="/candidate/{{ row.candidate.id }}#learning" data-no-i18n>{{ row.candidate.full_name or row.candidate.email }}</a>{% endif %}
+        <div class="wk-meta"><span data-no-i18n>{{ quiz.course_name }}</span>{% if row.class %} · <span data-no-i18n>{{ row.class.name }}</span>{% endif %} · <span>sent</span> {{ quiz.sent_at.strftime('%d %b') }}{% if row.via %} · {{ row.via }}{% endif %}</div>
+      </div>
+      {% if row.state == 'answered' %}<span class="ui-chip {{ row.level.tone }}">{{ row.level.label }}</span>
+      {% elif row.state == 'partial' %}<span class="ui-chip warn">{{ row.given }}/{{ row.result.total }} <span>answered so far</span></span>
+      {% else %}<span class="ui-chip muted">No answer yet</span>{% endif %}
+      {% if row.state == 'answered' %}<div class="wk-ring" style="--pct:{{ quiz.score | round | int }}; --c:{{ '#22c55e' if row.level.key == 'strong' else '#f59e0b' if row.level.key == 'partial' else '#e11d48' }};"><span>{{ quiz.score | round | int }}%</span></div>
+      {% else %}<form method="post" action="/quiz/weekly/{{ quiz.id }}/remind" class="m-0"><button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Send again</button></form>{% endif %}
+    </div>
+    <details class="wk-answers">
+      <summary>{{ 'Their answers' if row.given else 'The questions' }} ({{ row.result.total }})</summary>
+      {% for item in row.result.rows %}
+      {% set answered_this = item.given is not none %}
+      <div class="wk-q {{ 'is-void' if item.voided else ('is-right' if item.is_right else 'is-wrong') if answered_this else '' }}">
+        <span class="wk-q-num">{{ loop.index }}</span>
+        <div style="min-width:0;">
+          <b data-no-i18n>{{ item.question }}</b>
+          <div class="wk-opts" data-no-i18n>{% for option in item.options %}<span class="wk-opt {{ 'is-right' if loop.index0 == item.correct and not item.voided }} {{ 'is-given' if answered_this and loop.index0 == item.given and not item.is_right }}">{{ "ABCDEF"[loop.index0] }}) {{ option }}</span>{% endfor %}</div>
+          {% if item.voided %}<div class="wk-void"><i class="bi bi-exclamation-circle"></i><span>Badly written on our side: counted as right for everyone.</span></div>{% endif %}
+          {% if item.explanation and answered_this and not item.is_right %}<div class="wk-why" data-no-i18n>{{ item.explanation }}</div>{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </details>
+  </article>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-patch-question"></i><strong>No weekly questions sent yet</strong>They go by themselves after each week's session.</div>
+  {% endfor %}
+</div>
+
+<script>
+(() => {
+  let state = "";
+  const apply = () => {
+    const chosen = document.getElementById("wk-class").value;
+    document.querySelectorAll("#wk-list .wk-row").forEach(row => {
+      row.hidden = (state && row.dataset.state !== state) || (chosen && row.dataset.class !== chosen);
+    });
+  };
+  document.addEventListener("click", event => {
+    const pill = event.target.closest("[data-wk-state]");
+    if (!pill) return;
+    state = pill.dataset.wkState;
+    document.querySelectorAll("[data-wk-state]").forEach(item => item.classList.toggle("active", item === pill));
+    apply();
+  });
+  document.getElementById("wk-class").addEventListener("change", apply);
+  document.addEventListener("live:refreshed", apply);
+})();
+</script>
+{% endblock %}

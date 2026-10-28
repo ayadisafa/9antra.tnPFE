@@ -61,6 +61,15 @@ class ClassMaterial(Base):
     learned_status = Column(String, default="nothing", nullable=False)
 
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+    # Checked against the class's program (program_match): None or "ok" = used; "waiting" = the admin decides.
+    review_status = Column(String, nullable=True, index=True)
+    fit = Column(String, nullable=True)                 # fits | other | off | unknown
+    fit_program_id = Column(String, nullable=True)      # the program it looks like part of
+    fit_words = Column(Text, nullable=True)             # JSON list: the words that decided
+    uploaded_by = Column(String, nullable=True)
+    reviewed_by = Column(String, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
+
 
 
 class WeekQuestion(Base):
@@ -105,4 +114,30 @@ class AdviceSnooze(Base):
 
     key = Column(String, primary_key=True)
     until = Column(DateTime, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
+
+
+class ProgramFile(Base):
+    """A file of a program itself (its plan, a brochure, a course), read like a course file. The program's details can be
+    proposed from it, and the assistant learns from it once it is accepted (checked against the program like course files)."""
+
+    __tablename__ = "program_files"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    program_id = Column(String, ForeignKey("programs.id", ondelete="CASCADE"), nullable=False, index=True)
+    filename = Column(String, nullable=False)
+    stored_name = Column(String, nullable=False)
+    content_type = Column(String, nullable=False)
+    size = Column(Integer, default=0, nullable=False)
+    kind = Column(String, nullable=False)
+    note = Column(Text, nullable=True)
+    learned_text = Column(Text, nullable=True)
+    learned_status = Column(String, nullable=True)
+    review_status = Column(String, nullable=True, index=True)
+    fit = Column(String, nullable=True)
+    fit_program_id = Column(String, nullable=True)
+    fit_words = Column(Text, nullable=True)
+    uploaded_by = Column(String, nullable=True)
+    reviewed_by = Column(String, nullable=True)
+    reviewed_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)

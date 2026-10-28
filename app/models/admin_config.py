@@ -118,9 +118,17 @@ class SystemSettings(Base):
     # After each session, its questions go this many hours after it ends (services/session_check.py).
     session_check_on = Column(Boolean, nullable=True, default=True)
     session_check_hours = Column(Integer, nullable=True, default=24)
+    weekly_every = Column(Integer, nullable=True, default=1)            # weekly questions: every 1, 2 or 4 weeks; 0 = stopped
+    weekly_way = Column(String, nullable=True, default="auto")          # auto | email (answered by replying) | link
     session_check_since = Column(DateTime, nullable=True)       # sessions that ended before this are never asked about
     prospect_answers_on = Column(Boolean, nullable=True, default=True)   # people not registered yet get the programs' facts
     centre_address = Column(String, nullable=True)              # where the centre is, said to whoever asks
+    # Who the centre is on payments: a cheque is read against these names, the assistant gives them to whoever asks.
+    centre_legal_name = Column(String, nullable=True)
+    centre_beneficiaries = Column(Text, nullable=True)          # names a cheque may be made out to, one per line
+    centre_tax_id = Column(String, nullable=True)
+    centre_email = Column(String, nullable=True)
+    centre_website = Column(String, nullable=True)
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

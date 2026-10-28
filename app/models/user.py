@@ -24,6 +24,9 @@ class User(Base):
     # A team member's access: {part: none | view | edit} as JSON (see services/access.py).
     permissions = Column(Text, nullable=True)
     phone = Column(String, nullable=True)        # for WhatsApp and SMS from the team chat
+    # Forgot password: the fingerprint of the one-use link sent by email, and until when it works.
+    reset_hash = Column(String, nullable=True, index=True)
+    reset_until = Column(DateTime, nullable=True)
 
     professor = relationship("Professor")
 

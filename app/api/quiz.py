@@ -120,6 +120,47 @@ def level_checks_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/quiz/weekly", response_class=HTMLResponse)
+def weekly_answers_page(request: Request, db: Session = Depends(get_db)):
+    """The weekly questions, like the level checks: how often and how they go, and each candidate's answers."""
+    from app.services import weekly_questions
+
+    return templates.TemplateResponse(request=request, name="quizzes_weekly.html", context={
+        "active_page": "quizzes", "view": weekly_questions.answers_view(db), "plan": weekly_questions.settings_of(db),
+        "public_url_local": weekly_questions.is_local_address(public_base_url(db, request)),
+    })
+
+
+@router.post("/quiz/weekly/settings")
+def save_weekly_settings(every: int = Form(1), way: str = Form("auto"), db: Session = Depends(get_db)):
+    from app.services import weekly_questions
+
+    plan = weekly_questions.save_settings(db, every=every, way=way)
+    notice = {1: "Saved: the weekly questions go every week.", 2: "Saved: the weekly questions go every 2 weeks.",
+              4: "Saved: the weekly questions go every 4 weeks."}.get(plan["every"], "Saved: no weekly questions are sent.")
+    return RedirectResponse("/quiz/weekly?" + urlencode({"notice": notice}), status_code=303)
+
+
+@router.post("/quiz/weekly/{quiz_id}/remind")
+def remind_weekly(quiz_id: str, request: Request, db: Session = Depends(get_db)):
+    """Send one candidate their weekly questions again."""
+    from app.models.classgroup import ClassGroup
+    from app.services import course_materials, weekly_questions
+
+    quiz = db.get(Quiz, quiz_id)
+    registration = db.get(Registration, quiz.registration_id) if quiz is not None and quiz.registration_id else None
+    if quiz is None or registration is None or quiz.completed_at is not None:
+        return RedirectResponse("/quiz/weekly?" + urlencode({"error": "These questions are already answered, or no longer exist."}), status_code=303)
+    group = db.get(ClassGroup, quiz.class_group_id)
+    program = group.program.name if group is not None and group.program else (group.name if group else "")
+    topic = course_materials.week_topic(db, quiz.class_group_id, quiz.week_number) if group is not None else ""
+    delivered = weekly_questions._email_questions(db, registration, quiz, base_url=public_base_url(db, request), topic=topic or program,
+                                                  program=program, manual=True)
+    db.commit()
+    message = {"notice": "Sent again."} if delivered else {"error": "It could not be sent: see the inbox for why."}
+    return RedirectResponse("/quiz/weekly?" + urlencode(message), status_code=303)
+
+
 @router.get("/quiz/center")
 @router.get("/quiz/quizzes")
 def old_addresses():

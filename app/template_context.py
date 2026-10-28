@@ -17,6 +17,15 @@ SIDEBAR_PROGRAMS = 6
 _NO_ONE = auth.CurrentUser(id="", name="Admin", email="", role=auth.ADMIN)
 
 
+def _tour_of(db, request: Request):
+    """What this page lets you do, part by part, in the page's language (the “?” at the top)."""
+    from app.services import page_tours
+
+    lang = translations.clean_language(request.cookies.get("lang"))
+    words = page_tours.words_for(db, lang, translations.version(db, lang) if lang != "en" else "")
+    return page_tours.translated(page_tours.for_path(request.url.path), lang, words)
+
+
 def notification_context(request: Request) -> dict:
     """What every page shows around its content: who is signed in, the colour
     of the design and, for the admin, the bell, the inbox count and the most
@@ -25,7 +34,11 @@ def notification_context(request: Request) -> dict:
     db = SessionLocal()
     try:
         settings = get_settings(db)
+        from app.services import dynamic_words
+
         context = {
+            # Whole sentences built with names and figures (a notice, a check), in the page's language.
+            "shown": dynamic_words.shower(db, translations.clean_language(request.cookies.get("lang"))),
             "current_user": user,
             "is_admin": user.is_admin,
             "theme_css": theme.css(settings.ui_color),
@@ -39,6 +52,7 @@ def notification_context(request: Request) -> dict:
             "ui_background": "plain" if getattr(settings, "ui_background", None) == "plain" else "animated",
             "app_brand": brand.view(settings),
             "page_guide": guides.for_path(request.url.path),
+            "page_tour": _tour_of(db, request),
             "page_pdf": page_pdf_links.link_for(request.url.path, user),
             "page_pdf_more": page_pdf_links.more_for(request.url.path, user),
             "notifications": [],
@@ -71,6 +85,10 @@ def notification_context(request: Request) -> dict:
         )
         for item in context["notifications"]:      # what each one lets the admin do at once
             item.fix = notification_fixes.fix_for(db, item)
+        from app.services import dynamic_words
+
+        # In the page's language, and where each one leads.
+        dynamic_words.localize(db, context["notifications"], translations.clean_language(request.cookies.get("lang")))
         context["inbox_pending"] = db.query(EmailThread).filter(EmailThread.needs_admin.is_(True)).count()
         from app.services import team_messages
 

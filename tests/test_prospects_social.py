@@ -206,26 +206,41 @@ def lina_asks(body, key):
 
 question = "Bonjour, est-ce que vous acceptez les paiements par chèque bancaire ?"
 first = lina_asks(question, "1")
-check("self-learning: a new question goes to the admin", first.status != "replied", first.status)
+check("learning: a new question goes to the admin", first.status != "replied", first.status)
 ea.admin_reply(db, db.get(EmailThread, first.thread_id), "Oui, nous acceptons les chèques au centre, à l'ordre de 9antra.")
 db.commit()
-entry = db.query(KnowledgeEntry).filter(KnowledgeEntry.origin == "auto").first()
-check("self-learning: the admin's own answer is kept as learnt by itself", entry is not None and "chèque" in entry.title and "à l'ordre de 9antra" in entry.content,
-      entry.title if entry else None)
+entry = (db.query(KnowledgeEntry).filter(KnowledgeEntry.origin == "learned", KnowledgeEntry.title.like("%chèque%")).first())
+check("learning: the admin's own answer is learnt at once", entry is not None and "à l'ordre de 9antra" in entry.content, entry.title if entry else None)
 second = lina_asks(question, "2")
-check("self-learning: next time it is a draft, never sent alone", second.status != "replied" and "chèques au centre" in (second.suggested_reply or ""),
-      (second.status, (second.suggested_reply or "")[:120]))
-ea.admin_reply(db, db.get(EmailThread, second.thread_id), second.suggested_reply)
+db.expire_all()
+answer = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == second.thread_id, CandidateEmail.direction == "outbound")
+          .order_by(CandidateEmail.received_at.desc()).first())
+check("learning: the same question is then answered alone, with the admin's words", second.status == "replied" and answer is not None
+      and "chèques au centre" in (answer.body or ""), (second.status, second.escalation_reason))
+# A draft the admin changes before sending: the changed answer is what is learnt.
+other = lina_asks("Bonjour, est-ce que je peux payer en plusieurs fois ?", "5")
+ea.admin_reply(db, db.get(EmailThread, other.thread_id), "Oui, en deux fois : la moitié à l'inscription, le reste à la troisième semaine.")
+db.commit()
+again = lina_asks("Bonjour, est-ce que je peux payer en plusieurs fois ?", "6")
+ea.admin_reply(db, db.get(EmailThread, again.thread_id), "Oui, en trois fois maximum : à l'inscription, à la 3e et à la 6e semaine.")
 db.commit()
 db.expire_all()
-check("self-learning: sent once by the admin, it is confirmed", db.get(KnowledgeEntry, entry.id).origin == "learned")
-third = lina_asks(question, "3")
-check("self-learning: then it answers alone", third.status == "replied", (third.status, third.escalation_reason))
+kept = db.query(KnowledgeEntry).filter(KnowledgeEntry.title.like("%plusieurs fois%"), KnowledgeEntry.origin != "system").all()
+check("learning: a later edit replaces the answer, not a second one", len(kept) == 1 and "trois fois" in kept[0].content and kept[0].origin == "learned",
+      [(item.origin, item.content[:40]) for item in kept])
 personal = lina_asks("Bonjour, quand commence ma classe ?", "4")
-before = db.query(KnowledgeEntry).filter(KnowledgeEntry.origin == "auto").count()
+before = db.query(KnowledgeEntry).filter(KnowledgeEntry.origin.in_(("auto", "learned"))).count()
 ea.admin_reply(db, db.get(EmailThread, personal.thread_id), "Votre classe commence samedi à 9h.")
 db.commit()
-check("self-learning: an answer about the candidate's own class is never kept", db.query(KnowledgeEntry).filter(KnowledgeEntry.origin == "auto").count() == before)
+check("learning: an answer about the candidate's own class is never kept",
+      db.query(KnowledgeEntry).filter(KnowledgeEntry.origin.in_(("auto", "learned"))).count() == before)
+from app.services import knowledge_service as _ks
+
+_ks.sync_knowledge(db)
+check("knowledge: the automatic messages, the professors and the settings are known",
+      db.query(KnowledgeEntry).filter(KnowledgeEntry.source_key.like("system:message:%")).count() >= 10
+      and db.query(KnowledgeEntry).filter(KnowledgeEntry.source_key == "system:professors").count() == 1
+      and db.query(KnowledgeEntry).filter(KnowledgeEntry.source_key == "system:settings").count() == 1)
 
 # ---- G. The admin's assistant in Tunisian, and the settings ----
 reply = chatbot.answer(db, "9adech soum el formation devops?", [], user=auth.CurrentUser(id="a", name="A", email="a", role="admin"))

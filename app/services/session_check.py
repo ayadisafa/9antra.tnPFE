@@ -184,6 +184,17 @@ def plan(db: Session, now: datetime) -> int:
     return added
 
 
+def questions_written(db: Session, quiz, base_url: str) -> dict | None:
+    """The questions written in the email itself, answered by replying (“1-B, 2-A”), when candidates cannot open the
+    page (the same choice as the weekly questions): the email then has no button, its questions are in it."""
+    from app.services import email_templates, weekly_questions
+
+    if not weekly_questions.in_the_email(db, quiz, base_url):
+        return None
+    template = email_templates.get(db, "session_check")
+    return {"body": f"{template.body}\n\n{weekly_questions.written_out(quiz)}", "cta_label": "", "cta_url": ""}
+
+
 def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
     """Send the questions of the sessions whose time has come. Returns how many candidates were sent theirs."""
     from app.models import ClassGroup, ClassStatus
@@ -245,7 +256,7 @@ def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
             message = email_templates.send(db, "session_check", registration=registration, candidate=candidate, manual=False, values={
                 "session_date": f"{session.session_date:%d/%m}", "session_topic": topic or program, "questions_count": str(len(chosen)),
                 "questions_link": weekly_questions.public_link(base_url, quiz), "program_name": program,
-            })
+            }, overrides=questions_written(db, quiz, base_url))
             if email_templates.delivered(message):
                 quiz.sent_at = datetime.utcnow()
                 sent += 1
@@ -318,7 +329,7 @@ def send_again(db: Session, group, base_url: str) -> str:
             "session_date": f"{session.session_date:%d/%m}" if session else "", "session_topic": (session.topic if session else "") or program,
             "questions_count": str(len(weekly_questions.questions_in(quiz))), "questions_link": weekly_questions.public_link(base_url, quiz),
             "program_name": program,
-        })
+        }, overrides=questions_written(db, quiz, base_url))
         if email_templates.delivered(message):
             quiz.sent_at = datetime.utcnow()
             again += 1

@@ -460,10 +460,12 @@ def _system_chunks(db: Session) -> list[dict]:
     chunks += website_sync.knowledge_chunks(db)
     # The course itself, as the professors gave it (files and notes of each week, read once added): the assistant
     # answers about what was taught, and the questions after each session come from it too.
-    from app.models.course_material import ClassMaterial
+    from app.models.course_material import ClassMaterial, ProgramFile
+    from app.services import course_materials as _course_materials
 
     seen_courses: set[tuple] = set()
-    for material in (db.query(ClassMaterial).filter(ClassMaterial.learned_text.isnot(None)).order_by(ClassMaterial.created_at.desc()).limit(200).all()):
+    for material in (db.query(ClassMaterial).filter(ClassMaterial.learned_text.isnot(None), _course_materials.in_use())
+                     .order_by(ClassMaterial.created_at.desc()).limit(200).all()):
         group = db.get(ClassGroup, material.class_group_id)
         text = " ".join((material.learned_text or "").split())
         if group is None or group.program is None or len(text) < 120 or (group.program_id, text[:200]) in seen_courses:
@@ -474,6 +476,60 @@ def _system_chunks(db: Session) -> list[dict]:
             "title": f"{group.program.name} — cours de la semaine {material.week_number} ({material.filename})",
             "content": f"Ce qui a été enseigné en semaine {material.week_number} de {group.program.name} : {text[:1500]}",
         })
+    # The files of each program itself (a syllabus, a brochure), once accepted: in parts, so each answer finds its passage.
+    for row in (db.query(ProgramFile).filter(ProgramFile.learned_text.isnot(None), ProgramFile.review_status != "waiting")
+                .order_by(ProgramFile.created_at.desc()).limit(60).all()):
+        program = db.get(Program, row.program_id)
+        text = " ".join((row.learned_text or "").split())
+        if program is None or len(text) < 120:
+            continue
+        for index, start in enumerate(range(0, min(len(text), 9000), 1500)):
+            chunks.append({
+                "source_key": f"program-file:{row.id}:{index}", "kind": "program_file", "program_id": program.id,
+                "title": f"{program.name} — {row.filename}" + (f" ({index + 1})" if index else ""),
+                "content": f"Ce que dit le document « {row.filename} » de la formation {program.name} : {text[start:start + 1500]}",
+            })
+    # The automatic messages as the admin wrote them: their words carry facts (places, payment, links, timing).
+    from app.services import email_templates
+
+    for key, spec in email_templates.AUTO_EMAILS.items():
+        try:
+            template = email_templates.get(db, key)
+        except Exception:
+            continue
+        words = re.sub(r"\{(\w+)\}", lambda found: f"[{found.group(1)}]", "\n".join(part for part in (template.subject, template.body, template.closing) if part))
+        chunks.append({"source_key": f"system:message:{key}", "kind": "message", "program_id": None,
+                       "title": f"Automatic message: {spec.name}", "content": f"{spec.when}\n{words}"})
+    # The professors, what they teach and their classes.
+    from app.models import Professor
+
+    lines = []
+    for person in db.query(Professor).order_by(Professor.name).all():
+        if (person.name or "").startswith("À nommer"):
+            continue
+        teaching = [group.name for group in open_classes if group.professor_id == person.id]
+        lines.append(f"- {person.name}: {person.specialties or 'no speciality written'}"
+                     + (f"; teaches {', '.join(teaching)}" if teaching else "; no class now") + ("" if person.is_available else "; unavailable"))
+    if lines:
+        chunks.append({"source_key": "system:professors", "kind": "team", "program_id": None,
+                       "title": "The professors and what they teach", "content": "Professors of 9antra:\n" + "\n".join(lines)})
+    # The settings in plain words: what the application does by itself with the admin's choices.
+    try:
+        from app.services import settings_guide
+
+        parts = settings_guide.plain_words(db, model_ready=False)
+        text = "\n".join(f"{part['title']}: " + " ".join(line["text"] for line in part["lines"]) for part in parts)
+        if text:
+            chunks.append({"source_key": "system:settings", "kind": "settings", "program_id": None,
+                           "title": "The settings, in plain words", "content": text})
+    except Exception:
+        logger.exception("The settings could not be put in the knowledge.")
+    # Every page of the application: what it is for, its parts, what can be done and changed there (page_tours).
+    from app.services import page_tours
+
+    for address, tour in page_tours.every():
+        chunks.append({"source_key": f"system:page:{tour['key']}", "kind": "page", "program_id": None,
+                       "title": f"Page: {tour['title']}", "content": page_tours.knowledge_line(address, tour)})
     return chunks
 
 
@@ -507,7 +563,7 @@ def sync_knowledge(db: Session) -> dict:
             changed.append(entry)
 
         for key, entry in existing.items():
-            if key not in wanted and not (key or "").startswith("import:"):       # what the admin gave (a page, a text) stays
+            if key not in wanted and not (key or "").startswith(("import:", "fact:")):     # what the admin gave (a page, a text, a fact) stays
                 db.delete(entry)
                 removed += 1
 
@@ -576,6 +632,61 @@ def save_entry(db: Session, *, title: str, content: str, entry_id: str | None = 
     return entry
 
 
+def save_fact(db: Session, *, text: str, program_id: str | None = None, entry_id: str | None = None) -> KnowledgeEntry:
+    """Something the admin tells the assistants, in any language (“Le centre est fermé le 15 novembre”, “the certificate
+    is sent a week after the last session”). Kept with the system's own knowledge, so it is found by its words and its
+    meaning like the rest, and used by every assistant. Raises ValueError with a message for the admin."""
+    import uuid
+
+    content = (text or "").strip()
+    if len(content) < 3:
+        raise ValueError("Write what the assistants should know.")
+    entry = db.get(KnowledgeEntry, entry_id) if entry_id else None
+    if entry is not None and entry.kind != "fact":
+        raise ValueError("This one cannot be changed here.")
+    if entry is None:
+        entry = KnowledgeEntry(origin="system", kind="fact", source_key=f"fact:{uuid.uuid4().hex}")
+        db.add(entry)
+    first = re.split(r"(?<=[.!?؟])\s+|\n", content, maxsplit=1)[0]
+    entry.title = (first[:117] + "…") if len(first) > 120 else first
+    entry.content = content[:4000]
+    entry.program_id = program_id or None
+    entry.content_hash = _hash(entry.title, entry.content)
+    entry.is_active = True
+    vectors = embed([_entry_embedding_text(entry)])
+    entry.embedding = json.dumps(vectors[0]) if vectors else None
+    db.flush()
+    return entry
+
+
+def facts(db: Session, program_id: str | None = None, *, everything: bool = False) -> list[KnowledgeEntry]:
+    """What the admin told the assistants: about one program, or about the centre (no program), or all of it."""
+    query = db.query(KnowledgeEntry).filter(KnowledgeEntry.kind == "fact", KnowledgeEntry.is_active.is_(True))
+    if not everything:
+        query = query.filter(KnowledgeEntry.program_id == program_id) if program_id else query.filter(KnowledgeEntry.program_id.is_(None))
+    return query.order_by(KnowledgeEntry.updated_at.desc()).all()
+
+
+def _meaning_scores(entries: list[KnowledgeEntry], queries: list[str]) -> dict[str, float]:
+    """How close in meaning, whatever the language, each fact is to the question (the multilingual model): {id: 0..1}."""
+    if not entries or not queries:
+        return {}
+    try:
+        from app.services import meaning
+
+        if not meaning.available():
+            return {}
+        asked = meaning.encode(queries[:2])
+        known = meaning.encode([f"{entry.title}. {entry.content}"[:600] for entry in entries])
+        if asked is None or known is None:
+            return {}
+        scores = known @ asked.T
+        return {entry.id: float(max(row)) for entry, row in zip(entries, scores)}
+    except Exception:
+        logger.exception("The meaning model could not compare the facts; their words still count.")
+        return {}
+
+
 def mark_used(db: Session, entry_ids: list[str]) -> None:
     if not entry_ids:
         return
@@ -604,7 +715,7 @@ def stats(db: Session) -> dict:
 
 def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
            program_ids: list[str] | None = None, limit: int = 5,
-           questions: list[str] | None = None) -> list[dict]:
+           questions: list[str] | None = None, skip_kinds: tuple = ()) -> list[dict]:
     """The knowledge most relevant to a question, best first.
 
     `questions` is the question itself, in one or several cuts (with or
@@ -622,7 +733,8 @@ def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
     suggest a draft.
     """
     queries = [text for text in [query, *(extra_queries or [])] if text and text.strip()]
-    entries = db.query(KnowledgeEntry).filter(KnowledgeEntry.is_active.is_(True)).all()
+    entries = [entry for entry in db.query(KnowledgeEntry).filter(KnowledgeEntry.is_active.is_(True)).all()
+               if entry.kind not in skip_kinds]
     if not queries or not entries:
         return []
 
@@ -645,6 +757,8 @@ def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
     query_tokens = [tokenize(text) for text in queries]
     vectors = embed(queries)
     program_ids = set(program_ids or [])
+    # What the admin told the assistants is also compared by its meaning, so it answers a question in another language.
+    in_meaning = _meaning_scores([entry for entry in entries if entry.kind == "fact"], queries)
 
     def overlap(tokens: set[str]) -> float:
         best = 0.0
@@ -663,6 +777,8 @@ def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
         if vector:
             best = max(_cosine(query_vector, vector) for query_vector in vectors)
             semantic = max(0.0, min(1.0, (best - 0.15) / 0.5))
+        if entry.id in in_meaning:
+            semantic = max(semantic or 0.0, max(0.0, min(1.0, (in_meaning[entry.id] - 0.25) / 0.45)))
 
         def blend(lexical_part: float) -> float:
             if semantic is None:

@@ -26,4 +26,8 @@ class AdminReminder(Base):
     failed_count = Column(Integer, nullable=False, default=0)
     created_by = Column(String, nullable=True)
     channel = Column(String, nullable=True, default="email")     # email | both | whatsapp
+    repeat = Column(String, nullable=True, default="once")       # once | weekly | monthly | absence (each time someone is marked absent)
+    until = Column(DateTime, nullable=True)                      # a repeated reminder stops after this day (UTC)
+    times = Column(Integer, nullable=False, default=0)           # how many times it went
+    done_keys = Column(Text, nullable=True)                      # absence: the presence marks already answered (JSON)
     created_at = Column(DateTime, default=datetime.utcnow)

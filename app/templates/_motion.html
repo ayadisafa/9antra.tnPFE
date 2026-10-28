@@ -1,0 +1,75 @@
+{# Motion that explains, on every page: a thin bar runs at the top while the next page or a save comes (so a click is
+   never left without an answer), buttons answer the press with a ripple, and every fold slides open and closed. All of
+   it stops for those who asked their computer for less motion. #}
+<div class="mo-bar" id="mo-bar" aria-hidden="true"><span></span></div>
+<style>
+  .mo-bar { position:fixed; inset:0 0 auto 0; height:3px; z-index:2000; pointer-events:none; opacity:0; transition:opacity .2s ease; }
+  .mo-bar span { display:block; height:100%; width:0; background:linear-gradient(90deg, var(--primary-berry), var(--accent-gold-dark, #d97706)); box-shadow:0 0 10px var(--primary-berry); border-radius:0 3px 3px 0; }
+  .mo-bar.is-on { opacity:1; } .mo-bar.is-on span { animation:moRun 8s cubic-bezier(.1,.7,.2,1) forwards; }
+  @keyframes moRun { 0% { width:0; } 10% { width:35%; } 40% { width:70%; } 100% { width:92%; } }
+  .ui-btn, .btn, .ui-pill, .st-mini, .tp-can-item { position:relative; overflow:hidden; }
+  .mo-ripple { position:absolute; border-radius:50%; transform:scale(0); background:currentColor; opacity:.22; pointer-events:none; animation:moRipple .55s ease-out forwards; }
+  @keyframes moRipple { to { transform:scale(1); opacity:0; } }
+  @media (prefers-reduced-motion: reduce) { .mo-bar span { animation:none !important; width:60%; } .mo-ripple { display:none; } }
+</style>
+<script>
+(() => {
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const bar = document.getElementById("mo-bar");
+  let ending = null;
+  const run = () => {
+    if (!bar) return;
+    bar.classList.remove("is-on"); void bar.offsetWidth; bar.classList.add("is-on");
+    window.clearTimeout(ending);
+    ending = window.setTimeout(() => bar.classList.remove("is-on"), 12000);      // a download: no page comes
+  };
+  const stop = () => { if (bar) bar.classList.remove("is-on"); };
+  // The bar: a link to another page of the application, or a form sent the ordinary way.
+  document.addEventListener("click", event => {
+    if (event.defaultPrevented || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const link = event.target.closest && event.target.closest("a[href]");
+    if (!link || link.target === "_blank" || link.hasAttribute("download")) return;
+    const href = link.getAttribute("href") || "";
+    if (!href.startsWith("/") || href.startsWith("//") || href.startsWith("#")) return;
+    if (link.pathname === window.location.pathname && link.search === window.location.search && link.hash) return;
+    window.setTimeout(() => { if (!event.defaultPrevented) run(); }, 0);
+  });
+  document.addEventListener("submit", event => { window.setTimeout(() => { if (!event.defaultPrevented && !event.target.closest("[data-live-region]")) run(); }, 0); });
+  window.addEventListener("pageshow", stop);
+  if (calm) return;
+  // The ripple, from where the button was pressed.
+  document.addEventListener("pointerdown", event => {
+    const button = event.target.closest && event.target.closest(".ui-btn, .btn, .ui-pill, .st-mini, .tp-can-item");
+    if (!button || button.disabled) return;
+    const box = button.getBoundingClientRect(), size = Math.max(box.width, box.height) * 2;
+    const ripple = document.createElement("span");
+    ripple.className = "mo-ripple";
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = (event.clientX - box.left - size / 2) + "px";
+    ripple.style.top = (event.clientY - box.top - size / 2) + "px";
+    button.appendChild(ripple);
+    window.setTimeout(() => ripple.remove(), 600);
+  });
+  // Folds slide open and closed (the settings have their own, which remembers them).
+  document.addEventListener("click", event => {
+    const summary = event.target.closest && event.target.closest("summary");
+    if (!summary || event.defaultPrevented) return;
+    const control = event.target.closest("a, button, input, select, textarea");
+    if (control && summary.contains(control)) return;            // a button inside the line does its own thing
+    const fold = summary.parentElement;
+    if (!fold || fold.tagName !== "DETAILS" || fold.matches("[data-fold], [data-no-slide]") || !fold.animate
+        || summary !== fold.querySelector(":scope > summary")) return;
+    event.preventDefault();
+    if (fold._slide) fold._slide.cancel();
+    const edges = fold.offsetHeight - fold.clientHeight, from = fold.offsetHeight, opening = !fold.open;
+    if (opening) fold.open = true;
+    const to = opening ? fold.scrollHeight + edges : summary.offsetHeight + edges + (parseFloat(getComputedStyle(fold).paddingTop) || 0) + (parseFloat(getComputedStyle(fold).paddingBottom) || 0);
+    const overflow = fold.style.overflow;
+    fold.style.overflow = "hidden";
+    const slide = fold.animate({ height: [from + "px", to + "px"] }, { duration: opening ? 320 : 220, easing: "cubic-bezier(.2,.8,.2,1)" });
+    fold._slide = slide;
+    slide.onfinish = () => { fold._slide = null; fold.style.overflow = overflow; if (!opening) fold.open = false; };
+    slide.oncancel = () => { fold._slide = null; fold.style.overflow = overflow; };
+  });
+})();
+</script>

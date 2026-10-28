@@ -395,7 +395,7 @@ wq.queue(db, klass, 6); wq.work_one(db)
 week6 = db.query(ClassWeek).filter(ClassWeek.class_group_id == klass.id, ClassWeek.week_number == 6).first()
 check("questions: too little course: only the course's own plan is used, nothing invented from the notes",
       (week6.questions_status == "idle" and not wq.questions_of(db, klass.id, 6))
-      or all((q.material_id or "").startswith(("plan:", "site:")) for q in wq.questions_of(db, klass.id, 6)),
+      or all((q.material_id or "").startswith(("plan:", "site:", "bank:")) for q in wq.questions_of(db, klass.id, 6)),
       [q.material_id for q in wq.questions_of(db, klass.id, 6)])
 from app.models import ClassGroup as _Group, Program as _Program
 
@@ -413,7 +413,9 @@ model["on"] = False
 cm.set_week_notes(db, klass, 7, "The teacher explained monitoring with dashboards that show the load of every server. An alert is sent when a threshold is passed for five minutes.")
 wq.queue(db, klass, 7); wq.work_one(db)
 week7 = db.query(ClassWeek).filter(ClassWeek.class_group_id == klass.id, ClassWeek.week_number == 7).first()
-check("questions: when the model is down the week says why", week7.questions_status == "failed" and "assistant did not answer" in week7.questions_note, (week7.questions_status, week7.questions_note))
+check("questions: when the model is down the week still gets questions, from the course plan, and says so",
+      week7.questions_status == "ready" and "course plan" in week7.questions_note and any(q.author == "plan" for q in wq.questions_of(db, klass.id, 7)),
+      (week7.questions_status, week7.questions_note))
 model["on"] = True
 own = wq.add_question(db, klass, 2, wq.read_question_form({"question": "Which command lists the volumes?", "option_0": "docker ps", "option_1": "", "option_2": "docker volume ls", "correct": "2", "explanation": "Seen in class."}))
 check("questions: the professor's own question is ready at once, blanks removed", own.status == "ready" and own.author == "admin" and own.choices == ["docker ps", "docker volume ls"] and own.correct_answer == 1, (own.choices, own.correct_answer))
@@ -502,8 +504,7 @@ db.commit()
 check("auto: a finished week with ready questions is sent by itself", wq.send_due(db, BASE) == 4 and len(outbox) == 4 and "semaine 3" in outbox[0]["subject"], len(outbox))
 check("auto: and only once", wq.send_due(db, BASE) == 0)
 tp.save(db, "weekly_questions", subject="S {week_number}", body="B {questions_link}", is_active=False)
-check("auto: switching the email off stops the automatic sending only", not tp.is_on(db, "weekly_questions")
-      and "switched off" in wq.send_week(db, klass, 4, base_url=BASE, manual=False).get("error", "") + wq.send_week(db, klass, 2, base_url=BASE, manual=False).get("error", ""))
+check("auto: the weekly questions cannot be switched off (always on)", tp.is_on(db, "weekly_questions"))
 tp.reset(db, "weekly_questions")
 klass.weekly_questions_mode = "manual"; db.commit()
 
@@ -726,7 +727,7 @@ status, html = page(f"/classes/{klass.id}")
 check("page: the class page links to its course", status == 200 and "Course and weekly questions" in html and f"/classes/{klass.id}/course" in html, status)
 status, html = page(f"/classes/{klass.id}/course?week=2")
 check("page: the course page opens on the asked week", status == 200 and "Semaine 2 - volumes.pdf" in html and "Candidates' answers" in html, status)
-check("page: it warns that candidates cannot reach this computer", "only works on this computer" in html)
+check("page: it says candidates cannot reach this computer, so they answer by replying", "cannot be reached from outside" in html and "answer by replying" in html)
 check("page: it shows each file's reading and each question's source", "Read: about" in html and "The system learns from your note" in html and "From Semaine 2 - volumes.pdf" in html)
 check("page: it shows who answered and what to go over", "Needs support" in html and "What to go over again" in html and "Remind" in html)
 status, html = page(f"/classes/{klass.id}/course")
@@ -757,7 +758,9 @@ response = client.post(f"/classes/{klass.id}/course/files/{picture_id}/delete", 
 db.expire_all()
 check("page: a course file can be removed", response.status_code == 303 and db.get(ClassMaterial, picture_id) is None)
 response = client.post(f"/classes/{klass.id}/course/8/notes", data={"notes": "The week ends with a demo of the whole pipeline, from commit to production, in front of the class."}, follow_redirects=False)
-wq.work_one(db); db.expire_all()
+while wq.work_one(db):                      # (the weeks always on asked for are written too)
+    pass
+db.expire_all()
 check("page: notes are saved and questions are written from them", any(q.material_id == "notes" for q in wq.questions_of(db, klass.id, 8)), [q.material_id for q in wq.questions_of(db, klass.id, 8)])
 response = client.post(f"/classes/{klass.id}/course/8/questions/add", data={"question": "What does the demo show?", "option_0": "The whole pipeline", "option_1": "Only the tests", "correct": "0"}, follow_redirects=False)
 added = db.query(WeekQuestion).filter(WeekQuestion.question == "What does the demo show?").first()
@@ -782,9 +785,10 @@ check("page: how many questions and how they are sent can be set per class", db.
 client.post(f"/classes/{klass.id}/course/settings", data={"week": "2", "weekly_questions_mode": "manual", "weekly_questions_count": "3"})
 outbox.clear()
 response = client.post(f"/classes/{klass.id}/course/4/send", follow_redirects=False)
-check("page: sending from the page emails the class and warns about the local address",
-      response.status_code == 303 and len(outbox) == 5 and "received+their+questions" in response.headers["location"] and "only+opens+on+this+computer" in response.headers["location"], response.headers["location"][:200])
-check("page: the link uses the address the admin is on when none is set", "http://127.0.0.1:8000/learn/" in outbox[0]["body"])
+check("page: sending from the page emails the class and says the questions are in the emails",
+      response.status_code == 303 and len(outbox) == 5 and "received+their+questions" in response.headers["location"] and "answer+by+replying" in response.headers["location"], response.headers["location"][:200])
+check("page: with no address candidates can reach, the questions are in the email, not a link", "127.0.0.1:8000/learn/" not in outbox[0]["body"]
+      and "répondez simplement à cet email" in outbox[0]["body"])
 response = client.post("/settings/address", data={"public_base_url": "app.9antra.tn/"}, follow_redirects=False)
 check("page: the address for candidates can be set", settings_service.public_base_url(SessionLocal()) == "https://app.9antra.tn")
 check("page: a wrong address is refused", "error=" in client.post("/settings/address", data={"public_base_url": "ftp://x y"}, follow_redirects=False).headers["location"])

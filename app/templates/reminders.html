@@ -78,6 +78,7 @@
         <select class="form-select" name="to_candidate" data-for="candidate" style="flex:1; min-width:200px;" aria-label="Candidate"><option value="">Choose a candidate…</option>{% for person in people %}<option value="{{ person.id }}" {{ 'selected' if person.id == to }}>{{ person.name }}</option>{% endfor %}</select>
         <select class="form-select" name="to_class" data-for="class" style="flex:1; min-width:200px;" aria-label="Class"><option value="">Choose a class…</option>{% for group in classes %}<option value="{{ group.id }}" {{ 'selected' if group.id == to }}>{{ group.name }}</option>{% endfor %}</select>
         <select class="form-select" name="to_program" data-for="program" style="flex:1; min-width:200px;" aria-label="Program"><option value="">Choose a program…</option>{% for program in programs %}<option value="{{ program.id }}" {{ 'selected' if program.id == to }}>{{ program.name }}</option>{% endfor %}</select>
+        <select class="form-select" name="to_professor" data-for="professor" style="flex:1; min-width:200px;" aria-label="Professor"><option value="">Choose a professor…</option>{% for person in professors %}<option value="{{ person.id }}" {{ 'selected' if person.id == to }}>{{ person.name }}</option>{% endfor %}</select>
       </div>
       <div class="ui-link-text mt-1" id="rm-count" style="font-size:.76rem; color:var(--muted);"></div>
 
@@ -112,13 +113,34 @@
       </div>
       <div class="form-text">Without a WhatsApp Business number, WhatsApp messages wait in the inbox, each with a button that opens WhatsApp with the message written. Someone without a usable number gets the email.</div>
 
-      <div class="rm-label">When</div>
-      <div class="rm-when">
+      <div class="rm-label">How often</div>
+      <div class="rm-repeat" role="radiogroup" aria-label="How often">
+        {% for key, name in repeats.items() %}
+        <label class="rm-rep"><input type="radio" name="repeat" value="{{ key }}" {{ 'checked' if key == 'once' }}>
+          <span><i class="bi {{ {'once': 'bi-1-circle', 'weekly': 'bi-calendar-week', 'monthly': 'bi-calendar-month', 'absence': 'bi-person-x'}[key] }}"></i>{{ name }}</span></label>
+        {% endfor %}
+      </div>
+      <div class="form-text" id="rm-repeat-help">Every week or every month: it goes again at the same hour, until the last day you choose (or until you stop it). Each time a candidate is marked absent: it waits, and goes to that candidate the moment their absence is marked.</div>
+      <div class="rm-label" id="rm-when-label">When</div>
+      <div class="rm-when" id="rm-when">
         <label style="font-size:.84rem;"><input type="radio" name="when" value="later" checked> On</label>
         <input class="form-control" type="date" name="date" value="{{ default_date }}" style="max-width:170px;" aria-label="Day">
         <input class="form-control" type="time" name="time" value="{{ default_time }}" style="max-width:120px;" aria-label="Hour">
         <label style="font-size:.84rem;"><input type="radio" name="when" value="now"> Now</label>
       </div>
+      <div class="rm-when mt-2" id="rm-until" hidden>
+        <span style="font-size:.84rem;">Last day it goes (optional)</span>
+        <input class="form-control" type="date" name="until" style="max-width:170px;" aria-label="Last day">
+      </div>
+      <style>
+        .rm-repeat { display:flex; gap:8px; flex-wrap:wrap; }
+        .rm-rep { position:relative; } .rm-rep input { position:absolute; opacity:0; pointer-events:none; }
+        .rm-rep span { display:inline-flex; gap:6px; align-items:center; padding:7px 13px; border-radius:999px; border:1px solid var(--border-color); font-size:.8rem; font-weight:700; color:#5b5670; cursor:pointer; transition:background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
+        .rm-rep span:hover { transform:translateY(-1px); border-color:var(--primary-berry); }
+        .rm-rep input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+        .rm-rep input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+        .rm-chip-rep { display:inline-flex; gap:4px; align-items:center; font-size:.68rem; font-weight:800; border-radius:999px; padding:2px 8px; background:var(--berry-subtle); color:var(--primary-berry); margin-inline-start:6px; }
+      </style>
       <button class="ui-btn primary mt-3"><i class="bi bi-alarm"></i>Plan this reminder</button>
     </form>
   </section>
@@ -137,9 +159,10 @@
     <h3 class="rm-h"><i class="bi bi-alarm"></i>Planned</h3>
     {% for row in upcoming %}
     <div class="rm-row">
-      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b><span class="meta">{{ row.when.strftime('%a %d %b, %H:%M') }} · {{ row.reminder.audience_label }} · {{ row.people }} candidate{{ 's' if row.people != 1 }}</span></div>
-      <form method="post" action="/reminders/{{ row.reminder.id }}/send-now" data-confirm="Send this reminder now to {{ row.people }} candidate{{ 's' if row.people != 1 }}?"><button class="ui-btn sm">Send now</button></form>
-      <form method="post" action="/reminders/{{ row.reminder.id }}/cancel" data-confirm="Cancel this reminder? Nothing will be sent."><button class="ui-btn ghost sm icon danger" aria-label="Cancel this reminder"><i class="bi bi-x-lg"></i></button></form>
+      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b>{% if (row.reminder.repeat or 'once') != 'once' %}<span class="rm-chip-rep"><i class="bi bi-arrow-repeat"></i>{{ repeats.get(row.reminder.repeat, '') }}</span>{% endif %}
+        <span class="meta">{% if row.reminder.status == 'watching' %}<span>Waiting for an absence</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% else %}{{ row.when.strftime('%a %d %b, %H:%M') }}{% endif %} · {{ row.reminder.audience_label }}{% if row.reminder.status != 'watching' %} · {{ row.people }}{% endif %}</span></div>
+      {% if row.reminder.status != 'watching' %}<form method="post" action="/reminders/{{ row.reminder.id }}/send-now" data-confirm="Send this reminder now?"><button class="ui-btn sm">Send now</button></form>{% endif %}
+      <form method="post" action="/reminders/{{ row.reminder.id }}/cancel" data-confirm="Stop this reminder? Nothing more will be sent."><button class="ui-btn ghost sm icon danger" aria-label="Stop this reminder"><i class="bi bi-x-lg"></i></button></form>
     </div>
     {% else %}
     <div class="ui-empty" style="border:0;"><i class="bi bi-alarm"></i><strong>Nothing planned</strong>A reminder you plan shows here until it goes.</div>
@@ -186,7 +209,14 @@
     }, 350);
   }
   form.addEventListener("input", preview);
-  form.addEventListener("change", function () { showTarget(); preview(); });
+  function showRepeat() {
+    const chosen = (form.querySelector('input[name="repeat"]:checked') || {}).value || "once";
+    document.getElementById("rm-until").hidden = chosen === "once";
+    document.getElementById("rm-when").hidden = chosen === "absence";
+    document.getElementById("rm-when-label").hidden = chosen === "absence";
+  }
+  form.addEventListener("change", function () { showTarget(); showRepeat(); preview(); });
+  showRepeat();
   document.querySelectorAll("[data-idea]").forEach(function (button) {
     button.addEventListener("click", function () {
       const idea = ideas.find(function (item) { return item.key === button.dataset.idea; });

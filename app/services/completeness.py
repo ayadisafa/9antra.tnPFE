@@ -130,9 +130,9 @@ def items(db: Session) -> list[dict]:
     if not sms.configured():
         found.append(_item("settings", "bi-chat-dots", _t("No Android phone for SMS: SMS wait for your phone"), "/settings#sms"))
     if not (getattr(settings, "centre_ribs", None) or "").strip():
-        found.append(_item("settings", "bi-bank", _t("The centre's RIB is not written: payment proofs cannot be checked against it"), "/settings#whatsapp"))
+        found.append(_item("settings", "bi-bank", _t("The centre's RIB is not written: payment proofs cannot be checked against it"), "/settings#centre"))
     if not (getattr(settings, "centre_phone", None) or "").strip():
-        found.append(_item("settings", "bi-telephone", _t("The centre's phone is not written under the emails"), "/settings#whatsapp"))
+        found.append(_item("settings", "bi-telephone", _t("The centre's phone is not written under the emails"), "/settings#centre"))
     if re.search(r"//(127\.0\.0\.1|localhost)(:|/|$)", public_base_url(db)):
         found.append(_item("settings", "bi-link-45deg", _t("Links in emails only open on this computer: set the address for candidates"), "/settings#public"))
     if len((os.getenv("FACEBOOK_PAGE_ACCESS_TOKEN") or "").strip()) <= 40:

@@ -258,6 +258,8 @@ def ensure_sqlite_compatibility():
         "users": {
             "permissions": "TEXT",
             "phone": "VARCHAR",
+            "reset_hash": "VARCHAR",
+            "reset_until": "DATETIME",
         },
         "team_messages": {
             "question_message_id": "VARCHAR",
@@ -326,16 +328,43 @@ def ensure_sqlite_compatibility():
             "next_class_gap_days": "INTEGER DEFAULT 10",
             "session_check_on": "BOOLEAN DEFAULT 1",
             "session_check_hours": "INTEGER DEFAULT 24",
+            "weekly_every": "INTEGER DEFAULT 1",
+            "weekly_way": "VARCHAR DEFAULT 'auto'",
             "session_check_since": "DATETIME",
             "prospect_answers_on": "BOOLEAN DEFAULT 1",
             "centre_address": "VARCHAR",
+            "centre_legal_name": "VARCHAR",
+            "centre_beneficiaries": "TEXT",
+            "centre_tax_id": "VARCHAR",
+            "centre_email": "VARCHAR",
+            "centre_website": "VARCHAR",
+        },
+
+        "class_materials": {
+            "review_status": "VARCHAR",
+            "fit": "VARCHAR",
+            "fit_program_id": "VARCHAR",
+            "fit_words": "TEXT",
+            "uploaded_by": "VARCHAR",
+            "reviewed_by": "VARCHAR",
+            "reviewed_at": "DATETIME",
+        },
+        "payment_proofs": {
+            "kind": "VARCHAR",
+            "beneficiary": "VARCHAR",
+            "drawer": "VARCHAR",
+            "cheque_number": "VARCHAR",
+            "amount_words": "FLOAT",
+            "words_text": "VARCHAR",
+            "place": "VARCHAR",
         },
 
         "email_threads": {
             "last_status": "VARCHAR",
             "channel": "VARCHAR DEFAULT 'email'",
         },
-        "admin_reminders": {"channel": "VARCHAR DEFAULT 'email'"},
+        "admin_reminders": {"channel": "VARCHAR DEFAULT 'email'", "repeat": "VARCHAR DEFAULT 'once'", "until": "DATETIME",
+                            "times": "INTEGER DEFAULT 0", "done_keys": "TEXT"},
 
         "candidate_emails": {
             "emotions": "TEXT",

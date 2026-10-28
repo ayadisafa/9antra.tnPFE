@@ -1085,10 +1085,13 @@ def save_auto(
 
 
 @router.post("/templates/auto/{key}/reset")
-def reset_auto(key: str, db: Session = Depends(get_db)):
+def reset_auto(key: str, back: str = Form(""), db: Session = Depends(get_db)):
+    """The original text again (from its card on the list, or from the message itself)."""
     spec = _auto_or_404(key)
     email_templates.reset(db, key)
     db.commit()
+    if back == "list":
+        return _redirect("/inbox/templates", notice=f"“{spec.name}” is back to its original text.")
     return _redirect("/inbox/templates", notice=f"“{spec.name}” is back to its original text.", key=key)
 
 
@@ -1111,10 +1114,13 @@ def knowledge_page(request: Request, db: Session = Depends(get_db)):
     )
     system = (
         db.query(KnowledgeEntry)
-        .filter(KnowledgeEntry.origin == "system", KnowledgeEntry.is_active.is_(True))
+        .filter(KnowledgeEntry.origin == "system", KnowledgeEntry.is_active.is_(True), KnowledgeEntry.kind != "fact")
         .order_by(KnowledgeEntry.kind, KnowledgeEntry.title)
         .all()
     )
+    from app.models import Program
+
+    programs = {program.id: program for program in db.query(Program).order_by(Program.name).all()}
     edit_id = request.query_params.get("edit")
     return templates.TemplateResponse(
         request=request,
@@ -1126,6 +1132,8 @@ def knowledge_page(request: Request, db: Session = Depends(get_db)):
             "stats": knowledge_service.stats(db),
             "imported": __import__("app.services.knowledge_import", fromlist=["sources"]).sources(db),
             "editing": db.get(KnowledgeEntry, edit_id) if edit_id else None,
+            "facts": knowledge_service.facts(db, everything=True),
+            "programs": programs,
             "prefill_question": request.query_params.get("question", ""),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
@@ -1152,6 +1160,37 @@ def save_knowledge(
         if already is not None else "Saved. The assistant uses it from now on."
     )
     return _redirect("/inbox/knowledge", notice=notice + _read_again(db, entry))
+
+
+def _back_to(back: str, fallback: str = "/inbox/knowledge#facts") -> str:
+    return back if back.startswith("/") and not back.startswith("//") and "\\" not in back else fallback
+
+
+@router.post("/knowledge/fact")
+def save_fact(text: str = Form(""), program_id: str = Form(""), entry_id: str = Form(""), back: str = Form(""), db: Session = Depends(get_db)):
+    """Something the admin tells the assistants, in any language."""
+    target = _back_to(back)
+    path, _, anchor = target.partition("#")
+    try:
+        knowledge_service.save_fact(db, text=text, program_id=program_id or None, entry_id=entry_id or None)
+    except ValueError as err:
+        db.rollback()
+        return RedirectResponse(path + ("&" if "?" in path else "?") + urlencode({"error": str(err)}) + ("#" + anchor if anchor else ""), status_code=303)
+    db.commit()
+    notice = "Saved. Every assistant uses it from now on, whatever language the question is in."
+    return RedirectResponse(path + ("&" if "?" in path else "?") + urlencode({"notice": notice}) + ("#" + anchor if anchor else ""), status_code=303)
+
+
+@router.post("/knowledge/fact/{entry_id}/delete")
+def delete_fact(entry_id: str, back: str = Form(""), db: Session = Depends(get_db)):
+    entry = db.get(KnowledgeEntry, entry_id)
+    if entry is not None and entry.kind == "fact":
+        db.delete(entry)
+        db.commit()
+    target = _back_to(back)
+    path, _, anchor = target.partition("#")
+    return RedirectResponse(path + ("&" if "?" in path else "?") + urlencode({"notice": "Forgotten: the assistants no longer use it."})
+                            + ("#" + anchor if anchor else ""), status_code=303)
 
 
 @router.post("/knowledge/import")

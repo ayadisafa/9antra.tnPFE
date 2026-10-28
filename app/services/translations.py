@@ -31,7 +31,7 @@ TARGETS = {"fr": "French", "ar": "Arabic"}
 BATCH = 10                      # texts translated for one language in one pass of the job
 TEMPLATES = Path("app/templates")
 # Pages written for candidates, already in French, and the emails: not part of the interface.
-_NOT_INTERFACE = ("level_check", "join", "opinion", "learn", "login", "setup", "email", "quiz_take", "public")
+_NOT_INTERFACE = ("level_check", "join", "opinion", "learn", "setup", "email", "quiz_take", "public")
 # Services whose sentences do not appear on the pages: what candidates receive (written in French), what the model is
 # asked, what the assistant answers in the language it is asked in. Every other service's sentences are collected.
 _SILENT = ("answer_sync", "background", "brand", "catalogue_reader", "chatbot", "chatbot_actions", "chatbot_data", "chatbot_send",
@@ -40,7 +40,7 @@ _SILENT = ("answer_sync", "background", "brand", "catalogue_reader", "chatbot", 
            "firebase_service", "google_forms", "jobs", "knowledge_service", "level_bank", "mailbox_service", "page_pdf_links",
            "program_assistant", "program_documents", "program_names", "program_pdf", "realtime", "reply_writer", "report_pdf",
            "translation_seed", "translation_more", "translations", "tunisian_banks", "website_sync", "weekly_questions", "welcome",
-           "emotions", "finder", "derja", "howto_tn", "howto_examples", "meaning", "prospects")       # (the last ones: lists of words to recognise, not words to show)
+           "emotions", "finder", "derja", "howto_tn", "howto_examples", "meaning", "prospects", "course_requests", "dynamic_words", "program_match", "program_reader", "program_files", "password_reset")       # (the last ones: lists of words to recognise, not words to show)
 # What the routes say back on the page (“Saved.”, “The class is full.”): the words given as these.
 _SAID = {"notice", "error", "detail", "message", "label", "title", "reply"}
 RETRY_TRIES = 4                 # a text the model could not translate is tried again, with an example, up to this

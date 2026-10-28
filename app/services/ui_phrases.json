@@ -726,5 +726,173 @@
 "{0} question(s) of candidates that waited for them are back in your inbox.": [
 "{0} question(s) de candidats qui l'attendaient sont revenues dans votre boîte de réception.",
 "عاد {0} سؤال (أسئلة) من المترشحين كانت تنتظره إلى بريدك الوارد."
+],
+"This computer cannot be reached from outside: the questions are written in the emails, and candidates answer by replying.": [
+"Cet ordinateur n'est pas joignable de l'extérieur : les questions sont écrites dans les emails, et les candidats répondent en répondant à l'email.",
+"هذا الحاسوب غير متاح من الخارج: الأسئلة مكتوبة في الرسائل، ويجيب المترشحون بالرد عليها."
+],
+"“{0}” waits for the admin's approval: it does not look like part of this program.": [
+"« {0} » attend l'accord de l'admin : il ne semble pas faire partie de cette formation.",
+"«{0}» ينتظر موافقة المسؤول: لا يبدو جزءا من هذا البرنامج."
+],
+"“{0}” is part of week {1} now: the system learns from it.": [
+"« {0} » fait maintenant partie de la semaine {1} : le système en apprend.",
+"«{0}» صار جزءا من الأسبوع {1}: يتعلّم منه النظام."
+],
+"“{0}” is in {1}, week {2} now.": [
+"« {0} » est maintenant dans {1}, semaine {2}.",
+"«{0}» الآن في {1}، الأسبوع {2}."
+],
+"Choose at least one file.": [
+"Choisissez au moins un fichier.",
+"اختر ملفا واحدا على الأقل."
+],
+"{0} file(s) added to {1}.": [
+"{0} fichier(s) ajouté(s) à {1}.",
+"أُضيف {0} ملف إلى {1}."
+],
+"“{0}” waits for your approval: it does not look like part of this program.": [
+"« {0} » attend votre accord : il ne semble pas faire partie de cette formation.",
+"«{0}» ينتظر موافقتك: لا يبدو جزءا من هذا البرنامج."
+],
+"A week-by-week plan was found in “{0}”: you can use it below.": [
+"Un plan semaine par semaine a été trouvé dans « {0} » : vous pouvez l'utiliser ci-dessous.",
+"وُجدت خطة أسبوعية في «{0}»: يمكنك استعمالها أدناه."
+],
+"The details still missing are being proposed from it.": [
+"Les détails qui manquent encore sont proposés à partir de lui.",
+"التفاصيل التي لا تزال ناقصة تُقترح انطلاقا منه."
+],
+"“{0}” is part of the program now: the assistant learns from it.": [
+"« {0} » fait maintenant partie de la formation : l'assistant en apprend.",
+"«{0}» صار جزءا من البرنامج: يتعلّم منه المساعد."
+],
+"Choose where the file goes.": [
+"Choisissez où va le fichier.",
+"اختر أين يذهب الملف."
+],
+"“{0}” is a file of {1} now.": [
+"« {0} » est maintenant un fichier de {1}.",
+"«{0}» صار الآن ملفا من ملفات {1}."
+],
+"“{0}” removed.": [
+"« {0} » retiré.",
+"أُزيل «{0}»."
+],
+"No week-by-week plan can be taken from this file.": [
+"Aucun plan semaine par semaine ne peut être tiré de ce fichier.",
+"لا يمكن أخذ خطة أسبوعية من هذا الملف."
+],
+"The plan of {0} now follows “{1}”: {2} week(s) rewritten, {3} added, {4} later kept.": [
+"Le plan de {0} suit maintenant « {1} » : {2} semaine(s) réécrite(s), {3} ajoutée(s), {4} suivante(s) gardée(s).",
+"خطة {0} تتبع الآن «{1}»: أُعيدت كتابة {2} أسبوع، وأُضيف {3}، وحُفظ {4} لاحق."
+],
+"No description can be taken from this file.": [
+"Aucune description ne peut être tirée de ce fichier.",
+"لا يمكن أخذ وصف من هذا الملف."
+],
+"The description of {0} now comes from “{1}”.": [
+"La description de {0} vient maintenant de « {1} ».",
+"وصف {0} يأتي الآن من «{1}»."
+],
+"Saved: each candidate of {0} marked absent from now on receives it, once per absence.": [
+"Enregistré : chaque candidat de {0} noté absent à partir de maintenant le reçoit, une fois par absence.",
+"تم الحفظ: كل مترشح من {0} يُسجَّل غيابه من الآن يتلقاه، مرة عن كل غياب."
+],
+"within a minute": [
+"dans la minute",
+"خلال دقيقة"
+],
+"then every week": [
+"puis chaque semaine",
+"ثم كل أسبوع"
+],
+"then every month": [
+"puis chaque mois",
+"ثم كل شهر"
+],
+"The reminder goes {0} {1} to {2} ({3}).": [
+"Le rappel part {0} {1} vers {2} ({3}).",
+"يُرسل التذكير {0} {1} إلى {2} ({3})."
+],
+"{0}, week {1}": [
+"{0}, semaine {1}",
+"{0}، الأسبوع {1}"
+],
+"The files of the program {0}": [
+"Les fichiers de la formation {0}",
+"ملفات البرنامج {0}"
+],
+"Absent from the last {0} sessions": [
+"Absent(e) aux {0} dernières séances",
+"غاب عن آخر {0} حصص"
+],
+"Absent from the last session": [
+"Absent(e) à la dernière séance",
+"غاب عن الحصة الأخيرة"
+],
+"Present at {0}% of the sessions": [
+"Présent(e) à {0} % des séances",
+"حاضر في {0}٪ من الحصص"
+],
+"Did not answer {0} of their last questions": [
+"N'a pas répondu à {0} de ses dernières questions",
+"لم يُجب عن {0} من أسئلته الأخيرة"
+],
+"{0}% on average on the questions: they struggle": [
+"{0} % en moyenne aux questions : il a du mal",
+"{0}٪ في المعدل في الأسئلة: يجد صعوبة"
+],
+"Still owes {0} DT": [
+"Doit encore {0} DT",
+"لا يزال عليه {0} د.ت"
+],
+"Reminded {0} days ago, nothing paid since": [
+"Relancé il y a {0} jours, rien payé depuis",
+"ذُكّر منذ {0} أيام، ولم يدفع شيئا منذ ذلك"
+],
+"Wrote they felt: {0}": [
+"A écrit se sentir : {0}",
+"كتب أنه يشعر: {0}"
+],
+"Remind them to pay": [
+"Lui rappeler de payer",
+"تذكيره بالدفع"
+],
+"Open their file": [
+"Ouvrir sa fiche",
+"فتح ملفه"
+],
+"{0} articles speak of “{1}”, which {2} already teaches: say so in its posts and its page.": [
+"{0} articles parlent de « {1} », que {2} enseigne déjà : dites-le dans ses publications et sur sa page.",
+"{0} مقالات تتحدث عن «{1}» الذي يدرّسه {2} بالفعل: قل ذلك في منشوراته وصفحته."
+],
+"{0} articles speak of “{1}”, which {2} does not teach yet: a session or a week to consider.": [
+"{0} articles parlent de « {1} », que {2} n'enseigne pas encore : une séance ou une semaine à envisager.",
+"{0} مقالات تتحدث عن «{1}» الذي لا يدرّسه {2} بعد: حصة أو أسبوع يستحق النظر."
+],
+"Part of {0}: {1}.": [
+"Fait partie de {0} : {1}.",
+"جزء من {0}: {1}."
+],
+"Part of {0}.": [
+"Fait partie de {0}.",
+"جزء من {0}."
+],
+"Looks like part of {0}, not {1}: {2}.": [
+"Semble faire partie de {0}, pas de {1} : {2}.",
+"يبدو جزءا من {0} وليس من {1}: {2}."
+],
+"Looks like part of {0}, not {1}.": [
+"Semble faire partie de {0}, pas de {1}.",
+"يبدو جزءا من {0} وليس من {1}."
+],
+"Does not look like part of {0}, nor of any other program.": [
+"Ne semble faire partie ni de {0}, ni d'aucune autre formation.",
+"لا يبدو جزءا من {0} ولا من أي برنامج آخر."
+],
+"Not checked: there is nothing to read in it. Write a few lines about what it shows.": [
+"Non vérifié : il n'y a rien à y lire. Écrivez quelques lignes sur ce qu'il montre.",
+"لم يُراجَع: لا شيء يُقرأ فيه. اكتب بضعة أسطر عمّا يُظهره."
 ]
 }

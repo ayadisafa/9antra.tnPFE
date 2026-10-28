@@ -1,5 +1,5 @@
-"""Reminders the admin writes: to one candidate, a class, a program or everyone,
-now or at a chosen time.
+"""Reminders the admin writes: to one candidate, a class, a program, everyone, or the professors; now or at a chosen
+time, once, every week, every month, or each time a candidate is marked absent.
 
 They are separate from the automatic ones (payment, first session, level
 check), which keep their own rules. A reminder written here goes once, at its
@@ -34,6 +34,15 @@ AUDIENCES = {
     "program": "Everyone of a program",
     "unpaid": "Those who still owe something",
     "everyone": "Every candidate",
+    "professor": "One professor",
+    "professors": "Every professor",
+}
+FOR_PROFESSORS = ("professor", "professors")
+REPEATS = {
+    "once": "Once",
+    "weekly": "Every week",
+    "monthly": "Every month",
+    "absence": "Each time a candidate is marked absent",
 }
 MOST_AT_ONCE = 3        # reminders sent in one pass of the job
 
@@ -92,7 +101,16 @@ def _active(db: Session):
 
 
 def recipients(db: Session, audience: str, audience_id: str | None) -> list[tuple[Candidate, str | None]]:
-    """(candidate, the registration the reminder is about) for everyone it goes to, each person once."""
+    """(candidate, the registration the reminder is about) for everyone it goes to, each person once; for the professors,
+    (professor, None)."""
+    if audience in FOR_PROFESSORS:
+        from app.models import Professor
+
+        if audience == "professor":
+            person = db.get(Professor, audience_id or "")
+            return [(person, None)] if person is not None and person.email else []
+        return [(person, None) for person in db.query(Professor).order_by(Professor.name).all()
+                if person.email and not (person.name or "").startswith("À nommer")]
     if audience == "candidate":
         person = db.get(Candidate, audience_id or "")
         return [(person, None)] if person is not None and person.email else []
@@ -118,6 +136,11 @@ def recipients(db: Session, audience: str, audience_id: str | None) -> list[tupl
 
 
 def label_of(db: Session, audience: str, audience_id: str | None) -> str:
+    if audience == "professor":
+        from app.models import Professor
+
+        person = db.get(Professor, audience_id or "")
+        return person.name if person is not None else "A professor who is no longer here"
     if audience == "candidate":
         person = db.get(Candidate, audience_id or "")
         return (person.full_name or person.email) if person is not None else "Somebody who is no longer here"
@@ -131,29 +154,78 @@ def label_of(db: Session, audience: str, audience_id: str | None) -> str:
 
 
 def create(db: Session, *, audience: str, audience_id: str | None, subject: str, body: str, title: str | None = None,
-           style: str = "brand", send_at: datetime | None = None, by: str | None = None, channel: str = "email") -> AdminReminder:
-    """Keep a reminder. `send_at` is UTC; None means at the next pass, within a minute."""
+           style: str = "brand", send_at: datetime | None = None, by: str | None = None, channel: str = "email",
+           repeat: str = "once", until: datetime | None = None) -> AdminReminder:
+    """Keep a reminder. `send_at` is UTC; None means at the next pass, within a minute. `repeat`: once, weekly, monthly,
+    or absence (it then waits, and goes to each candidate of its choice the moment they are marked absent)."""
     if audience not in AUDIENCES:
         raise ValueError("Choose who receives the reminder.")
-    if audience in ("candidate", "class", "program") and not audience_id:
+    if audience in ("candidate", "class", "program", "professor") and not audience_id:
         raise ValueError("Choose who receives the reminder.")
     if not subject.strip() or not body.strip():
         raise ValueError("Write a subject and a message.")
-    if not recipients(db, audience, audience_id):
-        raise ValueError("Nobody would receive this reminder: there is no candidate with an email address in that choice.")
+    repeat = repeat if repeat in REPEATS else "once"
+    if repeat == "absence" and audience in FOR_PROFESSORS:
+        raise ValueError("“Each time a candidate is marked absent” goes to that candidate: choose candidates (a class, a program, everyone).")
+    if repeat != "absence" and not recipients(db, audience, audience_id):
+        raise ValueError("Nobody would receive this reminder: there is nobody with an email address in that choice.")
     reminder = AdminReminder(
         audience=audience, audience_id=audience_id or None, audience_label=label_of(db, audience, audience_id),
         subject=" ".join(subject.split())[:200], title=" ".join((title or "").split())[:120] or None, body=body.strip(),
         style=style if style in STYLES else "brand", send_at=send_at or datetime.utcnow(), created_by=by,
-        channel=channel if channel in ("email", "both", "whatsapp") else "email",
+        channel=channel if channel in ("email", "both", "whatsapp") else "email", repeat=repeat, until=until, times=0,
+        status="watching" if repeat == "absence" else "scheduled",
     )
     db.add(reminder)
     db.commit()
     return reminder
 
 
+def _next_time(when: datetime, repeat: str) -> datetime | None:
+    """The next time a repeated reminder goes: a week later, or the same day of the next month (its last day when shorter)."""
+    import calendar
+
+    if repeat == "weekly":
+        return when + timedelta(days=7)
+    if repeat == "monthly":
+        year, month = (when.year + 1, 1) if when.month == 12 else (when.year, when.month + 1)
+        return when.replace(year=year, month=month, day=min(when.day, calendar.monthrange(year, month)[1]))
+    return None
+
+
+def _to_professor(db: Session, reminder: AdminReminder, person) -> bool:
+    """A reminder to a professor: their name in it, by email (and WhatsApp when chosen and possible)."""
+    import re
+
+    from app.services import email_composer, whatsapp
+    from app.services.email_service import send_email
+
+    first = ((person.name or "").replace("Pr ", "").replace("Dr ", "").split() or [""])[0]
+    names = {"first_name": first, "full_name": person.name or "", "name": person.name or ""}
+
+    def filled(text: str) -> str:
+        return re.sub(r"\{(\w+)\}", lambda found: names.get(found.group(1), ""), text or "")
+
+    rendered = email_composer.render(db, subject=filled(reminder.subject), title=filled(reminder.title or ""), body=filled(reminder.body),
+                                     style=reminder.style)
+    delivered = False
+    if reminder.channel != "whatsapp" or whatsapp.normalise(getattr(person, "phone", None)) is None:
+        try:
+            delivered = send_email(to_email=person.email, subject=rendered["subject"], body=rendered["html"], is_html=True,
+                                   text_body=rendered["text"], journal=False)
+        except Exception:
+            logger.exception("A reminder to a professor could not be sent.")
+    if reminder.channel in ("both", "whatsapp") and whatsapp.normalise(getattr(person, "phone", None)) is not None:
+        try:
+            # send() says what went wrong, or nothing when it went.
+            delivered = (whatsapp.configured() and whatsapp.send(person.phone, rendered["text"]) is None) or delivered
+        except Exception:
+            logger.exception("A WhatsApp reminder to a professor could not be sent.")
+    return delivered
+
+
 def cancel(db: Session, reminder: AdminReminder) -> bool:
-    if reminder.status != "scheduled":
+    if reminder.status not in ("scheduled", "watching"):
         return False
     reminder.status = "cancelled"
     db.commit()
@@ -173,6 +245,10 @@ def send(db: Session, reminder: AdminReminder) -> tuple[int, int]:
 
     channel = reminder.channel if reminder.channel in ("email", "both", "whatsapp") else "email"
     for person, registration_id in recipients(db, reminder.audience, reminder.audience_id):
+        if reminder.audience in FOR_PROFESSORS:
+            delivered = _to_professor(db, reminder, person)
+            sent, failed = sent + (1 if delivered else 0), failed + (0 if delivered else 1)
+            continue
         try:
             fields = dict(subject=reminder.subject, title=reminder.title or "", body=reminder.body, style=reminder.style,
                           registration_id=registration_id)
@@ -193,8 +269,66 @@ def send(db: Session, reminder: AdminReminder) -> tuple[int, int]:
             delivered = False
         sent, failed = sent + (1 if delivered else 0), failed + (0 if delivered else 1)
     reminder.status, reminder.sent_at, reminder.sent_count, reminder.failed_count = "sent", datetime.utcnow(), sent, failed
+    reminder.times = (reminder.times or 0) + 1
+    coming = _next_time(reminder.send_at, reminder.repeat or "once")
+    if coming is not None:
+        while coming <= datetime.utcnow():            # the server was off for a while: the next one still to come
+            coming = _next_time(coming, reminder.repeat)
+        if reminder.until is None or coming <= reminder.until:
+            reminder.status, reminder.send_at = "scheduled", coming
     db.commit()
     return sent, failed
+
+
+def answer_absences(db: Session, limit: int = 20) -> int:
+    """The reminders that go each time a candidate is marked absent: to every candidate of their choice marked absent
+    since the reminder was written, once per absence. Returns how many went."""
+    import json
+
+    from app.models.classgroup import ClassGroup as Group
+    from app.services import email_composer
+
+    went = 0
+    for reminder in db.query(AdminReminder).filter(AdminReminder.status == "watching").all():
+        if reminder.until is not None and reminder.until < datetime.utcnow():
+            reminder.status = "sent"
+            db.commit()
+            continue
+        try:
+            done = set(json.loads(reminder.done_keys or "[]"))
+        except ValueError:
+            done = set()
+        query = db.query(Attendance).filter(Attendance.status == "absent", Attendance.marked_at >= reminder.created_at)
+        if reminder.audience == "class":
+            query = query.filter(Attendance.class_group_id == reminder.audience_id)
+        elif reminder.audience == "candidate":
+            query = query.filter(Attendance.candidate_id == reminder.audience_id)
+        elif reminder.audience == "program":
+            ids = [group.id for group in db.query(Group.id).filter(Group.program_id == reminder.audience_id).all()]
+            query = query.filter(Attendance.class_group_id.in_(ids or [""]))
+        for mark in query.order_by(Attendance.marked_at.asc()).limit(limit).all():
+            if mark.id in done:
+                continue
+            person = db.get(Candidate, mark.candidate_id)
+            done.add(mark.id)
+            if person is None or not person.email:
+                continue
+            if reminder.audience == "unpaid":
+                registration = db.get(Registration, mark.registration_id)
+                if registration is None or not (registration.remaining_amount or 0) > 0:
+                    continue
+            try:
+                if email_composer.send_one(db, person, subject=reminder.subject, title=reminder.title or "", body=reminder.body,
+                                           style=reminder.style, registration_id=mark.registration_id):
+                    reminder.sent_count = (reminder.sent_count or 0) + 1
+                    reminder.times = (reminder.times or 0) + 1
+                    reminder.sent_at = datetime.utcnow()
+                    went += 1
+            except Exception:
+                logger.exception("The absence reminder %s could not go to candidate %s.", reminder.id, person.id)
+        reminder.done_keys = json.dumps(sorted(done)[-2000:])
+        db.commit()
+    return went
 
 
 def send_due(db: Session, now: datetime | None = None) -> int:
@@ -204,11 +338,13 @@ def send_due(db: Session, now: datetime | None = None) -> int:
            .order_by(AdminReminder.send_at.asc()).limit(MOST_AT_ONCE).all())
     for reminder in due:
         send(db, reminder)
+    answer_absences(db)
     return len(due)
 
 
 def upcoming(db: Session) -> list[AdminReminder]:
-    return db.query(AdminReminder).filter(AdminReminder.status.in_(("scheduled", "sending"))).order_by(AdminReminder.send_at.asc()).all()
+    return (db.query(AdminReminder).filter(AdminReminder.status.in_(("scheduled", "sending", "watching")))
+            .order_by(AdminReminder.status != "watching", AdminReminder.send_at.asc()).all())
 
 
 def history(db: Session, limit: int = 12) -> list[AdminReminder]:

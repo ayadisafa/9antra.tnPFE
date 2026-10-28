@@ -5,6 +5,21 @@ from sqlalchemy import Column, DateTime, Integer, String, Text, UniqueConstraint
 from app.database import Base
 
 
+class TextTranslation(Base):
+    """A text the application wrote as it went (a notification), translated by the local model (see dynamic_words)."""
+
+    __tablename__ = "text_translations"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    lang = Column(String, nullable=False, index=True)           # en | fr | ar
+    source_hash = Column(String, nullable=False, unique=True, index=True)      # of the language and the text
+    source = Column(Text, nullable=False)
+    text = Column(Text, nullable=True)
+    origin = Column(String, nullable=True)                      # model | admin
+    tries = Column(Integer, nullable=False, default=0)
+    updated_at = Column(DateTime, nullable=True)
+
+
 class UiTranslation(Base):
     """One text of the interface in one language."""
 

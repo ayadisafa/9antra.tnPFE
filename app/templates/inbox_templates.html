@@ -66,6 +66,27 @@
   .tp-channel-opt input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
   .tp-channel-opt input:checked + span i { color:#fff; }
   .tp-channel-opt input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  /* What can be changed */
+  .tp-can { border:1px solid var(--border-color); border-radius:18px; padding:14px 16px; margin-bottom:18px; background:linear-gradient(135deg, #fff 0%, #fff 55%, var(--berry-subtle) 100%); }
+  .tp-can-title { display:flex; gap:8px; align-items:center; font-weight:800; font-size:.88rem; color:var(--ink-text); margin-bottom:10px; }
+  .tp-can-title i { color:var(--primary-berry); }
+  .tp-can-list { display:flex; flex-wrap:wrap; gap:7px; }
+  .tp-can-item { display:inline-flex; gap:7px; align-items:center; font-size:.78rem; font-weight:700; color:#4d4863; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:5px 12px; text-decoration:none; transition:border-color .15s ease, color .15s ease, transform .15s ease; }
+  .tp-can-item i { color:var(--primary-berry); }
+  a.tp-can-item:hover, button.tp-can-item:hover { border-color:var(--primary-berry); color:var(--primary-berry); transform:translateY(-1px); }
+  button.tp-can-item { cursor:pointer; }
+  .tp-can-item.is-reset { border-color:#f6d8e6; background:var(--berry-subtle); }
+  @media (prefers-reduced-motion: no-preference) { .tp-can-item { animation:tpPop .45s cubic-bezier(.3,1.4,.5,1) both; animation-delay:calc(var(--i, 0) * 45ms + .1s); } .tp-pulse { animation:tpPulse 1.3s ease; } }
+  @keyframes tpPop { from { opacity:0; transform:scale(.85) translateY(4px); } to { opacity:1; transform:none; } }
+  @keyframes tpPulse { 0% { box-shadow:0 0 0 0 rgba(164,44,103,.45); } 60% { box-shadow:0 0 0 8px rgba(164,44,103,.12); } 100% { box-shadow:0 0 0 0 rgba(164,44,103,0); } }
+  .tp-item-wrap { display:flex; flex-direction:column; background:#fff; border:1px solid var(--border-color); border-radius:18px; transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .tp-item-wrap:hover { border-color:var(--primary-berry); box-shadow:0 10px 24px -16px rgba(164, 44, 103, .5); transform:translateY(-2px); }
+  .tp-item-wrap.is-off { background:#fbfafc; }
+  .tp-item-wrap > .tp-item { border:0; background:transparent; box-shadow:none; flex:1; }
+  .tp-reset { padding:0 18px 14px; margin:0; }
+  .tp-reset-btn { display:inline-flex; gap:6px; align-items:center; border:1px dashed #f0bcd3; background:#fff; color:#be185d; border-radius:999px; padding:4px 11px; font-size:.74rem; font-weight:800; transition:background .15s ease; }
+  .tp-reset-btn:hover { background:var(--berry-subtle); }
+  .tp-orig-note { display:inline-flex; gap:6px; align-items:center; font-size:.76rem; font-weight:700; color:var(--muted); }
 </style>
 
 {% if current %}
@@ -83,6 +104,20 @@
       <div class="d-flex flex-wrap justify-content-between align-items-start gap-2 mb-1">
         <div class="tp-title" style="font-size:1.1rem;">{{ spec.name }}</div>
         {% if current.customized %}<span class="tp-chip own">Changed by you</span>{% else %}<span class="tp-chip orig">Original text</span>{% endif %}
+      </div>
+      <div class="tp-can mt-2" id="tp-can">
+        <div class="tp-can-title"><i class="bi bi-magic"></i>What you can change in this message</div>
+        <div class="tp-can-list">
+          {% for icon, text, target in [('bi-type', 'Subject and headline', '#template-subject'), ('bi-text-paragraph', 'The text', '#template-body'),
+                                        ('bi-person-badge', 'Personal details', '#tp-details-chips'), ('bi-chat-square-text', 'The closing words', '#template-closing'),
+                                        ('bi-image', 'A photo and files', '[data-ef]'), ('bi-link-45deg', 'A button with a link', '#template-cta-label'),
+                                        ('bi-palette', 'The design', '.tp-styles'), ('bi-whatsapp', 'Email, WhatsApp or both', '.tp-channel')] %}
+          <button type="button" class="tp-can-item" data-go="{{ target }}" style="--i:{{ loop.index0 }};"><i class="bi {{ icon }}"></i>{{ text }}</button>
+          {% endfor %}
+          {% if spec.switchable %}<button type="button" class="tp-can-item" data-go="#auto-box" style="--i:8;"><i class="bi bi-toggle-on"></i>Switch it off</button>{% endif %}
+          <button type="button" class="tp-can-item" data-go="#test-button" style="--i:9;"><i class="bi bi-send-check"></i>Send yourself a test</button>
+          <button type="button" class="tp-can-item is-reset" data-go="#tp-restore" style="--i:10;"><i class="bi bi-arrow-counterclockwise"></i>Restore the original</button>
+        </div>
       </div>
       {% if spec.key == "payment_reminder" %}
       <div class="tp-sub mb-2">Sent by itself once, after registering, to someone who still owes: one email for everything they owe. It is never repeated by itself; after three days without payment or answer, the dashboard suggests sending it again.</div>
@@ -145,7 +180,7 @@
 
       <div class="mt-3">
         <div class="form-label">Personal details — click to insert</div>
-        <div class="d-flex flex-wrap gap-2">
+        <div class="d-flex flex-wrap gap-2" id="tp-details-chips">
           {% for name, label, sample in extra_variables %}
           <button type="button" class="tp-var special" data-variable="{{ name }}" title="{{ label }} — for example “{{ sample }}”. Only in this email.">{{ "{" ~ name ~ "}" }}</button>
           {% endfor %}
@@ -187,8 +222,10 @@
         <button class="btn btn-berry rounded-pill px-4"><i class="bi bi-check2 me-1"></i>Save changes</button>
         <button type="button" class="btn btn-light border rounded-pill fw-semibold" id="test-button" {% if not smtp_ready %}disabled title="Email sending is not set up yet"{% endif %}><i class="bi bi-send me-1"></i>Send me a test</button>
         {% if current.customized %}
-        <button class="btn btn-light border rounded-pill fw-semibold text-danger ms-auto" formaction="/inbox/templates/auto/{{ spec.key }}/reset" formnovalidate
-                data-confirm="Go back to the original text of this email? Your version, its photo and its files are removed from it.">Restore the original</button>
+        <button class="btn btn-light border rounded-pill fw-semibold text-danger ms-auto" id="tp-restore" formaction="/inbox/templates/auto/{{ spec.key }}/reset" formnovalidate
+                data-confirm="Go back to the original text of this email? Your version, its photo and its files are removed from it."><i class="bi bi-arrow-counterclockwise me-1"></i>Restore the original</button>
+        {% else %}
+        <span class="tp-orig-note ms-auto" id="tp-restore"><i class="bi bi-check2-circle"></i>This is the original text. Once you change it, “Restore the original” brings it back.</span>
         {% endif %}
       </div>
       <div class="tp-warn mt-2" id="template-warning" role="alert"></div>
@@ -350,6 +387,20 @@
   });
 
   markStyle();
+
+  // “What you can change”: each one is shown at once, its fold opened, its field ready to type in.
+  document.querySelectorAll("[data-go]").forEach(chip => chip.addEventListener("click", () => {
+    const target = document.querySelector(chip.dataset.go);
+    if (!target) return;
+    const fold = target.closest("details");
+    if (fold) fold.open = true;
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    const box = target.matches("input, textarea, select, button") ? target : target;
+    box.classList.remove("tp-pulse");
+    void box.offsetWidth;
+    box.classList.add("tp-pulse");
+    if (target.matches("input, textarea")) window.setTimeout(() => target.focus({ preventScroll: true }), 400);
+  }));
 })();
 </script>
 
@@ -364,6 +415,18 @@
 <section class="tp-card mb-4">
   <div class="tp-title mb-1">Emails the system sends by itself</div>
   <div class="tp-sub mb-3">Open one to read it, change its text, add a photo or attach a file. Every email sent is kept in the candidate's discussion in the <a href="/inbox?filter=all">Inbox</a>.</div>
+  <div class="tp-can" id="tp-can">
+    <div class="tp-can-title"><i class="bi bi-magic"></i>In each message, you can</div>
+    <div class="tp-can-list">
+      {% for icon, text in [('bi-type', 'Change the subject and the headline'), ('bi-text-paragraph', 'Rewrite the text and the closing words'),
+                            ('bi-person-badge', 'Insert personal details: first name, program, date…'), ('bi-image', 'Add a photo'),
+                            ('bi-paperclip', 'Attach files'), ('bi-link-45deg', 'Add a button with a link'), ('bi-palette', 'Choose its design'),
+                            ('bi-whatsapp', 'Send it by email, WhatsApp or both'), ('bi-toggle-on', 'Switch it off, or on again'),
+                            ('bi-send-check', 'Send yourself a test'), ('bi-arrow-counterclockwise', 'Restore the original text at any time')] %}
+      <span class="tp-can-item {{ 'is-reset' if loop.last }}" style="--i:{{ loop.index0 }};"><i class="bi {{ icon }}"></i>{{ text }}</span>
+      {% endfor %}
+    </div>
+  </div>
 
   <div id="live-templates-auto" data-live-region>
     {% for group, items in groups.items() %}
@@ -371,7 +434,8 @@
     <div class="tp-grid">
       {% for item in items %}
       {% set template = item.template %}
-      <a class="tp-item {% if not template.sends_itself %}is-off{% endif %}" href="/inbox/templates?key={{ template.key }}">
+      <div class="tp-item-wrap {% if not template.sends_itself %}is-off{% endif %}">
+      <a class="tp-item" href="/inbox/templates?key={{ template.key }}">
         <div class="d-flex justify-content-between align-items-start gap-2">
           <span class="tp-item-name">{{ template.spec.name }}</span>
           <span class="tp-edit text-nowrap">Open <i class="bi bi-arrow-right"></i></span>
@@ -385,6 +449,14 @@
           {% if item.files %}<span class="tp-chip info"><i class="bi bi-paperclip"></i>{{ item.files }} file{{ "s" if item.files > 1 else "" }}</span>{% endif %}
         </div>
       </a>
+      {% if template.customized %}
+      <form method="post" action="/inbox/templates/auto/{{ template.key }}/reset" class="tp-reset"
+            data-confirm="Go back to the original text of this email? Your version, its photo and its files are removed from it.">
+        <input type="hidden" name="back" value="list">
+        <button class="tp-reset-btn"><i class="bi bi-arrow-counterclockwise"></i>Restore the original</button>
+      </form>
+      {% endif %}
+      </div>
       {% endfor %}
     </div>
     {% endfor %}

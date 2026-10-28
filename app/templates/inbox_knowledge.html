@@ -53,6 +53,57 @@
 
 {% include "_flash.html" %}
 
+<!-- ============ What the admin tells the assistants ============ -->
+<section class="kb-card mb-4 kb-facts" id="facts">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+    <div>
+      <div class="kb-title"><i class="bi bi-lightbulb-fill me-1" style="color:var(--gold-dark);"></i>Tell the assistants something</div>
+      <div class="kb-sub">Anything they should know, in any language: French, English, Arabic or Tunisian. Every assistant uses it (the answers to candidates, your assistant, Yasmine), even when the question comes in another language. In the assistant, “retiens que …” does the same.</div>
+    </div>
+    <span class="kb-chip admin">{{ facts | length }} <span>told</span></span>
+  </div>
+  <form method="post" action="/inbox/knowledge/fact" class="kb-fact-form mt-3">
+    <textarea class="form-control" name="text" rows="2" required placeholder="Le centre est fermé le 15 novembre · The certificate is sent one week after the last session · الدفع ممكن على ثلاث مراحل"></textarea>
+    <div class="d-flex gap-2 flex-wrap mt-2">
+      <select name="program_id" class="form-select form-select-sm" style="width:auto; border-radius:10px;" aria-label="About which program">
+        <option value="">About the centre (every program)</option>
+        {% for program in programs.values() %}<option value="{{ program.id }}" data-no-i18n>{{ program.name }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-berry btn-sm rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i>Teach it</button>
+    </div>
+  </form>
+  {% if facts %}
+  <div class="kb-fact-list mt-3">
+    {% for entry in facts %}
+    <div class="kb-fact" style="--i:{{ loop.index0 if loop.index0 < 12 else 12 }};">
+      <div class="kb-fact-text" dir="auto">{{ entry.content }}</div>
+      <div class="kb-meta">
+        <span class="kb-chip system">{{ programs[entry.program_id].name if entry.program_id in programs else 'The centre' }}</span>
+        <details class="kb-fact-edit"><summary class="kb-linkbtn">Change</summary>
+          <form method="post" action="/inbox/knowledge/fact" class="mt-2">
+            <input type="hidden" name="entry_id" value="{{ entry.id }}"><input type="hidden" name="program_id" value="{{ entry.program_id or '' }}">
+            <textarea class="form-control form-control-sm" name="text" rows="2" dir="auto">{{ entry.content }}</textarea>
+            <button class="btn btn-sm btn-berry rounded-pill px-3 mt-2">Save</button>
+          </form>
+        </details>
+        <form method="post" action="/inbox/knowledge/fact/{{ entry.id }}/delete" data-confirm="Forget this? The assistants no longer use it.">
+          <button class="kb-linkbtn danger">Forget</button></form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+<style>
+  .kb-facts { background:linear-gradient(135deg, #fff 0%, #fff 60%, var(--gold-subtle, #fff7e6) 100%); }
+  .kb-fact-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
+  .kb-fact { border:1px solid var(--border-color); border-radius:14px; padding:10px 12px; background:#fff; }
+  .kb-fact-text { font-size:.86rem; color:var(--ink-text); white-space:pre-wrap; overflow-wrap:anywhere; }
+  .kb-fact-edit summary { list-style:none; cursor:pointer; } .kb-fact-edit summary::-webkit-details-marker { display:none; }
+  @media (prefers-reduced-motion: no-preference) { .kb-fact { animation:kbIn .4s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 40ms); } }
+  @keyframes kbIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+</style>
+
 <div class="row g-4">
   <div class="col-xl-7">
     <!-- ============ What the admin taught ============ -->

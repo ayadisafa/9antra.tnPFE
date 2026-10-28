@@ -33,3 +33,11 @@ class PaymentProof(Base):
     decided_by = Column(String, nullable=True)
     decision_note = Column(Text, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
+    # What kind of proof it is, and what a cheque says (proof_reader.read).
+    kind = Column(String, nullable=True)                          # cheque | transfer | deposit | app | receipt
+    beneficiary = Column(String, nullable=True)                   # who it is made out to
+    drawer = Column(String, nullable=True)                        # who pays (the account holder)
+    cheque_number = Column(String, nullable=True, index=True)
+    amount_words = Column(Float, nullable=True)                   # the amount written in words
+    words_text = Column(String, nullable=True)                    # those words, as read
+    place = Column(String, nullable=True)

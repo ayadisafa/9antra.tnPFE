@@ -17,6 +17,7 @@ from app.services import auth, email_composer, email_threads, reminders
 from app.services.email_layout import STYLES
 from app.services.schedule_utils import local_now, utc_to_local
 from app.template_context import notification_context
+from app.services.ui_words import t as _t
 
 router = APIRouter(tags=["Reminders"])
 templates = Jinja2Templates(directory="app/templates", context_processors=[notification_context])
@@ -49,6 +50,9 @@ def reminders_page(request: Request, db: Session = Depends(get_db)):
                        for person in db.query(Candidate).order_by(Candidate.full_name).all() if person.email],
             "classes": db.query(ClassGroup).filter(ClassGroup.status != ClassStatus.COMPLETED).order_by(ClassGroup.name).all(),
             "programs": db.query(Program).order_by(Program.name).all(),
+            "professors": [person for person in db.query(__import__("app.models", fromlist=["Professor"]).Professor).order_by("name").all()
+                           if person.email and not (person.name or "").startswith("À nommer")],
+            "repeats": reminders.REPEATS,
             "ideas": reminders.IDEAS,
             "chosen": chosen,
             "styles": STYLES,
@@ -89,9 +93,16 @@ def preview(payload: Preview, db: Session = Depends(get_db)):
 
 @router.post("/reminders/create")
 def create(request: Request, audience: str = Form(""), to_candidate: str = Form(""), to_class: str = Form(""), to_program: str = Form(""),
-           subject: str = Form(""), title: str = Form(""), body: str = Form(""), style: str = Form("brand"),
-           when: str = Form("later"), date: str = Form(""), time: str = Form(""), channel: str = Form("email"), db: Session = Depends(get_db)):
-    target = {"candidate": to_candidate, "class": to_class, "program": to_program}.get(audience, "")
+           to_professor: str = Form(""), subject: str = Form(""), title: str = Form(""), body: str = Form(""), style: str = Form("brand"),
+           when: str = Form("later"), date: str = Form(""), time: str = Form(""), channel: str = Form("email"),
+           repeat: str = Form("once"), until: str = Form(""), db: Session = Depends(get_db)):
+    target = {"candidate": to_candidate, "class": to_class, "program": to_program, "professor": to_professor}.get(audience, "")
+    stop = None
+    if until.strip() and repeat != "once":
+        try:
+            stop = reminders.to_utc(datetime.strptime(until.strip(), "%Y-%m-%d").replace(hour=23, minute=59))
+        except ValueError:
+            return _back(error="Choose the last day it goes, or leave it empty.", anchor="#new")
     unknown = email_composer.unknown_variables(subject, title, body)
     if unknown:
         return _back(error="Unknown variable: " + ", ".join("{" + name + "}" for name in unknown) + ".", anchor="#new")
@@ -107,12 +118,15 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
     user = auth.current(request)
     try:
         reminder = reminders.create(db, audience=audience, audience_id=target or None, subject=subject, title=title, body=body,
-                                    style=style, send_at=send_at, by=getattr(user, "name", None), channel=channel)
+                                    style=style, send_at=send_at, by=getattr(user, "name", None), channel=channel, repeat=repeat, until=stop)
     except ValueError as problem:
         return _back(error=str(problem), anchor="#new")
+    if reminder.repeat == "absence":
+        return _back(notice=_t("Saved: each candidate of {0} marked absent from now on receives it, once per absence.", reminder.audience_label))
     people = len(reminders.recipients(db, reminder.audience, reminder.audience_id))
-    moment = "within a minute" if send_at is None else "on " + utc_to_local(reminder.send_at).strftime("%A %d %B at %H:%M")
-    return _back(notice=f"The reminder goes {moment} to {people} candidate{'s' if people != 1 else ''} ({reminder.audience_label}).")
+    moment = _t("within a minute") if send_at is None else utc_to_local(reminder.send_at).strftime("%d/%m %H:%M")
+    rhythm = {"weekly": _t("then every week"), "monthly": _t("then every month")}.get(reminder.repeat, "")
+    return _back(notice=_t("The reminder goes {0} {1} to {2} ({3}).", moment, rhythm, people, reminder.audience_label).replace("  ", " "))
 
 
 def _one(db: Session, reminder_id: str) -> AdminReminder:
@@ -126,7 +140,7 @@ def _one(db: Session, reminder_id: str) -> AdminReminder:
 def cancel(reminder_id: str, db: Session = Depends(get_db)):
     if not reminders.cancel(db, _one(db, reminder_id)):
         return _back(error="This reminder has already gone.")
-    return _back(notice="The reminder was cancelled. Nothing was sent.")
+    return _back(notice="The reminder was stopped. Nothing more is sent.")
 
 
 @router.post("/reminders/{reminder_id}/send-now")

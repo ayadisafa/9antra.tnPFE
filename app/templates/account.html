@@ -35,7 +35,8 @@
 
   <div class="col-lg-7">
     <section class="ui-card">
-      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-lock"></i>Change my password</div></div></div>
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-lock"></i>Change my password</div>
+        <div class="ui-card-sub">You forgot the current one? <a href="/login/forgot?email={{ me.email | urlencode }}">Get a link by email to choose a new one</a>.</div></div></div>
       <form method="post" action="/account/password" autocomplete="off">
         <div class="row g-3">
           <div class="col-12 ui-field"><label for="acc-current">Current password</label><input class="form-control" id="acc-current" name="current" type="password" required autocomplete="current-password"></div>

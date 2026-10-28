@@ -218,12 +218,35 @@ def check_week(class_group: ClassGroup, week_number: int) -> None:
         raise UploadRefused("This week is not part of the class.")
 
 
-def save_upload(db: Session, class_group: ClassGroup, week_number: int, upload, note: str = "") -> ClassMaterial:
-    """Keep one uploaded file (a Starlette UploadFile) and read what it says.
+def save_upload(db: Session, class_group: ClassGroup, week_number: int, upload, note: str = "", by: str | None = None) -> ClassMaterial:
+    """Keep one uploaded file (a Starlette UploadFile), read what it says, and check it is part of the class's program
+    (program_match): when it does not look like it, it waits for the admin (`review_status` "waiting").
 
     The file is copied piece by piece, so a long video never sits in memory.
     """
     check_week(class_group, week_number)
+    existing = db.query(ClassMaterial).filter(
+        ClassMaterial.class_group_id == class_group.id, ClassMaterial.week_number == week_number,
+    ).count()
+    if existing >= MAX_FILES_PER_WEEK:
+        raise UploadRefused(f"This week already has {MAX_FILES_PER_WEEK} files. Remove one first.")
+    stored = store_file(upload)
+    material = ClassMaterial(
+        class_group_id=class_group.id, week_number=week_number,
+        filename=stored["filename"], stored_name=stored["stored"], content_type=stored["content_type"], size=stored["size"],
+        kind=stored["kind"], note=" ".join((note or "").split())[:4000] or None,
+        learned_text=stored["text"] or None, learned_status=stored["status"], uploaded_by=by,
+    )
+    review(db, material, class_group.program_id)
+    db.add(material)
+    get_week(db, class_group, week_number)
+    db.commit()
+    return material
+
+
+def store_file(upload) -> dict:
+    """Copy an uploaded file to the class files folder and read it: {filename, stored, kind, content_type, size, text, status}.
+    Raises UploadRefused with a message for the person who added it."""
     filename = safe_name(upload.filename, fallback="file")
     extension = Path(filename).suffix.lower()
     if extension not in FILE_TYPES:
@@ -232,12 +255,6 @@ def save_upload(db: Session, class_group: ClassGroup, week_number: int, upload, 
             "Use PDF, Word, PowerPoint, text, a photo, a video or a recording."
         )
     kind, content_type = FILE_TYPES[extension]
-    existing = db.query(ClassMaterial).filter(
-        ClassMaterial.class_group_id == class_group.id, ClassMaterial.week_number == week_number,
-    ).count()
-    if existing >= MAX_FILES_PER_WEEK:
-        raise UploadRefused(f"This week already has {MAX_FILES_PER_WEEK} files. Remove one first.")
-
     limit = _LIMITS[kind]
     stored = f"{uuid.uuid4().hex}{extension}"
     path = storage_dir() / stored
@@ -264,13 +281,73 @@ def save_upload(db: Session, class_group: ClassGroup, week_number: int, upload, 
         raise UploadRefused(f"“{filename}” could not be saved on the server.") from exc
 
     text, status = read_file(path, extension, kind)
-    material = ClassMaterial(
-        class_group_id=class_group.id, week_number=week_number,
-        filename=filename, stored_name=stored, content_type=content_type, size=size, kind=kind,
-        note=" ".join((note or "").split())[:4000] or None,
-        learned_text=text or None, learned_status=status,
-    )
-    db.add(material)
+    return {"filename": filename, "stored": stored, "kind": kind, "content_type": content_type, "size": size, "text": text, "status": status}
+
+
+# ------------------------------------------------------------------
+# Part of the program? (program_match)
+# ------------------------------------------------------------------
+
+def in_use():
+    """The filter of the course files that are used: accepted, or never in doubt."""
+    return (ClassMaterial.review_status.is_(None)) | (ClassMaterial.review_status == "ok")
+
+
+def review(db: Session, row, own_program_id: str | None) -> dict:
+    """Check a course file (or a program's file) against its program; it waits for the admin when it does not look
+    like part of it. Returns the verdict."""
+    import json
+
+    from app.services import program_match
+
+    verdict = program_match.judge(db, own_program_id=own_program_id, text=row.learned_text or "", filename=row.filename or "",
+                                  note=row.note or "")
+    row.fit, row.fit_program_id = verdict["fit"], verdict["program_id"]
+    row.fit_words = json.dumps(verdict["words"], ensure_ascii=False)
+    row.review_status = "waiting" if verdict["fit"] in ("other", "off") and own_program_id else "ok"
+    return verdict
+
+
+def review_view(db: Session, row, own_program) -> dict:
+    """What the page says of a file's check: {"waiting", "fit", "text", "program" (the one it looks like part of), "targets"}."""
+    import json
+
+    from app.models import Program
+    from app.services import program_match
+    from app.services.ui_words import t as _t
+
+    other = db.get(Program, row.fit_program_id) if row.fit_program_id and row.fit_program_id != getattr(own_program, "id", None) else None
+    try:
+        words = json.loads(row.fit_words or "[]")
+    except ValueError:
+        words = []
+    text = program_match.said({"fit": row.fit, "words": words}, getattr(own_program, "name", "") or "", other.name if other else "")
+    targets = []
+    if row.review_status == "waiting" and other is not None:
+        for group in db.query(ClassGroup).filter(ClassGroup.program_id == other.id).all():
+            if getattr(group.status, "value", group.status) != "completed":
+                targets.append({"value": f"class:{group.id}:{max(1, group.current_week or 1)}",
+                                "label": _t("{0}, week {1}", group.name, max(1, group.current_week or 1))})
+        targets.append({"value": f"program:{other.id}", "label": _t("The files of the program {0}", other.name)})
+    return {"waiting": row.review_status == "waiting", "fit": row.fit, "text": text if row.fit else "", "program": other,
+            "targets": targets, "reviewed_by": row.reviewed_by}
+
+
+def accept(db: Session, material: ClassMaterial, by: str) -> None:
+    from datetime import datetime
+
+    material.review_status, material.reviewed_by, material.reviewed_at = "ok", by, datetime.utcnow()
+    db.commit()
+
+
+def move(db: Session, material: ClassMaterial, class_group: ClassGroup, week_number: int, by: str) -> ClassMaterial:
+    """To another class (and week): it is part of that class's course from now on."""
+    from datetime import datetime
+
+    check_week(class_group, week_number)
+    material.class_group_id, material.week_number = class_group.id, week_number
+    material.review_status, material.reviewed_by, material.reviewed_at = "ok", by, datetime.utcnow()
+    material.fit_program_id = class_group.program_id
     get_week(db, class_group, week_number)
     db.commit()
     return material
@@ -333,7 +410,7 @@ def sources(db: Session, class_id: str, week_number: int) -> list[dict]:
     found = []
     materials = (
         db.query(ClassMaterial)
-        .filter(ClassMaterial.class_group_id == class_id, ClassMaterial.week_number == week_number)
+        .filter(ClassMaterial.class_group_id == class_id, ClassMaterial.week_number == week_number, in_use())
         .order_by(ClassMaterial.created_at.asc())
         .all()
     )

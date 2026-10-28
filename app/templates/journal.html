@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}The journal · 9antra{% endblock %}
+{% block page_title %}The journal{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .jr-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px; }
+  .jr-filter { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:6px 12px; font-size:.8rem; font-weight:700; color:#5b5670; text-decoration:none; transition:border-color .15s ease, color .15s ease, transform .15s ease; }
+  .jr-filter:hover { border-color:var(--primary-berry); color:var(--primary-berry); transform:translateY(-1px); }
+  .jr-filter.is-on { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .jr-grid { display:grid; grid-template-columns:minmax(0, 1.6fr) minmax(0, 1fr); gap:16px; align-items:start; }
+  .jr-list { display:grid; gap:10px; }
+  .jr-item { display:grid; grid-template-columns:44px minmax(0, 1fr); gap:12px; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:14px 16px; transition:border-color .15s ease, box-shadow .15s ease, transform .15s ease; }
+  .jr-item:hover { border-color:#dccfe9; box-shadow:var(--shadow-soft); transform:translateY(-2px); }
+  .jr-ico { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.15rem; }
+  .jr-item h3 { font-size:.95rem; font-weight:800; margin:0; } .jr-item h3 a { color:var(--ink-text); text-decoration:none; } .jr-item h3 a:hover { color:var(--primary-berry); }
+  .jr-meta { font-size:.74rem; color:var(--muted); margin-top:2px; } .jr-sum { font-size:.83rem; color:#4a445e; margin-top:6px; line-height:1.5; }
+  .jr-terms { display:flex; gap:4px; flex-wrap:wrap; margin-top:6px; } .jr-terms span { font-size:.68rem; font-weight:700; background:#f3eff9; border-radius:999px; padding:1px 8px; color:#5b5470; }
+  .jr-side { display:grid; gap:12px; position:sticky; top:calc(var(--stick-top, 80px) + 8px); }
+  .jr-box { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px; }
+  .jr-box b.jr-h { display:flex; gap:8px; align-items:center; font-size:.92rem; margin-bottom:8px; } .jr-box b.jr-h i { color:var(--primary-berry); }
+  .jr-sug { display:flex; gap:8px; align-items:flex-start; font-size:.8rem; color:#4a445e; text-decoration:none; padding:8px 10px; border-radius:12px; background:#f7f5fb; margin-bottom:6px; transition:background .15s ease; }
+  .jr-sug:hover { background:var(--berry-subtle); } .jr-sug i { color:var(--primary-berry); margin-top:2px; } .jr-sug.is-new i { color:#16a34a; }
+  .jr-box textarea, .jr-box input, .jr-box select { width:100%; border:1px solid var(--border-color); border-radius:12px; padding:7px 10px; font-size:.82rem; margin-bottom:6px; }
+  @media (prefers-reduced-motion: no-preference) { .jr-item { animation:jrIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 45ms); } }
+  @keyframes jrIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @media (max-width: 991px) { .jr-grid { grid-template-columns:1fr; } .jr-side { position:static; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>The journal</h2>
+    <p>What is new in each field you teach, briefly, from public news sites{% if last %} (<span>read</span> {{ last.strftime('%d/%m %H:%M') }}, <span>again every six hours</span>){% endif %}, and what it suggests for your programs. Open an article to read it on its site.</p>
+  </div>
+  <form method="post" action="/journal/read" class="ui-actions"><button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Read the news now</button></form>
+</div>
+
+<nav class="jr-filters" aria-label="Fields">
+  <a class="jr-filter {{ 'is-on' if not domain }}" href="/journal"><i class="bi bi-grid"></i>Everything</a>
+  {% for key, info in domains.items() %}<a class="jr-filter {{ 'is-on' if domain == key }}" href="/journal?domain={{ key }}"><i class="bi {{ info[1] }}"></i>{{ info[0] }}</a>{% endfor %}
+</nav>
+
+<div class="jr-grid">
+  <div class="jr-list" id="jr-list">
+    {% for row in items %}
+    {% set info = domains.get(row.domain, ('', 'bi-newspaper')) %}
+    <article class="jr-item" style="--i:{{ loop.index0 if loop.index0 < 15 else 15 }};">
+      <span class="jr-ico"><i class="bi {{ info[1] }}"></i></span>
+      <div style="min-width:0;">
+        <h3>{% if row.url %}<a href="{{ row.url }}" target="_blank" rel="noopener noreferrer" data-no-i18n>{{ row.title }}</a>{% else %}<span data-no-i18n>{{ row.title }}</span>{% endif %}</h3>
+        <div class="jr-meta"><span>{{ info[0] }}</span> · <span data-no-i18n>{{ row.source }}</span>{% if row.published_at %} · {{ row.published_at.strftime('%d/%m/%Y') }}{% endif %}</div>
+        {% if row.summary %}<div class="jr-sum" data-no-i18n>{{ row.summary }}</div>{% endif %}
+        {% set terms = row.term_list() %}
+        {% if terms %}<div class="jr-terms" data-no-i18n>{% for term in terms[:8] %}<span>{{ term }}</span>{% endfor %}</div>{% endif %}
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-newspaper"></i><strong>No article yet</strong>The news is read every six hours. “Read the news now” reads it at once.</div>
+    {% endfor %}
+  </div>
+
+  <aside class="jr-side">
+    <div class="jr-box">
+      <b class="jr-h"><i class="bi bi-lightbulb"></i>What it suggests</b>
+      {% for item in suggestions %}
+      <a class="jr-sug {{ 'is-new' if not item.taught }}" href="/programs/expertise?open={{ item.program.id }}#ex-{{ item.program.id }}"><i class="bi {{ 'bi-plus-circle' if not item.taught else 'bi-megaphone' }}"></i><span>{{ item.text }}</span></a>
+      {% else %}
+      <div class="ui-card-sub">Suggestions come once a field's articles of the last weeks speak of the same thing several times.</div>
+      {% endfor %}
+    </div>
+    <form method="post" action="/journal/paste" class="jr-box">
+      <b class="jr-h"><i class="bi bi-linkedin"></i>Add a LinkedIn post or an article</b>
+      <div class="ui-card-sub mb-2">LinkedIn lets no application read its posts (only your own page's, when its access is set in Settings): copy the text here. It counts in the suggestions.</div>
+      <textarea name="text" rows="4" required placeholder="The text of the post or the article"></textarea>
+      <input name="url" inputmode="url" placeholder="Its link (optional)">
+      <select name="domain" aria-label="Field"><option value="">Its field: found from its words</option>{% for key, info in domains.items() %}<option value="{{ key }}">{{ info[0] }}</option>{% endfor %}</select>
+      <button class="ui-btn sm primary"><i class="bi bi-plus-lg"></i>Keep it in the journal</button>
+    </form>
+  </aside>
+</div>
+{% endblock %}

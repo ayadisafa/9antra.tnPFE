@@ -51,6 +51,7 @@ from app.api.friend import router as friend_router
 from app.api.team import router as team_router
 from app.api.videos import router as videos_router
 from app.api.proofs import router as proofs_router
+from app.api.program_files import router as program_files_router
 from app.api.sms import router as sms_router
 from app.services.auth import AccessGate, SecurityHeaders
 from app.services.realtime import broadcaster, install_session_hooks
@@ -192,6 +193,7 @@ app.include_router(teacher_router)
 app.include_router(realtime_router)
 app.include_router(settings_router)
 app.include_router(proofs_router)      # payment proofs: /payments/proofs/..., /candidate/{id}/proof
+app.include_router(program_files_router)   # /programs/{id}/files, /programs/files/...: before program_router's /programs/{program_id}
 app.include_router(team_router)        # /inbox/team, /account/messages: the chat with the professors and the team
 app.include_router(inbox_router)
 app.include_router(course_router)

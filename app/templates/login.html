@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>{{ ("Set up " if mode == "setup" else "Sign in · ") ~ (app_name or "9antra") }}</title>
+  <title>{{ (t("Set up") if mode == "setup" else t("Sign in")) ~ " · " ~ (app_name or "9antra") }}</title>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
@@ -13,11 +13,11 @@
   {% if theme_css %}<style>{{ theme_css | safe }}</style>{% endif %}
   <style>
     * { box-sizing:border-box; }
-    body { margin:0; min-height:100vh; font-family:'Plus Jakarta Sans', 'Segoe UI', sans-serif; color:var(--ink-text); background:var(--canvas); display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); }
+    body { margin:0; min-height:100vh; font-family:'Plus Jakarta Sans', 'Segoe UI', Tahoma, sans-serif; color:var(--ink-text); background:var(--canvas); display:grid; grid-template-columns:minmax(0, 1.05fr) minmax(0, 1fr); }
     .side { position:relative; overflow:hidden; padding:48px; color:#fff; display:flex; flex-direction:column; justify-content:space-between; background:linear-gradient(160deg, var(--ink) 0%, var(--ink-2) 55%, var(--ink-3) 100%); }
     .side::before, .side::after { content:""; position:absolute; border-radius:50%; filter:blur(70px); pointer-events:none; }
-    .side::before { width:320px; height:320px; background:var(--primary-berry); top:-90px; right:-100px; opacity:.45; }
-    .side::after { width:300px; height:300px; background:var(--accent-gold-dark); bottom:-80px; left:-110px; opacity:.28; }
+    .side::before { width:320px; height:320px; background:var(--primary-berry); top:-90px; inset-inline-end:-100px; opacity:.45; }
+    .side::after { width:300px; height:300px; background:var(--accent-gold-dark); bottom:-80px; inset-inline-start:-110px; opacity:.28; }
     .side > * { position:relative; z-index:1; }
     .brand { display:flex; align-items:center; gap:12px; font-weight:800; font-size:1.25rem; }
     .brand span { width:44px; height:44px; border-radius:14px; display:grid; place-items:center; font-size:1.25rem; background:linear-gradient(135deg, var(--accent-gold-dark), var(--primary-berry)); box-shadow:0 10px 22px -8px rgba(0,0,0,.6); }
@@ -27,23 +27,44 @@
     .points li { display:flex; gap:12px; align-items:center; color:rgba(255,255,255,.86); font-size:.92rem; font-weight:600; }
     .points i { width:34px; height:34px; border-radius:11px; background:rgba(255,255,255,.12); display:grid; place-items:center; flex:none; }
     .side small { color:rgba(255,255,255,.45); font-size:.78rem; }
-    .main { display:grid; place-items:center; padding:32px 20px; }
+    .main { display:grid; place-items:center; padding:32px 20px; position:relative; }
+    .langs { position:absolute; top:18px; inset-inline-end:20px; display:flex; gap:4px; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:4px; }
+    .langs a { font-size:.76rem; font-weight:800; color:#6b6480; text-decoration:none; padding:5px 11px; border-radius:999px; }
+    .langs a.is-on { background:var(--primary-berry); color:#fff; } .langs a:hover:not(.is-on) { background:var(--berry-subtle); color:var(--primary-berry); }
     .card { width:100%; max-width:420px; background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:34px 32px; box-shadow:0 30px 60px -36px rgba(36,26,56,.45); }
     .card h2 { font-size:1.45rem; font-weight:800; margin:0 0 6px; letter-spacing:-.01em; }
     .card .lead { color:var(--muted); font-size:.9rem; margin:0 0 22px; line-height:1.5; }
+    .card-ico { width:54px; height:54px; border-radius:17px; display:grid; place-items:center; font-size:1.45rem; color:#fff; background:linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark)); margin-bottom:14px; box-shadow:0 14px 26px -14px var(--primary-berry); }
     label { display:block; font-size:.78rem; font-weight:700; color:#5b5670; margin:14px 0 5px; }
     .field { position:relative; }
-    .field i { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:#a79fbd; }
-    input { width:100%; border:1.5px solid var(--border-color); border-radius:13px; padding:12px 14px 12px 40px; font:inherit; font-size:.93rem; color:var(--ink-text); background:#fff; }
+    .field i { position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%); color:#a79fbd; }
+    input { width:100%; border:1.5px solid var(--border-color); border-radius:13px; padding:12px 14px; padding-inline-start:40px; font:inherit; font-size:.93rem; color:var(--ink-text); background:#fff; }
     input:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 4px color-mix(in srgb, var(--primary-berry) 14%, transparent); }
     .hint { font-size:.74rem; color:var(--muted); margin-top:5px; }
-    button { margin-top:22px; width:100%; border:0; border-radius:13px; padding:13px 18px; font:inherit; font-weight:800; font-size:.95rem; color:#fff; background:var(--primary-berry); cursor:pointer; transition:background .15s ease, transform .1s ease; }
-    button:hover { background:var(--berry-dark); }
+    button, .btn { display:block; text-align:center; text-decoration:none; margin-top:22px; width:100%; border:0; border-radius:13px; padding:13px 18px; font:inherit; font-weight:800; font-size:.95rem; color:#fff; background:var(--primary-berry); cursor:pointer; transition:background .15s ease, transform .1s ease; }
+    button:hover, .btn:hover { background:var(--berry-dark); }
     button:active { transform:scale(.99); }
-    button:focus-visible { outline:2px solid var(--primary-berry); outline-offset:3px; }
+    button:focus-visible, .btn:focus-visible { outline:2px solid var(--primary-berry); outline-offset:3px; }
     .error { background:#fff1f2; color:#9f1239; border-radius:12px; padding:11px 13px; font-size:.86rem; font-weight:600; margin-bottom:6px; display:flex; gap:8px; }
-    .foot { margin-top:18px; font-size:.78rem; color:var(--muted); text-align:center; line-height:1.5; }
-    @media (max-width: 860px) { body { grid-template-columns:1fr; } .side { display:none; } }
+    .done { background:#ecfdf3; color:#166534; border-radius:12px; padding:11px 13px; font-size:.86rem; font-weight:600; margin-bottom:6px; display:flex; gap:8px; }
+    .foot { margin-top:18px; font-size:.8rem; color:var(--muted); text-align:center; line-height:1.5; }
+    .foot a { color:var(--primary-berry); font-weight:800; text-decoration:none; } .foot a:hover { text-decoration:underline; }
+    .row-link { display:flex; justify-content:flex-end; margin-top:8px; } .row-link a { font-size:.8rem; font-weight:700; color:var(--primary-berry); text-decoration:none; } .row-link a:hover { text-decoration:underline; }
+    .mail { position:relative; width:84px; height:64px; margin:4px auto 18px; }
+    .mail span { position:absolute; inset:0; border-radius:12px; background:linear-gradient(135deg, var(--primary-berry), var(--accent-gold-dark)); }
+    .mail span::after { content:""; position:absolute; inset:0; border-radius:12px; background:linear-gradient(to bottom right, transparent 49%, rgba(255,255,255,.35) 50%, transparent 51%), linear-gradient(to bottom left, transparent 49%, rgba(255,255,255,.35) 50%, transparent 51%); }
+    .mail b { position:absolute; top:-10px; inset-inline-end:-10px; width:28px; height:28px; border-radius:50%; background:#22c55e; color:#fff; display:grid; place-items:center; font-size:.9rem; border:3px solid #fff; }
+    @media (prefers-reduced-motion: no-preference) {
+      .card { animation:cardIn .5s cubic-bezier(.2,.8,.2,1) both; }
+      .mail { animation:fly 2.6s ease-in-out infinite; } .mail b { animation:pop .5s .4s cubic-bezier(.3,1.6,.5,1) both; }
+      .side::before { animation:drift 14s ease-in-out infinite alternate; } .side::after { animation:drift 18s ease-in-out infinite alternate-reverse; }
+      .points li { animation:cardIn .5s cubic-bezier(.2,.8,.2,1) both; } .points li:nth-child(2) { animation-delay:.08s; } .points li:nth-child(3) { animation-delay:.16s; }
+    }
+    @keyframes cardIn { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
+    @keyframes fly { 50% { transform:translateY(-8px) rotate(-3deg); } }
+    @keyframes pop { from { transform:scale(0); } to { transform:scale(1); } }
+    @keyframes drift { to { transform:translate(-40px, 30px) scale(1.15); } }
+    @media (max-width: 860px) { body { grid-template-columns:1fr; } .side { display:none; } .main { padding-top:72px; } }
     @media (prefers-reduced-motion: reduce) { button { transition:none; } }
   </style>
 </head>
@@ -51,49 +72,111 @@
   <section class="side" aria-hidden="true">
     <div class="brand"><img src="/static/brand/icon-192.png" alt="" width="46" height="46" style="border-radius:50%; background:#fff;" data-fallback="🎓" onerror="this.outerHTML='<span>'+this.dataset.fallback+'</span>'">{{ app_name or '9antra' }}</div>
     <div>
-      <h1>{{ "Welcome. Let's set up your training centre." if mode == "setup" else "Your training centre, in one place." }}</h1>
-      <p>Candidates, payments, classes, courses and emails, with the next thing to do always in front of you.</p>
+      <h1>{{ t("Welcome. Let's set up your training centre.") if mode == "setup" else t("Your training centre, in one place.") }}</h1>
+      <p>{{ t("Candidates, payments, classes, courses and emails, with the next thing to do always in front of you.") }}</p>
       <ul class="points">
-        <li><i class="bi bi-shield-lock"></i>Only people with an account can open the application</li>
-        <li><i class="bi bi-person-badge"></i>Each professor sees only their own classes</li>
-        <li><i class="bi bi-link-45deg"></i>Candidates answer their questions with a private link, no account needed</li>
+        <li><i class="bi bi-shield-lock"></i>{{ t("Only people with an account can open the application") }}</li>
+        <li><i class="bi bi-person-badge"></i>{{ t("Each professor sees only their own classes") }}</li>
+        <li><i class="bi bi-link-45deg"></i>{{ t("Candidates answer their questions with a private link, no account needed") }}</li>
       </ul>
     </div>
-    <small>{{ app_name or '9antra' }} · training management</small>
+    <small>{{ app_name or '9antra' }} · {{ t("training management") }}</small>
   </section>
 
   <main class="main">
+    <nav class="langs" aria-label="{{ t('Language') }}">
+      {% for code, label in [("en", "English"), ("fr", "Français"), ("ar", "العربية")] %}
+      <a href="?lang={{ code }}{{ '&next=' ~ (next | urlencode) if next }}" class="{{ 'is-on' if lang == code }}" lang="{{ code }}">{{ label }}</a>
+      {% endfor %}
+    </nav>
     {% if mode == "setup" %}
     <form class="card" method="post" action="/setup" autocomplete="off">
-      <h2>Create the admin account</h2>
-      <p class="lead">This is done once. The account you create here can see and change everything, and can give professors their own access.</p>
-      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>{% endif %}
-      <label for="name">Your name</label>
+      <h2>{{ t("Create the admin account") }}</h2>
+      <p class="lead">{{ t("This is done once. The account you create here can see and change everything, and can give professors their own access.") }}</p>
+      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ t(error) }}</div>{% endif %}
+      <label for="name">{{ t("Your name") }}</label>
       <div class="field"><i class="bi bi-person"></i><input id="name" name="name" value="{{ values.name or '' }}" required autofocus></div>
-      <label for="email">Email address</label>
+      <label for="email">{{ t("Email address") }}</label>
       <div class="field"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" value="{{ values.email or '' }}" required autocomplete="username"></div>
-      <div class="hint">You will sign in with it.</div>
-      <label for="password">Password</label>
+      <div class="hint">{{ t("You will sign in with it.") }}</div>
+      <label for="password">{{ t("Password") }}</label>
       <div class="field"><i class="bi bi-lock"></i><input id="password" name="password" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
-      <div class="hint">At least {{ min_password }} characters.</div>
-      <label for="confirmation">The same password again</label>
+      <div class="hint">{{ t("At least 8 characters.") }}</div>
+      <label for="confirmation">{{ t("The same password again") }}</label>
       <div class="field"><i class="bi bi-lock"></i><input id="confirmation" name="confirmation" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
-      <button type="submit">Create my account and enter</button>
+      <button type="submit">{{ t("Create my account and enter") }}</button>
     </form>
+
+    {% elif mode == "forgot" %}
+    <form class="card" method="post" action="/login/forgot">
+      <div class="card-ico"><i class="bi bi-key"></i></div>
+      <h2>{{ t("Forgot your password?") }}</h2>
+      <p class="lead">{{ t("Write the email address you sign in with. If it has an account, a link to choose a new password is sent to it, valid for one hour.") }}</p>
+      <label for="email">{{ t("Email address") }}</label>
+      <div class="field"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" value="{{ values.email or '' }}" required autofocus autocomplete="username"></div>
+      <button type="submit">{{ t("Send me the link") }}</button>
+      <div class="foot"><a href="/login">{{ t("Back to sign in") }}</a></div>
+    </form>
+
+    {% elif mode == "forgot_sent" %}
+    <div class="card">
+      {% if smtp_ready %}
+      <div class="mail" aria-hidden="true"><span></span><b><i class="bi bi-check-lg"></i></b></div>
+      <h2>{{ t("Look in your mailbox") }}</h2>
+      <p class="lead">{{ t("If this address has an account, an email is on its way with a link to choose a new password. It is valid for one hour and works once. Nothing came? Look in the spam folder, or ask the admin.") }}</p>
+      {% else %}
+      <h2>{{ t("No email can leave yet") }}</h2>
+      <div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ t("Email sending is not set up in this application. Ask the admin to give you a new password from the Professors page.") }}</div>
+      {% endif %}
+      <a class="btn" href="/login">{{ t("Back to sign in") }}</a>
+    </div>
+
+    {% elif mode == "reset" %}
+    <form class="card" method="post" action="/login/reset/{{ token }}">
+      <div class="card-ico"><i class="bi bi-shield-lock"></i></div>
+      <h2>{{ t("Choose a new password") }}</h2>
+      <p class="lead"><b dir="ltr">{{ values.email }}</b> · {{ t("Every other browser signed in with this account is signed out.") }}</p>
+      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ t(error) }}</div>{% endif %}
+      <label for="password">{{ t("New password") }}</label>
+      <div class="field"><i class="bi bi-lock"></i><input id="password" name="password" type="password" minlength="{{ min_password }}" required autofocus autocomplete="new-password"></div>
+      <div class="hint">{{ t("At least 8 characters.") }}</div>
+      <label for="confirmation">{{ t("The same password again") }}</label>
+      <div class="field"><i class="bi bi-lock"></i><input id="confirmation" name="confirmation" type="password" minlength="{{ min_password }}" required autocomplete="new-password"></div>
+      <button type="submit">{{ t("Save my new password") }}</button>
+    </form>
+
+    {% elif mode == "reset_bad" %}
+    <div class="card">
+      <div class="card-ico"><i class="bi bi-hourglass-bottom"></i></div>
+      <h2>{{ t("This link no longer works") }}</h2>
+      <p class="lead">{{ t("It was used already, or it is more than one hour old. Ask for a new one.") }}</p>
+      <a class="btn" href="/login/forgot">{{ t("Ask for a new link") }}</a>
+      <div class="foot"><a href="/login">{{ t("Back to sign in") }}</a></div>
+    </div>
+
     {% else %}
     <form class="card" method="post" action="/login">
-      <h2>Sign in</h2>
-      <p class="lead">Admin and professors sign in here.</p>
-      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ error }}</div>{% endif %}
+      <h2>{{ t("Sign in") }}</h2>
+      <p class="lead">{{ t("Admin and professors sign in here.") }}</p>
+      {% if changed %}<div class="done" role="status"><i class="bi bi-check-circle"></i>{{ t("Your password was changed. Sign in with it.") }}</div>{% endif %}
+      {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ t(error) }}</div>{% endif %}
       <input type="hidden" name="next" value="{{ next }}" style="display:none;">
-      <label for="email">Email address</label>
+      <label for="email">{{ t("Email address") }}</label>
       <div class="field"><i class="bi bi-envelope"></i><input id="email" name="email" type="email" value="{{ values.email or '' }}" required autofocus autocomplete="username"></div>
-      <label for="password">Password</label>
+      <label for="password">{{ t("Password") }}</label>
       <div class="field"><i class="bi bi-lock"></i><input id="password" name="password" type="password" required autocomplete="current-password"></div>
-      <button type="submit">Sign in</button>
-      <div class="foot">Forgot your password? The admin can give you a new one from the Professors page.</div>
+      <div class="row-link"><a href="/login/forgot" id="forgot-link">{{ t("Forgot your password?") }}</a></div>
+      <button type="submit">{{ t("Sign in") }}</button>
+      <div class="foot">{{ t("The link to choose a new password comes by email. The admin can also give you a new one from the Professors page.") }}</div>
     </form>
     {% endif %}
   </main>
+  <script>
+    // The email typed on the sign-in page goes with the link to the "forgot" page.
+    (() => {
+      const link = document.getElementById("forgot-link"), field = document.getElementById("email");
+      if (link && field) link.addEventListener("click", () => { if (field.value) link.href = "/login/forgot?email=" + encodeURIComponent(field.value); });
+    })();
+  </script>
 </body>
 </html>

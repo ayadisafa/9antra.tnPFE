@@ -518,9 +518,9 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
     AutoEmail(
         key="weekly_questions", group="Quiz",
         name="Weekly questions",
-        when="Sent to each candidate of a class with their questions about the week's course: when you "
-             "send them from the class's course page, or by itself after the week's session for classes "
-             "set to automatic. Switching it off only stops the automatic sending.",
+        when="Sent to each candidate of every running class, every week, by itself after the week's session (always on); "
+             "also when you send them from the class's course page.",
+        switchable=False,
         subject="{first_name}, vos questions de la semaine {week_number} — {program_name}",
         title="Qu'avez-vous retenu cette semaine ?",
         body=(

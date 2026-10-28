@@ -230,7 +230,7 @@ level_check._TRIED.clear()
 sent = level_check.send_due(db)
 check("timing: the regular round sends those whose day came", sent >= 1 and level_check.current(db, soon.id).sent_at is not None)
 check("timing: and not the others", level_check.current(db, later.id).sent_at is None)
-check("timing: in 13 days the later one goes", level_check.send_due(db, now_local=local_now() + timedelta(days=13, hours=1)) >= 1
+check("timing: in 13 days the later one goes", level_check.send_due(db, now_local=level_check.goes_on(later, level_check.timing(db)) + timedelta(minutes=1)) >= 1
       and level_check.current(db, later.id).sent_at is not None)
 page = admin.get("/quiz/all").text
 check("page: the level checks page says when", "7 days before the first session" in page and 'action="/quiz/timing"' in page)

@@ -501,7 +501,7 @@ def _knowledge(db: Session, message: str) -> dict | None:
         from app.services import chatbot_sources
 
         return {
-            "reply": (f"{entry.title}\n" if not taught else "") + text,
+            "reply": (f"{entry.title}\n" if not taught and entry.kind != "fact" else "") + text,
             "links": [_link("9antra.tn", WEBSITE)] if website else [_link("What the assistant knows", "/inbox/knowledge")],
             "source": "taught" if taught else "website" if website else "knowledge",
             "sources": [chatbot_sources.of_entry(db, entry)],
@@ -541,6 +541,37 @@ SUGGESTIONS = [
 ]
 
 
+_REMEMBER = re.compile(r"^\s*(?:retiens(?:\s+bien)?|souviens[- ]toi|n['’]oublie\s+pas|note\s+bien|garde\s+en\s+t[eê]te|remember|keep\s+in\s+mind|"
+                       r"don['’]?t\s+forget|note\s+that|تذكر|احفظ|a3?9el|3a9el|o?chfa)\b\s*(?:que|qu['’]|that|ان|أن|:|,|-)?\s*(.{3,})$",
+                       re.IGNORECASE | re.DOTALL)
+
+
+def _remember(db: Session, message: str, allowed: bool) -> dict | None:
+    """“Retiens que le centre est fermé le 15 novembre”: kept for every assistant (knowledge_service.save_fact)."""
+    found = _REMEMBER.match(message or "")
+    if found is None:
+        return None
+    arabic = re.search(r"[؀-ۿ]", message or "") is not None
+    fr = _french(message)
+    if not allowed:
+        return {"reply": "Seul un administrateur peut m'apprendre quelque chose." if fr else "Only an admin can teach me something.",
+                "links": [], "source": "system"}
+    from app.services import knowledge_service
+
+    try:
+        entry = knowledge_service.save_fact(db, text=found.group(1).strip())
+        db.commit()
+    except ValueError as error:
+        db.rollback()
+        return {"reply": str(error), "links": [], "source": "system"}
+    said = ("حفظت ذلك: " if arabic else "C'est noté : " if fr else "Noted: ") + entry.content
+    said += ("\nأستعمله أنا وكل المساعدين من الآن." if arabic else
+             "\nMoi et les autres assistants l'utilisons dès maintenant, quelle que soit la langue de la question." if fr else
+             "\nI and the other assistants use it from now on, whatever language the question is in.")
+    return {"reply": said, "links": [_link("What the assistant knows", "/inbox/knowledge#facts")], "source": "taught",
+            "sources": [{"label": "What you told the assistants", "url": "/inbox/knowledge#facts"}]}
+
+
 def _earlier_questions(message: str, history: list[dict] | None) -> list[str]:
     """What the admin asked before this message, oldest first (the page sends the conversation, this message last)."""
     asked = [str(item.get("content") or "") for item in (history or []) if item.get("role") == "user" and item.get("content")]
@@ -566,7 +597,9 @@ def _answer_now(db: Session, message: str, history: list[dict] | None = None, *,
     from app.services import chatbot_actions
 
     chatbot_actions.may_send.set(bool(may_send) and user is not None)          # a program's PDF goes at once only for them
-    found = None
+    found = _remember(db, message, may_send)       # “retiens que …”: told to every assistant
+    if found is not None:
+        return found
     # “Renvoie le message de bienvenue à Fares demain à 9h”, “3awed ab3ath el rappel l Fares ghodwa”: something the
     # application sends by itself, sent again (asks what, whom or when when it is missing).
     from app.services import resends
@@ -662,6 +695,8 @@ def _answer(db: Session, message: str, history: list[dict] | None = None, user=N
             return data.contact(db, named)
         if _has(text, data.OWE_WORDS):
             return data.balance(db, named)
+    if _has(text, data.OVERVIEW_WORDS):
+        return data.overview(db)
     if _has(text, data.TODAY_WORDS):
         return data.today(db)
     if _has(text, data.REGISTERED_WORDS):

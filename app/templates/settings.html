@@ -79,6 +79,62 @@
   .st-rhythm-opt > span input { width:58px; display:inline-block; padding:2px 6px; height:26px; }
   .st-rhythm-opt > input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
   .st-rhythm-opt > input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  /* The folds */
+  .st-stack { display:grid; gap:10px; }
+  .st-stack-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:2px; }
+  .st-mini { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:800; color:#5b5670; transition:border-color .15s ease, color .15s ease, transform .15s ease; }
+  .st-mini:hover { border-color:var(--primary-berry); color:var(--primary-berry); transform:translateY(-1px); }
+  .st-group { display:flex; align-items:center; gap:8px; font-size:.72rem; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:14px 2px 0; }
+  .st-group i { width:26px; height:26px; border-radius:9px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:.85rem; }
+  .st-group:first-of-type { margin-top:4px; }
+  .st-card.st-fold { padding:0; overflow:clip; transition:border-color .2s ease, box-shadow .2s ease; }
+  .st-fold:hover { border-color:#dccfe9; }
+  .st-fold[open] { border-color:color-mix(in srgb, var(--primary-berry) 35%, var(--border-color)); box-shadow:0 18px 40px -30px rgba(80,20,70,.45); }
+  .st-fold-head { list-style:none; cursor:pointer; display:grid; grid-template-columns:58px minmax(0, 1fr) auto 22px; gap:14px; align-items:center; padding:12px 18px; }
+  .st-fold-head::-webkit-details-marker { display:none; }
+  .st-fold-head:focus-visible { outline:2px solid var(--primary-berry); outline-offset:-2px; border-radius:20px; }
+  .st-fold-pic { width:58px; height:46px; display:grid; place-items:center; transition:transform .3s cubic-bezier(.3,1.4,.5,1); }
+  .st-fold-pic svg { width:58px; height:auto; }
+  .st-fold-pic.is-icon i { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.2rem; }
+  .st-fold:hover .st-fold-pic, .st-fold[open] .st-fold-pic { transform:scale(1.08) rotate(-2deg); }
+  .st-fold-text { display:flex; flex-direction:column; gap:1px; min-width:0; }
+  .st-fold-text .st-title { font-size:.98rem; } .st-fold-text .st-sub { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .st-fold-state { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .st-chip { display:inline-flex; gap:4px; align-items:center; font-size:.72rem; font-weight:800; border-radius:999px; padding:4px 10px; background:#f3eff9; color:#5b5470; white-space:nowrap; }
+  .st-dot { width:22px; height:22px; border-radius:50%; background:var(--swatch); box-shadow:0 0 0 3px #fff, 0 0 0 4px var(--border-color); }
+  .st-fold-chev { color:#b5afc8; transition:transform .3s cubic-bezier(.2,.8,.2,1), color .2s ease; }
+  .st-fold[open] .st-fold-chev { transform:rotate(180deg); color:var(--primary-berry); }
+  .st-fold-body { padding:4px 24px 24px 90px; border-top:1px dashed transparent; }
+  .st-fold[open] .st-fold-body { border-top-color:#eee6f5; }
+  .st-fold-body > .st-section:first-child { margin-top:14px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .st-fold { animation:rowIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 35ms + .1s); }
+    .st-fold[open] .st-fold-body > * { animation:foldIn .4s cubic-bezier(.2,.8,.2,1) both; }
+    .st-fold[open] .st-fold-body > *:nth-child(2) { animation-delay:.04s; } .st-fold[open] .st-fold-body > *:nth-child(3) { animation-delay:.08s; }
+    .st-fold[open] .st-fold-body > *:nth-child(n+4) { animation-delay:.12s; }
+  }
+  @keyframes foldIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  @media (max-width: 767px) {
+    .st-fold-head { grid-template-columns:42px minmax(0, 1fr) 20px; gap:10px; padding:12px 14px; } .st-fold-state { grid-column:2 / 3; justify-content:flex-start; }
+    .st-fold-pic { width:42px; } .st-fold-pic svg { width:42px; } .st-fold-text .st-sub { white-space:normal; }
+    .st-fold-body { padding:4px 16px 18px; }
+  }
+  /* Your centre */
+  .st-centre { display:grid; gap:12px; }
+  .st-centre-part { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; background:#fbfaff; border:1px solid var(--border-color); border-radius:16px; padding:12px 14px; }
+  .st-centre-title { grid-column:1 / -1; display:flex; gap:8px; align-items:center; font-weight:800; font-size:.86rem; color:var(--ink-text); }
+  .st-centre-title i { color:var(--primary-berry); } .st-centre-title span { font-weight:600; color:var(--muted); font-size:.76rem; }
+  .st-centre label { font-size:.74rem; font-weight:800; color:var(--muted); display:flex; flex-direction:column; gap:3px; }
+  .st-centre label.is-wide, .st-centre .is-wide { grid-column:1 / -1; }
+  .st-centre input, .st-centre textarea { border:1px solid var(--border-color); border-radius:12px; padding:7px 11px; font-size:.86rem; font-weight:600; color:var(--ink-text); background:#fff; }
+  .st-centre input:focus, .st-centre textarea:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px color-mix(in srgb, var(--primary-berry) 14%, transparent); }
+  .st-centre textarea.is-mono { font-family:ui-monospace, monospace; }
+  .st-centre small { font-weight:600; color:var(--muted); }
+  .st-centre-banks { display:flex; gap:8px; flex-wrap:wrap; }
+  .st-centre-bank { display:inline-flex; gap:6px; align-items:center; font-size:.78rem; background:#fff; border:1px solid var(--border-color); border-radius:999px; padding:4px 11px; }
+  .st-centre-bank i { color:var(--primary-berry); }
+  .st-centre-do { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  @media (max-width: 767px) { .st-centre-part { grid-template-columns:1fr; } }
 </style>
 
 {% include "_flash.html" %}
@@ -98,6 +154,7 @@
     <a class="st-tile" href="#language" data-words="language english, french or arabic, and the translations" style="--i:4;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("language") }}</span><b>Language</b><span>English, French or Arabic, and the translations</span></a>
     <a class="st-tile" href="/settings/team" data-words="team and access who signs in, and what each one sees" style="--i:5;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("team") }}</span><b>Team and access</b><span>Who signs in, and what each one sees</span></a>
     <a class="st-tile" href="#identity" data-words="name and icon what the application is called" style="--i:6;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("identity") }}</span><b>Name and icon</b><span>What the application is called</span></a>
+    <a class="st-tile" href="#centre" data-words="your centre official name cheque beneficiary rib bank tax number phone address payment" style="--i:7;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("data") }}</span><b>Your centre</b><span>Official name, cheques, RIB, phone, address</span></a>
     <a class="st-tile" href="#address" data-words="address for candidates the link candidates open from their emails" style="--i:7;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("link") }}</span><b>Address for candidates</b><span>The link candidates open from their emails</span></a>
     <a class="st-tile" href="#whatsapp" data-words="whatsapp business meta reminders messages answers" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span><b>WhatsApp</b><span>Messages and answers on WhatsApp</span></a>
     <a class="st-tile" href="#rules" data-words="assistant rules may not answer instructions chatbot" style="--i:13;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("assistant") }}</span><b>Assistant's rules</b><span>What it may and may not answer</span></a>
@@ -132,13 +189,21 @@
 </section>
 
 
-<div class="row g-4">
-  <!-- ============ Class parameters ============ -->
-  <div class="col-xl-8">
-    <section class="st-card" id="classes">
-      <div class="st-art st-art-classes" aria-hidden="true">{{ art.scene("classes") }}</div>
-      <div class="st-title">Class parameters</div>
-      <div class="st-sub">Defaults for every class created from now on. Each class can still be adjusted on its own page.</div>
+<div class="st-stack" id="st-stack">
+  <div class="st-stack-head">
+    <span class="st-sub"><i class="bi bi-arrows-collapse-vertical me-1"></i>Open a part to change it; the parts you leave open stay open on this browser.</span>
+    <span class="d-flex gap-2"><button type="button" class="st-mini" data-folds="open"><i class="bi bi-arrows-expand"></i>Open all</button>
+      <button type="button" class="st-mini" data-folds="close"><i class="bi bi-arrows-collapse"></i>Close all</button></span>
+  </div>
+  <div class="st-group"><i class="bi bi-easel2"></i>Classes and candidates</div>
+  <details class="st-card st-fold" id="classes" data-fold style="--i:0;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("classes") }}</span>
+      <span class="st-fold-text"><span class="st-title">Class parameters</span><span class="st-sub">How new classes are made, filled and started, and the reminders before the first session.</span></span>
+      <span class="st-fold-state"><span class="st-chip">{{ settings.default_class_capacity }} <span>places</span></span><span class="st-chip">{{ settings.default_program_weeks }} <span>weeks</span></span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
 
       <form method="post" action="/settings/classes" id="class-settings-form">
 
@@ -244,21 +309,34 @@
         </div>
         <button class="btn btn-berry px-4">Save class parameters</button>
       </form>
-    </section>
-  </div>
-
-  <!-- ============ Email ============ -->
-  <div class="col-xl-4">
-    <section class="st-card" id="email">
-      <div class="st-art st-art-email" aria-hidden="true">{{ art.scene("inbox") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">Email delivery</div>
-        {% if smtp_ready %}
-        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Ready</span>
-        {% else %}
-        <span class="st-state off"><i class="bi bi-x-circle-fill"></i>Not configured</span>
-        {% endif %}
-      </div>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="receives" data-fold style="--i:1;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-envelope-paper-heart"></i></span>
+      <span class="st-fold-text"><span class="st-title">What the candidate receives</span><span class="st-sub">On payment, before the first session, on any change, when they write.</span></span>
+      <span class="st-fold-state"></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <ul class="st-sub ps-3 mb-0">
+        <li class="mb-1"><strong>On payment:</strong> program, class, professor, exact start date and time, weekly schedule, duration and curriculum.</li>
+        <li class="mb-1"><strong>Before the first session:</strong> a reminder on each of the days set here ({{ reminder_days | replace(',', ', ') }}).</li>
+        <li class="mb-1"><strong>On any change:</strong> a new class, a new date or a new schedule.</li>
+        <li class="mb-1"><strong>When they write:</strong> an answer from the assistant, or from you.</li>
+      </ul>
+      <a href="/inbox/compose" class="btn btn-sm btn-light fw-semibold mt-3">Write a personalized email</a>
+    </div>
+  </details>
+  <div class="st-group"><i class="bi bi-chat-dots"></i>Emails and messages</div>
+  <details class="st-card st-fold" id="email" data-fold style="--i:2;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("inbox") }}</span>
+      <span class="st-fold-text"><span class="st-title">Email delivery</span><span class="st-sub">The address emails come from, its password, a test, and reading candidates' emails.</span></span>
+      <span class="st-fold-state">{% if smtp_ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Ready</span>{% else %}<span class="st-state off"><i class="bi bi-x-circle-fill"></i>Not configured</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
       {% if smtp_ready %}
       <div class="st-sub mb-3">Emails are sent from <strong>{{ smtp_sender }}</strong>.</div>
       {% else %}
@@ -319,347 +397,16 @@ SMTP_PASSWORD=your-app-password</div>
         For Gmail, IMAP must be enabled (Gmail → Settings → Forwarding and POP/IMAP).
       </div>
       {% endif %}
-    </section>
-
-    <section class="st-card mt-4" id="report">
-      <div class="st-art st-art-report" aria-hidden="true">{{ art.scene("data") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">Report by email</div>
-        {% if report.on %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>{{ report.label | capitalize }}</span>
-        {% else %}<span class="st-state off"><i class="bi bi-pause-circle-fill"></i>Off</span>{% endif %}
-      </div>
-      <div class="st-sub mb-2">How the centre is doing, sent to you: the analysis and the candidates' progress as two PDFs, and what to improve first in the email itself. It goes to you only, never to candidates.</div>
-      <form method="post" action="/settings/report" id="report-form">
-        <label class="st-switch form-check form-switch ps-0 mb-0">
-          <input class="form-check-input ms-0" type="checkbox" role="switch" name="report_email_on" {% if report.on %}checked{% endif %}>
-          <span><span class="st-switch-title d-block">Send me the report</span>
-            <span class="st-switch-help">The first one goes a full period after you switch it on, never at once.</span></span>
-        </label>
-        <div class="st-section" style="margin-top:6px; padding-top:12px;">How often</div>
-        <div class="st-rhythm" role="radiogroup" aria-label="How often">
-          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="week" {{ 'checked' if report.rhythm == 'week' }}><span>Every week</span></label>
-          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="ten" {{ 'checked' if report.rhythm == 'ten' }}><span>Every 10 days</span></label>
-          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="days" {{ 'checked' if report.rhythm == 'days' }}><span>Every
-            <input type="number" name="days" min="1" max="{{ report.most_days }}" value="{{ report.days if report.rhythm == 'days' else 14 }}" class="form-control form-control-sm" aria-label="Number of days, up to {{ report.most_days }}"> days</span></label>
-          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="weeks" {{ 'checked' if report.rhythm == 'weeks' }}><span>Every
-            <input type="number" name="weeks" min="1" max="{{ report.most_weeks }}" value="{{ report.weeks }}" class="form-control form-control-sm" aria-label="Number of weeks, up to {{ report.most_weeks }}"> weeks</span></label>
-        </div>
-        <div class="form-text">Any number of days up to {{ report.most_days }}, or of weeks up to {{ report.most_weeks }}.</div>
-        <div class="st-section" style="margin-top:12px; padding-top:12px;">To</div>
-        <input name="recipients" class="form-control form-control-sm" value="{{ report.written }}" placeholder="{{ report.to | join(', ') or 'you@example.com' }}" aria-label="Addresses the report goes to">
-        <div class="form-text">Empty: {{ ('your own address (' ~ report.to | join(', ') ~ ')') if report.to else 'the admins’ addresses' }}. Several addresses: separate them with commas.</div>
-        <div class="st-sub mt-2">{% if report.on and report.next %}<i class="bi bi-calendar-check me-1"></i>Next report: <strong>{{ report.next.strftime('%A %d %B, %H:%M') }}</strong>.{% elif report.on %}<i class="bi bi-hourglass-split me-1"></i>The clock starts within a minute; the first report goes {{ report.label }} after that.{% endif %}
-          {% if report.last %} Last one: {{ report.last.strftime('%d %b %Y, %H:%M') }}.{% endif %}</div>
-        <div class="d-flex gap-2 flex-wrap mt-3">
-          <button class="btn btn-berry btn-sm px-3">Save</button>
-          <a class="btn btn-sm btn-light border" href="/dashboard/analysis/pdf" target="_blank" rel="noopener"><i class="bi bi-eye me-1"></i>See the analysis</a>
-          <a class="btn btn-sm btn-light border" href="/candidate/all/analysis/pdf" target="_blank" rel="noopener"><i class="bi bi-mortarboard me-1"></i>See the candidates' progress</a>
-        </div>
-      </form>
-      <form method="post" action="/settings/report/send" class="mt-2" data-confirm="Send the report now to {{ report.to | join(', ') or 'the admins' }}?">
-        <button class="btn btn-sm btn-outline-secondary" {{ 'disabled' if not smtp_ready }}><i class="bi bi-send me-1"></i>Send one now</button>
-        {% if not smtp_ready %}<span class="st-sub ms-1">Email is not set up yet.</span>{% endif %}
-      </form>
-    </section>
-
-    <section class="st-card mt-4" id="identity">
-      <div class="st-art st-art-identity" aria-hidden="true">{{ art.scene("identity") }}</div>
-      <div class="st-title">Name and icon</div>
-      <div class="st-sub mb-3">The icon is the picture of your Facebook page (facebook.com/9antra.tn). It is looked at again every day, so a new picture there becomes the icon here.</div>
-      <form method="post" action="/settings/identity" enctype="multipart/form-data" class="d-flex gap-3 align-items-start flex-wrap">
-        {% if app_brand.logo %}<img src="{{ app_brand.icon_big }}" alt="The application's icon" style="width:76px; height:76px; border-radius:50%; border:1px solid var(--border-color); flex:none;">{% endif %}
-        <div style="flex:1 1 280px;">
-          <label class="form-label fw-bold small mb-1" for="app-name">Name of the application</label>
-          <input class="form-control" id="app-name" name="name" value="{{ app_brand.name }}" maxlength="40" list="name-ideas" style="border-radius:11px;">
-          <datalist id="name-ideas">{% for idea, why in name_ideas %}<option value="{{ idea }}">{{ why }}</option>{% endfor %}</datalist>
-          <div class="st-sub mt-2">Ideas:
-            {% for idea, why in name_ideas %}<button type="button" class="btn btn-sm btn-light border rounded-pill me-1 mb-1" data-name-idea="{{ idea }}" title="{{ why }}">{{ idea }}</button>{% endfor %}
-          </div>
-          <label class="form-label fw-bold small mb-1 mt-2" for="app-picture">Use a picture of your own instead (optional)</label>
-          <input class="form-control form-control-sm" id="app-picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" style="border-radius:11px;">
-          <div class="d-flex gap-2 flex-wrap mt-3">
-            <button class="btn btn-primary btn-sm rounded-pill px-3" style="background:var(--primary-berry); border-color:var(--primary-berry);">Save</button>
-            <button class="btn btn-light border btn-sm rounded-pill px-3" formaction="/settings/identity/facebook" formnovalidate><i class="bi bi-facebook me-1"></i>Take the icon from Facebook now</button>
-          </div>
-          <div class="st-sub mt-2">{{ 'You are using a picture of your own: it is kept until you take the Facebook one again.' if app_brand.source == 'upload' else 'Currently: the picture of the Facebook page.' if app_brand.source else 'No icon yet.' }}</div>
-        </div>
-      </form>
-    </section>
-
-    <section class="st-card mt-4" id="whatsapp">
-      <div class="st-art st-art-whatsapp" aria-hidden="true">{{ art.scene("whatsapp") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">WhatsApp Business</div>
-        {% if wa.receives %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Sends and receives</span>
-        {% elif wa.configured %}<span class="st-state ok"><i class="bi bi-send-check"></i>Sends by itself</span>
-        {% else %}<span class="st-state off"><i class="bi bi-hand-index"></i>One click per message</span>{% endif %}
-      </div>
-      <div class="st-sub mb-2">Phone numbers get <strong>+216</strong> in front by themselves, unless the candidate wrote another country code.</div>
-      <form method="post" action="/settings/numbers" class="st-numbers mb-3">
-        <div class="st-numbers-title"><i class="bi bi-telephone-fill"></i> The centre's numbers <span>written under every email, so candidates can call or write</span></div>
-        <label>Phone (calls, SMS)<input name="phone" value="{{ settings.centre_phone or '' }}" placeholder="+216 71 123 456"></label>
-        <label>WhatsApp<input name="chat" value="{{ settings.centre_whatsapp or '' }}" placeholder="+216 98 123 456"></label>
-        <label>Address (said to whoever asks where you are)<input name="address" value="{{ settings.centre_address or '' }}" placeholder="Les Berges du Lac, Tunis & Sahloul Sousse"></label>
-        <button class="btn btn-sm btn-outline-secondary rounded-pill fw-bold">Save the numbers</button>
-        <label class="st-numbers-rib">The centre's RIB, where candidates pay (one per line)
-          <input type="hidden" name="whole" value="1">
-          <textarea name="ribs" rows="2" placeholder="08 006 0101234567890 64">{{ settings.centre_ribs or '' }}</textarea>
-          <small>A payment proof is checked against it: the money must go to this account. Its bank is recognised from its first two digits.</small></label>
-        <label class="st-numbers-rib">The registration form, given to whoever asks how to register (email, WhatsApp, SMS, the assistant, Yasmine)
-          <input name="form" value="{{ settings.registration_form_url or '' }}" placeholder="{{ registration_form }}" inputmode="url">
-          <small>Empty = the form used today: <a href="{{ registration_form }}" target="_blank" rel="noopener">open it</a>.</small></label>
-        <div class="st-numbers-help">To change the <strong>WhatsApp Business number</strong> the assistant answers from: add the new number at Meta, then write its <em>phone number ID</em> below.</div>
-      </form>
-      <style>
-        .st-numbers { display:grid; grid-template-columns:1fr 1fr auto; gap:8px 10px; align-items:end; background:#fbfaff; border:1px solid var(--border-color); border-radius:16px; padding:12px 14px; }
-        @media (max-width: 767px) { .st-numbers { grid-template-columns:1fr; } }
-        .st-numbers-title { grid-column:1 / -1; font-weight:800; font-size:.86rem; } .st-numbers-title span { font-weight:600; color:var(--muted); font-size:.76rem; }
-        .st-numbers label { font-size:.74rem; font-weight:800; color:var(--muted); display:flex; flex-direction:column; gap:3px; }
-        .st-numbers input { border:1px solid var(--border-color); border-radius:12px; padding:7px 11px; font-size:.86rem; font-weight:600; color:var(--ink-text); }
-        .st-numbers-help { grid-column:1 / -1; font-size:.76rem; color:#5b5470; }
-        .st-numbers-rib { grid-column:1 / -1; } .st-numbers-rib textarea { border:1px solid var(--border-color); border-radius:12px; padding:7px 11px; font-size:.86rem; font-weight:600; font-family:ui-monospace, monospace; }
-        .st-numbers-rib small { font-weight:600; color:var(--muted); }
-      </style>
-      <ul class="st-sub ps-3 mb-3">
-        <li><strong>Today{{ '' if wa.configured else ', without a Business number' }}:</strong> {% if wa.configured %}reminders and answers on WhatsApp go by themselves from your Business number{% else %}a WhatsApp message waits in the inbox (“To send on WhatsApp”) with a button that opens WhatsApp with the message written; you press send{% endif %}.</li>
-        <li><strong>Each automatic email and each reminder</strong> chooses its way: email, WhatsApp, or both (Inbox → Email templates, and the Reminders page).</li>
-        <li><strong>When candidates write on WhatsApp</strong> (Business number connected), the assistant reads them like emails: it answers in French first, then in the candidate's language, and what it is not sure of comes to you. You score its answers and correct them; it learns.</li>
-      </ul>
-
-      <div class="st-section" style="margin-top:6px; padding-top:12px;">How the assistant answers on WhatsApp</div>
-      <form method="post" action="/settings/whatsapp" id="whatsapp-form" autocomplete="off">
-        <div class="st-rhythm mb-3" role="radiogroup" aria-label="How the assistant answers on WhatsApp">
-          <label class="st-rhythm-opt"><input type="radio" name="mode" value="auto" {{ 'checked' if wa.mode == 'auto' }}><span>Alone when it is sure</span></label>
-          <label class="st-rhythm-opt"><input type="radio" name="mode" value="review" {{ 'checked' if wa.mode == 'review' }}><span>Always ask me first</span></label>
-          <label class="st-rhythm-opt"><input type="radio" name="mode" value="off" {{ 'checked' if wa.mode == 'off' }}><span>Off: I answer</span></label>
-        </div>
-
-        <div class="st-section" style="margin-top:6px; padding-top:12px;">What Meta gives (kept on this computer, never shown again)</div>
-        <div class="row g-2">
-          <div class="col-12"><input name="token" type="password" class="form-control form-control-sm" placeholder="{{ 'Access token: leave empty to keep it' if wa.has_token else 'Permanent access token' }}" aria-label="Access token" autocomplete="new-password"></div>
-          <div class="col-md-6"><input name="phone_id" class="form-control form-control-sm" value="{{ wa.phone_id }}" placeholder="Phone number ID (a long number)" aria-label="Phone number ID"></div>
-          <div class="col-md-6"><input name="app_secret" type="password" class="form-control form-control-sm" placeholder="{{ 'App secret: leave empty to keep it' if wa.has_secret else 'App secret' }}" aria-label="App secret" autocomplete="new-password"></div>
-          <div class="col-md-6"><input name="verify_token" class="form-control form-control-sm" value="{{ wa.verify_token }}" placeholder="Verify token (made for you when you save)" aria-label="Verify token"></div>
-          <div class="col-md-6"><input name="template" class="form-control form-control-sm" value="{{ wa.template }}" placeholder="Approved message for reminders (optional)" aria-label="Approved message template"></div>
-        </div>
-        <div class="d-flex gap-2 flex-wrap mt-3">
-          <button class="btn btn-berry btn-sm px-3">Save</button>
-        </div>
-      </form>
-      <form method="post" action="/settings/whatsapp/test" class="mt-2"><button class="btn btn-sm btn-outline-secondary" {{ 'disabled' if not wa.configured }}><i class="bi bi-plug me-1"></i>Test the connection</button></form>
-
-      <div class="st-section">The address to give Meta</div>
-      <div class="st-code mb-1">Callback URL: {{ wa.webhook }}
-Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
-      {% if wa.public_local %}<div class="st-sub" style="color:#be123c;"><i class="bi bi-exclamation-triangle-fill me-1"></i>This address only opens on this computer: Meta cannot reach it. Set the “Address for candidates” to a public https address first.</div>{% endif %}
-
-      <details class="mt-2">
-        <summary class="st-sub" style="cursor:pointer;"><strong>Where to get them (Meta, about 15 minutes)</strong></summary>
-        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
-          <li><strong>Create the app.</strong> On Meta for Developers, “Create app”, type Business, then add the <em>WhatsApp</em> product. <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">Open</a></li>
-          <li><strong>The phone number ID.</strong> WhatsApp → API Setup: add your business number, then copy its <em>Phone number ID</em>.</li>
-          <li><strong>A permanent token.</strong> Business settings → System users → add one, give it the app with <em>whatsapp_business_messaging</em>, then “Generate token”. <a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener noreferrer">Open</a></li>
-          <li><strong>The app secret.</strong> App settings → Basic → App secret → Show.</li>
-          <li><strong>Receive messages.</strong> WhatsApp → Configuration → Webhook: paste the callback URL and the verify token above, then subscribe to <em>messages</em>.</li>
-          <li><strong>Reminders to people who did not write first</strong> need a message Meta approved (one variable: the text). Create it under Message templates and write its name above.</li>
-        </ol>
-      </details>
-    </section>
-
-    <section class="st-card mt-4" id="sms">
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">SMS from your Android phone</div>
-        {% if sm.receives and sm.configured %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Sends and receives</span>
-        {% elif sm.configured %}<span class="st-state ok"><i class="bi bi-send-check"></i>Sends by itself</span>
-        {% else %}<span class="st-state off"><i class="bi bi-hand-index"></i>One click per SMS</span>{% endif %}
-      </div>
-      <div class="st-sub mb-2">An Android phone with a SIM sends and receives the SMS, from its own number, with the free app <strong>SMS Gateway for Android</strong>. SMS that candidates send are read by the assistant like emails and WhatsApp messages: it answers alone when it is sure, otherwise it asks you, and it learns from your answers. Without the phone, each SMS waits in the inbox with a button that opens the messages of your phone, written. (An iPhone cannot do this.)</div>
-      <form method="post" action="/settings/sms" class="row g-2 align-items-end">
-        <div class="col-md-6"><label class="form-label small fw-bold mb-1">The phone's address</label><input class="form-control form-control-sm" name="url" value="{{ sm.url }}" placeholder="http://192.168.1.20:8080"></div>
-        <div class="col-md-3"><label class="form-label small fw-bold mb-1">Username</label><input class="form-control form-control-sm" name="user" value="{{ sm.user }}" autocomplete="off"></div>
-        <div class="col-md-3"><label class="form-label small fw-bold mb-1">Password {% if sm.has_password %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="password" type="password" autocomplete="new-password" placeholder="{{ '••••••' if sm.has_password else '' }}"></div>
-        <div class="col-md-6"><label class="form-label small fw-bold mb-1">Signing key (the app: Settings › Webhooks) {% if sm.has_key %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="key" type="password" autocomplete="off" placeholder="{{ '••••••' if sm.has_key else '' }}"></div>
-        <div class="col-md-6 d-flex gap-2"><button class="btn btn-sm btn-berry rounded-pill px-3">Save</button>
-          <button class="btn btn-sm btn-outline-secondary rounded-pill" formaction="/settings/sms/test" formnovalidate>Test the phone</button></div>
-      </form>
-      <div class="st-sub mt-2">Where the phone sends the SMS it receives (its webhook for <em>sms:received</em>): <code>{{ sm.webhook }}</code></div>
-      <details class="mt-2">
-        <summary class="st-sub" style="cursor:pointer;"><strong>How to set it up (about 10 minutes)</strong></summary>
-        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
-          <li>On the Android phone, install <strong>SMS Gateway for Android</strong> (sms-gate.app; for this computer's address on the Wi-Fi, the "insecure" version of the app). <a href="https://sms-gate.app" target="_blank" rel="noopener noreferrer">Open</a></li>
-          <li>In the app, switch on <strong>Local server</strong>: it shows its address, a username and a password. Write them above.</li>
-          <li>In the app's Settings › Webhooks, copy the <strong>signing key</strong> and write it above.</li>
-          <li>Add a webhook for <em>sms:received</em> with the address above (the phone and this computer on the same Wi-Fi, and the application started for the phone).</li>
-          <li>Press “Test the phone”. Then choose SMS at the top of the inbox if you want SMS to go first.</li>
-        </ol>
-      </details>
-    </section>
-
-    <section class="st-card mt-4" id="rules">
-      <div class="st-art" aria-hidden="true">{{ art.scene("assistant") }}</div>
-      <div class="st-title">What the assistant may and may not answer</div>
-      <div class="st-sub mb-2">For emails and WhatsApp. It already never answers cancellations, refunds and complaints alone, and never invents what your programs, classes and the answers you taught do not say.</div>
-      <form method="post" action="/settings/assistant-rules">
-        <label class="form-label" for="rules-never">Never answer these alone (one subject per line, in a few words)</label>
-        <textarea class="form-control" id="rules-never" name="never" rows="4" placeholder="réduction&#10;stage rémunéré&#10;attestation de présence">{{ rules.never }}</textarea>
-        <div class="form-text mb-3">A message that holds all the words of a line comes to you, with the reason. Example: “réduction” sends every question about a discount to you.</div>
-        <label class="form-label" for="rules-notes">What it should know or say (one idea per line)</label>
-        <textarea class="form-control" id="rules-notes" name="notes" rows="4" placeholder="Toujours proposer d'appeler le +216 … pour une question urgente.&#10;Les séances sur place ont lieu à Tunis, centre-ville.&#10;Vouvoyer les candidats.">{{ rules.notes }}</textarea>
-        <div class="form-text">Given to the assistant each time it writes an answer. It still answers only from what the system knows.</div>
-        <label class="d-flex gap-2 align-items-start mt-3" id="prospects"><input type="checkbox" name="prospects_on" value="1" class="mt-1" {{ 'checked' if settings.prospect_answers_on is not false }}>
-          <span><b>Answer people not registered yet</b> about the programs (prices, length, next start, what is taught, online or on site, where, how to register),
-          in their language (French, English, Arabic, Tunisian), from the facts only, with the registration form. Anything else still comes to you.</span></label>
-        <button class="btn btn-berry btn-sm px-3 mt-3">Save the rules</button>
-      </form>
-    </section>
-
-    <section class="st-card mt-4" id="google">
-      <div class="st-art st-art-google" aria-hidden="true">{{ art.scene("quiz") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">Weekly answers: Google Form → Firebase → here</div>
-        {% if forms.ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>
-        {% else %}<span class="st-state off"><i class="bi bi-hourglass-split"></i>Two clicks missing</span>{% endif %}
-      </div>
-      <div class="st-sub mb-3">Each week's questions can be a Google Form: the answers go to your Firebase database (<code>weekly_answers</code>), then arrive here by themselves, the same road as registrations. Until it is connected, candidates answer on this application's own private page and nothing is lost.</div>
-      <div class="d-flex align-items-center gap-2 flex-wrap mb-3" style="font-size:.8rem; font-weight:700;">
-        <span class="st-state {{ 'ok' if forms.google.forms == 'on' else 'off' }}"><i class="bi bi-ui-checks"></i>Google Forms {{ 'on' if forms.google.forms == 'on' else 'off' if forms.google.forms == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
-        <span class="st-state {{ 'ok' if forms.google.drive == 'on' else 'off' }}"><i class="bi bi-share"></i>Sharing (Google Drive) {{ 'on' if forms.google.drive == 'on' else 'off' if forms.google.drive == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
-        <span class="st-state {{ 'ok' if forms.firebase else 'off' }}"><i class="bi bi-fire"></i>Firebase {{ 'connected' if forms.firebase else 'not connected' }}</span><i class="bi bi-arrow-right"></i>
-        <span class="st-state ok"><i class="bi bi-house-check"></i>Here</span>
-      </div>
-      {% if not forms.ready %}
-      <div class="st-sub mb-2">Your Firebase project <strong>{{ forms.google.project or 'is not found (app/firebase_key.json is missing)' }}</strong> has to allow two Google services. Sign in to Google as the owner of the project, open each link, press <strong>Enable</strong>:</div>
-      <ol class="st-sub mb-3">
-        <li><a href="{{ forms.google.forms_link }}" target="_blank" rel="noopener">Switch on Google Forms for the project</a></li>
-        <li><a href="{{ forms.google.drive_link }}" target="_blank" rel="noopener">Switch on Google Drive for the project</a> (it is what lets anyone with the link answer the form)</li>
-      </ol>
-      {% endif %}
-      <form method="post" action="/settings/google/test" id="google-test">
-        <button class="btn btn-light border btn-sm rounded-pill px-3"><i class="bi bi-plug me-1"></i>Test the connection</button>
-        <span class="st-sub ms-2">Creates a small form, opens it, reads it, removes it. Takes about ten seconds.</span>
-      </form>
-      {% if forms_trial %}
-      <div class="mt-3">
-        {% for step in forms_trial %}
-        <div class="st-sub mb-1"><i class="bi {{ 'bi-check-circle-fill text-success' if step.ok else 'bi-x-circle-fill text-danger' }} me-1"></i><strong>{{ step.label }}</strong>{% if step.detail %}: {{ step.detail }}{% endif %}</div>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </section>
-
-    <section class="st-card mt-4" id="appearance">
-      <div class="st-art st-art-appearance" aria-hidden="true">{{ art.scene("look") }}</div>
-      <div class="st-title">Colour of the design</div>
-      <div class="st-sub mb-3">Choose the main colour, where the menu sits, and whether the background moves. Buttons, the side menu and the sign-in page all follow the colour.</div>
-      <form method="post" action="/settings/appearance" id="appearance-form">
-        <div class="d-flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Colour">
-          {% for name, value in colour_presets %}
-          <button type="button" class="st-swatch {{ 'is-chosen' if value == ui_colour }}" data-colour="{{ value }}" style="--swatch:{{ value }};" title="{{ name }}" aria-label="{{ name }}"></button>
-          {% endfor %}
-        </div>
-        <div class="d-flex flex-wrap gap-4 mb-3" style="font-size:.86rem;">
-          <div><div class="st-sub mb-1"><strong>Menu</strong></div>
-            <label class="me-3"><input type="radio" name="ui_menu_side" value="left" {{ 'checked' if ui_menu_side != 'right' }}> On the left</label>
-            <label><input type="radio" name="ui_menu_side" value="right" {{ 'checked' if ui_menu_side == 'right' }}> On the right</label></div>
-          <div><div class="st-sub mb-1"><strong>Day or night</strong></div>
-            <label class="me-3"><input type="radio" name="ui_mode" value="soft" {{ 'checked' if ui_mode == 'soft' }}> Day, soft</label>
-            <label class="me-3"><input type="radio" name="ui_mode" value="colours" {{ 'checked' if ui_mode == 'colours' }}> Day, with colours</label>
-            <label class="me-3"><input type="radio" name="ui_mode" value="night" {{ 'checked' if ui_mode == 'night' }}> Night, black</label>
-            <label><input type="radio" name="ui_mode" value="night-blue" {{ 'checked' if ui_mode == 'night-blue' }}> Night, blue</label></div>
-          <div><div class="st-sub mb-1"><strong>Background</strong></div>
-            <label class="me-3"><input type="radio" name="ui_background" value="animated" {{ 'checked' if ui_background != 'plain' }}> Moving, softly</label>
-            <label><input type="radio" name="ui_background" value="plain" {{ 'checked' if ui_background == 'plain' }}> Still</label></div>
-        </div>
-        <div class="d-flex gap-2 align-items-center">
-          <input type="color" class="form-control form-control-color" id="appearance-colour" name="ui_color" value="{{ ui_colour }}" title="Any other colour" aria-label="Any other colour">
-          <span class="st-sub" id="appearance-value">{{ ui_colour }}</span>
-          <button class="btn btn-sm btn-outline-secondary text-nowrap ms-auto">Save the colour</button>
-        </div>
-      </form>
-    </section>
-
-    <section class="st-card mt-4" id="language">
-      <div class="st-art st-art-language" aria-hidden="true">{{ art.scene("language") }}</div>
-      <div class="st-title">Language of the pages</div>
-      <div class="st-sub mb-2">Each person chooses English, French or Arabic with the <i class="bi bi-translate"></i> button at the top of every page; the choice is remembered on their browser. The most common words were translated by hand. The assistant translates the rest a little at a time, starting with what you actually open, and every translation is kept.</div>
-      {% for code, state in languages_progress.items() %}
-      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="font-size:.84rem;">
-        <strong style="min-width:76px;" data-no-i18n>{{ state.name }}</strong>
-        <div class="progress flex-grow-1" style="height:8px;" role="progressbar" aria-label="{{ state.name }}" aria-valuenow="{{ state.done }}" aria-valuemin="0" aria-valuemax="{{ state.total }}"><div class="progress-bar" style="width:{{ (state.done / state.total * 100) | round(1) if state.total else 0 }}%; background:var(--primary-berry);"></div></div>
-        <span class="st-sub" style="flex-basis:100%;">{{ state.done }} of {{ state.total }} texts{{ '' if state.used else ' · starts when someone chooses it' }}</span>
-      </div>
-      {% endfor %}
-      <a class="btn btn-sm btn-outline-secondary mt-2" href="/settings/translations">Read and correct the translations</a>
-    </section>
-
-    <section class="st-card mt-4" id="access">
-      <div class="st-art st-art-access" aria-hidden="true">{{ art.scene("team") }}</div>
-      <div class="st-title">Who can sign in</div>
-      <div class="st-sub mb-3">
-        You are signed in as <strong>{{ current_user.name }}</strong>{% if current_user.email %} ({{ current_user.email }}){% endif %}.
-        Professors get their own access from the Professors page: each one then sees only their classes.
-      </div>
-      <div class="d-flex flex-wrap gap-2">
-        <a href="/account" class="btn btn-sm btn-outline-secondary">Change my password</a>
-        <a href="/settings/team" class="btn btn-sm btn-primary fw-semibold" style="background:var(--primary-berry); border-color:var(--primary-berry);">Team and access: who sees what</a>
-        <a href="/classes/?tab=professors" class="btn btn-sm btn-light fw-semibold">Professors' access</a>
-        <a href="/data" class="btn btn-sm btn-light fw-semibold">All the data: change any value</a>
-      </div>
-    </section>
-
-    <section class="st-card mt-4" id="address">
-      <div class="st-art st-art-address" aria-hidden="true">{{ art.scene("link") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div class="st-title">Address for candidates</div>
-        {% if public_url_local %}
-        <span class="st-state off"><i class="bi bi-exclamation-triangle-fill"></i>This computer only</span>
-        {% else %}
-        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Set</span>
-        {% endif %}
-      </div>
-      <div class="st-sub mb-3">
-        Emails with a link (weekly questions, quizzes) send candidates to this address.
-        {% if public_url_local %}
-        Right now links start with <strong>{{ public_url }}</strong>, which only opens on this computer:
-        candidates cannot answer their questions until the application has an address they can reach.
-        {% else %}
-        Links start with <strong>{{ public_url }}</strong>.
-        {% endif %}
-      </div>
-      <form method="post" action="/settings/address" class="d-flex gap-2">
-        <input name="public_base_url" type="text" class="form-control form-control-sm" value="{{ settings.public_base_url or '' }}"
-               placeholder="https://app.9antra.tn" aria-label="Address candidates use to reach the application">
-        <button class="btn btn-sm btn-outline-secondary text-nowrap">Save</button>
-      </form>
-    </section>
-
-    <section class="st-card mt-4">
-      <div class="st-title mb-1">What the candidate receives</div>
-      <ul class="st-sub ps-3 mb-0">
-        <li class="mb-1"><strong>On payment:</strong> program, class, professor, exact start date and time, weekly schedule, duration and curriculum.</li>
-        <li class="mb-1"><strong>Before the first session:</strong> a reminder on each of the days set here ({{ reminder_days | replace(',', ', ') }}).</li>
-        <li class="mb-1"><strong>On any change:</strong> a new class, a new date or a new schedule.</li>
-        <li class="mb-1"><strong>When they write:</strong> an answer from the assistant, or from you.</li>
-      </ul>
-      <a href="/inbox/compose" class="btn btn-sm btn-light fw-semibold mt-3">Write a personalized email</a>
-    </section>
-  </div>
-
-  <!-- ============ Email assistant ============ -->
-  <div class="col-xl-8">
-    <section class="st-card" id="assistant">
-      <div class="st-art st-art-assistant" aria-hidden="true">{{ art.scene("assistant") }}</div>
-      <div class="d-flex justify-content-between align-items-start gap-2">
-        <div>
-          <div class="st-title">Email assistant</div>
-          <div class="st-sub">How the system answers candidates who write, and how every email looks.</div>
-        </div>
-        {% if model_ready %}
-        <span class="st-state ok"><i class="bi bi-check-circle-fill"></i>AI model ready</span>
-        {% else %}
-        <span class="st-state off" title="Start Ollama and make sure the {{ assistant_model }} model is installed"><i class="bi bi-x-circle-fill"></i>AI model not reachable</span>
-        {% endif %}
-      </div>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="assistant" data-fold style="--i:3;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("assistant") }}</span>
+      <span class="st-fold-text"><span class="st-title">Email assistant</span><span class="st-sub">How the system answers candidates who write, and how every email looks.</span></span>
+      <span class="st-fold-state">{% if model_ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>AI model ready</span>{% else %}<span class="st-state off" title="Start the local model: Settings, How it is working"><i class="bi bi-x-circle-fill"></i>AI model not reachable</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
 
       <form method="post" action="/settings/assistant" id="assistant-settings-form">
         <div class="st-section">When a candidate writes</div>
@@ -716,8 +463,368 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
         <button class="btn btn-berry px-4 mt-4">Save email assistant settings</button>
         <a href="/inbox/compose" class="btn btn-light fw-semibold mt-4 ms-1">Preview the design</a>
       </form>
-    </section>
-  </div>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="rules" data-fold style="--i:4;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("assistant") }}</span>
+      <span class="st-fold-text"><span class="st-title">What the assistant may and may not answer</span><span class="st-sub">Subjects that always come to you, and what it should know or say.</span></span>
+      <span class="st-fold-state"><span class="st-chip">{{ rules.never.splitlines() | select | list | length }} <span>subjects kept for you</span></span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">For emails and WhatsApp. It already never answers cancellations, refunds and complaints alone, and never invents what your programs, classes and the answers you taught do not say.</div>
+      <form method="post" action="/settings/assistant-rules">
+        <label class="form-label" for="rules-never">Never answer these alone (one subject per line, in a few words)</label>
+        <textarea class="form-control" id="rules-never" name="never" rows="4" placeholder="réduction&#10;stage rémunéré&#10;attestation de présence">{{ rules.never }}</textarea>
+        <div class="form-text mb-3">A message that holds all the words of a line comes to you, with the reason. Example: “réduction” sends every question about a discount to you.</div>
+        <label class="form-label" for="rules-notes">What it should know or say (one idea per line)</label>
+        <textarea class="form-control" id="rules-notes" name="notes" rows="4" placeholder="Toujours proposer d'appeler le +216 … pour une question urgente.&#10;Les séances sur place ont lieu à Tunis, centre-ville.&#10;Vouvoyer les candidats.">{{ rules.notes }}</textarea>
+        <div class="form-text">Given to the assistant each time it writes an answer. It still answers only from what the system knows.</div>
+        <label class="d-flex gap-2 align-items-start mt-3" id="prospects"><input type="checkbox" name="prospects_on" value="1" class="mt-1" {{ 'checked' if settings.prospect_answers_on is not false }}>
+          <span><b>Answer people not registered yet</b> about the programs (prices, length, next start, what is taught, online or on site, where, how to register),
+          in their language (French, English, Arabic, Tunisian), from the facts only, with the registration form. Anything else still comes to you.</span></label>
+        <button class="btn btn-berry btn-sm px-3 mt-3">Save the rules</button>
+      </form>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="whatsapp" data-fold style="--i:5;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span>
+      <span class="st-fold-text"><span class="st-title">WhatsApp Business</span><span class="st-sub">Messages and answers on WhatsApp, and what Meta gives.</span></span>
+      <span class="st-fold-state">{% if wa.receives %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Sends and receives</span>{% elif wa.configured %}<span class="st-state ok"><i class="bi bi-send-check"></i>Sends by itself</span>{% else %}<span class="st-state off"><i class="bi bi-hand-index"></i>One click per message</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">Phone numbers get <strong>+216</strong> in front by themselves, unless the candidate wrote another country code.</div>
+      <div class="st-sub mb-3"><i class="bi bi-building me-1"></i>The centre's numbers, address and RIB are in <a href="#centre">Your centre</a>.</div>
+      <ul class="st-sub ps-3 mb-3">
+        <li><strong>Today{{ '' if wa.configured else ', without a Business number' }}:</strong> {% if wa.configured %}reminders and answers on WhatsApp go by themselves from your Business number{% else %}a WhatsApp message waits in the inbox (“To send on WhatsApp”) with a button that opens WhatsApp with the message written; you press send{% endif %}.</li>
+        <li><strong>Each automatic email and each reminder</strong> chooses its way: email, WhatsApp, or both (Inbox → Email templates, and the Reminders page).</li>
+        <li><strong>When candidates write on WhatsApp</strong> (Business number connected), the assistant reads them like emails: it answers in French first, then in the candidate's language, and what it is not sure of comes to you. You score its answers and correct them; it learns.</li>
+      </ul>
+
+      <div class="st-section" style="margin-top:6px; padding-top:12px;">How the assistant answers on WhatsApp</div>
+      <form method="post" action="/settings/whatsapp" id="whatsapp-form" autocomplete="off">
+        <div class="st-rhythm mb-3" role="radiogroup" aria-label="How the assistant answers on WhatsApp">
+          <label class="st-rhythm-opt"><input type="radio" name="mode" value="auto" {{ 'checked' if wa.mode == 'auto' }}><span>Alone when it is sure</span></label>
+          <label class="st-rhythm-opt"><input type="radio" name="mode" value="review" {{ 'checked' if wa.mode == 'review' }}><span>Always ask me first</span></label>
+          <label class="st-rhythm-opt"><input type="radio" name="mode" value="off" {{ 'checked' if wa.mode == 'off' }}><span>Off: I answer</span></label>
+        </div>
+
+        <div class="st-section" style="margin-top:6px; padding-top:12px;">What Meta gives (kept on this computer, never shown again)</div>
+        <div class="row g-2">
+          <div class="col-12"><input name="token" type="password" class="form-control form-control-sm" placeholder="{{ 'Access token: leave empty to keep it' if wa.has_token else 'Permanent access token' }}" aria-label="Access token" autocomplete="new-password"></div>
+          <div class="col-md-6"><input name="phone_id" class="form-control form-control-sm" value="{{ wa.phone_id }}" placeholder="Phone number ID (a long number)" aria-label="Phone number ID"></div>
+          <div class="col-md-6"><input name="app_secret" type="password" class="form-control form-control-sm" placeholder="{{ 'App secret: leave empty to keep it' if wa.has_secret else 'App secret' }}" aria-label="App secret" autocomplete="new-password"></div>
+          <div class="col-md-6"><input name="verify_token" class="form-control form-control-sm" value="{{ wa.verify_token }}" placeholder="Verify token (made for you when you save)" aria-label="Verify token"></div>
+          <div class="col-md-6"><input name="template" class="form-control form-control-sm" value="{{ wa.template }}" placeholder="Approved message for reminders (optional)" aria-label="Approved message template"></div>
+        </div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+          <button class="btn btn-berry btn-sm px-3">Save</button>
+        </div>
+      </form>
+      <form method="post" action="/settings/whatsapp/test" class="mt-2"><button class="btn btn-sm btn-outline-secondary" {{ 'disabled' if not wa.configured }}><i class="bi bi-plug me-1"></i>Test the connection</button></form>
+
+      <div class="st-section">The address to give Meta</div>
+      <div class="st-code mb-1">Callback URL: {{ wa.webhook }}
+Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
+      {% if wa.public_local %}<div class="st-sub" style="color:#be123c;"><i class="bi bi-exclamation-triangle-fill me-1"></i>This address only opens on this computer: Meta cannot reach it. Set the “Address for candidates” to a public https address first.</div>{% endif %}
+
+      <details class="mt-2">
+        <summary class="st-sub" style="cursor:pointer;"><strong>Where to get them (Meta, about 15 minutes)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li><strong>Create the app.</strong> On Meta for Developers, “Create app”, type Business, then add the <em>WhatsApp</em> product. <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>The phone number ID.</strong> WhatsApp → API Setup: add your business number, then copy its <em>Phone number ID</em>.</li>
+          <li><strong>A permanent token.</strong> Business settings → System users → add one, give it the app with <em>whatsapp_business_messaging</em>, then “Generate token”. <a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>The app secret.</strong> App settings → Basic → App secret → Show.</li>
+          <li><strong>Receive messages.</strong> WhatsApp → Configuration → Webhook: paste the callback URL and the verify token above, then subscribe to <em>messages</em>.</li>
+          <li><strong>Reminders to people who did not write first</strong> need a message Meta approved (one variable: the text). Create it under Message templates and write its name above.</li>
+        </ol>
+      </details>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="sms" data-fold style="--i:6;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
+      <span class="st-fold-text"><span class="st-title">SMS from your Android phone</span><span class="st-sub">An Android phone sends and receives the SMS, from its own number.</span></span>
+      <span class="st-fold-state">{% if sm.receives and sm.configured %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Sends and receives</span>{% elif sm.configured %}<span class="st-state ok"><i class="bi bi-send-check"></i>Sends by itself</span>{% else %}<span class="st-state off"><i class="bi bi-hand-index"></i>One click per SMS</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">An Android phone with a SIM sends and receives the SMS, from its own number, with the free app <strong>SMS Gateway for Android</strong>. SMS that candidates send are read by the assistant like emails and WhatsApp messages: it answers alone when it is sure, otherwise it asks you, and it learns from your answers. Without the phone, each SMS waits in the inbox with a button that opens the messages of your phone, written. (An iPhone cannot do this.)</div>
+      <form method="post" action="/settings/sms" class="row g-2 align-items-end">
+        <div class="col-md-6"><label class="form-label small fw-bold mb-1">The phone's address</label><input class="form-control form-control-sm" name="url" value="{{ sm.url }}" placeholder="http://192.168.1.20:8080"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold mb-1">Username</label><input class="form-control form-control-sm" name="user" value="{{ sm.user }}" autocomplete="off"></div>
+        <div class="col-md-3"><label class="form-label small fw-bold mb-1">Password {% if sm.has_password %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="password" type="password" autocomplete="new-password" placeholder="{{ '••••••' if sm.has_password else '' }}"></div>
+        <div class="col-md-6"><label class="form-label small fw-bold mb-1">Signing key (the app: Settings › Webhooks) {% if sm.has_key %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="key" type="password" autocomplete="off" placeholder="{{ '••••••' if sm.has_key else '' }}"></div>
+        <div class="col-md-6 d-flex gap-2"><button class="btn btn-sm btn-berry rounded-pill px-3">Save</button>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill" formaction="/settings/sms/test" formnovalidate>Test the phone</button></div>
+      </form>
+      <div class="st-sub mt-2">Where the phone sends the SMS it receives (its webhook for <em>sms:received</em>): <code>{{ sm.webhook }}</code></div>
+      <details class="mt-2">
+        <summary class="st-sub" style="cursor:pointer;"><strong>How to set it up (about 10 minutes)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li>On the Android phone, install <strong>SMS Gateway for Android</strong> (sms-gate.app; for this computer's address on the Wi-Fi, the "insecure" version of the app). <a href="https://sms-gate.app" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li>In the app, switch on <strong>Local server</strong>: it shows its address, a username and a password. Write them above.</li>
+          <li>In the app's Settings › Webhooks, copy the <strong>signing key</strong> and write it above.</li>
+          <li>Add a webhook for <em>sms:received</em> with the address above (the phone and this computer on the same Wi-Fi, and the application started for the phone).</li>
+          <li>Press “Test the phone”. Then choose SMS at the top of the inbox if you want SMS to go first.</li>
+        </ol>
+      </details>
+    </div>
+  </details>
+  <div class="st-group"><i class="bi bi-building"></i>Your centre</div>
+  <details class="st-card st-fold" id="centre" data-fold style="--i:7;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("data") }}</span>
+      <span class="st-fold-text"><span class="st-title">Your centre</span><span class="st-sub">Official name, the names a cheque is made out to, RIB, tax number, phone, address.</span></span>
+      <span class="st-fold-state">{% if centre_banks %}<span class="st-state ok"><i class="bi bi-bank2"></i>{{ centre_banks[0].bank }}</span>{% else %}<span class="st-state off"><i class="bi bi-exclamation-circle-fill"></i>No RIB yet</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">Who the centre is on payment proofs, cheques and emails. A cheque is read against these names, a transfer against the RIB; the assistant and Yasmine give them to whoever asks how to pay.</div>
+      <form method="post" action="/settings/numbers" class="st-centre" id="centre-form">
+        <input type="hidden" name="whole" value="1">
+        <div class="st-centre-part">
+          <div class="st-centre-title"><i class="bi bi-building"></i>Who you are</div>
+          <label>Official name (company or centre)<input name="legal_name" value="{{ settings.centre_legal_name or '' }}" placeholder="9antra Training Center SARL" maxlength="160"></label>
+          <label>Tax number (matricule fiscal)<input name="tax_id" value="{{ settings.centre_tax_id or '' }}" placeholder="1234567/A/M/000" maxlength="40"></label>
+          <label class="is-wide">Names a cheque or a transfer may be made out to (one per line)
+            <textarea name="beneficiaries" rows="3" placeholder="9antra&#10;9antra Training Center">{{ settings.centre_beneficiaries or '' }}</textarea>
+            <small>On a cheque, “Payez contre ce chèque … à l'ordre de” must be one of these names (the official name counts too). Accents and capitals do not matter.</small></label>
+        </div>
+        <div class="st-centre-part">
+          <div class="st-centre-title"><i class="bi bi-bank"></i>Where candidates pay</div>
+          <label class="is-wide">The centre's RIB (one per line)
+            <textarea name="ribs" rows="2" placeholder="08 006 0101234567890 64" class="is-mono">{{ settings.centre_ribs or '' }}</textarea>
+            <small>A transfer receipt is checked against it: the money must go to this account. Its bank is recognised from its first two digits.</small></label>
+          {% if centre_banks %}<div class="st-centre-banks is-wide">{% for item in centre_banks %}<span class="st-centre-bank"><i class="bi bi-bank2"></i><b>{{ item.bank }}</b> <span dir="ltr">{{ item.rib }}</span></span>{% endfor %}</div>{% endif %}
+        </div>
+        <div class="st-centre-part">
+          <div class="st-centre-title"><i class="bi bi-telephone"></i>How to reach you <span>written under every email</span></div>
+          <label>Phone (calls, SMS)<input name="phone" value="{{ settings.centre_phone or '' }}" placeholder="+216 71 123 456"></label>
+          <label>WhatsApp<input name="chat" value="{{ settings.centre_whatsapp or '' }}" placeholder="+216 98 123 456"></label>
+          <label>Contact email<input name="email" type="email" value="{{ settings.centre_email or '' }}" placeholder="contact@9antra.tn"></label>
+          <label>Website<input name="website" value="{{ settings.centre_website or '' }}" placeholder="https://9antra.tn" inputmode="url"></label>
+          <label class="is-wide">Address (said to whoever asks where you are)<input name="address" value="{{ settings.centre_address or '' }}" placeholder="Les Berges du Lac, Tunis & Sahloul Sousse"></label>
+          <label class="is-wide">The registration form, given to whoever asks how to register (email, WhatsApp, SMS, the assistant, Yasmine)
+            <input name="form" value="{{ settings.registration_form_url or '' }}" placeholder="{{ registration_form }}" inputmode="url">
+            <small>Empty = the form used today: <a href="{{ registration_form }}" target="_blank" rel="noopener">open it</a>.</small></label>
+        </div>
+        <div class="st-centre-do"><button class="btn btn-berry btn-sm px-4">Save your centre</button>
+          <span class="st-sub">To change the WhatsApp Business number the assistant answers from, see <a href="#whatsapp">WhatsApp Business</a>.</span></div>
+      </form>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="identity" data-fold style="--i:8;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("identity") }}</span>
+      <span class="st-fold-text"><span class="st-title">Name and icon</span><span class="st-sub">What the application is called, and its picture.</span></span>
+      <span class="st-fold-state"><span class="st-chip" data-no-i18n>{{ app_brand.name }}</span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">The icon is the picture of your Facebook page (facebook.com/9antra.tn). It is looked at again every day, so a new picture there becomes the icon here.</div>
+      <form method="post" action="/settings/identity" enctype="multipart/form-data" class="d-flex gap-3 align-items-start flex-wrap">
+        {% if app_brand.logo %}<img src="{{ app_brand.icon_big }}" alt="The application's icon" style="width:76px; height:76px; border-radius:50%; border:1px solid var(--border-color); flex:none;">{% endif %}
+        <div style="flex:1 1 280px;">
+          <label class="form-label fw-bold small mb-1" for="app-name">Name of the application</label>
+          <input class="form-control" id="app-name" name="name" value="{{ app_brand.name }}" maxlength="40" list="name-ideas" style="border-radius:11px;">
+          <datalist id="name-ideas">{% for idea, why in name_ideas %}<option value="{{ idea }}">{{ why }}</option>{% endfor %}</datalist>
+          <div class="st-sub mt-2">Ideas:
+            {% for idea, why in name_ideas %}<button type="button" class="btn btn-sm btn-light border rounded-pill me-1 mb-1" data-name-idea="{{ idea }}" title="{{ why }}">{{ idea }}</button>{% endfor %}
+          </div>
+          <label class="form-label fw-bold small mb-1 mt-2" for="app-picture">Use a picture of your own instead (optional)</label>
+          <input class="form-control form-control-sm" id="app-picture" name="picture" type="file" accept="image/png,image/jpeg,image/webp" style="border-radius:11px;">
+          <div class="d-flex gap-2 flex-wrap mt-3">
+            <button class="btn btn-primary btn-sm rounded-pill px-3" style="background:var(--primary-berry); border-color:var(--primary-berry);">Save</button>
+            <button class="btn btn-light border btn-sm rounded-pill px-3" formaction="/settings/identity/facebook" formnovalidate><i class="bi bi-facebook me-1"></i>Take the icon from Facebook now</button>
+          </div>
+          <div class="st-sub mt-2">{{ 'You are using a picture of your own: it is kept until you take the Facebook one again.' if app_brand.source == 'upload' else 'Currently: the picture of the Facebook page.' if app_brand.source else 'No icon yet.' }}</div>
+        </div>
+      </form>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="address" data-fold style="--i:9;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("link") }}</span>
+      <span class="st-fold-text"><span class="st-title">Address for candidates</span><span class="st-sub">The link candidates open from their emails.</span></span>
+      <span class="st-fold-state">{% if public_url_local %}<span class="st-state off"><i class="bi bi-exclamation-triangle-fill"></i>This computer only</span>{% else %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Set</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">
+        Emails with a link (weekly questions, quizzes) send candidates to this address.
+        {% if public_url_local %}
+        Right now links start with <strong>{{ public_url }}</strong>, which only opens on this computer:
+        candidates cannot answer their questions until the application has an address they can reach.
+        {% else %}
+        Links start with <strong>{{ public_url }}</strong>.
+        {% endif %}
+      </div>
+      <form method="post" action="/settings/address" class="d-flex gap-2">
+        <input name="public_base_url" type="text" class="form-control form-control-sm" value="{{ settings.public_base_url or '' }}"
+               placeholder="https://app.9antra.tn" aria-label="Address candidates use to reach the application">
+        <button class="btn btn-sm btn-outline-secondary text-nowrap">Save</button>
+      </form>
+    </div>
+  </details>
+  <div class="st-group"><i class="bi bi-palette"></i>Look and language</div>
+  <details class="st-card st-fold" id="appearance" data-fold style="--i:10;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("look") }}</span>
+      <span class="st-fold-text"><span class="st-title">Colour of the design</span><span class="st-sub">The main colour, where the menu sits, day or night.</span></span>
+      <span class="st-fold-state"><span class="st-dot" style="--swatch:{{ ui_colour }};"></span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">Choose the main colour, where the menu sits, and whether the background moves. Buttons, the side menu and the sign-in page all follow the colour.</div>
+      <form method="post" action="/settings/appearance" id="appearance-form">
+        <div class="d-flex flex-wrap gap-2 mb-3" role="radiogroup" aria-label="Colour">
+          {% for name, value in colour_presets %}
+          <button type="button" class="st-swatch {{ 'is-chosen' if value == ui_colour }}" data-colour="{{ value }}" style="--swatch:{{ value }};" title="{{ name }}" aria-label="{{ name }}"></button>
+          {% endfor %}
+        </div>
+        <div class="d-flex flex-wrap gap-4 mb-3" style="font-size:.86rem;">
+          <div><div class="st-sub mb-1"><strong>Menu</strong></div>
+            <label class="me-3"><input type="radio" name="ui_menu_side" value="left" {{ 'checked' if ui_menu_side != 'right' }}> On the left</label>
+            <label><input type="radio" name="ui_menu_side" value="right" {{ 'checked' if ui_menu_side == 'right' }}> On the right</label></div>
+          <div><div class="st-sub mb-1"><strong>Day or night</strong></div>
+            <label class="me-3"><input type="radio" name="ui_mode" value="soft" {{ 'checked' if ui_mode == 'soft' }}> Day, soft</label>
+            <label class="me-3"><input type="radio" name="ui_mode" value="colours" {{ 'checked' if ui_mode == 'colours' }}> Day, with colours</label>
+            <label class="me-3"><input type="radio" name="ui_mode" value="night" {{ 'checked' if ui_mode == 'night' }}> Night, black</label>
+            <label><input type="radio" name="ui_mode" value="night-blue" {{ 'checked' if ui_mode == 'night-blue' }}> Night, blue</label></div>
+          <div><div class="st-sub mb-1"><strong>Background</strong></div>
+            <label class="me-3"><input type="radio" name="ui_background" value="animated" {{ 'checked' if ui_background != 'plain' }}> Moving, softly</label>
+            <label><input type="radio" name="ui_background" value="plain" {{ 'checked' if ui_background == 'plain' }}> Still</label></div>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <input type="color" class="form-control form-control-color" id="appearance-colour" name="ui_color" value="{{ ui_colour }}" title="Any other colour" aria-label="Any other colour">
+          <span class="st-sub" id="appearance-value">{{ ui_colour }}</span>
+          <button class="btn btn-sm btn-outline-secondary text-nowrap ms-auto">Save the colour</button>
+        </div>
+      </form>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="language" data-fold style="--i:11;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("language") }}</span>
+      <span class="st-fold-text"><span class="st-title">Language of the pages</span><span class="st-sub">English, French or Arabic, and the translations.</span></span>
+      <span class="st-fold-state">{% for code, state in languages_progress.items() %}<span class="st-chip" data-no-i18n>{{ code | upper }} {{ ((state.done / state.total * 100) | round | int) if state.total else 0 }}%</span>{% endfor %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">Each person chooses English, French or Arabic with the <i class="bi bi-translate"></i> button at the top of every page; the choice is remembered on their browser. The most common words were translated by hand. The assistant translates the rest a little at a time, starting with what you actually open, and every translation is kept.</div>
+      {% for code, state in languages_progress.items() %}
+      <div class="d-flex align-items-center gap-2 mb-2 flex-wrap" style="font-size:.84rem;">
+        <strong style="min-width:76px;" data-no-i18n>{{ state.name }}</strong>
+        <div class="progress flex-grow-1" style="height:8px;" role="progressbar" aria-label="{{ state.name }}" aria-valuenow="{{ state.done }}" aria-valuemin="0" aria-valuemax="{{ state.total }}"><div class="progress-bar" style="width:{{ (state.done / state.total * 100) | round(1) if state.total else 0 }}%; background:var(--primary-berry);"></div></div>
+        <span class="st-sub" style="flex-basis:100%;">{{ state.done }} of {{ state.total }} texts{{ '' if state.used else ' · starts when someone chooses it' }}</span>
+      </div>
+      {% endfor %}
+      <a class="btn btn-sm btn-outline-secondary mt-2" href="/settings/translations">Read and correct the translations</a>
+    </div>
+  </details>
+  <div class="st-group"><i class="bi bi-plug"></i>Reports and connections</div>
+  <details class="st-card st-fold" id="report" data-fold style="--i:12;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("data") }}</span>
+      <span class="st-fold-text"><span class="st-title">Report by email</span><span class="st-sub">The analysis of the centre, sent to you on a rhythm you choose.</span></span>
+      <span class="st-fold-state">{% if report.on %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>{{ report.label | capitalize }}</span>{% else %}<span class="st-state off"><i class="bi bi-pause-circle-fill"></i>Off</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">How the centre is doing, sent to you: the analysis and the candidates' progress as two PDFs, and what to improve first in the email itself. It goes to you only, never to candidates.</div>
+      <form method="post" action="/settings/report" id="report-form">
+        <label class="st-switch form-check form-switch ps-0 mb-0">
+          <input class="form-check-input ms-0" type="checkbox" role="switch" name="report_email_on" {% if report.on %}checked{% endif %}>
+          <span><span class="st-switch-title d-block">Send me the report</span>
+            <span class="st-switch-help">The first one goes a full period after you switch it on, never at once.</span></span>
+        </label>
+        <div class="st-section" style="margin-top:6px; padding-top:12px;">How often</div>
+        <div class="st-rhythm" role="radiogroup" aria-label="How often">
+          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="week" {{ 'checked' if report.rhythm == 'week' }}><span>Every week</span></label>
+          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="ten" {{ 'checked' if report.rhythm == 'ten' }}><span>Every 10 days</span></label>
+          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="days" {{ 'checked' if report.rhythm == 'days' }}><span>Every
+            <input type="number" name="days" min="1" max="{{ report.most_days }}" value="{{ report.days if report.rhythm == 'days' else 14 }}" class="form-control form-control-sm" aria-label="Number of days, up to {{ report.most_days }}"> days</span></label>
+          <label class="st-rhythm-opt"><input type="radio" name="rhythm" value="weeks" {{ 'checked' if report.rhythm == 'weeks' }}><span>Every
+            <input type="number" name="weeks" min="1" max="{{ report.most_weeks }}" value="{{ report.weeks }}" class="form-control form-control-sm" aria-label="Number of weeks, up to {{ report.most_weeks }}"> weeks</span></label>
+        </div>
+        <div class="form-text">Any number of days up to {{ report.most_days }}, or of weeks up to {{ report.most_weeks }}.</div>
+        <div class="st-section" style="margin-top:12px; padding-top:12px;">To</div>
+        <input name="recipients" class="form-control form-control-sm" value="{{ report.written }}" placeholder="{{ report.to | join(', ') or 'you@example.com' }}" aria-label="Addresses the report goes to">
+        <div class="form-text">Empty: {{ ('your own address (' ~ report.to | join(', ') ~ ')') if report.to else 'the admins’ addresses' }}. Several addresses: separate them with commas.</div>
+        <div class="st-sub mt-2">{% if report.on and report.next %}<i class="bi bi-calendar-check me-1"></i>Next report: <strong>{{ report.next.strftime('%A %d %B, %H:%M') }}</strong>.{% elif report.on %}<i class="bi bi-hourglass-split me-1"></i>The clock starts within a minute; the first report goes {{ report.label }} after that.{% endif %}
+          {% if report.last %} Last one: {{ report.last.strftime('%d %b %Y, %H:%M') }}.{% endif %}</div>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+          <button class="btn btn-berry btn-sm px-3">Save</button>
+          <a class="btn btn-sm btn-light border" href="/dashboard/analysis/pdf" target="_blank" rel="noopener"><i class="bi bi-eye me-1"></i>See the analysis</a>
+          <a class="btn btn-sm btn-light border" href="/candidate/all/analysis/pdf" target="_blank" rel="noopener"><i class="bi bi-mortarboard me-1"></i>See the candidates' progress</a>
+        </div>
+      </form>
+      <form method="post" action="/settings/report/send" class="mt-2" data-confirm="Send the report now to {{ report.to | join(', ') or 'the admins' }}?">
+        <button class="btn btn-sm btn-outline-secondary" {{ 'disabled' if not smtp_ready }}><i class="bi bi-send me-1"></i>Send one now</button>
+        {% if not smtp_ready %}<span class="st-sub ms-1">Email is not set up yet.</span>{% endif %}
+      </form>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="google" data-fold style="--i:13;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("quiz") }}</span>
+      <span class="st-fold-text"><span class="st-title">Weekly answers: Google Form → Firebase → here</span><span class="st-sub">Each week's questions as a Google Form, the answers back here by themselves.</span></span>
+      <span class="st-fold-state">{% if forms.ready %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>{% else %}<span class="st-state off"><i class="bi bi-hourglass-split"></i>Two clicks missing</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">Each week's questions can be a Google Form: the answers go to your Firebase database (<code>weekly_answers</code>), then arrive here by themselves, the same road as registrations. Until it is connected, candidates answer on this application's own private page and nothing is lost.</div>
+      <div class="d-flex align-items-center gap-2 flex-wrap mb-3" style="font-size:.8rem; font-weight:700;">
+        <span class="st-state {{ 'ok' if forms.google.forms == 'on' else 'off' }}"><i class="bi bi-ui-checks"></i>Google Forms {{ 'on' if forms.google.forms == 'on' else 'off' if forms.google.forms == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state {{ 'ok' if forms.google.drive == 'on' else 'off' }}"><i class="bi bi-share"></i>Sharing (Google Drive) {{ 'on' if forms.google.drive == 'on' else 'off' if forms.google.drive == 'off' else 'not checked yet' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state {{ 'ok' if forms.firebase else 'off' }}"><i class="bi bi-fire"></i>Firebase {{ 'connected' if forms.firebase else 'not connected' }}</span><i class="bi bi-arrow-right"></i>
+        <span class="st-state ok"><i class="bi bi-house-check"></i>Here</span>
+      </div>
+      {% if not forms.ready %}
+      <div class="st-sub mb-2">Your Firebase project <strong>{{ forms.google.project or 'is not found (app/firebase_key.json is missing)' }}</strong> has to allow two Google services. Sign in to Google as the owner of the project, open each link, press <strong>Enable</strong>:</div>
+      <ol class="st-sub mb-3">
+        <li><a href="{{ forms.google.forms_link }}" target="_blank" rel="noopener">Switch on Google Forms for the project</a></li>
+        <li><a href="{{ forms.google.drive_link }}" target="_blank" rel="noopener">Switch on Google Drive for the project</a> (it is what lets anyone with the link answer the form)</li>
+      </ol>
+      {% endif %}
+      <form method="post" action="/settings/google/test" id="google-test">
+        <button class="btn btn-light border btn-sm rounded-pill px-3"><i class="bi bi-plug me-1"></i>Test the connection</button>
+        <span class="st-sub ms-2">Creates a small form, opens it, reads it, removes it. Takes about ten seconds.</span>
+      </form>
+      {% if forms_trial %}
+      <div class="mt-3">
+        {% for step in forms_trial %}
+        <div class="st-sub mb-1"><i class="bi {{ 'bi-check-circle-fill text-success' if step.ok else 'bi-x-circle-fill text-danger' }} me-1"></i><strong>{{ step.label }}</strong>{% if step.detail %}: {{ step.detail }}{% endif %}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </details>
+  <div class="st-group"><i class="bi bi-shield-lock"></i>Access</div>
+  <details class="st-card st-fold" id="access" data-fold style="--i:14;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("team") }}</span>
+      <span class="st-fold-text"><span class="st-title">Who can sign in</span><span class="st-sub">Your password, the team, the professors' access, all the data.</span></span>
+      <span class="st-fold-state"></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-3">
+        You are signed in as <strong>{{ current_user.name }}</strong>{% if current_user.email %} ({{ current_user.email }}){% endif %}.
+        Professors get their own access from the Professors page: each one then sees only their classes.
+      </div>
+      <div class="d-flex flex-wrap gap-2">
+        <a href="/account" class="btn btn-sm btn-outline-secondary">Change my password</a>
+        <a href="/settings/team" class="btn btn-sm btn-primary fw-semibold" style="background:var(--primary-berry); border-color:var(--primary-berry);">Team and access: who sees what</a>
+        <a href="/classes/?tab=professors" class="btn btn-sm btn-light fw-semibold">Professors' access</a>
+        <a href="/data" class="btn btn-sm btn-light fw-semibold">All the data: change any value</a>
+      </div>
+    </div>
+  </details>
 </div>
 
 <script>
@@ -726,8 +833,10 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
     const form = document.getElementById(id);
     if (!form) return;
     function markSelected() {
+      // A choice (radio) or a switch (checkbox): the option chosen is marked.
       form.querySelectorAll('.st-option').forEach(option => {
-        option.classList.toggle('is-selected', option.querySelector('input[type="radio"]').checked);
+        const input = option.querySelector('input[type="radio"], input[type="checkbox"]');
+        if (input) option.classList.toggle('is-selected', input.checked);
       });
     }
     form.addEventListener('change', markSelected);
@@ -759,6 +868,49 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
   });
 </script>
 
+<script>
+/* The folds: they slide open and closed, the one a link points to (#email…) opens by itself, the open ones are
+   remembered on this browser. */
+(() => {
+  const folds = Array.from(document.querySelectorAll("details[data-fold]"));
+  if (!folds.length) return;
+  const KEY = "settings:open";
+  const calm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(folds.filter(fold => fold.open).map(fold => fold.id))); } catch (error) {} };
+  function slide(fold, open) {
+    if (calm || !fold.animate) { fold.open = open; save(); return; }
+    if (fold._slide) fold._slide.cancel();
+    const summary = fold.querySelector("summary");
+    const from = fold.offsetHeight;
+    if (open) fold.open = true;
+    const to = open ? fold.scrollHeight + (fold.offsetHeight - fold.clientHeight) : summary.offsetHeight + (fold.offsetHeight - fold.clientHeight);
+    fold.style.overflow = "hidden";
+    const run = fold.animate({ height: [from + "px", to + "px"] }, { duration: open ? 340 : 240, easing: "cubic-bezier(.2,.8,.2,1)" });
+    fold._slide = run;
+    run.onfinish = () => { fold._slide = null; fold.style.overflow = ""; if (!open) fold.open = false; save(); };
+    run.oncancel = () => { fold._slide = null; fold.style.overflow = ""; };
+  }
+  folds.forEach(fold => fold.querySelector("summary").addEventListener("click", event => {
+    event.preventDefault();
+    slide(fold, !fold.open);
+  }));
+  try { JSON.parse(localStorage.getItem(KEY) || "[]").forEach(id => { const fold = document.getElementById(id); if (fold && folds.includes(fold)) fold.open = true; }); } catch (error) {}
+  function fromAddress() {
+    const id = decodeURIComponent((window.location.hash || "").slice(1));
+    const fold = id && document.getElementById(id);
+    if (!fold || !folds.includes(fold)) return;
+    fold.open = true;
+    save();
+    window.setTimeout(() => fold.scrollIntoView({ behavior: calm ? "auto" : "smooth", block: "start" }), 80);
+  }
+  window.addEventListener("hashchange", fromAddress);
+  fromAddress();
+  document.querySelectorAll("[data-folds]").forEach(button => button.addEventListener("click", () => {
+    const open = button.dataset.folds === "open";
+    folds.forEach(fold => { if (fold.open !== open) slide(fold, open); });
+  }));
+})();
+</script>
 <script>
 /* Find a setting: only the pictures that match stay; Enter opens the first one. */
 (function () {

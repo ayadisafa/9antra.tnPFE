@@ -1,24 +1,29 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.notification import Notification
-from app.services import notification_fixes
+from app.services import dynamic_words, notification_fixes, translations
 from app.services.notification_service import mark_all_as_read, mark_notification_as_read
 
 
 router = APIRouter(prefix="/admin/api/notifications", tags=["Notifications"])
 
 
+def _lang(request: Request) -> str:
+    return translations.clean_language(request.cookies.get("lang"))
+
+
 def _serialize(notification: Notification, db: Session | None = None) -> dict:
+    """In the page's language when `dynamic_words.localize` was run on it; `action_url` is always where it leads."""
     return {
         "fix": notification_fixes.fix_for(db, notification) if db is not None else None,
         "id": notification.id,
-        "title": notification.title,
-        "message": notification.message,
+        "title": getattr(notification, "title_shown", None) or notification.title,
+        "message": getattr(notification, "message_shown", None) or notification.message,
         "category": notification.category,
         "candidate_id": notification.candidate_id,
         "program_id": notification.program_id,
-        "action_url": notification.action_url,
+        "action_url": dynamic_words.target_of(notification),
         "is_read": bool(notification.is_read),
         "status": notification.status,
         "similarity_score": notification.similarity_score,
@@ -28,6 +33,7 @@ def _serialize(notification: Notification, db: Session | None = None) -> dict:
 
 @router.get("")
 def get_notifications(
+    request: Request,
     page: int = Query(1, ge=1),
     unread_only: bool = Query(False),
     db: Session = Depends(get_db),
@@ -39,6 +45,7 @@ def get_notifications(
     offset = (page - 1) * per_page
     total_items = query.count()
     notifications = query.order_by(Notification.created_at.desc()).offset(offset).limit(per_page).all()
+    dynamic_words.localize(db, notifications, _lang(request))
     return {
         "notifications": [_serialize(item, db) for item in notifications],
         "unread_count": db.query(Notification).filter(
@@ -50,12 +57,15 @@ def get_notifications(
 
 
 @router.get("/{notification_id}/fix")
-def fix_of(notification_id: str, db: Session = Depends(get_db)):
-    """The one action that solves what a notification is about, as things are now."""
+def fix_of(notification_id: str, request: Request, db: Session = Depends(get_db)):
+    """The one action that solves what a notification is about, as things are now; and the notification as the bell
+    shows it (in the page's language, with where it leads)."""
     notification = db.get(Notification, notification_id)
     if notification is None:
         raise HTTPException(status_code=404, detail="Notification not found")
-    return {"fix": notification_fixes.fix_for(db, notification)}
+    dynamic_words.localize(db, [notification], _lang(request))
+    return {"fix": notification_fixes.fix_for(db, notification), "title": notification.title_shown,
+            "message": notification.message_shown, "href": notification.target}
 
 
 @router.post("/{notification_id}/read")

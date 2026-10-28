@@ -329,6 +329,9 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
         if mine:
             lines.append({"text": _plural(words, "mine", mine), "url": "/account/messages", "icon": "bi-chat-heart", "tone": "warn"})
     guide = guides.for_path(path or "/")
+    from app.services import page_tours
+
+    tour = page_tours.for_path(path or "/")
     tip = None
     facts = place_facts(db, path, written) if is_admin else None
     if facts:
@@ -336,6 +339,9 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
     elif guide:
         title, text = _in_language(db, written, guide["title"]), _in_language(db, written, guide["text"])
         tip = {"text": words["page"].format(title=title.rstrip("."), text=text), "key": guide["key"]}
+    elif tour:
+        title, text = _in_language(db, written, tour["title"]), _in_language(db, written, tour["purpose"])
+        tip = {"text": words["page"].format(title=title.rstrip("."), text=text), "key": "tour:" + tour["key"]}
     cheer = words["cheers"][now_local.toordinal() % len(words["cheers"])]
     return {
         "name": NAME, "lang": lang, "voice_lang": {"fr": "fr-FR", "tn": "fr-FR", "ar": "ar-SA"}.get(lang, "en-US"),

@@ -1016,6 +1016,14 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
     found = {"method": "none", "answer": None, "confidence": 0.0, "hits": [], "used": [],
              "blocker": None, "evidence": 0.0, "unsupported": [], "programs": [], "files": []}
 
+    from app.services import course_requests
+
+    text_asked = f"{analysis.get('subject') or ''}\n{analysis.get('derja') or message.body or ''}"
+    # The course of another program than theirs is never attached (see process_inbound: “register first”).
+    material = None if course_requests.other_program_asked(db, candidate, text_asked) else course_requests.answer(db, candidate, analysis, message)
+    if material is not None:
+        found.update(material, confidence=RECORD_CONFIDENCE)
+        return found
     document = document_answer(db, candidate, thread, message, analysis)
     if document is not None:
         found.update(document)
@@ -1088,6 +1096,7 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
         db, f"{subject}\n{question}", extra_queries=[message.body[:600]],
         program_ids=about or coverage["program_ids"], limit=80,
         questions=[question, f"{subject} {question}"] if subject else [question],
+        skip_kinds=("page", "message", "team", "settings"),   # how the application works and who does what: for the team, not candidates
     )
     # What the system worked out by itself. A taught answer is never mixed into
     # it: on a real trial the model, given the admin's note as "knowledge",
@@ -1162,6 +1171,8 @@ def source_line(found: dict, language: str = "fr") -> str:
         return "Source: 9antra's registration form." if english else "Source : le formulaire d'inscription de 9antra."
     if method == "facts":
         return "Source: 9antra's information about its programs." if english else "Source : les informations de 9antra sur ses formations."
+    if method == "material":
+        return "Source: your class's course files." if english else "Source : les fichiers du cours de votre classe."
     if method == "taught":
         return "Source: the 9antra team." if english else "Source : l'équipe 9antra."
     if method == "composed":
@@ -1288,7 +1299,63 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
 
     reply_language = "en" if analysis["language"] == "en" else "fr"
     asked_text = analysis.get("derja") or message.body or ""
-    if course_questions.is_learning_question(f"{subject}\n{asked_text}"):
+    # A reply with the answers to the weekly questions (“1-B, 2-A”): graded at once, the score and corrections sent back.
+    from app.services import weekly_questions
+
+    handled = None if is_test(message) else weekly_questions.handle_reply(db, candidate.id, thread.subject or message.subject or "", message.body or "")
+    if handled is not None:
+        graded = f"{greeting_for(candidate, 'fr')}\n\n{handled['text']}"
+        text, html_body = compose_reply(db, candidate, graded, language="fr")
+        email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system", thread=thread,
+                              language="fr", note="Answers to the weekly questions read from the reply.")
+        message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+        message.analysis = f"Answers to the weekly questions ({handled['quiz'].course_name})" + (": complete, graded." if handled["done"] else ": some still missing.")
+        thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
+        return "replied"
+    from app.services import course_requests
+
+    # The course of a program they are not registered in: “register first”, answered alone (it is not the admin's to give).
+    elsewhere = course_requests.other_program_asked(db, candidate, f"{subject}\n{asked_text}")
+    if elsewhere is not None and not is_test(message):
+        told = f"{greeting_for(candidate, reply_language)}\n\n{course_requests.register_first_text(db, elsewhere, reply_language)}"
+        text, html_body = compose_reply(db, candidate, told, language=reply_language, quote=message.body)
+        sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                     thread=thread, language=reply_language, note=f"Asked the course of {elsewhere.name}, not their program: register first.")
+        if sent is not None and sent.status != "failed":
+            message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+            thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
+            _notify(db, thread, "CANDIDATE_EMAIL", f"{name} asked the course of {elsewhere.name}",
+                    "They are not registered in it: they were told to register first. The course of a program is only for its candidates.")
+            return "replied"
+    wanted = course_requests.lookup(db, candidate, f"{subject}\n{asked_text}") if course_requests.asks_for_material(f"{subject}\n{asked_text}") else None
+    if wanted is not None and wanted["state"] != "ready":
+        # The course of a week not added yet (or not taught yet): the professor and the admin are asked, the candidate told.
+        professor = course_questions.professor_of(db, wanted["class"])
+        week_said = f"week {wanted['week']}"
+        if is_test(message):
+            return _ask_admin(db, thread, message, candidate, f"Test: the course of {week_said} is not there yet; it would be asked to the professor.", None)
+        if wanted["state"] == "missing":
+            course_requests.keep_waiting(db, candidate, wanted, message, thread)
+            if professor is not None:
+                course_questions.forward(db, candidate=candidate, message=message, registration=wanted["registration"],
+                                         class_group=wanted["class"], professor=professor)
+        told = f"{greeting_for(candidate, reply_language)}\n\n{course_requests.passed_on_text(wanted, professor, reply_language)}"
+        if mode != "auto":
+            return _ask_admin(db, thread, message, candidate,
+                              f"{name} asks for the course of {week_said}, which is not there yet"
+                              + (f": {professor.name} was asked for it." if professor is not None and wanted["state"] == "missing" else "."), told)
+        text, html_body = compose_reply(db, candidate, told, language=reply_language, quote=message.body)
+        sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                     thread=thread, language=reply_language, note=f"The course of {week_said} is not there yet: passed on.")
+        if sent is None or sent.status == "failed":
+            return _ask_admin(db, thread, message, candidate, "The answer could not be delivered. You can send it again from here.", told)
+        message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+        _notify(db, thread, "CANDIDATE_EMAIL", f"{name} asks for the course of {week_said}",
+                "Not added yet: " + (f"{professor.name} was asked; " if professor is not None else "")
+                + "it goes to them by itself as soon as its files are added on the course page.")
+        return "replied"
+    material_ready = wanted is not None
+    if not material_ready and course_questions.is_learning_question(f"{subject}\n{asked_text}"):
         # About the learning itself: only for a candidate who paid that program, and their professor answers.
         registration, class_group = course_questions.class_of(db, candidate, asked_text)
         if registration is None:
@@ -1377,7 +1444,7 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     if reason is None:
         if found.get("language") in ("ar", "tn") and found["method"] in ("facts", "register"):
             pass        # built from facts and written in their own language (Arabic or Tunisian): it goes as it is
-        elif analysis["language"] == "ar" and analysis.get("derja") and found["method"] in ("record", "taught", "document", "register", "facts"):
+        elif analysis["language"] == "ar" and analysis.get("derja") and found["method"] in ("record", "taught", "document", "register", "facts", "material"):
             pass        # written in Arabic letters, read with the list, and the answer is a sure one: it goes, in French
         elif analysis["language"] not in AUTO_LANGUAGES:
             reason = (
@@ -1677,14 +1744,17 @@ def admin_reply(db: Session, thread: EmailThread, body: str, *, learn: bool = Fa
         confirmed.origin = "learned"
         if inbound is not None:
             knowledge_service.add_wording(confirmed, question_sentence(inbound.body or "") or inbound.body)
-    # The admin answered a general question in their own words (not about the candidate's own class or money): kept as
-    # learnt by itself, to confirm. It only ever gives a draft until the admin sends that draft once.
+    # The admin answered a general question in their own words, or changed the draft (not about the candidate's own
+    # class or money): learnt at once and used for the next questions like it; an answer already known is replaced.
     if not learn and not from_draft and inbound is not None and reply.status != "failed":
         asked = " ".join((question or question_sentence(inbound.body or "") or "").split())
         personal = record_topics(knowledge_service.tokenize(asked)) or (candidate and _first_name(candidate) and _first_name(candidate).lower() in text.lower())
-        if len(asked) >= 12 and not personal and not knowledge_service.same_question(db, asked):
+        if len(asked) >= 12 and not personal:
             try:
-                knowledge_service.save_entry(db, title=asked, content=clean_answer(text) or text, origin="auto", source_email_id=inbound.id)
+                kept = knowledge_service.save_entry(db, title=asked, content=clean_answer(text) or text, origin="learned", source_email_id=inbound.id)
+                if kept.origin == "auto":
+                    kept.origin = "learned"
+                reply.taught_entry_id = kept.id
             except ValueError:
                 pass
     if learn and learned_question and reply.status != "failed":

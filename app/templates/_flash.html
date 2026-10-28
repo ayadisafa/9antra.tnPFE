@@ -1,9 +1,9 @@
 {# One-line result of the last action, passed as ?notice= or ?error= #}
 {% if notice %}
-<div class="alert alert-success page-flash mb-3" role="status"><i class="bi bi-check-circle-fill me-2"></i>{{ notice }}</div>
+<div class="alert alert-success page-flash mb-3" role="status"><i class="bi bi-check-circle-fill me-2"></i><span data-no-i18n>{{ shown(notice) if shown is defined else notice }}</span></div>
 {% endif %}
 {% if error %}
-<div class="alert alert-danger page-flash mb-3" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i>{{ error }}</div>
+<div class="alert alert-danger page-flash mb-3" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i><span data-no-i18n>{{ shown(error) if shown is defined else error }}</span></div>
 {% endif %}
 {% if notice or error %}
 <script>

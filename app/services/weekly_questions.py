@@ -248,6 +248,33 @@ def _says_the_same(choice: str, answer: str) -> bool:
     return bool(needed) and needed <= _key_words(choice)
 
 
+_VAGUE = re.compile(r"\b(main (topic|focus|idea|subject|purpose|goal)|sujet principal|idée principale|thème principal|objectif principal)\b",
+                    re.IGNORECASE)
+
+
+def _same_word(word: str, other: str) -> bool:
+    return word == other or (len(word) >= 4 and len(other) >= 4 and (other.startswith(word) or word.startswith(other)))
+
+
+def repeats_question(question: str, answer: str) -> bool:
+    """Whether an answer only says again the question's own words ("What is the purpose of error handling?" → "Error
+    handling"): every choice could then be defended."""
+    asked = _key_words(question) - _FRENCH - _ENGLISH
+    said = _key_words(answer) - _FRENCH - _ENGLISH
+    return len(said) >= 2 and all(any(_same_word(word, other) for other in asked) for word in said)
+
+
+def badly_written(question: dict) -> bool:
+    """A question that cannot be fairly marked: its right answer repeats the question, it asks for "the main topic"
+    (several choices fit), or its right answer is missing. Already sent, it counts as right for whoever answers it."""
+    options = question.get("options") or []
+    right = question.get("correct_answer")
+    if not isinstance(right, int) or not 0 <= right < len(options):
+        return True
+    text = question.get("question") or ""
+    return bool(_VAGUE.search(text)) or repeats_question(text, str(options[right]))
+
+
 def _tidy_choice(text: str) -> str:
     """Choices written alike, so the right one does not stand out by its form."""
     text = text.strip().rstrip(".")
@@ -325,6 +352,8 @@ def write_for_passage(passage: dict, topic: str, existing: list[str], rng: rando
             continue
         if _asked_already(item["question"], existing):
             continue
+        if _VAGUE.search(item["question"]) or repeats_question(item["question"], item["answer_text"]):
+            continue                         # could not be fairly marked
         wrong = _wrong_answers(item["question"], item["answer_text"], text, language)
         if len(wrong) < 2:
             continue
@@ -381,10 +410,131 @@ def queue(db: Session, class_group: ClassGroup, week_number: int, mode: str = "n
     return week
 
 
+PLAN_NOTE = ("No course file yet: these questions come from the course plan, about what the class already studied. "
+             "Add a file for questions about what was really said.")
+
+
+_TERMS = re.compile(r"\b(?:[A-Z]{2,}[A-Za-z0-9]*|[A-Za-z]+[A-Z][A-Za-z0-9]*|[A-Za-z]+\d+[A-Za-z0-9]*)\b")
+
+
+def _terms(text: str) -> set[str]:
+    """The technical words of a text: ESP32, MQTT, WordPress, CapCut, DAX…"""
+    return {term for term in _TERMS.findall(text or "") if 2 <= len(term) <= 24}
+
+
+def plan_week_questions(db: Session, class_group: ClassGroup, week_number: int, used: set[str] | None = None) -> list[dict]:
+    """Questions about what the class studied, in French, right by construction (no model): knowledge questions of the
+    subject written by hand (level_bank) chosen for this week, a notion of the week among those of other weeks, a point
+    that was not in the week, a point that was, the subject of an earlier week, and the week's own subject."""
+    from app.services import chatbot_sources, level_bank
+    from app.services.session_check import _objectives
+
+    if class_group is None or class_group.program is None:
+        return []
+    weeks, _ = chatbot_sources._weeks_of(db, class_group.program)
+    titled = [week for week in weeks if (week["title"] or "").strip()]
+    rng = random.Random(f"plan-{class_group.id}-{week_number}")
+    used = used or set()
+    texts = {week["number"]: " ".join((week["title"] or "", week["objectives"] or "", week["site"] or "")) for week in weeks}
+
+    def subject(week: dict, question: str) -> dict | None:
+        right = week["title"].strip()
+        others = list(dict.fromkeys(item["title"].strip() for item in titled if item["number"] != week["number"] and item["title"].strip() != right))
+        if len(others) < 3:
+            return None
+        others.sort(key=lambda title: -abs(next(item["number"] for item in titled if item["title"].strip() == title) - week["number"]))
+        options = [right] + rng.sample(others[:6], 3)
+        rng.shuffle(options)
+        return {"question": question, "options": options, "answer": options.index(right),
+                "explanation": f"La semaine {week['number']} portait sur « {right} », selon le programme de la formation.",
+                "quote": f"Programme, semaine {week['number']} : {right}"}
+
+    found = []
+    # 1. Knowledge of the subject, written by hand: the questions closest to this week, never one used already.
+    bank = [item for item in level_bank.questions_for(class_group.program.name) if item["question"] not in used]
+    if bank:
+        here = _key_words(texts.get(week_number, ""))
+        step = 1 if week_number <= max(1, len(weeks)) / 3 else 2 if week_number <= 2 * max(1, len(weeks)) / 3 else 3
+        bank.sort(key=lambda item: (-len(_key_words(item["question"] + " " + " ".join(item["options"])) & here), abs(item["step"] - step), rng.random()))
+        for item in bank[:2]:
+            options = list(item["options"])
+            right = options[0]
+            rng.shuffle(options)
+            found.append({"question": item["question"], "options": options, "answer": options.index(right),
+                          "explanation": f"La bonne réponse est « {right} ».", "quote": "Banque de questions de 9antra", "kind": "bank"})
+    this = next((week for week in titled if week["number"] == week_number), None)
+    if this is not None:
+        # 2. A notion seen this week, among the notions of other weeks.
+        theirs_terms = set().union(*[_terms(text) for number, text in texts.items() if number != week_number]) if len(texts) > 1 else set()
+        mine_terms = sorted(_terms(texts.get(week_number, "")) - theirs_terms)
+        others = sorted(theirs_terms - _terms(texts.get(week_number, "")))
+        if mine_terms and len(others) >= 3:
+            right = rng.choice(mine_terms)
+            options = [right] + rng.sample(others, 3)
+            rng.shuffle(options)
+            found.append({"question": f"Laquelle de ces notions avez-vous vue en semaine {week_number} ?", "options": options,
+                          "answer": options.index(right), "explanation": f"« {right} » fait partie du contenu de la semaine {week_number}.",
+                          "quote": f"Programme, semaine {week_number}"})
+        mine = _objectives(this["objectives"])
+        theirs = sorted({point for week in weeks if abs(week["number"] - week_number) >= 2 for point in _objectives(week["objectives"])} - set(mine))
+        # 3. What was not in the week: three of its points and one from far away.
+        if len(mine) >= 3 and theirs:
+            right = rng.choice(theirs)
+            options = rng.sample(mine, 3) + [right]
+            rng.shuffle(options)
+            found.append({"question": f"Lequel de ces points n'était PAS au programme de la semaine {week_number} ?", "options": options,
+                          "answer": options.index(right), "explanation": f"« {right} » appartient à une autre semaine de la formation.",
+                          "quote": f"Programme, semaine {week_number}"})
+        # 4. A point that was in the week.
+        if mine and len(theirs) >= 3:
+            right = rng.choice(mine)
+            options = [right] + rng.sample(theirs, 3)
+            rng.shuffle(options)
+            found.append({"question": f"Lequel de ces points faisait partie de la semaine {week_number} ?", "options": options,
+                          "answer": options.index(right), "explanation": f"« {right} » fait partie des objectifs de la semaine {week_number}.",
+                          "quote": f"Programme, semaine {week_number} : {right}"})
+    # 5. What they studied before: one earlier week, to keep it fresh.
+    earlier = [week for week in titled if week["number"] < week_number]
+    for week in rng.sample(earlier, min(1, len(earlier))):
+        item = subject(week, f"Vous l'avez déjà étudié : quel était le sujet de la semaine {week['number']} ?")
+        if item:
+            found.append(item)
+    # 6. The week's own subject (the question after each session asks it too: last).
+    if this is not None:
+        item = subject(this, f"Quel était le sujet de la semaine {week_number} ?")
+        if item:
+            found.append(item)
+    return found
+
+
+def add_plan_questions(db: Session, class_id: str, number: int) -> int:
+    """The course plan's questions for a week, kept ready to send. Returns how many were added."""
+    group = db.get(ClassGroup, class_id)
+    known = {item.question for item in questions_of(db, class_id, number)}
+    used = {question for (question,) in db.query(WeekQuestion.question).filter(WeekQuestion.class_group_id == class_id).all()}
+    added = 0
+    for item in plan_week_questions(db, group, number, used=used):
+        if item["question"] in known:
+            continue
+        bank = item.get("kind") == "bank"
+        db.add(WeekQuestion(
+            class_group_id=class_id, week_number=number, question=item["question"],
+            options=json.dumps(item["options"], ensure_ascii=False), correct_answer=item["answer"], explanation=item["explanation"],
+            material_id=f"bank:{number}" if bank else f"plan:{number}", source_name="9antra's question bank" if bank else "The course plan",
+            source_excerpt=item["quote"], status="ready", review_reason=None, author="plan",
+        ))
+        added += 1
+    db.commit()
+    return added
+
+
 def write_week(db: Session, week: ClassWeek) -> int:
     """Write the questions of one queued week. Returns how many were kept."""
     class_id, number = week.class_group_id, week.week_number
-    sources = course_materials.sources(db, class_id, number)
+    everything = course_materials.sources(db, class_id, number)
+    # The model only writes from what the professor gave (files, notes): from the course plan and the website alone its
+    # questions were vague or wrong, so those weeks get the rules' questions, right by construction.
+    sources = [source for source in everything if not str(source["key"]).startswith(("plan:", "site:"))]
     learned = sum(len(source["text"]) for source in sources)
     existing = questions_of(db, class_id, number)
 
@@ -395,6 +545,10 @@ def write_week(db: Session, week: ClassWeek) -> int:
         db.commit()
 
     if learned < MIN_TO_LEARN:
+        added = 0 if existing else add_plan_questions(db, class_id, number)
+        if added:
+            finish("ready", PLAN_NOTE)
+            return added
         finish("idle" if not existing else "ready",
                None if existing else "There is not enough to learn from yet. Add a course file, or write "
                                      "a few lines about what was covered this week.")
@@ -409,6 +563,10 @@ def write_week(db: Session, week: ClassWeek) -> int:
     }
     planned = plan_passages(sources, done_keys, [item.source_excerpt for item in existing])
     if not planned:
+        added = 0 if existing else add_plan_questions(db, class_id, number)
+        if added:
+            finish("ready", PLAN_NOTE)
+            return added
         finish("ready" if existing else "idle",
                None if existing else "Nothing in the course files could be turned into questions. "
                                      "Write a few lines about what was covered this week.")
@@ -438,6 +596,12 @@ def write_week(db: Session, week: ClassWeek) -> int:
             kept += 1
         db.commit()     # kept passage by passage, so a stop loses little
 
+    if kept == 0 and not existing:
+        # The model could not write: the week still gets its questions, from what the class already studied.
+        added = add_plan_questions(db, class_id, number)
+        if added:
+            finish("ready", "The assistant could not write from the course this time: questions from the course plan were written instead.")
+            return added
     if kept == 0:
         finish("failed" if not existing else "ready",
                "The assistant did not answer, so no question could be written. Ask again in a moment; "
@@ -610,14 +774,15 @@ def _pick(pool: list[WeekQuestion], count: int, rng: random.Random) -> list[Week
 
 
 def send_week(db: Session, class_group: ClassGroup, week_number: int, *, base_url: str,
-              manual: bool = True) -> dict:
+              manual: bool = True, span: int = 1) -> dict:
     """Email each candidate of the class their questions of the week.
 
     A candidate who already received them is skipped; one whose email failed
     earlier is tried again with the same questions. Returns
     {"sent", "failed", "already", "pool"} or {"error": message}.
     """
-    pool = ready_questions(db, class_group.id, week_number)
+    first = max(1, week_number - max(1, span) + 1)
+    pool = [question for number in range(first, week_number + 1) for question in ready_questions(db, class_group.id, number)]
     if not pool:
         return {"error": "No question is ready for this week yet."}
     members = members_of(db, class_group.id)
@@ -659,7 +824,8 @@ def send_week(db: Session, class_group: ClassGroup, week_number: int, *, base_ur
             asked = form_questions or [_as_asked(question) for question in _pick(list(pool), per_candidate, rng)]
             quiz = Quiz(
                 candidate_id=candidate.id, registration_id=registration.id,
-                course_name=f"{program} — semaine {week_number}", angle="weekly", level="week",
+                course_name=f"{program} — semaine {week_number}" if first == week_number else f"{program} — semaines {first} à {week_number}",
+                angle="weekly", level="week",
                 kind="weekly", class_group_id=class_group.id, week_number=week_number,
                 access_token=secrets.token_urlsafe(24),
                 questions=json.dumps(asked, ensure_ascii=False),
@@ -691,9 +857,233 @@ def _as_asked(question: WeekQuestion) -> dict:
     }
 
 
+LETTERS = "ABCDEF"
+_PAIR = re.compile(r"(?<!\d)(\d{1,2})\s*[-:.)=/]?\s*([a-fA-F])(?![a-zA-Z])")
+_ONLY_LETTERS = re.compile(r"[\s,;.\-]*(?:[a-fA-F][\s,;.\-]*)+")
+_QUOTE_START = re.compile(r"^\s*(>|le .{3,80} a [ée]crit|on .{3,80} wrote|-{2,}\s*(original|message))", re.IGNORECASE)
+
+
+def written_out(quiz: Quiz) -> str:
+    """The questions in the email itself, for candidates who cannot open a page of this computer: lettered choices,
+    answered by replying."""
+    lines, example = [], []
+    for index, question in enumerate(questions_in(quiz), 1):
+        options = question.get("options") or []
+        lines.append(f"{index}. {question.get('question', '')}")
+        lines.append("    ".join(f"{LETTERS[k]}) {option}" for k, option in enumerate(options[: len(LETTERS)])))
+        lines.append("")
+        example.append(f"{index}-{LETTERS[(index * 2 + 1) % max(1, min(len(options), len(LETTERS)))]}")
+    lines.append(f"[box]Pour répondre, répondez simplement à cet email avec vos choix, par exemple : {', '.join(example[:3])}")
+    return "\n".join(lines)
+
+
+def _own_words(text: str) -> str:
+    """A reply without the email it quotes."""
+    kept = []
+    for line in (text or "").splitlines():
+        if _QUOTE_START.match(line):
+            break
+        kept.append(line)
+    return "\n".join(kept).strip()
+
+
+def answers_from_text(text: str, count: int) -> list[int | None] | None:
+    """“1-B, 2-A, 3-D” (or “B A D”, in order) in a reply to the weekly questions; None when the reply is not that."""
+    body = _own_words(text)
+    if not body or count <= 0:
+        return None
+    answers: list[int | None] = [None] * count
+    pairs = _PAIR.findall(body)
+    if pairs:
+        for number, letter in pairs:
+            index = int(number) - 1
+            if 0 <= index < count:
+                answers[index] = LETTERS.index(letter.upper())
+        return answers if sum(answer is not None for answer in answers) >= max(1, (count + 1) // 2) else None
+    if _ONLY_LETTERS.fullmatch(body):
+        letters = [char.upper() for char in body if char.upper() in LETTERS]
+        if len(letters) == count:
+            return [LETTERS.index(char) for char in letters]
+    return None
+
+
+_KEYWORD = re.compile(r"\b(r[ée]ponses?|response|answers?|choix|choice|jaweb|jawab|el jaweb)\b", re.IGNORECASE)
+_UPPER = re.compile(r"(?<![A-Za-z])([A-F])(?![A-Za-z])")
+_ANY_CASE = re.compile(r"(?<![A-Za-z])([A-Fa-f])(?![A-Za-z])")
+
+
+def read_answers(text: str, count: int) -> tuple[dict[int, int], bool] | None:
+    """What a reply answers: ({question index: choice}, positional). Pairs (“1-B, 2-A”) say which question; letters
+    alone (“ma réponse est C”, “B A D”) fill the questions not answered yet, in order. None when it holds no answer."""
+    body = _own_words(text)
+    if not body or count <= 0:
+        return None
+    found = {}
+    for number, letter in _PAIR.findall(body):
+        index = int(number) - 1
+        if 0 <= index < count:
+            found[index] = LETTERS.index(letter.upper())
+    if found:
+        return found, False
+    letters = []
+    keyword = _KEYWORD.search(body)
+    if keyword is not None:
+        after = body[keyword.end():]
+        letters = _UPPER.findall(after) or (_ANY_CASE.findall(after) if re.fullmatch(r"[\s:,;.\-]*(?:(?:est|sont|is|are)\s*)?(?:[a-fA-F][\s,;.\-]*)+", after) else [])
+    elif _ONLY_LETTERS.fullmatch(body):
+        letters = [char for char in body if char.upper() in LETTERS]
+    elif count == 1:
+        letters = _UPPER.findall(body)[:1]
+    if not letters:
+        return None
+    return {index: LETTERS.index(letter.upper()) for index, letter in enumerate(letters[:count])}, True
+
+
+def _partial_text(answers: list, questions: list) -> str:
+    noted = ", ".join(f"{index} → {LETTERS[choice]}" for index, choice in enumerate(answers, 1) if choice is not None)
+    missing = [str(index) for index, choice in enumerate(answers, 1) if choice is None]
+    example = ", ".join(f"{number}-B" for number in missing[:2])
+    return (f"Merci ! J'ai noté : {noted}. Il reste {'la question' if len(missing) == 1 else 'les questions'} {', '.join(missing)} : "
+            f"répondez à cet email avec vos choix, par exemple « {example} ».")
+
+
+def handle_reply(db: Session, candidate_id: str, subject: str, body: str) -> dict | None:
+    """A candidate's reply to their weekly questions: the answers it holds are kept (replies add up), and graded once every
+    question is answered. Returns {"text": what to answer, "done", "quiz"}, or None when the reply holds no answer."""
+    waiting = (db.query(Quiz).filter(Quiz.candidate_id == candidate_id, Quiz.kind.in_(("weekly", "session")), Quiz.sent_at.isnot(None),
+                                     Quiz.completed_at.is_(None)).order_by(Quiz.sent_at.desc()).all())
+    if not waiting:
+        return None
+    # The questions after a session (“qu'avez-vous retenu de la séance du 24/10”), or those of a week (“semaine 3”).
+    session = re.search(r"s[ée]ance\s*du\s*(\d{1,2}/\d{1,2})", subject or "", re.IGNORECASE)
+    after_session = [item for item in waiting if item.kind == "session"]
+    if session and after_session:
+        quiz = next((item for item in after_session if session.group(1) in (item.course_name or "")), after_session[0])
+    else:
+        weekly = [item for item in waiting if item.kind == "weekly"] or waiting
+        said = re.search(r"semaines?\s*(\d+)(?:\s*[àa-]\s*(\d+))?", subject or "", re.IGNORECASE)
+        week = int(said.group(2) or said.group(1)) if said else None
+        quiz = next((item for item in weekly if item.week_number == week), weekly[0])
+    questions = questions_in(quiz)
+    read = read_answers(body, len(questions))
+    if read is None:
+        return None
+    given, positional = read
+    answers = (list(answers_in(quiz)) + [None] * len(questions))[: len(questions)]
+    if positional:
+        empty = [index for index, choice in enumerate(answers) if choice is None]
+        for slot, (_, choice) in zip(empty, sorted(given.items())):
+            answers[slot] = choice
+    else:
+        for index, choice in given.items():
+            answers[index] = choice
+    if all(choice is not None for choice in answers):
+        result = grade(db, quiz, answers, source="email")
+        return {"text": result_text(result), "done": True, "quiz": quiz}
+    quiz.answers = json.dumps(answers)
+    db.commit()
+    return {"text": _partial_text(answers, questions), "done": False, "quiz": quiz}
+
+
+def reread_replies(db: Session) -> int:
+    """Replies to the weekly questions that came to the admin before they could be read as answers: read again now."""
+    from app.models.candidate_email import CandidateEmail
+    from app.models.email_thread import EmailThread
+    from app.services import email_threads
+
+    done = 0
+    rows = (db.query(CandidateEmail).filter(CandidateEmail.direction == "inbound", CandidateEmail.requires_admin.is_(True),
+                                            CandidateEmail.replied_at.is_(None)).all())
+    for row in rows:
+        thread = db.get(EmailThread, row.thread_id) if row.thread_id else None
+        subject = (thread.subject or "").lower() if thread is not None else ""
+        if thread is None or not ("questions de la semaine" in subject or "de la séance du" in subject) or row.candidate_id is None:
+            continue
+        handled = handle_reply(db, row.candidate_id, thread.subject, row.body or "")
+        if handled is None:
+            continue
+        candidate = db.get(Candidate, row.candidate_id)
+        text = f"{email_assistant.greeting_for(candidate, 'fr')}\n\n{handled['text']}"
+        plain, html_body = email_assistant.compose_reply(db, candidate, text, language="fr")
+        email_threads.deliver(db, candidate, f"Re: {thread.subject}", plain, html_body, kind="reply", author="system", thread=thread,
+                              language="fr", note="Answers to the weekly questions read from the reply.")
+        row.status, row.requires_admin, row.replied_at = "replied", False, datetime.utcnow()
+        thread.needs_admin, thread.status = False, "replied"
+        db.commit()
+        done += 1
+    return done
+
+
+def answers_view(db: Session) -> dict:
+    """Every weekly questions sent, with each candidate's answers, like the level checks."""
+    rows = []
+    quizzes = (db.query(Quiz).filter(Quiz.kind == "weekly", Quiz.sent_at.isnot(None)).order_by(Quiz.sent_at.desc()).limit(400).all())
+    classes = {group.id: group for group in db.query(ClassGroup).all()}
+    for quiz in quizzes:
+        candidate = db.get(Candidate, quiz.candidate_id) if quiz.candidate_id else None
+        result = result_of(quiz)
+        given = sum(1 for choice in answers_in(quiz) if choice is not None)
+        state = "answered" if quiz.completed_at else "partial" if given else "waiting"
+        rows.append({"quiz": quiz, "candidate": candidate, "class": classes.get(quiz.class_group_id), "result": result, "state": state,
+                     "given": given, "level": level_of(quiz.score if quiz.completed_at else None),
+                     "via": {"email": "By replying to the email", "form": "Google Form", "page": "On the page"}.get(quiz.answer_source or "", "")})
+    answered = [row for row in rows if row["state"] == "answered"]
+    levels = {key: sum(1 for row in answered if row["level"]["key"] == key) for key in ("strong", "partial", "weak")}
+    return {
+        "rows": rows, "levels": levels,
+        "counts": {"sent": len(rows), "answered": len(answered), "partial": sum(1 for row in rows if row["state"] == "partial"),
+                   "waiting": sum(1 for row in rows if row["state"] == "waiting")},
+        "average": round(sum(row["quiz"].score or 0 for row in answered) / len(answered)) if answered else None,
+        "classes": sorted({row["class"].name: row["class"] for row in rows if row["class"] is not None}.values(), key=lambda group: group.name),
+    }
+
+
+def waiting_quiz(db: Session, candidate_id: str) -> Quiz | None:
+    """The candidate's latest weekly questions, sent and not answered yet."""
+    return (db.query(Quiz).filter(Quiz.candidate_id == candidate_id, Quiz.kind == "weekly", Quiz.sent_at.isnot(None),
+                                  Quiz.completed_at.is_(None))
+            .order_by(Quiz.sent_at.desc()).first())
+
+
+def result_text(result: dict) -> str:
+    """The answer to a candidate's reply: their score, and the right answer for each one missed (in French)."""
+    voided = [str(index) for index, row in enumerate(result["rows"], 1) if row.get("voided")]
+    if voided and len(voided) == result["total"]:
+        return ("Merci pour votre réponse ! Cette question était mal formulée de notre côté : elle est comptée juste."
+                if len(voided) == 1 else
+                "Merci pour vos réponses ! Ces questions étaient mal formulées de notre côté : elles sont comptées justes.") + \
+            " Les prochaines questions porteront directement sur ce que vous avez étudié."
+    lines = [f"Merci pour vos réponses ! Vous avez {result['right']} bonne(s) réponse(s) sur {result['total']}."]
+    if voided:
+        lines.append(f"La question {voided[0]} était mal formulée de notre côté : elle est comptée juste." if len(voided) == 1 else
+                     f"Les questions {', '.join(voided)} étaient mal formulées de notre côté : elles sont comptées justes.")
+    wrong = [(index, row) for index, row in enumerate(result["rows"], 1) if not row["is_right"]]
+    if not wrong:
+        lines.append("Bravo, tout est juste !")
+    for index, row in wrong:
+        options = row["options"] or []
+        right = row["correct"] if isinstance(row["correct"], int) and 0 <= row["correct"] < len(options) else None
+        said = f"{LETTERS[right]}) {options[right]}" if right is not None else ""
+        lines.append(f"{index}. {row['question']} — la bonne réponse était {said}." + (f" {row['explanation']}" if row["explanation"] else ""))
+    return "\n\n".join(lines)
+
+
+def in_the_email(db: Session, quiz: Quiz, base_url: str) -> bool:
+    """Whether the questions are written in the email itself (answered by replying), as chosen on the weekly page:
+    always “in the email”, or automatic and this computer cannot be reached by candidates."""
+    way = settings_of(db)["way"]
+    return not quiz.google_form_url and (way == "email" or (way == "auto" and is_local_address(base_url)))
+
+
 def _email_questions(db: Session, registration: Registration, quiz: Quiz, *, base_url: str,
                      topic: str, program: str, manual: bool) -> bool:
-    """Email one candidate the link to their questions. True when delivered."""
+    """Email one candidate the link to their questions (or, when this computer cannot be reached from outside, the
+    questions themselves, answered by replying). True when delivered."""
+    overrides = None
+    way = settings_of(db)["way"]
+    if not quiz.google_form_url and (way == "email" or (way == "auto" and is_local_address(base_url))):
+        template = email_templates.get(db, "weekly_questions")
+        overrides = {"body": f"{template.body}\n\n{written_out(quiz)}", "cta_label": "", "cta_url": ""}
     message = email_templates.send(
         db, "weekly_questions", registration=registration, candidate=registration.candidate, manual=manual,
         values={
@@ -703,6 +1093,7 @@ def _email_questions(db: Session, registration: Registration, quiz: Quiz, *, bas
             "questions_link": quiz.google_form_url or public_link(base_url, quiz),
             "program_name": program,
         },
+        overrides=overrides,
     )
     return email_templates.delivered(message)
 
@@ -741,24 +1132,109 @@ def week_is_over(db: Session, class_group: ClassGroup, week_number: int, now: da
     return now >= class_group.start_date + timedelta(weeks=week_number - 1, days=1)
 
 
+EVERY_CHOICES = (1, 2, 4, 0)
+WAY_CHOICES = ("auto", "email", "link")
+
+
+def settings_of(db: Session) -> dict:
+    """How often the questions go (every 1, 2 or 4 weeks; 0: stopped) and how candidates answer them."""
+    from app.services.settings_service import get_settings
+
+    settings = get_settings(db)
+    every = getattr(settings, "weekly_every", None)
+    every = 1 if every is None or int(every) not in EVERY_CHOICES else int(every)
+    way = getattr(settings, "weekly_way", None)
+    return {"every": every, "way": way if way in WAY_CHOICES else "auto"}
+
+
+def save_settings(db: Session, *, every, way: str) -> dict:
+    from app.services.settings_service import get_settings
+
+    settings = get_settings(db)
+    try:
+        every = int(every)
+    except (TypeError, ValueError):
+        every = 1
+    settings.weekly_every = every if every in EVERY_CHOICES else 1
+    settings.weekly_way = way if way in WAY_CHOICES else "auto"
+    db.commit()
+    return settings_of(db)
+
+
+def replace_thin(db: Session) -> int:
+    """Questions the model wrote from the course plan or the website alone (vague, sometimes wrong), and any of its
+    questions that cannot be fairly marked, are removed from the weeks not sent yet; those weeks are written again.
+    Returns how many weeks."""
+    weeks = set()
+    for row in db.query(WeekQuestion).filter(WeekQuestion.author == "system").all():
+        thin = str(row.material_id or "").startswith(("plan:", "site:"))
+        if not thin and not badly_written({"question": row.question, "options": row.choices, "correct_answer": row.correct_answer}):
+            continue
+        week = db.query(ClassWeek).filter(ClassWeek.class_group_id == row.class_group_id, ClassWeek.week_number == row.week_number).first()
+        if week is not None and week.sent_at is not None:
+            continue
+        weeks.add((row.class_group_id, row.week_number))
+        db.delete(row)
+    db.commit()
+    for class_id, number in weeks:
+        group = db.get(ClassGroup, class_id)
+        if group is not None:
+            queue(db, group, number)
+    return len(weeks)
+
+
+def queue_due(db: Session, now: datetime | None = None) -> int:
+    """Always on: the week a running class is in, and the one before, get their questions written, even with no course
+    file (then from the course plan). Weeks further back are left as they were. Returns how many weeks were asked for."""
+    now = now or datetime.now(timezone.utc)
+    count = 0
+    for class_group in db.query(ClassGroup).filter(ClassGroup.status == ClassStatus.ONGOING).all():
+        if not members_of(db, class_group.id):
+            continue
+        current = max(1, class_group.current_week or 1)
+        for number in range(max(1, current - 1), current + 1):
+            week = course_materials.get_week(db, class_group, number)
+            if week.sent_at is not None or ready_questions(db, class_group.id, number):
+                continue
+            if week.questions_status == "failed" and week.questions_updated_at is not None:
+                tried = week.questions_updated_at if week.questions_updated_at.tzinfo else week.questions_updated_at.replace(tzinfo=timezone.utc)
+                if now - tried < timedelta(hours=1):
+                    continue                 # tried a moment ago: again later, not at every check
+            if week.questions_status in ("idle", "failed"):
+                queue(db, class_group, number)
+                count += 1
+    db.commit()
+    return count
+
+
 def send_due(db: Session, base_url: str) -> int:
-    """Classes set to "automatic": send the questions of every finished week
-    that has not gone out yet. Returns how many emails were sent."""
+    """Always on: every running class gets the questions of each week once its session is over (the week just finished,
+    and the current one when it ends). Returns how many emails were sent."""
     now = local_now()
     sent = 0
-    classes = db.query(ClassGroup).filter(
-        ClassGroup.weekly_questions_mode == "auto", ClassGroup.status == ClassStatus.ONGOING,
-    ).all()
+    reread_replies(db)                       # replies that came before they could be read as answers
+    plan = settings_of(db)
+    if plan["every"] == 0:
+        return 0                             # stopped by the admin
+    db.query(ClassGroup).filter(ClassGroup.weekly_questions_mode != "auto").update({"weekly_questions_mode": "auto"}, synchronize_session=False)
+    db.commit()
+    replace_thin(db)
+    queue_due(db)
+    classes = db.query(ClassGroup).filter(ClassGroup.status == ClassStatus.ONGOING).all()
     for class_group in classes:
+        current = max(1, class_group.current_week or 1)
         weeks = db.query(ClassWeek).filter(
             ClassWeek.class_group_id == class_group.id,
             ClassWeek.sent_at.is_(None),
             ClassWeek.questions_status == "ready",
+            ClassWeek.week_number >= current - 1,
         ).all()
         for week in weeks:
             if not week_is_over(db, class_group, week.week_number, now):
                 continue
-            outcome = send_week(db, class_group, week.week_number, base_url=base_url, manual=False)
+            if plan["every"] > 1 and week.week_number % plan["every"]:
+                continue                     # every 2 or 4 weeks: the questions of the weeks between wait for the review
+            outcome = send_week(db, class_group, week.week_number, base_url=base_url, manual=False, span=plan["every"])
             sent += outcome.get("sent", 0)
     return sent
 
@@ -802,7 +1278,7 @@ def grade(db: Session, quiz: Quiz, answers: list[int | None], feedback: dict | N
         quiz.answer_source = source
         quiz.external_id = external_id
         answers = (list(answers) + [None] * len(questions))[: len(questions)]
-        correct = sum(1 for question, answer in zip(questions, answers) if answer == question.get("correct_answer"))
+        correct = sum(1 for question, answer in zip(questions, answers) if _counts_right(question, answer))
         score = round(correct / len(questions) * 100, 1) if questions else 0.0
         quiz.answers = json.dumps(answers)
         quiz.score = score
@@ -810,7 +1286,7 @@ def grade(db: Session, quiz: Quiz, answers: list[int | None], feedback: dict | N
         quiz.assessed_level = level_of(score)["key"]
         missed = [
             question.get("question", "") for question, answer in zip(questions, answers)
-            if answer != question.get("correct_answer")
+            if not _counts_right(question, answer)
         ]
         quiz.improvement_areas = "\n".join(missed) or None
         db.add(Activity(
@@ -825,6 +1301,11 @@ def grade(db: Session, quiz: Quiz, answers: list[int | None], feedback: dict | N
     return result_of(quiz)
 
 
+def _counts_right(question: dict, answer) -> bool:
+    """The right choice, or any choice to a question that was badly written on our side."""
+    return answer is not None and (answer == question.get("correct_answer") or badly_written(question))
+
+
 def result_of(quiz: Quiz) -> dict:
     """A quiz with the candidate's answers set against the right ones."""
     questions, answers = questions_in(quiz), answers_in(quiz)
@@ -832,11 +1313,12 @@ def result_of(quiz: Quiz) -> dict:
     for index, question in enumerate(questions):
         given = answers[index] if index < len(answers) else None
         rows.append({
+            "voided": badly_written(question),
             "question": question.get("question", ""),
             "options": question.get("options", []),
             "given": given,
             "correct": question.get("correct_answer"),
-            "is_right": given is not None and given == question.get("correct_answer"),
+            "is_right": _counts_right(question, given),
             "explanation": question.get("explanation", ""),
             "id": question.get("id"),
         })

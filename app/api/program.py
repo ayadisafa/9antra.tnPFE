@@ -1119,6 +1119,17 @@ def program_story(db: Session, program: Program) -> dict:
     }
 
 
+@router.get("/expertise")
+def programs_expertise(request: Request, db: Session = Depends(get_db)):
+    """What the application knows about each program, week by week, and what is still thin."""
+    from app.services import expertise
+
+    return templates.TemplateResponse(request=request, name="programs_expertise.html",
+                                      context={"active_page": "programs", "programs": expertise.all_programs(db),
+                                               "opened": request.query_params.get("open"),
+                                               "notice": request.query_params.get("notice"), "error": request.query_params.get("error")})
+
+
 @router.get("/{program_id}")
 def program_detail(program_id: str, request: Request):
     db = SessionLocal()

@@ -348,6 +348,31 @@ def prepare(db: Session, proposal: ProgramProposal) -> None:
         basis["similar"] = {"id": close[0].id, "name": close[0].name, "score": close[1]}
 
     want_description, want_plan = "description" in gaps, "curriculum" in gaps
+    # What the program's own files write comes first: its plan and its description are taken from them as written.
+    from app.services import program_files
+
+    source, said = program_files.best_plan(db, program)
+    if source is not None:
+        if want_description and said.get("description"):
+            data["description"] = said["description"]
+            basis["description"] = f"From the file “{source.filename}”"
+            want_description = False
+        if want_plan and len(said.get("plan") or []) >= 2:
+            per_level = max(2, house.get("weeks_per_level", 4))
+            plan = said["plan"]
+            data["levels"] = [{"title": f"Level {index // per_level + 1}", "description": "",
+                               "weeks": [{"week_number": index + position + 1, "topic_title": item["title"][:150],
+                                          "learning_objectives": "; ".join(item["points"])}
+                                         for position, item in enumerate(plan[index:index + per_level])]}
+                              for index in range(0, len(plan), per_level)]
+            basis["curriculum"] = f"From the file “{source.filename}”: {len(plan)} weeks"
+            want_plan = False
+        if said.get("days") and "total_duration_days" in gaps:
+            data["total_duration_days"] = said["days"]
+            basis["total_duration_days"] = f"From the file “{source.filename}”"
+        if said.get("hours_per_week") and "hours_per_week" in gaps:
+            data["hours_per_week"] = said["hours_per_week"]
+            basis["hours_per_week"] = f"From the file “{source.filename}”"
     if want_description or want_plan:
         levels = house.get("levels", 2)
         weeks = house.get("weeks_per_level", 4)

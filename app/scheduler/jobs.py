@@ -13,6 +13,7 @@ from app.models.programprogress import ProgramProgress  # Added to prevent SQLAl
 from app.models.registration import PaymentStatus, Registration, RegistrationStatus
 from app.models.quiz import Quiz
 from app.services.firebase_service import start_firebase_listener
+from app.services import course_requests as _course_requests  # noqa: F401  (its table is made with the others)
 from app.services.enrollment_service import (
     assign_pending_paid_registrations,
     dispatch_due_reminders,
@@ -422,6 +423,9 @@ def translations_tick():
     db: Session = SessionLocal()
     try:
         translations.work(db)
+        from app.services import dynamic_words
+
+        dynamic_words.work(db)              # the notifications no written sentence covers
     except Exception as exc:
         db.rollback()
         logger.exception("Translating the interface failed.")
@@ -550,6 +554,20 @@ def market_tick():
         db.close()
 
 
+def journal_tick():
+    """The journal: the news feeds of each field taught, read again every six hours (see journal.read_if_due)."""
+    from app.services import journal
+
+    db: Session = SessionLocal()
+    try:
+        journal.read_if_due(db)
+    except Exception:
+        db.rollback()
+        logger.exception("Reading the journal failed.")
+    finally:
+        db.close()
+
+
 @system_status.watched("market")
 def market_now():
     """The job market read at once, when the admin asks for it on the System page (six hours apart at least)."""
@@ -630,6 +648,16 @@ def knowledge_tick():
 
 
 def start():
+    scheduler.add_job(
+        journal_tick,
+        "interval",
+        minutes=30,
+        next_run_time=datetime.now() + timedelta(minutes=4),
+        max_instances=1,
+        coalesce=True,
+        id="journal_tick",
+        replace_existing=True,
+    )
     scheduler.add_job(
         knowledge_tick,
         "interval",

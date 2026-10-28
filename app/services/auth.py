@@ -174,6 +174,53 @@ def set_password(db: Session, user: User, password: str, keep_token: str | None 
 
 
 # ------------------------------------------------------------------
+# Forgot password: a link by email, one hour, used once
+# ------------------------------------------------------------------
+
+RESET_MINUTES = 60
+_MAX_RESETS = 3                 # links asked for one address from one place, in one hour
+_resets: dict[str, list[float]] = {}
+
+
+def start_reset(db: Session, email: str, client: str = "") -> tuple[User | None, str | None]:
+    """A new link for this account: (user, token). (None, None) when there is no such active account, or when it was
+    asked for too often; the page says the same thing either way, so it does not tell who has an account."""
+    address = clean_email(email)
+    if address is None:
+        return None, None
+    key = f"{client}|{address}"
+    recent = [moment for moment in _resets.get(key, []) if time.time() - moment < 3600]
+    if len(recent) >= _MAX_RESETS:
+        _resets[key] = recent
+        return None, None
+    _resets[key] = recent + [time.time()]
+    user = db.query(User).filter(User.email == address, User.is_active.is_(True)).first()
+    if user is None:
+        return None, None
+    token = secrets.token_urlsafe(32)
+    user.reset_hash = _fingerprint(token)           # a new link replaces the one before
+    user.reset_until = datetime.utcnow() + timedelta(minutes=RESET_MINUTES)
+    db.commit()
+    return user, token
+
+
+def user_for_reset(db: Session, token: str | None) -> User | None:
+    """The account a reset link is for, while it still works."""
+    if not token or len(token) < 20:
+        return None
+    user = db.query(User).filter(User.reset_hash == _fingerprint(token)).first()
+    if user is None or not user.is_active or user.reset_until is None or user.reset_until < datetime.utcnow():
+        return None
+    return user
+
+
+def finish_reset(db: Session, user: User, password: str) -> None:
+    """The new password; the link stops working and every browser signed in with this account is signed out."""
+    user.reset_hash, user.reset_until = None, None
+    set_password(db, user, password)
+
+
+# ------------------------------------------------------------------
 # Signing in and out
 # ------------------------------------------------------------------
 

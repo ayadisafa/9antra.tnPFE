@@ -113,7 +113,7 @@ tomorrow = local_now() + timedelta(days=1)
 answer = admin.post("/reminders/create", data={"audience": "program", "to_program": python.id, "subject": "Une date à retenir", "title": "", "body": "Bonjour {first_name}", "style": "brand",
                                                "when": "later", "date": tomorrow.strftime("%Y-%m-%d"), "time": "18:30"})
 made = db.query(AdminReminder).filter(AdminReminder.subject == "Une date à retenir").first()
-check("a reminder is planned from the page for a day and an hour", answer.status_code == 303 and "The reminder goes on" in where(answer) and "18:30" in where(answer) and made is not None and made.audience == "program"
+check("a reminder is planned from the page for a day and an hour", answer.status_code == 303 and "The reminder goes" in where(answer) and "18:30" in where(answer) and made is not None and made.audience == "program"
       and abs((made.send_at - rm.to_utc(tomorrow.replace(hour=18, minute=30, second=0, microsecond=0))).total_seconds()) < 1, where(answer))
 check("a time already past is refused", "already past" in where(admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "s", "body": "b", "when": "later", "date": "2020-01-01", "time": "09:00"})))
 before = len(sent)
@@ -122,7 +122,7 @@ check("“now” goes at the next pass, within a minute", "within a minute" in w
 jobs.reminders_tick()
 check("the job sends what is due and nothing else", len(sent) == before + 1 and sent[-1]["to_email"] == "omar.rm@test.local" and db.query(AdminReminder).filter(AdminReminder.subject == "Une date à retenir").first().status == "scheduled")
 answer = admin.post(f"/reminders/{made.id}/cancel")
-check("cancelling from the page sends nothing", "Nothing was sent" in where(answer) and len(sent) == before + 1)
+check("cancelling from the page sends nothing", "Nothing more is sent" in where(answer) and len(sent) == before + 1)
 check("the job is followed on the System page, and cannot be pushed from there", jobs.WATCHED.get("reminders") == "reminders_tick" and "reminders" not in jobs.RUN_NOW and any(item["key"] == "reminders" and not item["run"] for item in ss.WORK))
 
 # ======================================================================

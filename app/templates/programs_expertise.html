@@ -1,0 +1,265 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}What the assistant knows · 9antra{% endblock %}
+{% block page_title %}What the assistant knows{% endblock %}
+{% block live_topics %}programs,classes{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .ex-intro { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:10px; margin-bottom:18px; }
+  .ex-src { background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:14px; display:flex; gap:12px; align-items:flex-start; }
+  .ex-src i { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; font-size:1.05rem; color:#fff; background:var(--c); }
+  .ex-src b { display:block; font-size:.86rem; color:var(--ink-text); } .ex-src span { font-size:.74rem; color:var(--muted); line-height:1.4; }
+  .ex-list { display:grid; gap:12px; }
+  .ex-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; }
+  .ex-card > summary { list-style:none; cursor:pointer; display:grid; grid-template-columns:auto minmax(0, 1fr) auto auto; gap:14px; align-items:center; padding:14px 18px; }
+  .ex-card > summary::-webkit-details-marker { display:none; }
+  .ex-name { font-weight:800; font-size:.98rem; color:var(--ink-text); }
+  .ex-bars { display:flex; gap:10px; flex-wrap:wrap; margin-top:6px; }
+  .ex-bar { display:flex; align-items:center; gap:6px; font-size:.7rem; font-weight:700; color:#6b6480; }
+  .ex-bar em { font-style:normal; display:flex; gap:2px; }
+  .ex-bar em i { width:8px; height:14px; border-radius:3px; background:#ece6f4; }
+  .ex-bar em i.on { background:var(--c); }
+  .ex-ring { --pct:0; width:54px; height:54px; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--primary-berry) calc(var(--pct) * 1%), #f1edf7 0); }
+  .ex-ring span { width:42px; height:42px; border-radius:50%; background:#fff; display:grid; place-items:center; font-weight:800; font-size:.82rem; color:var(--ink-text); }
+  .ex-chev { color:#b5afc8; transition:transform .2s ease; } .ex-card[open] .ex-chev { transform:rotate(180deg); color:var(--primary-berry); }
+  .ex-body { padding:4px 18px 18px; }
+  .ex-actions { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+  .ex-weeks { display:grid; gap:8px; }
+  .ex-week { display:grid; grid-template-columns:54px minmax(0, 1fr); gap:12px; padding:12px; border-radius:16px; background:#fbf9fe; border:1px solid #f0ebf6; }
+  .ex-week.is-thin { border-style:dashed; border-color:#f3c7d3; background:#fff8fa; }
+  .ex-num { width:46px; height:46px; border-radius:14px; display:grid; place-items:center; text-align:center; font-weight:800; font-size:.62rem; line-height:1.1; color:#fff; background:linear-gradient(135deg, var(--primary-berry), #e07aa8); }
+  .ex-num b { display:block; font-size:1.05rem; }
+  .ex-title { font-weight:800; font-size:.88rem; color:var(--ink-text); }
+  .ex-points { margin:4px 0 0; padding-inline-start:18px; font-size:.78rem; color:#4a445e; }
+  .ex-site { font-size:.76rem; color:#6b6480; margin-top:6px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ex-tags { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+  .ex-tag { display:inline-flex; gap:5px; align-items:center; font-size:.7rem; font-weight:700; border-radius:999px; padding:2px 9px; background:#f3eff9; color:#5b5470; }
+  .ex-tag.ok { background:var(--mint-subtle); color:#166534; } .ex-tag.no { background:#fff1f2; color:#9f1239; }
+  @media (prefers-reduced-motion: no-preference) { .ex-card { animation:exIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 60ms); }
+    .ex-card[open] .ex-week { animation:exIn .35s ease both; animation-delay:calc(var(--k) * 40ms); } }
+  @keyframes exIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  /* The program's files, what waits, what is known */
+  .ex-part { border:1px solid #f0ebf6; border-radius:18px; padding:14px; margin-bottom:12px; background:#fff; }
+  .ex-part-head { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  .ex-part-head b { display:flex; gap:8px; align-items:center; font-size:.9rem; color:var(--ink-text); } .ex-part-head b i { color:var(--primary-berry); }
+  .ex-drop { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border:2px dashed #e6dcf0; border-radius:14px; padding:10px 12px; background:#fcfaff; transition:border-color .2s ease, background .2s ease; }
+  .ex-drop.is-over { border-color:var(--primary-berry); background:var(--berry-subtle); }
+  .ex-drop input[type=file] { font-size:.8rem; max-width:260px; } .ex-drop input[name=note] { flex:1 1 220px; border:1px solid var(--border-color); border-radius:10px; padding:5px 9px; font-size:.8rem; }
+  .ex-file { display:grid; grid-template-columns:38px minmax(0, 1fr) auto; gap:10px; align-items:start; padding:10px 0; border-top:1px solid #f3eff8; }
+  .ex-file:first-of-type { border-top:0; }
+  .ex-file-ico { width:38px; height:38px; border-radius:12px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); }
+  .ex-file.is-wait .ex-file-ico { background:#fff7e6; color:#d97706; }
+  .ex-file-name { font-weight:800; font-size:.86rem; color:var(--ink-text); text-decoration:none; } .ex-file-name:hover { color:var(--primary-berry); }
+  .ex-file-line { font-size:.76rem; color:#6b6480; margin-top:2px; }
+  .ex-file-line.is-wait { color:#92400e; font-weight:700; } .ex-file-line.is-ok { color:#166534; }
+  .ex-file-do { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; } .ex-file-do form { margin:0; display:flex; gap:6px; }
+  .ex-file-do select { border:1px solid var(--border-color); border-radius:10px; padding:4px 8px; font-size:.78rem; max-width:240px; }
+  .ex-plan { margin-top:6px; font-size:.76rem; } .ex-plan summary { cursor:pointer; font-weight:800; color:var(--primary-berry); }
+  .ex-plan ol { margin:6px 0 0; padding-inline-start:18px; color:#4a445e; }
+  .ex-tools { display:flex; gap:4px; flex-wrap:wrap; margin-top:4px; } .ex-tools span { font-size:.68rem; font-weight:700; background:#f3eff9; border-radius:999px; padding:1px 8px; color:#5b5470; }
+  .ex-known { display:grid; gap:6px; }
+  .ex-fact { display:flex; gap:10px; align-items:flex-start; justify-content:space-between; padding:8px 10px; border-radius:12px; background:var(--gold-subtle, #fff7e6); font-size:.82rem; }
+  .ex-fact form { margin:0; }
+  .ex-teach { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; } .ex-teach textarea { flex:1 1 280px; border:1px solid var(--border-color); border-radius:12px; padding:7px 10px; font-size:.82rem; }
+  .ex-learnt { margin-top:8px; font-size:.78rem; } .ex-learnt summary { cursor:pointer; font-weight:800; color:#5b5470; }
+  .ex-learnt li { margin:4px 0; color:#4a445e; } .ex-learnt li b { color:var(--ink-text); }
+  .ex-src-tag { font-size:.66rem; font-weight:800; border-radius:999px; padding:1px 7px; background:#eef2ff; color:#3730a3; margin-inline-end:4px; }
+  .ex-wait-chip { display:inline-flex; gap:5px; align-items:center; font-size:.72rem; font-weight:800; border-radius:999px; padding:3px 10px; background:#fff7e6; color:#b45309; }
+  @media (prefers-reduced-motion: no-preference) { .ex-wait-chip i { animation:exTurn 2.4s ease-in-out infinite; } .ex-part { animation:exIn .4s ease both; } }
+  @keyframes exTurn { 0%, 70% { transform:rotate(0); } 85%, 100% { transform:rotate(180deg); } }
+  @media (max-width: 991px) { .ex-intro { grid-template-columns:1fr 1fr; } }
+  @media (max-width: 575px) { .ex-intro { grid-template-columns:1fr; } .ex-card > summary { grid-template-columns:auto minmax(0, 1fr) auto; } .ex-card > summary .ex-ring { display:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h1 class="ui-title">What the assistant knows, program by program</h1>
+    <div class="ui-card-sub">What the weekly questions and the answers to candidates come from, and where each thing comes from. Add a program's files, teach it what is missing, and decide on the files that wait for you. What waits for you comes first, then the least known programs.</div>
+  </div>
+  <div class="ui-actions">
+    <a class="ui-btn sm" href="/inbox/knowledge"><i class="bi bi-mortarboard"></i>Teach an answer</a>
+    <a class="ui-btn sm" href="/programs/all"><i class="bi bi-journal-bookmark"></i>Programs</a>
+  </div>
+</div>
+
+<div class="ex-intro" id="ex-sources">
+  <div class="ex-src" style="--c:#a42c67"><i class="bi bi-list-ol"></i><div><b>The course plan</b><span>Each week's subject and points, from the program.</span></div></div>
+  <div class="ex-src" style="--c:#1d4ed8"><i class="bi bi-globe2"></i><div><b>9antra.tn</b><span>What the website says of each week.</span></div></div>
+  <div class="ex-src" style="--c:#0f766e"><i class="bi bi-folder2-open"></i><div><b>The professors' files</b><span>What was really taught: slides, PDF, notes.</span></div></div>
+  <div class="ex-src" style="--c:#b45309"><i class="bi bi-patch-question"></i><div><b>The questions</b><span>Written every week, even with no file: then from what the class already studied.</span></div></div>
+</div>
+{% set waiting_total = programs | sum(attribute='waiting') %}
+{% if waiting_total %}<div class="ex-wait-chip mb-3"><i class="bi bi-hourglass-split"></i>{{ waiting_total }} <span>file(s) wait for your approval: open the programs marked below</span></div>{% endif %}
+
+<div class="ex-list" id="ex-list">
+  {% for item in programs %}
+  {% set program = item.program %}
+  <details class="ex-card" style="--i:{{ loop.index0 }};" id="ex-{{ program.id }}" {{ 'open' if opened == program.id or item.waiting }}>
+    <summary>
+      {{ ui.program_icon(item.icon, 44) }}
+      <div style="min-width:0;">
+        <div class="ex-name">{{ program.name }}</div>
+        <div class="ex-bars">
+          {% for key, label, colour in [('plan', 'Plan', '#a42c67'), ('site', 'Website', '#1d4ed8'), ('files', 'Files', '#0f766e'), ('questions', 'Questions', '#b45309')] %}
+          <span class="ex-bar" style="--c:{{ colour }};" title="{{ item.cover[key] }} / {{ item.total }}"><span>{{ label }}</span>
+            <em>{% for row in item.weeks %}<i class="{{ 'on' if loop.index <= item.cover[key] }}"></i>{% endfor %}</em><b>{{ item.cover[key] }}/{{ item.total }}</b></span>
+          {% endfor %}
+        </div>
+      </div>
+      {% if item.waiting %}<span class="ex-wait-chip"><i class="bi bi-hourglass-split"></i>{{ item.waiting }} <span>waiting</span></span>{% endif %}
+      <div class="ex-ring" style="--pct:{{ item.score }};" title="How much it knows"><span>{{ item.score }}</span></div>
+      <i class="bi bi-chevron-down ex-chev"></i>
+    </summary>
+    <div class="ex-body">
+      <div class="ex-actions">
+        <a class="ui-btn sm primary" href="/programs/{{ program.id }}"><i class="bi bi-pencil"></i>Edit the weekly plan</a>
+        {% for group in item.classes if group.status.value != 'completed' %}<a class="ui-btn sm" href="/classes/{{ group.id }}/course"><i class="bi bi-folder-plus"></i><span>Add course files</span>&nbsp;<span data-no-i18n>· {{ group.name }}</span></a>{% endfor %}
+      </div>
+      {% if item.missing %}<div class="ex-part" style="background:#fff8fa;"><b><i class="bi bi-magic"></i> <span>Still missing:</span></b> <span data-no-i18n>{{ item.missing | join(', ') }}</span>. <span class="ui-card-sub">Add the program's brochure or syllabus below: what it writes is proposed first, then the rest is written for you to check.</span></div>{% endif %}
+
+      <!-- The program's own files -->
+      <div class="ex-part" id="program-files-{{ program.id }}">
+        <div class="ex-part-head"><b><i class="bi bi-folder2-open"></i>The program's files</b><span class="ui-card-sub">Its plan, a brochure, a syllabus: checked against the program, then learnt.</span></div>
+        <form method="post" action="/programs/{{ program.id }}/files" enctype="multipart/form-data" class="ex-drop" data-drop>
+          <i class="bi bi-cloud-arrow-up" style="color:var(--primary-berry); font-size:1.2rem;"></i>
+          <input type="file" name="files" multiple required aria-label="Files of {{ program.name }}">
+          <input name="note" placeholder="What they are (needed for a video or a photo)" aria-label="What the files are">
+          <button class="ui-btn sm primary"><i class="bi bi-upload"></i>Add</button>
+        </form>
+        {% for entry in item.files %}
+        {% set row = entry.file %}
+        <div class="ex-file {{ 'is-wait pg-file' if entry.review.waiting else 'pg-file' }}" id="file-{{ row.id }}">
+          <span class="ex-file-ico"><i class="bi {{ entry.icon }}"></i></span>
+          <div style="min-width:0;">
+            <a class="ex-file-name" href="{{ entry.url }}" target="_blank" rel="noopener" data-no-i18n>{{ row.filename }}</a> <span class="ui-card-sub">{{ entry.size }}</span>
+            <div class="ex-file-line">{{ entry.learned.text }}</div>
+            {% if entry.review.waiting %}
+            <div class="ex-file-line is-wait"><i class="bi bi-hourglass-split"></i> <span>Waits for your approval:</span> <span data-no-i18n>{{ entry.review.text }}</span></div>
+            <div class="ex-file-do">
+              <form method="post" action="/programs/files/{{ row.id }}/accept"><button class="ui-btn sm primary"><i class="bi bi-check2"></i>Keep it here</button></form>
+              <form method="post" action="/programs/files/{{ row.id }}/move">
+                <select name="target" aria-label="Where it goes" data-no-i18n>
+                  {% if entry.review.program %}<option value="program:{{ entry.review.program.id }}">{{ entry.review.program.name }}</option>{% endif %}
+                  {% for other in item.programs if not entry.review.program or other.id != entry.review.program.id %}<option value="program:{{ other.id }}">{{ other.name }}</option>{% endfor %}
+                </select>
+                <button class="ui-btn sm"><i class="bi bi-arrow-right-circle"></i>Move it</button>
+              </form>
+            </div>
+            {% elif entry.review.text %}<div class="ex-file-line is-ok"><i class="bi bi-patch-check"></i> <span data-no-i18n>{{ entry.review.text }}</span></div>{% endif %}
+            {% if entry.tools %}<div class="ex-tools" data-no-i18n>{% for tool in entry.tools %}<span>{{ tool }}</span>{% endfor %}</div>{% endif %}
+            {% if entry.plan and not entry.review.waiting %}
+            <details class="ex-plan"><summary><i class="bi bi-list-ol"></i> <span>A plan of</span> {{ entry.plan | length }} <span>weeks was found in it</span></summary>
+              <ol data-no-i18n>{% for week in entry.plan %}<li><b>{{ week.title }}</b>{% if week.points %} — {{ week.points | join('; ') }}{% endif %}</li>{% endfor %}</ol>
+              <form method="post" action="/programs/files/{{ row.id }}/plan" class="mt-2" data-confirm="Write the weeks of the plan from this file? Each of its weeks replaces the same week of the plan; later weeks are kept.">
+                <button class="ui-btn sm primary"><i class="bi bi-magic"></i>Use this plan for the program</button></form>
+            </details>
+            {% endif %}
+            {% if entry.description and not entry.review.waiting %}
+            <form method="post" action="/programs/files/{{ row.id }}/description" class="mt-1" data-confirm="Replace the program's description with the one of this file?">
+              <button class="ui-btn ghost sm"><i class="bi bi-card-text"></i>Use its description</button></form>
+            {% endif %}
+          </div>
+          <form method="post" action="/programs/files/{{ row.id }}/delete" data-confirm="Remove “{{ row.filename }}”?">
+            <button class="ui-btn ghost sm icon danger" title="Remove" aria-label="Remove {{ row.filename }}"><i class="bi bi-trash3"></i></button></form>
+        </div>
+        {% else %}
+        <div class="ui-card-sub mt-2">No file yet.</div>
+        {% endfor %}
+      </div>
+
+      {% if item.waiting_course %}
+      <div class="ex-part">
+        <div class="ex-part-head"><b><i class="bi bi-hourglass-split"></i>Course files waiting for you</b></div>
+        {% for entry in item.waiting_course %}
+        <div class="ex-file is-wait">
+          <span class="ex-file-ico"><i class="bi bi-file-earmark-text"></i></span>
+          <div style="min-width:0;">
+            <span class="ex-file-name" data-no-i18n>{{ entry.file.filename }}</span>
+            <div class="ex-file-line is-wait" data-no-i18n>{{ entry.class.name if entry.class }} · {{ entry.review.text }}</div>
+          </div>
+          <a class="ui-btn sm" href="/classes/{{ entry.file.class_group_id }}/course?week={{ entry.file.week_number }}&file={{ entry.file.id }}#course-files">Decide</a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      <!-- What it knows, and from where -->
+      <div class="ex-part">
+        <div class="ex-part-head"><b><i class="bi bi-mortarboard"></i>What the assistant knows about it</b>
+          <a class="ui-btn ghost sm" href="/inbox/knowledge#facts">All it was told</a></div>
+        <div class="ex-known">
+          {% for entry in item.told %}
+          <div class="ex-fact"><span dir="auto">{{ entry.content }}</span>
+            <form method="post" action="/inbox/knowledge/fact/{{ entry.id }}/delete" data-confirm="Forget this? The assistants no longer use it.">
+              <input type="hidden" name="back" value="/programs/expertise?open={{ program.id }}#ex-{{ program.id }}">
+              <button class="ui-btn ghost sm icon" title="Forget" aria-label="Forget"><i class="bi bi-x-lg"></i></button></form>
+          </div>
+          {% endfor %}
+        </div>
+        <form method="post" action="/inbox/knowledge/fact" class="ex-teach">
+          <input type="hidden" name="program_id" value="{{ program.id }}">
+          <input type="hidden" name="back" value="/programs/expertise?open={{ program.id }}#ex-{{ program.id }}">
+          <textarea name="text" rows="2" required placeholder="Teach it something about this program, in any language: “Les séances pratiques se font sur place”, “الشهادة معترف بها”…"></textarea>
+          <button class="ui-btn sm primary"><i class="bi bi-plus-lg"></i>Teach it</button>
+        </form>
+        {% if item.learnt %}
+        <details class="ex-learnt"><summary><span>And</span> {{ item.learnt | length }} <span>things it learnt by itself, with where they come from</span></summary>
+          <ul>
+            {% for entry in item.learnt %}
+            <li><span class="ex-src-tag">{{ {'program': 'The program', 'curriculum': 'The plan', 'course': 'A course file', 'program_file': "The program's files", 'website': '9antra.tn', 'class': 'A class'}.get(entry.kind, entry.kind) }}</span><b data-no-i18n>{{ entry.title }}</b>
+              <span class="d-block ui-card-sub" data-no-i18n>{{ entry.content | truncate(180) }}</span></li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% endif %}
+      </div>
+
+      {% if item.weeks %}
+      <div class="ex-weeks">
+        {% for row in item.weeks %}
+        <div class="ex-week {{ 'is-thin' if row.number in item.thin }}" style="--k:{{ loop.index0 }};">
+          <div class="ex-num"><span>Week</span><b>{{ row.number }}</b></div>
+          <div style="min-width:0;">
+            <div class="ex-title">{{ row.title or 'No subject yet' }}</div>
+            {% if row.points %}<ul class="ex-points">{% for point in row.points %}<li>{{ point }}</li>{% endfor %}</ul>{% endif %}
+            {% if row.site %}<div class="ex-site"><i class="bi bi-globe2"></i> {{ row.site }}</div>{% endif %}
+            <div class="ex-tags">
+              {% if row.files %}<span class="ex-tag ok"><i class="bi bi-folder2-open"></i>{{ row.files | length }} {{ 'file' if row.files | length == 1 else 'files' }}</span>
+              {% else %}<span class="ex-tag"><i class="bi bi-folder"></i>No file yet</span>{% endif %}
+              {% if row.questions %}<span class="ex-tag ok"><i class="bi bi-patch-check"></i>{{ row.questions }} {{ 'question ready' if row.questions == 1 else 'questions ready' }}</span>{% endif %}
+              {% if row.number in item.thin %}<span class="ex-tag no"><i class="bi bi-exclamation-circle"></i>Nothing says what this week teaches</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-list-ol"></i><strong>No weekly plan yet</strong>Write it on the program's page: the questions and answers come from it.</div>
+      {% endif %}
+    </div>
+  </details>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-journal-plus"></i><strong>No program yet</strong></div>
+  {% endfor %}
+</div>
+<script>
+  // Files dropped on a program's box are added at once.
+  document.querySelectorAll("[data-drop]").forEach(zone => {
+    const input = zone.querySelector('input[type="file"]');
+    ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("is-over"); }));
+    ["dragleave", "drop"].forEach(name => zone.addEventListener(name, () => zone.classList.remove("is-over")));
+    zone.addEventListener("drop", event => {
+      event.preventDefault();
+      if (!event.dataTransfer || !event.dataTransfer.files.length) return;
+      input.files = event.dataTransfer.files;
+      zone.submit();
+    });
+  });
+</script>
+{% endblock %}

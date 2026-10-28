@@ -35,6 +35,45 @@ def talks_of_payment(text: str | None) -> bool:
     return bool(_PAY_WORDS.search(text or ""))
 
 
+def centre_names(db: Session) -> list[str]:
+    """The names a cheque may be made out to (Settings › Your centre): the ones written, and the official name."""
+    from app.services.settings_service import get_settings
+
+    settings = get_settings(db)
+    names = [line.strip() for line in (getattr(settings, "centre_beneficiaries", None) or "").splitlines() if line.strip()]
+    legal = (getattr(settings, "centre_legal_name", None) or "").strip()
+    return names + ([legal] if legal and legal not in names else [])
+
+
+def guess_candidate(db: Session, found: dict):
+    """The candidate a proof is from, when nobody was chosen: the one who owes money whose full name is written on it
+    (the payer of a cheque, who gave a transfer order). None when no one, or more than one, fits."""
+    from rapidfuzz import fuzz
+
+    from app.models import Registration
+    from app.models.registration import RegistrationStatus
+
+    lines = [line for line in [found.get("drawer") or ""] + (found.get("text") or "").splitlines()[:80] if len(line.strip()) >= 5]
+    if not lines:
+        return None
+    people = {}
+    for registration in db.query(Registration).filter(Registration.status != RegistrationStatus.CANCELLED).all():
+        if (registration.remaining_amount or 0) > 0 and registration.candidate is not None:
+            people[registration.candidate.id] = registration.candidate
+    fits = []
+    for person in people.values():
+        name = _plain(person.full_name or "")
+        if len(name.split()) < 2:
+            continue
+        score = max(fuzz.token_set_ratio(name, _plain(line)) for line in lines)
+        if score >= 90:
+            fits.append((score, person))
+    fits.sort(key=lambda item: -item[0])
+    if len(fits) == 1 or (len(fits) > 1 and fits[0][0] - fits[1][0] >= 6):
+        return fits[0][1]
+    return None
+
+
 def centre_ribs(db: Session) -> list[str]:
     from app.services.settings_service import get_settings
 
@@ -91,15 +130,21 @@ def read_now(db: Session, proof: PaymentProof, *, words: str = "") -> PaymentPro
     found = proof_reader.read(data, file.content_type) if data else {"text": "", "amount": None, "ribs": [], "banks": [], "apps": [],
                                                                       "date": None, "reference": None, "editor": None, "fingerprint": None}
     candidate = db.get(Candidate, proof.candidate_id) if proof.candidate_id else None
+    if candidate is None:
+        candidate = guess_candidate(db, found)          # the name written on it
+        proof.candidate_id = candidate.id if candidate is not None else None
     registration = guess_registration(candidate, found, words) if candidate else None
     owed = registration.remaining_amount if registration else (sum(item.remaining_amount for item in owing(candidate)) if candidate and owing(candidate) else None)
     seen = bool(found.get("fingerprint")) and db.query(PaymentProof.id).filter(
         PaymentProof.fingerprint == found["fingerprint"], PaymentProof.id != proof.id).first() is not None
     same_reference = bool(found.get("reference")) and db.query(PaymentProof.id).filter(
         PaymentProof.reference == found["reference"], PaymentProof.id != proof.id).first() is not None
+    same_cheque = bool(found.get("cheque_number")) and db.query(PaymentProof.id).filter(
+        PaymentProof.cheque_number == found["cheque_number"], PaymentProof.id != proof.id).first() is not None
     registered_on = registration.registration_date.date() if registration and registration.registration_date else None
     results = proof_reader.checks(found, owed=owed, centre_ribs=centre_ribs(db), registered_on=registered_on,
-                                  seen_before=seen, same_reference=same_reference)
+                                  seen_before=seen, same_reference=same_reference, centre_names=centre_names(db),
+                                  same_cheque=same_cheque)
     bank = found.get("bank")
     proof.registration_id = registration.id if registration else None
     proof.amount = found.get("amount")
@@ -111,6 +156,13 @@ def read_now(db: Session, proof: PaymentProof, *, words: str = "") -> PaymentPro
     proof.text = (found.get("text") or "")[:6000]
     proof.fingerprint = found.get("fingerprint")
     proof.editor = found.get("editor")
+    proof.kind = found.get("kind")
+    proof.beneficiary = (found.get("beneficiary") or "")[:160] or None
+    proof.drawer = (found.get("drawer") or "")[:160] or None
+    proof.cheque_number = found.get("cheque_number")
+    proof.amount_words = found.get("amount_words")
+    proof.words_text = (found.get("words_text") or "")[:240] or None
+    proof.place = (found.get("place") or "")[:80] or None
     proof.verdict = proof_reader.verdict(results)
     proof.status = "waiting"
     db.flush()
@@ -184,7 +236,7 @@ def from_message(db: Session, message, candidate, files) -> list[PaymentProof]:
             continue
         proof = create(db, file=file, candidate=candidate, source="whatsapp" if message.channel == "whatsapp" else "email", message=message)
         read_now(db, proof, words=words)
-        if not talks_of_payment(words) and not proof.amount and not proof.bank:
+        if not talks_of_payment(words) and not proof.amount and not proof.bank and proof.kind != "cheque":
             # A photo that is not a payment at all (a CV, a picture): not kept as a proof.
             db.delete(proof)
             db.flush()
@@ -196,6 +248,8 @@ def from_message(db: Session, message, candidate, files) -> list[PaymentProof]:
 def summary(proof: PaymentProof) -> str:
     label = proof_reader.VERDICTS.get(proof.verdict, ("To check",))[0]
     bits = [f"{proof.amount:g} DT" if proof.amount else "no amount read"]
+    if proof.kind == "cheque":
+        bits.insert(0, "cheque" + (f" n° {proof.cheque_number}" if proof.cheque_number else ""))
     if proof.bank:
         bits.append(proof.bank)
     if proof.proof_date:
@@ -245,9 +299,29 @@ def view(db: Session, proof: PaymentProof) -> dict:
         ribs = [tunisian_banks.pretty_rib(rib) for rib in json.loads(proof.ribs or "[]")]
     except ValueError:
         ribs = []
+    tones = {item["key"]: ("ok" if item["ok"] is True else "bad" if item["ok"] is False else "na") for item in checks}
     return {"proof": proof, "candidate": candidate, "registration": registration, "owed": owing(candidate) if candidate else [],
-            "label": label, "tone": tone, "icon": icon, "checks": checks, "ribs": ribs,
+            "label": label, "tone": tone, "icon": icon, "checks": checks, "ribs": ribs, "tones": tones,
+            "kind": KINDS.get(proof.kind or "receipt", KINDS["receipt"]),
             "file_url": f"/payments/proofs/{proof.id}/file"}
+
+
+KINDS = {
+    "cheque": ("Cheque", "bi-postcard"), "transfer": ("Bank transfer", "bi-arrow-left-right"), "deposit": ("Deposit", "bi-safe"),
+    "app": ("Paid with an app", "bi-phone"), "receipt": ("Receipt", "bi-receipt"),
+}
+
+
+def who_may_have_paid(db: Session) -> list:
+    """The candidates who still owe something, for the choice “who paid?”."""
+    from app.models import Registration
+    from app.models.registration import RegistrationStatus
+
+    people = {}
+    for registration in db.query(Registration).filter(Registration.status != RegistrationStatus.CANCELLED).all():
+        if (registration.remaining_amount or 0) > 0 and registration.candidate is not None:
+            people[registration.candidate.id] = registration.candidate
+    return sorted(people.values(), key=lambda person: (person.full_name or person.email or "").lower())
 
 
 def waiting(db: Session, candidate_id: str | None = None, limit: int = 50) -> list[dict]:

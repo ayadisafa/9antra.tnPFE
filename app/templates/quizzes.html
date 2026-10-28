@@ -110,6 +110,15 @@
 
 {% block content %}
 {% include "_flash.html" %}
+<nav class="qz-tabs" aria-label="Questions to candidates">
+  <a href="/quiz/all" class="is-on"><i class="bi bi-signpost-split"></i>Level checks</a>
+  <a href="/quiz/weekly"><i class="bi bi-patch-question"></i>Weekly questions</a>
+</nav>
+<style>
+  .qz-tabs { display:flex; gap:6px; padding:6px; background:#fff; border:1px solid var(--border-color); border-radius:18px; margin-bottom:16px; width:fit-content; max-width:100%; overflow-x:auto; }
+  .qz-tabs a { display:inline-flex; gap:8px; align-items:center; padding:9px 15px; border-radius:13px; font-weight:700; font-size:.86rem; color:#5b5670; text-decoration:none; white-space:nowrap; }
+  .qz-tabs a:hover { background:#f6f3fb; color:var(--ink-text); } .qz-tabs a.is-on { background:var(--ink-2); color:#fff; }
+</style>
 
 <div class="ui-head">
   <div>

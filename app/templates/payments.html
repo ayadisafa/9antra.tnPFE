@@ -35,14 +35,69 @@
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-check"></i></div><div><div class="ui-stat-num">{{ totals.to_decide }}</div><div class="ui-stat-label">Waiting for your decision</div></div></div>
 </div>
 
-{% import "_proofs.html" as proofs_ui %}
+{% import "_proofs.html" as proofs_ui with context %}
 <section class="mb-4" id="proofs">
   <div class="d-flex align-items-center gap-2 mb-2">
     <h3 class="h6 fw-bold mb-0"><i class="bi bi-receipt"></i> Payment proofs to check</h3>
     <span class="ui-chip {{ 'warn' if proofs else 'muted' }}">{{ proofs | length }}</span>
   </div>
-  <p class="small text-muted mb-2">Receipts, transfers and invoices candidates send by email or WhatsApp are read here: amount, bank, RIB, date, reference, and checks. A photo cannot prove a receipt is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set %} <a href="/settings#whatsapp">Write the centre's RIB in Settings</a> to check the money went to your account.{% endif %}</p>
-  {% if proofs %}{{ proofs_ui.list(proofs, "/payments#proofs") }}{% else %}<div class="ui-card"><div class="ui-card-sub">Nothing to check.</div></div>{% endif %}
+  <p class="small text-muted mb-2">Cheques, receipts, transfers and invoices candidates send by email or WhatsApp are read here: amount, bank, RIB, date, reference, and for a cheque who it is made out to, the amount in words and its number. A photo cannot prove a proof is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set or not centre_names_set %} <a href="/settings#centre">Write the centre's RIB and the names a cheque is made out to in Settings</a> to check them.{% endif %}</p>
+  <form method="post" action="/payments/proofs/upload" enctype="multipart/form-data" class="pf-drop" id="proof-drop">
+    <div class="pf-drop-art" aria-hidden="true"><span class="pf-drop-cheque"><i></i><i></i><i></i><b>DT</b></span><span class="pf-drop-scan"></span></div>
+    <div class="pf-drop-text">
+      <b>Read a cheque, a transfer or a receipt</b>
+      <span>Drop photos or PDFs here, or choose them. Each one is read and checked: who it is made out to, the amount in figures and in words, the date, the bank, the RIB, the number of the cheque.</span>
+      <div class="pf-drop-do">
+        <label class="ui-btn sm primary pf-drop-pick"><i class="bi bi-camera"></i><span>Choose photos</span><input type="file" name="files" accept="image/*,application/pdf" multiple required></label>
+        <select name="candidate_id" aria-label="Who paid">
+          <option value="">Who paid? Found from the name on it when it can be</option>
+          {% for person in who_paid %}<option value="{{ person.id }}">{{ person.full_name or person.email }}</option>{% endfor %}
+        </select>
+        <span class="pf-drop-files" id="proof-drop-files" aria-live="polite"></span>
+      </div>
+    </div>
+  </form>
+  <style>
+    .pf-drop { display:grid; grid-template-columns:120px minmax(0, 1fr); gap:18px; align-items:center; padding:16px 18px; margin:0 0 14px; border:2px dashed #e3d6ee; border-radius:20px; background:linear-gradient(135deg, #fff, var(--berry-subtle)); transition:border-color .2s ease, background .2s ease, transform .2s ease; }
+    .pf-drop.is-over { border-color:var(--primary-berry); transform:scale(1.01); }
+    .pf-drop-text b { display:block; font-size:.95rem; color:var(--ink-text); } .pf-drop-text > span { display:block; font-size:.8rem; color:#5b5670; margin:2px 0 10px; }
+    .pf-drop-do { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .pf-drop-do select { border:1px solid var(--border-color); border-radius:10px; padding:6px 9px; font-size:.82rem; max-width:340px; }
+    .pf-drop-pick { position:relative; overflow:hidden; cursor:pointer; } .pf-drop-pick input { position:absolute; inset:0; opacity:0; cursor:pointer; }
+    .pf-drop-files { font-size:.78rem; font-weight:700; color:var(--primary-berry); }
+    .pf-drop-art { position:relative; width:120px; height:74px; }
+    .pf-drop-cheque { position:absolute; inset:6px 0; border-radius:10px; background:#fff; border:1px solid #e9dff2; box-shadow:0 10px 22px -16px rgba(80,20,70,.6); padding:10px 10px 0; display:grid; gap:6px; }
+    .pf-drop-cheque i { display:block; height:5px; border-radius:3px; background:#efe7f6; } .pf-drop-cheque i:nth-child(2) { width:70%; } .pf-drop-cheque i:nth-child(3) { width:45%; }
+    .pf-drop-cheque b { position:absolute; top:8px; inset-inline-end:8px; font-size:.62rem; color:var(--primary-berry); border:1px solid #f2c9dc; border-radius:5px; padding:1px 5px; }
+    .pf-drop-scan { position:absolute; inset-inline:0; top:6px; height:3px; border-radius:3px; background:linear-gradient(90deg, transparent, var(--primary-berry), transparent); box-shadow:0 0 12px var(--primary-berry); opacity:.75; }
+    @media (prefers-reduced-motion: no-preference) { .pf-drop-scan { animation:pfScan 2.6s ease-in-out infinite; } .pf-drop.is-reading .pf-drop-scan { animation-duration:.9s; } }
+    @keyframes pfScan { 0%, 100% { top:8px; } 50% { top:66px; } }
+    @media (max-width: 575px) { .pf-drop { grid-template-columns:1fr; } .pf-drop-art { display:none; } }
+  </style>
+  <script>
+  (() => {
+    const zone = document.getElementById("proof-drop");
+    if (!zone) return;
+    const input = zone.querySelector('input[type="file"]'), told = document.getElementById("proof-drop-files");
+    const send = () => {
+      if (!input.files.length) return;
+      told.textContent = input.files.length === 1 ? input.files[0].name : input.files.length + " files";
+      zone.classList.add("is-reading");
+      told.textContent += " · reading…";
+      zone.submit();
+    };
+    input.addEventListener("change", send);
+    ["dragenter", "dragover"].forEach(name => zone.addEventListener(name, event => { event.preventDefault(); zone.classList.add("is-over"); }));
+    ["dragleave", "drop"].forEach(name => zone.addEventListener(name, () => zone.classList.remove("is-over")));
+    zone.addEventListener("drop", event => {
+      event.preventDefault();
+      if (!event.dataTransfer || !event.dataTransfer.files.length) return;
+      input.files = event.dataTransfer.files;
+      send();
+    });
+  })();
+  </script>
+  {% if proofs %}{{ proofs_ui.list(proofs, "/payments#proofs", who_paid=who_paid) }}{% else %}<div class="ui-card"><div class="ui-card-sub">Nothing to check.</div></div>{% endif %}
   {% if proofs_done %}<details><summary class="small fw-bold text-muted">Last decided</summary><div class="mt-2">{{ proofs_ui.list(proofs_done, "/payments#proofs") }}</div></details>{% endif %}
 </section>
 

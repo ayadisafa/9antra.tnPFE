@@ -1,4 +1,5 @@
-"""Signing in and out, the first-time setup, and each person's own account."""
+"""Signing in and out, the first-time setup, forgot password, and each person's own account."""
+import logging
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, Request
@@ -8,19 +9,44 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models.user import User
-from app.services import auth, brand, theme
+from app.services import auth, brand, theme, translations
 from app.services.settings_service import get_settings
 from app.template_context import notification_context
 
+logger = logging.getLogger(__name__)
 router = APIRouter(tags=["Access"])
 # The sign-in pages show nothing of the application.
 public_templates = Jinja2Templates(directory="app/templates")
 templates = Jinja2Templates(directory="app/templates", context_processors=[notification_context])
 
 
+def _tell_admin(db: Session, title: str, message: str) -> None:
+    """Every password asked for or changed is told to the admin (Team and access)."""
+    from app.services.notification_service import create_notification
+
+    try:
+        create_notification(db, title=title, message=message, category="ACCOUNT", action_url="/settings/team")
+    except Exception:
+        db.rollback()
+        logger.exception("The admin could not be told about a password.")
+
+
+def _language(request: Request) -> str:
+    """The language of the sign-in pages: the one chosen on the page (?lang=), else the one remembered."""
+    return translations.clean_language(request.query_params.get("lang") or request.cookies.get("lang"))
+
+
 def _sign_in_page(request: Request, db: Session, mode: str, *, error: str | None = None,
-                  values: dict | None = None, status_code: int = 200, next_page: str | None = None):
-    return public_templates.TemplateResponse(
+                  values: dict | None = None, status_code: int = 200, next_page: str | None = None, extra: dict | None = None):
+    lang = _language(request)
+    words = translations.dictionary(db, lang)["t"] if lang in translations.TARGETS else {}
+    if lang in translations.TARGETS:
+        # The hand-made translations too, before the server's start has put them in the database.
+        from app.services.translation_seed import MORE, SEED
+
+        position = 0 if lang == "fr" else 1
+        words = {**{text: pair[position] for text, pair in {**SEED, **MORE}.items() if pair and pair[position]}, **words}
+    response = public_templates.TemplateResponse(
         request=request,
         name="login.html",
         context={
@@ -32,10 +58,16 @@ def _sign_in_page(request: Request, db: Session, mode: str, *, error: str | None
             "theme_css": theme.css(get_settings(db).ui_color),
             "app_name": brand.view(get_settings(db))["name"],
             "min_password": auth.MIN_PASSWORD,
+            "lang": lang,
+            "t": lambda text: words.get(text, text),
+            **(extra or {}),
         },
         status_code=status_code,
         headers={"Cache-Control": "no-store"},
     )
+    if request.query_params.get("lang") in translations.LANGUAGES:
+        response.set_cookie("lang", lang, max_age=365 * 86400, samesite="lax", path="/")
+    return response
 
 
 def _signed_in(request: Request, token: str, target: str) -> RedirectResponse:
@@ -101,7 +133,54 @@ def login_page(request: Request, db: Session = Depends(get_db)):
     user = auth.user_for(db, request.cookies.get(auth.COOKIE))
     if user is not None:
         return RedirectResponse(user.home, status_code=303)
-    return _sign_in_page(request, db, "login")
+    return _sign_in_page(request, db, "login", extra={"changed": request.query_params.get("changed") == "1"})
+
+
+# ------------------------------------------------------------------
+# Forgot password
+# ------------------------------------------------------------------
+
+@router.get("/login/forgot", response_class=HTMLResponse)
+def forgot_page(request: Request, db: Session = Depends(get_db)):
+    return _sign_in_page(request, db, "forgot", values={"email": request.query_params.get("email", "")})
+
+
+@router.post("/login/forgot")
+def forgot_send(request: Request, email: str = Form(""), db: Session = Depends(get_db)):
+    """Always the same answer, whether the address has an account or not; the email goes in the background."""
+    from app.services import email_threads, password_reset
+    from app.services.background import run_in_background
+
+    ready = email_threads.smtp_configured()
+    if ready:
+        user, token = auth.start_reset(db, email, request.client.host if request.client else "")
+        if user is not None:
+            link = str(request.base_url).rstrip("/") + f"/login/reset/{token}"
+            run_in_background(password_reset.send_task, user.id, link, _language(request))
+            _tell_admin(db, f"{user.name} asked for a new password", f"A link to choose it was sent to {user.email}. If it was not them, nothing changes until the link is used.")
+    return _sign_in_page(request, db, "forgot_sent", values={"email": email}, extra={"smtp_ready": ready})
+
+
+@router.get("/login/reset/{token}", response_class=HTMLResponse)
+def reset_page(token: str, request: Request, db: Session = Depends(get_db)):
+    user = auth.user_for_reset(db, token)
+    if user is None:
+        return _sign_in_page(request, db, "reset_bad", status_code=410)
+    return _sign_in_page(request, db, "reset", values={"email": user.email}, extra={"token": token})
+
+
+@router.post("/login/reset/{token}")
+def reset_save(token: str, request: Request, password: str = Form(""), confirmation: str = Form(""), db: Session = Depends(get_db)):
+    user = auth.user_for_reset(db, token)
+    if user is None:
+        return _sign_in_page(request, db, "reset_bad", status_code=410)
+    problem = auth.password_problem(password, confirmation)
+    if problem:
+        return _sign_in_page(request, db, "reset", error=problem, values={"email": user.email}, extra={"token": token}, status_code=400)
+    auth.finish_reset(db, user, password)
+    logger.info("A password was changed with a link sent by email.")
+    _tell_admin(db, f"{user.name} chose a new password", "With the link sent by email. Every browser signed in with this account was signed out.")
+    return RedirectResponse("/login?changed=1", status_code=303)
 
 
 @router.post("/login")
@@ -194,6 +273,7 @@ def change_password(
     if problem:
         return _back(error=problem)
     auth.set_password(db, user, password, keep_token=request.cookies.get(auth.COOKIE))
+    _tell_admin(db, f"{user.name} changed their password", "From their account page. Other browsers signed in with this account were signed out.")
     return _back(notice="Password changed. Other browsers signed in with this account were signed out.")
 
 

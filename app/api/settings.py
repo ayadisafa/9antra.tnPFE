@@ -88,11 +88,25 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "session_check": __import__("app.services.session_check", fromlist=["settings_of"]).settings_of(db),
             "sm": _sms_view(db, request),
             "rules": {"never": settings.assistant_never or "", "notes": settings.assistant_notes or ""},
+            "centre_banks": _centre_banks(settings),
             "wa_trial": request.query_params.get("wa_trial"),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         },
     )
+
+
+def _centre_banks(settings) -> list[dict]:
+    """Each RIB of the centre with the bank it belongs to."""
+    from app.services import tunisian_banks
+
+    found = []
+    for line in (settings.centre_ribs or "").splitlines():
+        digits = tunisian_banks.rib_digits(line)
+        if digits:
+            bank = tunisian_banks.bank_of_rib(digits)
+            found.append({"rib": tunisian_banks.pretty_rib(digits), "bank": bank["name"] if bank else "Bank not recognised"})
+    return found
 
 
 def _report_view(db: Session, settings) -> dict:
@@ -127,8 +141,11 @@ def _whatsapp_view(db: Session, settings, request) -> dict:
 
 @router.post("/numbers")
 def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None = Form(None), form: str | None = Form(None),
-                 address: str | None = Form(None), whole: str = Form(""), db: Session = Depends(get_db)):
-    """The centre's own phone and WhatsApp numbers, written under every email, and its RIB(s), where candidates pay."""
+                 address: str | None = Form(None), whole: str = Form(""), legal_name: str | None = Form(None),
+                 beneficiaries: str | None = Form(None), tax_id: str | None = Form(None), email: str | None = Form(None),
+                 website: str | None = Form(None), db: Session = Depends(get_db)):
+    """Your centre: its own phone and WhatsApp numbers, written under every email, its RIB(s), where candidates pay, and
+    who it is on payments (the names a cheque may be made out to)."""
     from app.services import tunisian_banks
 
     kept_ribs = []
@@ -137,17 +154,23 @@ def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None =
         if not digits:
             continue
         if not tunisian_banks.rib_ok(digits):
-            return _back(error=f"The RIB {line.strip()} is not right: a Tunisian RIB has 20 digits and its last two (the key) must match.", anchor="#whatsapp")
+            return _back(error=f"The RIB {line.strip()} is not right: a Tunisian RIB has 20 digits and its last two (the key) must match.", anchor="#centre")
         kept_ribs.append(tunisian_banks.pretty_rib(digits))
     values = {}
     for name, value in (("phone", phone), ("WhatsApp", chat)):
         value = (value or "").strip()
         if value and whatsapp.normalise(value) is None:
-            return _back(error=f"The {name} number cannot be read: write it like +216 71 123 456.", anchor="#whatsapp")
+            return _back(error=f"The {name} number cannot be read: write it like +216 71 123 456.", anchor="#centre")
         values[name] = whatsapp.pretty(value) if value else None
     link = (form or "").strip()
     if link and not link.startswith(("https://", "http://")):
-        return _back(error="The registration form must be a link starting with https://", anchor="#whatsapp")
+        return _back(error="The registration form must be a link starting with https://", anchor="#centre")
+    contact = (email or "").strip()
+    if contact and ("@" not in contact or " " in contact):
+        return _back(error="The contact email cannot be read: write it like contact@9antra.tn.", anchor="#centre")
+    site = (website or "").strip()
+    if site and not site.startswith(("https://", "http://")):
+        site = "https://" + site
     settings = get_settings(db)
     settings.centre_phone, settings.centre_whatsapp = values["phone"], values["WhatsApp"]
     # The whole card was sent (“whole”): an empty box clears what was there (FastAPI turns an empty field into None).
@@ -157,8 +180,19 @@ def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None =
         settings.registration_form_url = link or None     # empty: back to the form 9antra uses today
     if address is not None or whole:
         settings.centre_address = (address or "").strip()[:200] or None
+    if whole:
+        settings.centre_legal_name = " ".join((legal_name or "").split())[:160] or None
+        names = []
+        for line in (beneficiaries or "").splitlines():
+            line = " ".join(line.split())[:120]
+            if line and line.lower() not in (item.lower() for item in names):
+                names.append(line)
+        settings.centre_beneficiaries = "\n".join(names[:12]) or None
+        settings.centre_tax_id = " ".join((tax_id or "").split())[:40] or None
+        settings.centre_email = contact[:160] or None
+        settings.centre_website = site[:200] or None
     db.commit()
-    return _back(notice="Saved: the numbers are written under every email; payment proofs are checked against the RIB.", anchor="#whatsapp")
+    return _back(notice="Saved: your centre's details are written under every email, cheques are read against its names and transfers against its RIB.", anchor="#centre")
 
 
 @router.post("/whatsapp")

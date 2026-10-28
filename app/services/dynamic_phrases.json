@@ -1,0 +1,717 @@
+[
+{
+"en": "New Registration: {0}",
+"fr": "Nouvelle inscription : {0}",
+"ar": "تسجيل جديد: {0}"
+},
+{
+"en": "New candidate registration: {0}",
+"fr": "Nouvelle inscription d'un candidat : {0}",
+"ar": "تسجيل مترشح جديد: {0}"
+},
+{
+"en": "{0} added another registration",
+"fr": "{0} a ajouté une autre inscription",
+"ar": "أضاف {0} تسجيلا آخر"
+},
+{
+"en": "Payment received",
+"fr": "Paiement reçu",
+"ar": "تم استلام الدفع"
+},
+{
+"en": "Payment received, class to come",
+"fr": "Paiement reçu, classe à venir",
+"ar": "تم استلام الدفع، والقسم قادم"
+},
+{
+"en": "Program Approval Pending",
+"fr": "Formation en attente d'approbation",
+"ar": "برنامج في انتظار الموافقة"
+},
+{
+"en": "Session reminders sent",
+"fr": "Rappels de séance envoyés",
+"ar": "أُرسلت تذكيرات الحصة"
+},
+{
+"en": "Candidate assigned",
+"fr": "Candidat placé",
+"ar": "تم تعيين المترشح"
+},
+{
+"en": "Candidate assigned to a class",
+"fr": "Candidat placé dans une classe",
+"ar": "تم تعيين المترشح في قسم"
+},
+{
+"en": "Your answer is needed",
+"fr": "Votre réponse est attendue",
+"ar": "إجابتك مطلوبة"
+},
+{
+"en": "Class started",
+"fr": "Classe commencée",
+"ar": "بدأ القسم"
+},
+{
+"en": "Class completed",
+"fr": "Classe terminée",
+"ar": "انتهى القسم"
+},
+{
+"en": "Class not started",
+"fr": "Classe pas encore commencée",
+"ar": "القسم لم يبدأ بعد"
+},
+{
+"en": "Class on hold",
+"fr": "Classe en attente",
+"ar": "القسم معلّق"
+},
+{
+"en": "Email not delivered",
+"fr": "Email non remis",
+"ar": "لم تُسلَّم الرسالة"
+},
+{
+"en": "Week {0} questions written: {1}",
+"fr": "Questions de la semaine {0} écrites : {1}",
+"ar": "كُتبت أسئلة الأسبوع {0}: {1}"
+},
+{
+"en": "Class schedule updated",
+"fr": "Horaire de la classe modifié",
+"ar": "تم تحديث جدول القسم"
+},
+{
+"en": "Class assignment updated",
+"fr": "Placement en classe modifié",
+"ar": "تم تحديث التعيين في القسم"
+},
+{
+"en": "Level check answered",
+"fr": "Test de niveau rempli",
+"ar": "تمت الإجابة عن اختبار المستوى"
+},
+{
+"en": "Payment confirmed · new class created",
+"fr": "Paiement confirmé · nouvelle classe créée",
+"ar": "تم تأكيد الدفع · أُنشئ قسم جديد"
+},
+{
+"en": "Payment confirmed · candidate enrolled",
+"fr": "Paiement confirmé · candidat inscrit en classe",
+"ar": "تم تأكيد الدفع · سُجّل المترشح في قسم"
+},
+{
+"en": "Payment confirmed — new class created",
+"fr": "Paiement confirmé — nouvelle classe créée",
+"ar": "تم تأكيد الدفع — أُنشئ قسم جديد"
+},
+{
+"en": "Payment confirmed — candidate enrolled",
+"fr": "Paiement confirmé — candidat inscrit en classe",
+"ar": "تم تأكيد الدفع — سُجّل المترشح في قسم"
+},
+{
+"en": "Payment confirmed",
+"fr": "Paiement confirmé",
+"ar": "تم تأكيد الدفع"
+},
+{
+"en": "Payment confirmed, class to assign",
+"fr": "Paiement confirmé — classe à assigner",
+"ar": "تم تأكيد الدفع — القسم في انتظار التعيين"
+},
+{
+"en": "Partial payment recorded",
+"fr": "Paiement partiel enregistré",
+"ar": "تم تسجيل دفع جزئي"
+},
+{
+"en": "Candidate moved to another class",
+"fr": "Candidat déplacé dans une autre classe",
+"ar": "نُقل المترشح إلى قسم آخر"
+},
+{
+"en": "Registration pending",
+"fr": "Inscription en attente",
+"ar": "تسجيل في الانتظار"
+},
+{
+"en": "Answered automatically · {0}%",
+"fr": "Réponse automatique · {0} %",
+"ar": "أُجيب تلقائيا · {0}٪"
+},
+{
+"en": "Program requires admin review",
+"fr": "Formation à vérifier par vous",
+"ar": "برنامج يحتاج إلى مراجعتك"
+},
+{
+"en": "Proposal ready: {0}",
+"fr": "Proposition prête : {0}",
+"ar": "الاقتراح جاهز: {0}"
+},
+{
+"en": "Emails are not being sent",
+"fr": "Les emails ne partent pas",
+"ar": "الرسائل لا تُرسل"
+},
+{
+"en": "A class took its professor by itself",
+"fr": "Une classe a trouvé son professeur toute seule",
+"ar": "حصل قسم على أستاذه تلقائيا"
+},
+{
+"en": "Asks to register: {0}",
+"fr": "Demande à s'inscrire : {0}",
+"ar": "يطلب التسجيل: {0}"
+},
+{
+"en": "Candidate questions are back in your inbox",
+"fr": "Les questions des candidats reviennent dans votre boîte",
+"ar": "عادت أسئلة المترشحين إلى صندوق الوارد"
+},
+{
+"en": "Candidate removed from class",
+"fr": "Candidat retiré de la classe",
+"ar": "أُزيل المترشح من القسم"
+},
+{
+"en": "Candidate status changed",
+"fr": "Statut du candidat modifié",
+"ar": "تغيّرت حالة المترشح"
+},
+{
+"en": "Class scheduled",
+"fr": "Classe programmée",
+"ar": "تمت برمجة القسم"
+},
+{
+"en": "Paid registration awaiting a class",
+"fr": "Inscription payée en attente d'une classe",
+"ar": "تسجيل مدفوع في انتظار قسم"
+},
+{
+"en": "Paid registration needs a program",
+"fr": "Inscription payée sans formation",
+"ar": "تسجيل مدفوع يحتاج إلى برنامج"
+},
+{
+"en": "Payment proof from {0}: {1}",
+"fr": "Preuve de paiement de {0} : {1}",
+"ar": "إثبات دفع من {0}: {1}"
+},
+{
+"en": "Payment status updated",
+"fr": "Statut du paiement modifié",
+"ar": "تم تحديث حالة الدفع"
+},
+{
+"en": "Registration status changed",
+"fr": "Statut de l'inscription modifié",
+"ar": "تغيّرت حالة التسجيل"
+},
+{
+"en": "SMS from a number that is not a candidate",
+"fr": "SMS d'un numéro qui n'est pas un candidat",
+"ar": "رسالة SMS من رقم ليس لمترشح"
+},
+{
+"en": "SMS not delivered",
+"fr": "SMS non remis",
+"ar": "لم تُسلَّم رسالة SMS"
+},
+{
+"en": "Sent again: {0} · {1}",
+"fr": "Renvoyé : {0} · {1}",
+"ar": "أُعيد الإرسال: {0} · {1}"
+},
+{
+"en": "Sent again: {0}",
+"fr": "Renvoyé : {0}",
+"ar": "أُعيد الإرسال: {0}"
+},
+{
+"en": "Waits for their current class to end",
+"fr": "Attend la fin de sa classe actuelle",
+"ar": "ينتظر انتهاء قسمه الحالي"
+},
+{
+"en": "WhatsApp from a number that is not a candidate",
+"fr": "WhatsApp d'un numéro qui n'est pas un candidat",
+"ar": "واتساب من رقم ليس لمترشح"
+},
+{
+"en": "WhatsApp message not delivered",
+"fr": "Message WhatsApp non remis",
+"ar": "لم تُسلَّم رسالة واتساب"
+},
+{
+"en": "{0} gave {1} stars",
+"fr": "{0} a donné {1} étoiles",
+"ar": "أعطى {0} {1} نجوم"
+},
+{
+"en": "{0} gave {1} star",
+"fr": "{0} a donné {1} étoile",
+"ar": "أعطى {0} {1} نجمة"
+},
+{
+"en": "{0} gave their opinion",
+"fr": "{0} a donné son avis",
+"ar": "أبدى {0} رأيه"
+},
+{
+"en": "{0} answered {1}",
+"fr": "{0} a répondu à {1}",
+"ar": "أجاب {0} {1}"
+},
+{
+"en": "{0} has not answered a candidate for two days",
+"fr": "{0} n'a pas répondu à un candidat depuis deux jours",
+"ar": "لم يُجب {0} مترشحا منذ يومين"
+},
+{
+"en": "{0} wrote to you · the assistant answered",
+"fr": "{0} vous a écrit · l'assistant a répondu",
+"ar": "كتب إليك {0} · أجاب المساعد"
+},
+{
+"en": "{0} wrote to you",
+"fr": "{0} vous a écrit",
+"ar": "كتب إليك {0}"
+},
+{
+"en": "{0}: no questions after the session",
+"fr": "{0} : pas de questions après la séance",
+"ar": "{0}: لا أسئلة بعد الحصة"
+},
+{
+"en": "Notification: {0}",
+"fr": "Notification : {0}",
+"ar": "إشعار: {0}"
+},
+{
+"en": "A course file waits for you: {0}",
+"fr": "Un fichier de cours vous attend : {0}",
+"ar": "ملف درس في انتظارك: {0}"
+},
+{
+"en": "A program file waits for you: {0}",
+"fr": "Un fichier de formation vous attend : {0}",
+"ar": "ملف برنامج في انتظارك: {0}"
+},
+{
+"en": "New registration received for {0}",
+"fr": "Nouvelle inscription reçue pour {0}",
+"ar": "وصل تسجيل جديد باسم {0}"
+},
+{
+"en": "{0} question(s) are ready to send, {1} wait for your review.",
+"fr": "{0} question(s) prête(s) à envoyer, {1} attendent votre relecture.",
+"ar": "{0} سؤال جاهز للإرسال، و{1} في انتظار مراجعتك."
+},
+{
+"en": "{0} question(s) are ready to send.",
+"fr": "{0} question(s) prête(s) à envoyer.",
+"ar": "{0} سؤال جاهز للإرسال."
+},
+{
+"en": "{0} were missing. Read the proposal, correct it if needed, then accept it.",
+"fr": "Il manquait : {0}. Lisez la proposition, corrigez-la si besoin, puis acceptez-la.",
+"ar": "كان ينقص: {0}. اقرأ الاقتراح وصحّحه إن لزم ثم اقبله."
+},
+{
+"en": "{0} candidate(s) of {1} were reminded that the first session is {2}.",
+"fr": "{0} candidat(s) de {1} ont reçu le rappel : la première séance est {2}.",
+"ar": "تم تذكير {0} مترشح من {1} بأن الحصة الأولى {2}."
+},
+{
+"en": "Payment received for registration {0}",
+"fr": "Paiement reçu pour l'inscription {0}",
+"ar": "تم استلام الدفع للتسجيل {0}"
+},
+{
+"en": "{0} moved from {1} to {2}. First session: {3}.",
+"fr": "{0} est passé(e) de {1} à {2}. Première séance : {3}.",
+"ar": "انتقل {0} من {1} إلى {2}. الحصة الأولى: {3}."
+},
+{
+"en": "{0} was assigned to {1}. First session: {2}.",
+"fr": "{0} a été placé(e) dans {1}. Première séance : {2}.",
+"ar": "تم تعيين {0} في {1}. الحصة الأولى: {2}."
+},
+{
+"en": "{0} is now ongoing with {1} candidate(s). No professor is assigned yet.",
+"fr": "{0} est en cours avec {1} candidat(s). Aucun professeur n'est encore placé.",
+"ar": "{0} جارٍ الآن مع {1} مترشح. لم يُعيَّن أستاذ بعد."
+},
+{
+"en": "{0} is now ongoing with {1} candidate(s).",
+"fr": "{0} est en cours avec {1} candidat(s).",
+"ar": "{0} جارٍ الآن مع {1} مترشح."
+},
+{
+"en": "{0} has finished. {1} registration(s) marked completed.",
+"fr": "{0} est terminée. {1} inscription(s) marquée(s) terminée(s).",
+"ar": "انتهى {0}. سُجّل {1} تسجيل كمكتمل."
+},
+{
+"en": "{0} is back to not started: first session {1}.",
+"fr": "{0} revient à « pas encore commencée » : première séance {1}.",
+"ar": "عاد {0} إلى «لم يبدأ»: الحصة الأولى {1}."
+},
+{
+"en": "{0} registered for {1}. Review the candidate profile and registration history.",
+"fr": "{0} s'est inscrit(e) à {1}. Vérifiez sa fiche et ses inscriptions.",
+"ar": "سجّل {0} في {1}. راجع ملف المترشح وسجل تسجيلاته."
+},
+{
+"en": "{0} registered for {1}.",
+"fr": "{0} s'est inscrit(e) à {1}.",
+"ar": "سجّل {0} في {1}."
+},
+{
+"en": "Registration {0} assigned to {1}.",
+"fr": "Inscription {0} placée dans {1}.",
+"ar": "تم تعيين التسجيل {0} في {1}."
+},
+{
+"en": "{0} asks: {1}",
+"fr": "{0} demande : {1}",
+"ar": "يسأل {0}: {1}"
+},
+{
+"en": "'{0}' could not be delivered to {1}: {2}",
+"fr": "« {0} » n'a pas pu être remis à {1} : {2}",
+"ar": "تعذّر تسليم «{0}» إلى {1}: {2}"
+},
+{
+"en": "'{0}' may match '{1}' ({2}% similarity).",
+"fr": "« {0} » correspond peut-être à « {1} » ({2} % de ressemblance).",
+"ar": "قد يطابق «{0}» «{1}» (تشابه {2}٪)."
+},
+{
+"en": "New program from the website: {0}. Its details and weekly plan were taken from 9antra.tn.",
+"fr": "Nouvelle formation du site : {0}. Ses détails et son plan semaine par semaine viennent de 9antra.tn.",
+"ar": "برنامج جديد من الموقع: {0}. أُخذت تفاصيله وخطته الأسبوعية من 9antra.tn."
+},
+{
+"en": "Payment for {0} is now {1}. Class assignment remains pending until a staffed class is selected.",
+"fr": "Le paiement de {0} est maintenant {1}. Le placement attend qu'une classe avec professeur soit choisie.",
+"ar": "دفع {0} الآن {1}. يبقى التعيين معلّقا حتى يُختار قسم له أستاذ."
+},
+{
+"en": "Program '{0}' pending approval. Online: {1} DT, Onsite: {2} DT.",
+"fr": "Formation « {0} » en attente d'approbation. En ligne : {1} DT, sur place : {2} DT.",
+"ar": "البرنامج «{0}» في انتظار الموافقة. عن بعد: {1} د.ت، حضوريا: {2} د.ت."
+},
+{
+"en": "Registration {0} is now {1}.",
+"fr": "L'inscription {0} est maintenant {1}.",
+"ar": "التسجيل {0} الآن {1}."
+},
+{
+"en": "SMTP is not configured, so candidates are not receiving their class emails or reminders. Open Settings to fix it.",
+"fr": "L'envoi d'emails n'est pas configuré : les candidats ne reçoivent ni les emails de leur classe ni les rappels. Ouvrez les Paramètres pour le régler.",
+"ar": "إرسال الرسائل غير مضبوط، لذلك لا يتلقى المترشحون رسائل قسمهم ولا التذكيرات. افتح الإعدادات لإصلاح ذلك."
+},
+{
+"en": "The session of {0} could not be asked about: add the week's plan or a course file.",
+"fr": "Aucune question n'a pu être posée sur la séance de {0} : ajoutez le plan de la semaine ou un fichier de cours.",
+"ar": "تعذّر طرح أسئلة عن حصة {0}: أضف خطة الأسبوع أو ملف درس."
+},
+{
+"en": "Not fully happy: {0}",
+"fr": "Pas tout à fait satisfait(e) : {0}",
+"ar": "غير راضٍ تماما: {0}"
+},
+{
+"en": "{0} added to {1}.",
+"fr": "{0} ajouté(e) à {1}.",
+"ar": "أُضيف {0} إلى {1}."
+},
+{
+"en": "{0} is not a candidate yet and writes: “{1}”",
+"fr": "{0} n'est pas encore candidat(e) et écrit : « {1} »",
+"ar": "{0} ليس مترشحا بعد ويكتب: «{1}»"
+},
+{
+"en": "{0} paid for '{1}', which is not linked to a program yet. Link it to assign a class.",
+"fr": "{0} a payé « {1} », qui n'est relié à aucune formation. Reliez-le pour pouvoir le placer en classe.",
+"ar": "دفع {0} مقابل «{1}» غير المرتبط ببرنامج بعد. اربطه لتعيين قسم."
+},
+{
+"en": "{0} paid for {1} but no open class exists and automatic class creation is off.",
+"fr": "{0} a payé {1}, mais aucune classe n'est ouverte et la création automatique de classes est désactivée.",
+"ar": "دفع {0} مقابل {1} لكن لا يوجد قسم مفتوح وإنشاء الأقسام التلقائي معطّل."
+},
+{
+"en": "{0} paid for {1}. No open class existed, so {2} was created (professor: {3}). First session: {4}.",
+"fr": "{0} a payé {1}. Aucune classe n'était ouverte : {2} a été créée (professeur : {3}). Première séance : {4}.",
+"ar": "دفع {0} مقابل {1}. لم يكن هناك قسم مفتوح، فأُنشئ {2} (الأستاذ: {3}). الحصة الأولى: {4}."
+},
+{
+"en": "{0} paid for {1} and joined {2} ({3}). First session: {4}.",
+"fr": "{0} a payé {1} et a rejoint {2} ({3}). Première séance : {4}.",
+"ar": "دفع {0} مقابل {1} والتحق بـ {2} ({3}). الحصة الأولى: {4}."
+},
+{
+"en": "{0} reached {1} candidates and will start {2}.",
+"fr": "{0} a atteint {1} candidats et commencera {2}.",
+"ar": "بلغ {0} {1} مترشحين وسيبدأ {2}."
+},
+{
+"en": "{0} was removed from {1} and is waiting for a class.",
+"fr": "{0} a été retiré(e) de {1} et attend une classe.",
+"ar": "أُزيل {0} من {1} وينتظر قسما."
+},
+{
+"en": "{0}: first session is now {1}.",
+"fr": "{0} : la première séance est maintenant {1}.",
+"ar": "{0}: الحصة الأولى الآن {1}."
+},
+{
+"en": "{0} · {1}: they waited for this professor's answer. Answer them from the inbox.",
+"fr": "{0} · {1} : ils attendaient la réponse de ce professeur. Répondez-leur depuis la boîte de réception.",
+"ar": "{0} · {1}: كانوا ينتظرون إجابة هذا الأستاذ. أجبهم من صندوق الوارد."
+},
+{
+"en": "{0} · {1}. It was waiting for a professor: this one teaches its program and is free at its hours. Its candidates are told how to reach them.",
+"fr": "{0} · {1}. Elle attendait un professeur : celui-ci enseigne sa formation et il est libre à ses horaires. Ses candidats savent comment le joindre.",
+"ar": "{0} · {1}. كان ينتظر أستاذا: هذا الأستاذ يدرّس برنامجه ومتاح في أوقاته. أُبلغ مترشحوه بكيفية التواصل معه."
+},
+{
+"en": "{0}'s registration for {1} is paid and placed in a class.",
+"fr": "L'inscription de {0} pour {1} est payée et assignée à une classe.",
+"ar": "تسجيل {0} في {1} مدفوع ومعيَّن في قسم."
+},
+{
+"en": "{0}'s registration for {1} is fully paid, but no class with a professor is assigned to it yet.",
+"fr": "L'inscription de {0} pour {1} est entièrement payée, mais aucune classe encadrée ne lui est encore assignée.",
+"ar": "تسجيل {0} في {1} مدفوع بالكامل، لكن لم يُعيَّن له بعد قسم مؤطَّر."
+},
+{
+"en": "A part payment was recorded for {0}. The rest is to be paid before they are placed in a class.",
+"fr": "Un paiement partiel a été enregistré pour {0}. Le solde reste à payer avant l'affectation à une classe.",
+"ar": "تم تسجيل دفع جزئي لـ {0}. يبقى الباقي للدفع قبل التعيين في قسم."
+},
+{
+"en": "A file added to week {0} of {1} does not look like part of {2}.",
+"fr": "Un fichier ajouté à la semaine {0} de {1} ne semble pas faire partie de {2}.",
+"ar": "ملف أُضيف إلى الأسبوع {0} من {1} لا يبدو جزءا من {2}."
+},
+{
+"en": "A file added to week {0} of {1} looks like part of {2}, not {3}.",
+"fr": "Un fichier ajouté à la semaine {0} de {1} semble faire partie de {2}, pas de {3}.",
+"ar": "ملف أُضيف إلى الأسبوع {0} من {1} يبدو جزءا من {2} وليس من {3}."
+},
+{
+"en": "A file added to {0} looks like part of {1}, not {0}.",
+"fr": "Un fichier ajouté à {0} semble faire partie de {1}, pas de {0}.",
+"ar": "ملف أُضيف إلى {0} يبدو جزءا من {1} وليس من {0}."
+},
+{
+"en": "A file added to {0} does not look like part of it.",
+"fr": "Un fichier ajouté à {0} ne semble pas en faire partie.",
+"ar": "ملف أُضيف إلى {0} لا يبدو جزءا منه."
+},
+{
+"en": "Amount found: {0} DT. The candidate owes nothing that is known.",
+"fr": "Montant trouvé : {0} DT. Le candidat ne doit rien de connu.",
+"ar": "المبلغ الموجود: {0} د.ت. لا يُعرف أن على المترشح شيئا."
+},
+{
+"en": "{0} DT: exactly what the candidate owes.",
+"fr": "{0} DT : exactement ce que doit le candidat.",
+"ar": "{0} د.ت: بالضبط ما على المترشح."
+},
+{
+"en": "{0} DT: less than the {1} DT owed (a part payment).",
+"fr": "{0} DT : moins que les {1} DT dus (un paiement partiel).",
+"ar": "{0} د.ت: أقل من {1} د.ت المستحقة (دفع جزئي)."
+},
+{
+"en": "{0} DT: more than the {1} DT owed.",
+"fr": "{0} DT : plus que les {1} DT dus.",
+"ar": "{0} د.ت: أكثر من {1} د.ت المستحقة."
+},
+{
+"en": "The RIB {0} is not well formed (its key is wrong): a typing mistake, or a changed number.",
+"fr": "Le RIB {0} n'est pas bien formé (sa clé est fausse) : une erreur de frappe, ou un numéro modifié.",
+"ar": "الـRIB {0} غير سليم (مفتاحه خاطئ): خطأ في الكتابة أو رقم مُغيَّر."
+},
+{
+"en": "Made out to “{0}”: the centre.",
+"fr": "À l'ordre de « {0} » : le centre.",
+"ar": "لأمر «{0}»: المركز."
+},
+{
+"en": "Made out to “{0}”, not to the centre ({1}).",
+"fr": "À l'ordre de « {0} », pas du centre ({1}).",
+"ar": "لأمر «{0}» وليس المركز ({1})."
+},
+{
+"en": "Only the amount in words could be read ({0} DT): look at the figures yourself.",
+"fr": "Seul le montant en lettres a pu être lu ({0} DT) : regardez vous-même les chiffres.",
+"ar": "لم يُقرأ إلا المبلغ بالحروف ({0} د.ت): انظر بنفسك إلى الأرقام."
+},
+{
+"en": "In words it says {0} DT, in figures {1} DT: they must be the same.",
+"fr": "En lettres il est écrit {0} DT, en chiffres {1} DT : ils doivent être identiques.",
+"ar": "بالحروف مكتوب {0} د.ت وبالأرقام {1} د.ت: يجب أن يتطابقا."
+},
+{
+"en": "In words: {0} DT, the same as in figures.",
+"fr": "En lettres : {0} DT, comme en chiffres.",
+"ar": "بالحروف: {0} د.ت، كما بالأرقام."
+},
+{
+"en": "The cheque n° {0} is on another proof already.",
+"fr": "Le chèque n° {0} est déjà sur une autre preuve.",
+"ar": "الشيك رقم {0} موجود في إثبات آخر من قبل."
+},
+{
+"en": "Cheque n° {0}.",
+"fr": "Chèque n° {0}.",
+"ar": "شيك رقم {0}."
+},
+{
+"en": "Bank: {0}, and the RIB's bank code agrees.",
+"fr": "Banque : {0}, et le code banque du RIB concorde.",
+"ar": "البنك: {0}، ورمز البنك في الـRIB مطابق."
+},
+{
+"en": "It names {0}, the RIB belongs to {1} (a transfer between two banks?).",
+"fr": "Il nomme {0}, le RIB est chez {1} (un virement entre deux banques ?).",
+"ar": "يذكر {0} والـRIB تابع لـ{1} (تحويل بين بنكين؟)."
+},
+{
+"en": "Bank: {0}.",
+"fr": "Banque : {0}.",
+"ar": "البنك: {0}."
+},
+{
+"en": "Bank (from the RIB): {0}.",
+"fr": "Banque (d'après le RIB) : {0}.",
+"ar": "البنك (حسب الـRIB): {0}."
+},
+{
+"en": "Paid with {0}.",
+"fr": "Payé avec {0}.",
+"ar": "مدفوع بـ{0}."
+},
+{
+"en": "Dated {0}: in the future.",
+"fr": "Daté du {0} : dans le futur.",
+"ar": "مؤرخ في {0}: في المستقبل."
+},
+{
+"en": "Dated {0}: more than {1} days ago. A cheque is presented to the bank within {2} days of its date.",
+"fr": "Daté du {0} : il y a plus de {1} jours. Un chèque se présente à la banque dans les {2} jours de sa date.",
+"ar": "مؤرخ في {0}: منذ أكثر من {1} أيام. يُقدَّم الشيك إلى البنك خلال {2} أيام من تاريخه."
+},
+{
+"en": "Dated {0}: more than {1} days ago.",
+"fr": "Daté du {0} : il y a plus de {1} jours.",
+"ar": "مؤرخ في {0}: منذ أكثر من {1} يوما."
+},
+{
+"en": "Dated {0}: before the registration.",
+"fr": "Daté du {0} : avant l'inscription.",
+"ar": "مؤرخ في {0}: قبل التسجيل."
+},
+{
+"en": "Dated {0}.",
+"fr": "Daté du {0}.",
+"ar": "مؤرخ في {0}."
+},
+{
+"en": "The reference {0} is on another proof already.",
+"fr": "La référence {0} est déjà sur une autre preuve.",
+"ar": "المرجع {0} موجود في إثبات آخر من قبل."
+},
+{
+"en": "The file says it went through a photo editor ({0}).",
+"fr": "Le fichier indique qu'il est passé par un éditeur photo ({0}).",
+"ar": "يشير الملف إلى أنه مرّ ببرنامج تعديل صور ({0})."
+},
+{
+"en": "Payment proof received ({0}): {1}.",
+"fr": "Preuve de paiement reçue ({0}) : {1}.",
+"ar": "وصل إثبات دفع ({0}): {1}."
+},
+{
+"en": "{0} proofs read: each one is below with what it says.",
+"fr": "{0} preuves lues : chacune est ci-dessous avec ce qu'elle dit.",
+"ar": "قُرئ {0} إثباتات: كل واحد أدناه مع ما يقوله."
+},
+{
+"en": "Linked to {0}. Payment proof received ({1}): {2}.",
+"fr": "Relié à {0}. Preuve de paiement reçue ({1}) : {2}.",
+"ar": "رُبط بـ{0}. وصل إثبات دفع ({1}): {2}."
+},
+{
+"en": "Payment of {0} DT recorded.",
+"fr": "Paiement de {0} DT enregistré.",
+"ar": "سُجّل دفع {0} د.ت."
+},
+{
+"en": "“{0}” is back to its original text.",
+"fr": "« {0} » est revenu à son texte d'origine.",
+"ar": "عاد «{0}» إلى نصه الأصلي."
+},
+{
+"en": "{0} new article(s) read.",
+"fr": "{0} nouvel(s) article(s) lu(s).",
+"ar": "قُرئ {0} مقال جديد."
+},
+{
+"en": "{0} asked for a new password",
+"fr": "{0} a demandé un nouveau mot de passe",
+"ar": "طلب {0} كلمة مرور جديدة"
+},
+{
+"en": "A link to choose it was sent to {0}. If it was not them, nothing changes until the link is used.",
+"fr": "Un lien pour le choisir a été envoyé à {0}. Si ce n'était pas cette personne, rien ne change tant que le lien n'est pas utilisé.",
+"ar": "أُرسل رابط لاختيارها إلى {0}. إن لم يكن هو، لا يتغير شيء ما لم يُستعمل الرابط."
+},
+{
+"en": "{0} chose a new password",
+"fr": "{0} a choisi un nouveau mot de passe",
+"ar": "اختار {0} كلمة مرور جديدة"
+},
+{
+"en": "With the link sent by email. Every browser signed in with this account was signed out.",
+"fr": "Avec le lien envoyé par email. Tous les navigateurs connectés avec ce compte ont été déconnectés.",
+"ar": "بالرابط المرسل بالبريد. سُجّل خروج كل المتصفحات المتصلة بهذا الحساب."
+},
+{
+"en": "{0} changed their password",
+"fr": "{0} a changé son mot de passe",
+"ar": "غيّر {0} كلمة مروره"
+},
+{
+"en": "From their account page. Other browsers signed in with this account were signed out.",
+"fr": "Depuis sa page de compte. Les autres navigateurs connectés avec ce compte ont été déconnectés.",
+"ar": "من صفحة حسابه. سُجّل خروج المتصفحات الأخرى المتصلة بهذا الحساب."
+},
+{
+"en": "{0} asked the course of {1}",
+"fr": "{0} a demandé le cours de {1}",
+"ar": "طلب {0} درس {1}"
+},
+{
+"en": "They are not registered in it: they were told to register first. The course of a program is only for its candidates.",
+"fr": "Il n'y est pas inscrit : on lui a dit de s'inscrire d'abord. Le cours d'une formation est réservé à ses candidats.",
+"ar": "ليس مسجلا فيه: قيل له أن يسجّل أولا. درس البرنامج خاص بمترشحيه."
+},
+{
+"en": "{0} asks for the course of week {1}",
+"fr": "{0} demande le cours de la semaine {1}",
+"ar": "يطلب {0} درس الأسبوع {1}"
+}
+]
