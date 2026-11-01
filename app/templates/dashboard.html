@@ -125,6 +125,29 @@
   .db-said-improve { display:flex; gap:6px; align-items:flex-start; font-size:.76rem !important; color:#92400e !important; background:var(--gold-subtle); border-radius:10px; padding:6px 9px; }
   .db-said-open { margin-inline-start:auto; color:var(--muted); font-size:.8rem; } .db-said-open:hover { color:var(--primary-berry); }
   .db-said-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+  /* Ideas to keep them engaged: folded; the folded row says how many. */
+  .db-ideas { margin-top:14px; border:1px solid #efe7f6; border-radius:18px; background:linear-gradient(135deg, #fffaf0, #faf6ff); }
+  .db-ideas > summary { list-style:none; display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer; }
+  .db-ideas > summary::-webkit-details-marker { display:none; }
+  .db-ideas-ico { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--gold-subtle, #fef3c7); color:#b45309; flex:none; }
+  .db-ideas-sum { display:flex; flex-direction:column; min-width:0; } .db-ideas-sum b { font-size:.92rem; color:var(--ink-text); }
+  .db-ideas-chev { margin-inline-start:auto; color:var(--muted); transition:transform .2s ease; }
+  .db-ideas[open] .db-ideas-chev { transform:rotate(180deg); }
+  .db-ideas-grid { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:16px; padding:0 16px 16px; }
+  .db-ideas-col { display:flex; flex-direction:column; gap:10px; min-width:0; }
+  .db-ideas-label { font-size:.72rem; font-weight:800; letter-spacing:.04em; text-transform:uppercase; color:#8a84a0; display:flex; gap:6px; align-items:center; }
+  .db-idea { background:#fff; border:1px solid #eee8f5; border-radius:14px; padding:12px 14px; }
+  .db-idea-head { display:flex; gap:8px; align-items:center; } .db-idea-head i { color:var(--primary-berry); } .db-idea-head b { font-size:.88rem; color:var(--ink-text); }
+  .db-idea-why { margin:6px 0 4px; font-size:.76rem; color:#5b5670; display:flex; flex-direction:column; gap:2px; }
+  .db-idea-plan { margin:0 0 6px; padding-inline-start:18px; font-size:.78rem; color:#3f3a52; }
+  .db-idea-target { display:flex; gap:6px; align-items:flex-start; font-size:.76rem; color:#14532d; background:#ecfdf3; border-radius:10px; padding:6px 9px; margin:0 0 6px; }
+  .db-field { display:flex; gap:10px; align-items:flex-start; background:#fff; border:1px solid #eee8f5; border-radius:14px; padding:10px 12px; color:inherit; text-decoration:none; transition:border-color .15s ease, transform .15s ease; }
+  .db-field:hover { border-color:var(--primary-berry); transform:translateY(-1px); }
+  .db-field-ico { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; background:#f3effc; color:#7c3aed; flex:none; }
+  .db-field-body { display:flex; flex-direction:column; gap:4px; min-width:0; font-size:.8rem; } .db-field-body b { color:var(--ink-text); } .db-field-body small { color:var(--muted); font-weight:700; }
+  .db-field-terms { display:flex; gap:4px; flex-wrap:wrap; }
+  .db-field-idea { font-size:.76rem; color:#5b5670; } .db-field-idea.is-new { color:#92400e; }
+  @media (max-width: 900px) { .db-ideas-grid { grid-template-columns:minmax(0, 1fr); } }
   .db-said-links { display:flex; gap:12px; flex-wrap:wrap; }
   @media (max-width: 1100px) { .db-said-top { grid-template-columns:1fr 1fr; } .db-said-box.wide { grid-column:1 / -1; } }
   @media (max-width: 560px) { .db-said-top { grid-template-columns:1fr; } .db-said-card { flex-basis:82vw; } }
@@ -1201,6 +1224,45 @@
     </article>
     {% endfor %}
   </div>
+  {% if ideas and (ideas.plans or ideas.industries) %}
+  <details class="db-ideas" id="engagement-ideas">
+    <summary>
+      <span class="db-ideas-ico"><i class="bi bi-lightbulb-fill"></i></span>
+      <span class="db-ideas-sum"><b>Ideas to keep them engaged</b>
+        <span class="db-sub"><span>{{ ideas.plans | length }}</span> <span>from what they said and how the classes go</span> · <span>{{ ideas.industries | length }}</span> <span>industries this month</span></span></span>
+      <i class="bi bi-chevron-down db-ideas-chev"></i>
+    </summary>
+    <div class="db-ideas-grid">
+      <div class="db-ideas-col">
+        <div class="db-ideas-label"><i class="bi bi-chat-heart"></i>From what they said and how the classes go</div>
+        {% for idea in ideas.plans %}
+        <article class="db-idea">
+          <div class="db-idea-head"><i class="bi {{ idea.icon }}"></i><b>{{ idea.title }}</b></div>
+          <p class="db-idea-why">{% for fact in idea.why %}<span>{{ fact }}</span>{% endfor %}</p>
+          <ol class="db-idea-plan">{% for step in idea.plan %}<li>{{ step }}</li>{% endfor %}</ol>
+          <p class="db-idea-target"><i class="bi bi-bullseye"></i><span>{{ idea.target }}</span></p>
+          <a class="ui-link" href="{{ idea.href }}">{{ idea.action }} <i class="bi bi-arrow-right"></i></a>
+        </article>
+        {% else %}
+        <p class="db-sub">Nothing to improve was asked, and the classes go well.</p>
+        {% endfor %}
+      </div>
+      <div class="db-ideas-col">
+        <div class="db-ideas-label"><i class="bi bi-globe2"></i>What is going on in every industry (30 days)</div>
+        {% for field in ideas.industries %}
+        <a class="db-field" href="{{ field.href }}">
+          <span class="db-field-ico"><i class="bi {{ field.icon }}"></i></span>
+          <span class="db-field-body"><b>{{ field.label }}</b> <small>{{ field.articles }} <span>articles</span></small>
+            {% if field.terms %}<span class="db-field-terms">{% for term, times in field.terms %}<span class="ui-chip muted" data-no-i18n>{{ term }} · {{ times }}</span>{% endfor %}</span>{% endif %}
+            {% if field.idea %}<span class="db-field-idea {{ 'is-new' if not field.taught }}">{{ field.idea }}</span>{% endif %}</span>
+        </a>
+        {% else %}
+        <p class="db-sub">The journal has no article of the last 30 days yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </details>
+  {% endif %}
   <div class="db-said-foot">
     <span class="db-sub"><i class="bi bi-arrow-left-right me-1"></i>Slide to read them all{% if voices.waiting %} · {{ voices.waiting }} still to read{% endif %}</span>
     <span class="db-said-links"><a class="ui-link" href="/website#feedback">Website feedback</a><a class="ui-link" href="/quiz/weekly">Weekly check-ins</a><a class="ui-link" href="/programs/all">Reviews by program</a></span>

@@ -18,7 +18,8 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.models.agent_run import AgentRun
-from app.services import message_categories
+from app.services import access, message_categories
+from app.services.ui_words import t as _t
 
 AGENTS = {
     "programs": {"name": "Programs agent", "icon": "bi-journal-bookmark", "colour": "#7c3aed",
@@ -42,6 +43,9 @@ AGENTS = {
     "trends": {"name": "Trends agent", "icon": "bi-graph-up-arrow", "colour": "#0d9488",
                "does": "What is new in every field, what the job offers ask, services to add, and what a name says.",
                "reads": ["The journal", "The job offers", "The programs"]},
+    "inbox": {"name": "Inbox rules agent", "icon": "bi-sliders", "colour": "#7c3aed",
+              "does": "Why a message was set aside without an answer; bringing it back and changing the rule when you say so (and undoing it).",
+              "reads": ["The set-aside messages", "The rules you changed"]},
     "records": {"name": "Figures agent", "icon": "bi-clipboard-data", "colour": "#475569",
                 "does": "Your figures: who paid, who is absent, lists, money, what to do today.",
                 "reads": ["The candidates", "The payments", "The classes"]},
@@ -131,9 +135,16 @@ def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, 
 
         found = professor_assistant.answer(db, message, history, user=user, lang=lang)
     elif _role(user) in ("admin", "staff"):
-        from app.services import trends_agent
+        from app.services import reply_rules, trends_agent
 
-        if trends_agent.wants(message):           # what is new, services to add, what a name says
+        if reply_rules.wants(message):            # the messages set aside without an answer, and their rules
+            agent = "inbox"
+            if _role(user) == "admin" or access.allows(access.clean(getattr(user, "permissions", None)), "/inbox/message/x/talk", "POST"):
+                found = reply_rules.for_chat(db, message, user=user, lang=lang)
+            else:
+                found = {"reply": _t("Changing what the inbox sets aside needs the right to answer emails: ask the admin."), "links": [],
+                         "source": "system", "sources": [], "resources": []}
+        elif trends_agent.wants(message):           # what is new, services to add, what a name says
             agent = "trends"
             found = trends_agent.answer(db, message, lang=lang)
     if found is None:

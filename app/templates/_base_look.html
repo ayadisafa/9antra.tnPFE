@@ -348,13 +348,18 @@
   }
   /* ---------------- 2026-10: the look, a step further (every page) ---------------- */
   /* Page heads: a soft band with a slow light, like the dashboard's. */
-  .ui-head { position:relative; overflow:hidden; background:linear-gradient(120deg, #fdf2f7 0%, #f6efff 55%, #eef6ff 100%);
+  /* The light is drawn inside the head (no overflow:hidden), so a menu opened in the head is seen in full, over what follows. */
+  @property --ui-glow-x { syntax:"<length>"; inherits:false; initial-value:0px; }
+  @property --ui-glow-y { syntax:"<length>"; inherits:false; initial-value:0px; }
+  .ui-head { position:relative; background:linear-gradient(120deg, #fdf2f7 0%, #f6efff 55%, #eef6ff 100%);
              border:1px solid #f1e3ee; border-radius:24px; padding:18px 22px; margin-bottom:20px; isolation:isolate; }
-  .ui-head::after { content:""; position:absolute; width:240px; height:240px; right:-70px; top:-110px; border-radius:50%; z-index:-1;
-                    background:radial-gradient(circle, rgba(164,44,103,.13), transparent 70%); animation:uiGlow 10s ease-in-out infinite; }
+  .ui-head::after { content:""; position:absolute; inset:0; border-radius:inherit; z-index:-1; pointer-events:none;
+                    background:radial-gradient(circle 125px at calc(100% - 50px + var(--ui-glow-x)) calc(10px + var(--ui-glow-y)), rgba(164,44,103,.13), transparent);
+                    animation:uiGlow 10s ease-in-out infinite; }
+  .ui-head:has(.dropdown-menu.show) { z-index:30; }
   .ui-head h2 { font-size:1.5rem; }
   .ui-head p { color:#5b5670; }
-  @keyframes uiGlow { 50% { transform:translate(-30px, 18px) scale(1.08); } }
+  @keyframes uiGlow { 50% { --ui-glow-x:-30px; --ui-glow-y:18px; } }
 
   /* Buttons: depth, a lift on hover, a ring when chosen with the keyboard. */
   .ui-btn { transition:transform .15s ease, box-shadow .15s ease, background-color .15s ease, border-color .15s ease, color .15s ease; }

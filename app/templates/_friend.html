@@ -9,6 +9,10 @@
   body.menu-right .fr { left:auto; right:calc(268px + 22px); }
   @media (max-width: 991px) { .fr, body.menu-right .fr { left:8px; right:auto; bottom:calc(88px + env(safe-area-inset-bottom, 0px)); width:78px; height:100px; } }
   .fr[hidden], .fr-back[hidden], .fr-bubble[hidden], .fr-ask[hidden], .fr-badge[hidden] { display:none !important; }
+  /* Never over what the admin opened: under a window (and its shade), and out of the way while a menu is open. */
+  body.modal-open .fr, body.modal-open .fr-back { z-index:1040; }
+  .fr, .fr-back { transition:opacity .18s ease; }
+  body:has(.dropdown-menu.show:not(.fr *)) .fr, body:has(.dropdown-menu.show:not(.fr *)) .fr-back { opacity:0 !important; visibility:hidden; pointer-events:none; }
   .fr-face { position:absolute; inset:0; border:0; padding:0; background:none; cursor:pointer; border-radius:50% 50% 40% 40%; }
   .fr-face:focus-visible { outline:3px solid var(--primary-berry); outline-offset:3px; }
   .fr-svg { width:100%; height:100%; overflow:visible; filter:drop-shadow(0 10px 14px rgba(60,20,80,.28)); }

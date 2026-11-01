@@ -33,11 +33,13 @@ from app.services import (
     email_threads,
     knowledge_service,
     mailbox_service,
+    reply_rules,
     reply_writer,
 )
 from app.services import document_pdf, program_pdf
 from app.services.background import run_in_background
 from app.services import email_layout
+from app.services.ui_words import t as _t
 from app.services.email_layout import STYLES
 from app.services.email_threads import utcnow
 from app.services.schedule_utils import utc_to_local
@@ -52,6 +54,7 @@ FILTERS = {
     "todo": "Needs your answer",
     "conversations": "Conversations",
     "auto": "Answered by the system",
+    "aside": "Set aside",
     "whatsapp": "WhatsApp",
     "sms": "SMS",
     "to_send": "To send from your phone",
@@ -172,6 +175,10 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         query = query.filter(exists().where(
             CandidateEmail.thread_id == EmailThread.id, CandidateEmail.channel.in_(("whatsapp", "sms")), CandidateEmail.status == "to_send",
         ))
+    elif current == "aside":
+        # What the assistant set aside without an answer (a thank-you, an automatic reply…): the admin may say otherwise.
+        query = query.filter(exists().where(CandidateEmail.thread_id == EmailThread.id, CandidateEmail.direction == "inbound",
+                                            CandidateEmail.status == "no_reply"))
     elif current == "auto":
         query = query.filter(exists().where(
             CandidateEmail.thread_id == EmailThread.id,
@@ -219,9 +226,18 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         else:
             messages, subjects = selected.messages, {}
         previous_thread = None
+        rules_now = reply_rules.rules(db)
+        last_change = rules_now["changes"][0] if rules_now["changes"] else None
         for message in messages:
+            aside = None
+            if message.direction == "inbound" and message.status == "no_reply":
+                proposed = reply_rules.proposal(message, rules_now)
+                aside = {"why": reply_rules.explain(message), "change": reply_rules.describe(proposed) if proposed else None}
             conversation.append({
                 "message": message,
+                "aside": aside,
+                # The rule this message changed last, with its "undo".
+                "changed": reply_rules.describe(last_change.get("change") or {}) if last_change and last_change.get("message_id") == message.id else None,
                 "sources": _parse_sources(message),
                 "files": email_threads.message_files(message),
                 # Shown where the subject changes, when several discussions are read together.
@@ -244,6 +260,8 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         "whatsapp": db.query(EmailThread).filter(EmailThread.channel == "whatsapp").count(),
         "sms": db.query(EmailThread).filter(EmailThread.channel == "sms").count(),
         "to_send": db.query(CandidateEmail).filter(CandidateEmail.channel.in_(("whatsapp", "sms")), CandidateEmail.status == "to_send").count(),
+        "aside": db.query(func.count(func.distinct(CandidateEmail.thread_id))).filter(
+            CandidateEmail.direction == "inbound", CandidateEmail.status == "no_reply", CandidateEmail.thread_id.isnot(None)).scalar() or 0,
     }
     settings = get_settings(db)
     state = mailbox_service.get_state(db)
@@ -508,6 +526,53 @@ def no_reply(thread_id: str, db: Session = Depends(get_db)):
     email_assistant.mark_no_reply(db, thread)
     db.commit()
     return _redirect("/inbox", notice="Marked as not needing an answer.", thread=thread_id)
+
+
+@router.post("/message/{message_id}/needs-answer")
+def needs_answer(message_id: str, request: Request, db: Session = Depends(get_db)):
+    """The admin says a set-aside message needed an answer: it comes back with one prepared, and the rule that set it
+    aside changes (it can be undone)."""
+    message = db.get(CandidateEmail, message_id)
+    if message is None or message.direction != "inbound":
+        raise HTTPException(status_code=404, detail="Message not found")
+    if message.status != "no_reply":
+        return _redirect("/inbox", error="This message is not set aside: it was answered or waits for you.", thread=message.thread_id)
+    from app.services import auth
+
+    done = reply_rules.needs_answer(db, message, said="It needs an answer (button)", by=getattr(auth.current(request), "email", None))
+    notice = (_t("It comes back to you with an answer prepared, to read before it goes.") if done["how"] == "again"
+              else _t("It is now in the messages waiting for your answer."))
+    if done["change"]:
+        notice += " " + done["change"]["text"]
+    return _redirect("/inbox", notice=notice, thread=message.thread_id)
+
+
+class TalkAboutIt(BaseModel):
+    text: str = Field("", max_length=600)
+
+
+@router.post("/message/{message_id}/talk")
+def talk_about_it(message_id: str, payload: TalkAboutIt, request: Request, db: Session = Depends(get_db)):
+    """The admin's words about a set-aside message ("why?", "it needs an answer", "always answer them", "undo"): the
+    answer, after doing what they ask."""
+    message = db.get(CandidateEmail, message_id)
+    if message is None or message.direction != "inbound":
+        raise HTTPException(status_code=404, detail="Message not found")
+    if not payload.text.strip():
+        return JSONResponse({"reply": _t("Write what you want: “why?”, “it needs an answer”, “always answer them”, “undo”."), "changed": None, "reload": False})
+    from app.services import auth
+
+    return JSONResponse(reply_rules.talk(db, payload.text, message=message, by=getattr(auth.current(request), "email", None)))
+
+
+@router.post("/rules/undo")
+def undo_rule(thread: str = Form(""), db: Session = Depends(get_db)):
+    last = reply_rules.undo(db)
+    db.commit()
+    if last is None:
+        return _redirect("/inbox", error="There is no change to undo.", thread=thread or None)
+    return _redirect("/inbox", notice=_t("Undone: the rule is back as it was. The change was: {0}", reply_rules.describe(last.get("change") or {})),
+                     thread=thread or None)
 
 
 @router.post("/thread/{thread_id}/rerun")

@@ -16,6 +16,28 @@
   .rm-sug { display:flex; gap:12px; align-items:flex-start; background:#fff; border:1px solid var(--border-color); border-left:4px solid var(--accent-gold-dark, #b45309); border-radius:16px; padding:13px 14px; text-decoration:none; color:inherit; transition:transform .16s ease, box-shadow .16s ease; }
   .rm-sug:hover { transform:translateY(-2px); box-shadow:var(--shadow-soft); }
   .rm-sug i { font-size:1.15rem; color:var(--accent-gold-dark, #b45309); }
+  /* What is smart for each candidate: one folded row each; open, their figures and the suggestions, written SMART. */
+  .rm-people { display:flex; flex-direction:column; gap:8px; margin-bottom:26px; }
+  .rm-person { background:#fff; border:1px solid var(--border-color); border-radius:16px; }
+  .rm-person > summary { list-style:none; display:flex; gap:12px; align-items:center; padding:10px 14px; cursor:pointer; }
+  .rm-person > summary::-webkit-details-marker { display:none; }
+  .rm-person-av { width:34px; height:34px; border-radius:50%; display:grid; place-items:center; background:var(--berry-subtle, #fbf1f6); color:var(--primary-berry); font-weight:800; flex:none; }
+  .rm-person-sum { display:flex; flex-direction:column; min-width:0; } .rm-person-sum b { color:var(--ink-text); font-size:.9rem; }
+  .rm-person-sum span { font-size:.78rem; color:#5b5670; }
+  .rm-person-way { margin-inline-start:auto; flex:none; }
+  .rm-person-chev { color:var(--muted); transition:transform .2s ease; } .rm-person[open] .rm-person-chev { transform:rotate(180deg); }
+  .rm-person-body { padding:0 14px 14px; }
+  .rm-metrics { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:8px; }
+  .rm-way { font-size:.8rem; color:#5b5670; display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin:0 0 10px; }
+  .rm-way > i { color:var(--primary-berry); } .rm-way b { color:var(--ink-text); } .rm-way-hour { display:inline-flex; gap:4px; align-items:center; }
+  .rm-smart-card { border:1px solid #eee8f5; border-radius:14px; padding:10px 12px; margin-top:8px; background:#fdfcff; }
+  .rm-smart-title { font-size:.88rem; color:var(--ink-text); }
+  .rm-smart-line { display:grid; grid-template-columns:max-content minmax(0, 1fr); gap:3px 10px; margin:6px 0 8px; font-size:.78rem; }
+  .rm-smart-line dt { font-weight:800; color:var(--primary-berry); font-size:.7rem; text-transform:uppercase; letter-spacing:.03em; padding-top:2px; }
+  .rm-smart-line dd { margin:0; color:#3f3a52; display:flex; flex-direction:column; gap:1px; }
+  .rm-smart-do { display:flex; gap:6px; flex-wrap:wrap; }
+  .rm-for-person { margin-top:10px; border:1px dashed #d9cdee; border-radius:14px; padding:10px 12px; background:#fbf9ff; }
+  @media (max-width: 575px) { .rm-smart-line { grid-template-columns:minmax(0, 1fr); } .rm-person-way { display:none; } }
   .rm-sug b { display:block; font-size:.86rem; color:var(--ink-text); } .rm-sug span { font-size:.78rem; color:var(--muted); line-height:1.4; display:block; }
   .rm-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:18px; align-items:start; margin-bottom:28px; }
   .rm-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:14px 0 6px; }
@@ -166,6 +188,27 @@
 </div>
 {% endif %}
 
+{% import "_smart_reminder.html" as smart_view %}
+<div id="smart-people">
+<h3 class="rm-h"><i class="bi bi-stars"></i>What is smart for each candidate</h3>
+<p class="rm-p">Counted from what each one does: presence, the weekly questions, how their week went, and how they answer you (which way, how fast, at what hour). Each suggestion says what to send, what to watch, why, and when. Nothing is sent from here.</p>
+<div class="rm-people">
+  {% for row in smart_board %}
+  <details class="rm-person" {{ 'open' if loop.first }}>
+    <summary>
+      <span class="rm-person-av">{{ (row.name or '?')[:1] | upper }}</span>
+      <span class="rm-person-sum"><b data-no-i18n>{{ row.name }}</b><span>{{ row.suggestions[0].title }}{% if row.suggestions | length > 1 %} · +{{ row.suggestions | length - 1 }}{% endif %}</span></span>
+      <span class="ui-chip muted rm-person-way"><i class="bi {{ row.channel.icon }}"></i>{{ row.channel.label }} · {{ row.hour }} h</span>
+      <i class="bi bi-chevron-down rm-person-chev"></i>
+    </summary>
+    <div class="rm-person-body">{{ smart_view.person(row) }}</div>
+  </details>
+  {% else %}
+  <p class="rm-p mb-0"><i class="bi bi-check2-circle me-1"></i>No one following a training needs a reminder now.</p>
+  {% endfor %}
+</div>
+</div>
+
 <div class="rm-two" id="new">
   <section class="rm-box">
     <h3 class="rm-h"><i class="bi bi-pencil-square"></i>New reminder</h3>
@@ -182,6 +225,8 @@
         <select class="form-select" name="to_professor" data-for="professor" style="flex:1; min-width:200px;" aria-label="Professor"><option value="">Choose a professor…</option>{% for person in professors %}<option value="{{ person.id }}" {{ 'selected' if person.id == to }}>{{ person.name }}</option>{% endfor %}</select>
       </div>
       <div class="ui-link-text mt-1" id="rm-count" style="font-size:.76rem; color:var(--muted);"></div>
+      <div id="rm-smart-person" aria-live="polite"></div>
+      {% if smart %}<div class="ui-chip ok mt-2" style="white-space:normal;"><i class="bi bi-stars"></i>Filled from a smart suggestion: the day and hour are when they usually write. {{ smart.measure }}</div>{% endif %}
 
       <div class="rm-label">Start from an idea</div>
       <div class="rm-ideas">{% for idea in ideas %}<button type="button" class="rm-idea {{ 'is-on' if chosen and chosen.key == idea.key }}" data-idea="{{ idea.key }}"><i class="bi {{ idea.icon }}"></i>{{ idea.name }}</button>{% endfor %}</div>
@@ -291,7 +336,23 @@
   const audience = document.getElementById("rm-audience");
   function showTarget() {
     form.querySelectorAll("select[data-for]").forEach(function (select) { select.hidden = select.dataset.for !== audience.value; });
+    smartFor();
   }
+  // One candidate chosen: what is smart for them, under the choice.
+  const personBox = document.getElementById("rm-smart-person");
+  let smartShown = "";
+  function smartFor() {
+    const select = form.querySelector('select[data-for="candidate"]');
+    const wanted = audience.value === "candidate" && select && select.value ? select.value : "";
+    if (wanted === smartShown) return;
+    smartShown = wanted;
+    if (!wanted) { personBox.innerHTML = ""; return; }
+    fetch("/reminders/smart/" + encodeURIComponent(wanted), { credentials: "same-origin" })
+      .then(function (answer) { return answer.ok ? answer.text() : ""; })
+      .then(function (html) { if (smartShown === wanted) personBox.innerHTML = html; })
+      .catch(function () {});
+  }
+  form.querySelector('select[data-for="candidate"]').addEventListener("change", smartFor);
   let timer = null;
   function preview() {
     clearTimeout(timer);

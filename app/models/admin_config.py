@@ -133,6 +133,8 @@ class SystemSettings(Base):
     friend_look = Column(Text, nullable=True)
     # The reminder before each session: how many hours before it goes (services/session_reminders.py).
     session_reminder_hours = Column(Integer, nullable=True, default=24)
+    # Which messages are set aside without an answer, as the admin changed it by talking (services/reply_rules.py); JSON.
+    reply_rules = Column(Text, nullable=True)
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

@@ -13,7 +13,7 @@ from app.models.admin_reminder import AdminReminder
 from app.models.candidate import Candidate
 from app.models.classgroup import ClassGroup, ClassStatus
 from app.models.program import Program
-from app.services import auth, email_composer, email_layout, email_threads, reminder_board, reminders
+from app.services import auth, email_composer, email_layout, email_threads, reminder_board, reminders, smart_reminders
 from app.services.email_layout import STYLES
 from app.services.schedule_utils import local_now, utc_to_local
 from app.template_context import notification_context
@@ -38,14 +38,20 @@ def reminders_page(request: Request, db: Session = Depends(get_db)):
     params = request.query_params
     chosen = reminders.idea(params.get("idea"))
     tomorrow = (local_now() + timedelta(days=1)).replace(hour=9, minute=0, second=0, microsecond=0)
+    # A smart suggestion for one candidate: the form comes filled (who, words, look, day and hour).
+    smart = smart_reminders.prefill(db, params.get("smart") or "") if params.get("smart") else None
+    if smart is not None:
+        chosen = smart
     return templates.TemplateResponse(
         request=request,
         name="reminders.html",
         context={
             "active_page": "reminders",
             "audiences": reminders.AUDIENCES,
-            "audience": params.get("audience") if params.get("audience") in reminders.AUDIENCES else "class",
-            "to": params.get("to") or "",
+            "audience": "candidate" if smart else params.get("audience") if params.get("audience") in reminders.AUDIENCES else "class",
+            "to": smart["candidate_id"] if smart else params.get("to") or "",
+            "smart": smart,
+            "smart_board": smart_reminders.board(db),
             "people": [{"id": person.id, "name": person.full_name or person.email}
                        for person in db.query(Candidate).order_by(Candidate.full_name).all() if person.email],
             "classes": db.query(ClassGroup).filter(ClassGroup.status != ClassStatus.COMPLETED).order_by(ClassGroup.name).all(),
@@ -62,13 +68,22 @@ def reminders_page(request: Request, db: Session = Depends(get_db)):
             "design_options": email_layout.design_options(),
             "upcoming": [_row(db, item) for item in reminders.upcoming(db)],
             "history": [_row(db, item) for item in reminders.history(db)],
-            "default_date": tomorrow.strftime("%Y-%m-%d"),
-            "default_time": tomorrow.strftime("%H:%M"),
+            "default_date": smart["date"] if smart else tomorrow.strftime("%Y-%m-%d"),
+            "default_time": smart["time"] if smart else tomorrow.strftime("%H:%M"),
             "smtp_ready": email_threads.smtp_configured(),
             "notice": params.get("notice"),
             "error": params.get("error"),
         },
     )
+
+
+@router.get("/reminders/smart/{candidate_id}", response_class=HTMLResponse)
+def smart_for(candidate_id: str, request: Request, db: Session = Depends(get_db)):
+    """What is smart to remind this candidate, for the form (a piece of page)."""
+    candidate = db.get(Candidate, candidate_id)
+    if candidate is None:
+        raise HTTPException(status_code=404, detail="Candidate not found")
+    return templates.TemplateResponse(request=request, name="smart_person.html", context={"row": smart_reminders.for_candidate(db, candidate)})
 
 
 class Preview(BaseModel):

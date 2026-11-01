@@ -1,0 +1,26 @@
+{# What is smart to remind one candidate (services/smart_reminders.py): their figures, the way and hour that work for
+   them, and each suggestion written SMART. Used on the Reminders page, in the list and for the person chosen in the form. #}
+{% macro person(row) %}
+<div class="rm-metrics">
+  {% for metric in row.metrics %}<span class="ui-chip {{ metric.tone }}" {% if metric.note %}title="{{ metric.note }}"{% endif %}><i class="bi {{ metric.icon }}"></i>{{ metric.label }} · <span data-no-i18n>{{ metric.value }}</span></span>{% endfor %}
+</div>
+<p class="rm-way"><i class="bi {{ row.channel.icon }}"></i><b>{{ row.channel.label }}</b> <span>{{ row.channel.why }}</span> <span class="rm-way-hour"><i class="bi bi-clock"></i>{{ row.hour_why }}</span></p>
+{% for item in row.suggestions %}
+<div class="rm-smart-card">
+  <b class="rm-smart-title">{{ item.title }}</b>
+  <dl class="rm-smart-line">
+    <dt>Specific</dt><dd>{{ item.specific }}</dd>
+    <dt>Measurable</dt><dd>{{ item.measure }}</dd>
+    <dt>Achievable and relevant</dt><dd>{% for fact in item.why %}<span>{{ fact }}</span>{% endfor %}</dd>
+    <dt>Time-bound</dt><dd>{{ item.when_text }}</dd>
+  </dl>
+  <div class="rm-smart-do">
+    {% if item.href %}<a class="ui-btn primary" href="{{ item.href }}"><i class="bi bi-pencil-square"></i>Prepare it</a>{% endif %}
+    {% if item.whatsapp %}<a class="ui-btn" href="{{ item.whatsapp }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>Write it on WhatsApp</a>{% endif %}
+    {% if item.call %}<a class="ui-btn" href="{{ item.call }}"><i class="bi bi-telephone"></i>Call</a>{% endif %}
+  </div>
+</div>
+{% else %}
+<p class="rm-p mb-0">Nothing to remind them now: present, answering, and fine.</p>
+{% endfor %}
+{% endmacro %}

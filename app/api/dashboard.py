@@ -144,6 +144,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "at_risk": __import__("app.services.dropout", fromlist=["at_risk"]).at_risk(db, limit=6),
             "journal": __import__("app.services.journal", fromlist=["for_dashboard"]).for_dashboard(db),
             "voices": __import__("app.services.feedback_hub", fromlist=["overview"]).overview(db),
+            "ideas": __import__("app.services.engagement_ideas", fromlist=["overview"]).overview(db),
             "smart": {"ideas": reminders.suggestions(db)[:3],
                       "planned": [{"reminder": item, "when": utc_to_local(item.send_at)} for item in reminders.upcoming(db)[:3]]},
             "dashboard_programs": db.query(Program).order_by(Program.name.asc()).all(),

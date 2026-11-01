@@ -371,7 +371,8 @@ def _planned_for(db: Session, audience: str, audience_id: str) -> bool:
 
 
 def suggestions(db: Session, now: datetime | None = None) -> list[dict]:
-    """Reminders worth writing, from how the classes stand: {"text", "why", "href", "icon"}. Nothing is sent from here."""
+    """Reminders worth writing, from how the classes stand: {"text", "why", "href", "icon"}. Nothing is sent from here.
+    (What is smart for each candidate, their absences among it, is in services/smart_reminders.py.)"""
     now = now or schedule_utils.local_now()
     found = []
     for group in db.query(ClassGroup).filter(ClassGroup.status != ClassStatus.COMPLETED).all():
@@ -387,17 +388,4 @@ def suggestions(db: Session, now: datetime | None = None) -> list[dict]:
             found.append({"icon": "bi-award", "text": f"{group.name} ends {schedule_utils.humanize_until(end, now)}",
                           "why": "Remind them of the project, the last session and what comes next.",
                           "href": f"/reminders?audience=class&to={group.id}&idea=last#new"})
-    # Absent at their last two sessions.
-    last_two: dict[str, list[str]] = {}
-    for row in db.query(Attendance).order_by(Attendance.marked_at.desc()).limit(600).all():
-        marks = last_two.setdefault(row.candidate_id, [])
-        if len(marks) < 2:
-            marks.append(row.status)
-    for candidate_id, marks in last_two.items():
-        if marks == ["absent", "absent"] and not _planned_for(db, "candidate", candidate_id):
-            person = db.get(Candidate, candidate_id)
-            if person is not None and person.email:
-                found.append({"icon": "bi-emoji-smile", "text": f"{person.full_name or person.email} missed their last two sessions",
-                              "why": "A short personal note often brings a candidate back.",
-                              "href": f"/reminders?audience=candidate&to={person.id}&idea=missed#new"})
     return found[:6]

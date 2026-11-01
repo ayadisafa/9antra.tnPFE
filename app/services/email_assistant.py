@@ -45,7 +45,7 @@ from app.models.knowledge import KnowledgeEntry
 from app.models.notification import Notification
 from app.models.program import Program
 from app.models.registration import PaymentStatus, Registration, RegistrationStatus
-from app.services import class_emails, email_files, email_threads, knowledge_service
+from app.services import class_emails, email_files, email_threads, knowledge_service, reply_rules
 from app.services.email_layout import branding, render_email, render_plain, text_to_html
 from app.services.email_threads import utcnow
 from app.services.schedule_utils import (
@@ -245,7 +245,7 @@ def question_sentence(body: str) -> str:
     return chosen[:1].upper() + chosen[1:]
 
 
-def analyse(subject: str, body: str) -> dict:
+def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
     """Language, subject and the question itself.
 
     Done with rules rather than the model: on real emails a small local model
@@ -292,10 +292,13 @@ def analyse(subject: str, body: str) -> dict:
         or any(token.startswith("_") for token in knowledge_service.tokenize(stripped))
         or bool(_QUESTION_WORDS.search(stripped))
     )
-    thanks_only = (
-        not asks and len(stripped) < 200
-        and bool(_THANKS_ONLY.match(_OPENING.sub("", stripped, count=1)))
-    )
+    # A plain thank-you is set aside: the words, the length and "nothing else than thanks" are the admin's to change
+    # (services/reply_rules.py); without them, the fixed list.
+    opened = _OPENING.sub("", stripped, count=1)
+    thanked = (reply_rules.pattern(rules) if rules else _THANKS_ONLY).match(opened)
+    thanks_only = not asks and len(stripped) < (rules["max_length"] if rules else 200) and bool(thanked)
+    if thanks_only and rules and rules["only_thanks"] and not reply_rules.pure_thanks(opened, rules):
+        thanks_only = False
     if intent == "complaint":
         sentiment = "frustrated"
     elif re.search(r"\b(merci|thanks|thank you|super|parfait|génial|genial|ravi|content|شكرا)\b", lowered):
@@ -310,6 +313,7 @@ def analyse(subject: str, body: str) -> dict:
         "intent": "greeting" if thanks_only else intent,
         # Everything except a plain thank-you is handled: answered, or shown to the admin.
         "needs_reply": not thanks_only,
+        "thanks_word": thanked.group(1).lower() if thanks_only else None,
         "question": question_sentence(stripped),
         "sentiment": sentiment,
         "summary": email_threads.snippet(stripped, 160),
@@ -1217,8 +1221,14 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     name = candidate.full_name or candidate.email
 
     subject = own_subject(db, thread, message)
-    analysis = analyse(subject, message.body)
+    rules = reply_rules.rules(db)
+    analysis = analyse(subject, message.body, rules)
     analysis["subject"] = subject
+    # The admin said a message like this needs an answer (this one, or every one from this person): it is not set aside.
+    reopened = bool(reply_rules.reason_of(message).get("reopened")) if message.set_aside else False
+    if not analysis["needs_reply"] and (reopened or reply_rules.always_answered(rules, message, candidate)):
+        analysis["needs_reply"], analysis["intent"] = True, "other"
+        analysis["question"] = analysis["question"] or question_sentence(message.body or "")
     message.language = analysis["language"]
     message.intent = analysis["intent"]
     from app.services import message_categories
@@ -1272,6 +1282,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         message.status = "no_reply"
         message.requires_admin = False
         message.analysis = f"The payment proof is for {named.program_name}: it waits for you on the Payments page."
+        reply_rules.mark(message, "payment", program=named.program_name)
         thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
         _notify(db, thread, "PAYMENT_PROOF", f"{name}: the payment is for {named.program_name}", "Confirm it on the Payments page.")
         return "no_reply"
@@ -1296,6 +1307,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                 "Their opinion on the program, kept with the class"
                 + (f": {opinion.rating} stars." if opinion.rating else ".")
             )
+            reply_rules.mark(message, "opinion")
             thread.status = "received"
             thread.needs_admin = False
             thread.last_status = "no_reply"
@@ -1304,6 +1316,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     if not analysis["needs_reply"]:
         message.status = "no_reply"
         message.requires_admin = False
+        reply_rules.mark(message, "thanks", word=analysis.get("thanks_word"))
         thread.status = "received"
         thread.needs_admin = False
         thread.last_status = "no_reply"
@@ -1412,6 +1425,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         course_questions.forward(db, candidate=candidate, message=message, registration=registration, class_group=class_group, professor=professor)
         message.status, message.requires_admin = "no_reply", False
         message.analysis = f"Sent to the professor, {professor.name}, who answers in the application; the answer goes back to {name}."
+        reply_rules.mark(message, "professor", who=professor.name)
         thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
         if mode == "auto":
             acknowledged = f"{greeting_for(candidate, reply_language)}\n\n{course_questions.forwarded_text(professor, reply_language)}"
@@ -1469,6 +1483,10 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     in_thread, today = _auto_replies(db, thread)
     percent = round(found["confidence"] * 100)
     reason = found["blocker"]
+    if reopened:
+        # The admin brought it back: it always comes to them, with what the assistant could prepare.
+        reason = (("You said this message needs an answer. " + reason) if reason
+                  else "You said this message needs an answer: here is the one prepared, to read before it goes.")
     if reason is None and feelings["main"] == "frustrated":
         reason = ("The candidate seems frustrated (" + ", ".join(feelings["emotions"][0]["words"][:3])
                   + "): a person should answer. The draft is ready.")
@@ -1674,9 +1692,10 @@ def ingest_inbound(db: Session, *, sender: str, subject: str, body: str,
         message.attachments = json.dumps(
             [email_files.describe(file) for file in received_files], ensure_ascii=False,
         )
-    if automatic:
+    if automatic and not reply_rules.reads_automatic(db, address):
         message.status = "no_reply"
         message.analysis = "Automatic reply (for example an out-of-office message); not answered."
+        reply_rules.mark(message, "automatic")
         thread.status = "received" if thread.inbound_count == thread.message_count else "answered"
         thread.last_status = "no_reply"
         db.commit()
@@ -1873,6 +1892,7 @@ def mark_no_reply(db: Session, thread: EmailThread) -> None:
     for item in pending_messages(db, thread):
         item.requires_admin = False
         item.status = "no_reply"
+        reply_rules.mark(item, "admin")
     thread.needs_admin = False
     thread.status = "received"
     thread.last_status = "no_reply"

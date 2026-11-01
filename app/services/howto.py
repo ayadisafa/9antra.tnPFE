@@ -263,7 +263,9 @@ def _may(user, who, part) -> bool:
 
 
 from app.services.howto_tn import REGISTER as _REGISTER, SAY as _SAY        # the words around the steps, in each language
-_FRENCH_WORDS = re.compile(r"\b(comment|ou|quoi|est-ce|je|veux|faire|ajouter|voir|bonjour|quel|quelle|les|des|une|pour|qu)\b")
+# Words only French has ("la" and "ma" are left out: in Tunisian they mean "no" and "not").
+_FRENCH_WORDS = re.compile(r"\b(comment|ou|quoi|est-ce|je|veux|faire|ajouter|voir|bonjour|quel|quelle|les|des|une|pour|qu|pourquoi|combien|"
+                           r"quand|est|le|du|au|aux|mon|mes|vous|nous|il|elle|pas|dans|avec|sur|cette|ces|qui|que|de|un|et)\b")
 
 
 def language_of(message: str) -> str:

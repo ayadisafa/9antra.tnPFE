@@ -13,6 +13,24 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-01b", "day": date(2026, 11, 1), "title": "Smart suggestions, and nothing hidden any more",
+        "items": [
+            {"icon": "bi-moon-stars", "title": "Messages set aside: you decide",
+             "text": "A message the assistant set aside without an answer (a thank-you, an automatic reply…) says why. Say it needed an "
+                     "answer, with a button or in a few words under it or to Yasmine: it comes back with an answer prepared, and the rule "
+                     "changes so the next ones are kept. Every change can be undone.", "url": "/inbox?filter=aside"},
+            {"icon": "bi-lightbulb", "title": "Ideas to keep candidates engaged",
+             "text": "On the dashboard, under what people say: plans from their feedback and from how the classes go, and what is going on "
+                     "in every industry, each with the facts it rests on and a target to reach by a date.", "url": "/#engagement-ideas"},
+            {"icon": "bi-stars", "title": "What is smart to remind each candidate",
+             "text": "From their presence, their weekly questions, how their week went and how they answer you: what to send, which way, "
+                     "at what hour, and what to watch afterwards. The form fills itself from a suggestion.", "url": "/reminders"},
+            {"icon": "bi-eye", "title": "Menus and windows always seen in full",
+             "text": "A menu opened in a page's head was cut; Yasmine covered the corner of windows and menus; two labels of the Social "
+                     "media page were grey on red. All fixed, and every page was checked for what could not be seen.", "url": "/programs/all"},
+        ],
+    },
+    {
         "key": "2026-11-01", "day": date(2026, 11, 1), "title": "Social media, and every feedback in one place",
         "items": [
             {"icon": "bi-magic", "title": "Posts and stories made from your records",

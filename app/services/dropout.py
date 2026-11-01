@@ -13,7 +13,7 @@ For each candidate in a class that runs (or starts within two weeks), points are
 """
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -22,6 +22,14 @@ _SAD = {"frustrated", "disappointed", "worried"}
 
 
 def _naive(moment):
+    if isinstance(moment, str):
+        # Some dates are kept as text (registrations.reminder_sent_at: "2026-10-13T20:40:48+00:00"): read, in UTC.
+        try:
+            moment = datetime.fromisoformat(moment.strip().replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if moment.tzinfo is not None:
+            moment = moment.astimezone(timezone.utc)
     return moment.replace(tzinfo=None) if moment is not None and getattr(moment, "tzinfo", None) else moment
 
 

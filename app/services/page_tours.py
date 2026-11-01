@@ -171,8 +171,10 @@ TOURS: dict[str, dict] = {
         _step("#live-inbox-kpis", "bi-bar-chart", "The figures", "Waiting for you, answered alone, sent today."),
         _step("#live-inbox-list", "bi-list-ul", "The conversations", "One line per conversation; those waiting for you first.",
               ["Open a conversation", "Filter by kind"]),
-        _step("#live-inbox-messages", "bi-chat-left-text", "The messages", "What was said, with what the assistant understood and why.",
-              ["Read the conversation", "Score the assistant's answer"]),
+        _step("#live-inbox-messages", "bi-chat-left-text", "The messages", "What was said, with what the assistant understood and why. "
+              "A message set aside without an answer says why: tell it that it needed one, and the rule changes.",
+              ["Read the conversation", "Score the assistant's answer", "Bring back a set-aside message", "Talk about why it was set aside"],
+              ["Which messages are set aside"]),
         _step("#live-inbox-reply", "bi-reply", "Your answer", "A draft is ready when the assistant was not sure.",
               ["Send it", "Reword it", "Teach it as the answer for next time"], ["The text of the answer"]),
     ),
@@ -225,6 +227,9 @@ TOURS: dict[str, dict] = {
         _step("#auto", "bi-bell", "Every reminder", "Payment, the countdown, the reminder before each session, the session link, the level check, the "
               "professors' reminders: each with its switch and its timing.",
               ["Switch one on or off", "Change when it goes", "Put the original back"], ["Its words and its design", "When it goes"]),
+        _step("#smart-people", "bi-stars", "What is smart for each candidate", "From their presence, their weekly questions, how their week went "
+              "and how they answer you: what to send, which way, at what hour, and what to watch afterwards.",
+              ["Prepare a suggested reminder", "Write it on WhatsApp"]),
         _step("#new", "bi-plus-lg", "New reminder", "Who (candidates or professors), what, when: once, every week, every month, or at each absence.",
               ["Write a reminder", "Use an idea"], ["Who it goes to, its text, when it goes"]),
         _step("#planned", "bi-clock-history", "Planned", "What will go, and when.", ["Cancel a reminder"]),

@@ -1,0 +1,5 @@
+{% import "_smart_reminder.html" as smart %}
+<div class="rm-for-person">
+  <div class="rm-label"><i class="bi bi-stars"></i> What is smart for <span data-no-i18n>{{ row.name }}</span></div>
+  {{ smart.person(row) }}
+</div>

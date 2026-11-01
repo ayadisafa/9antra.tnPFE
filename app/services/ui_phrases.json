@@ -1374,5 +1374,553 @@
 "That is not in your assistant: payments, the centre's figures, the settings and the other classes stay with the admin. Write to the admin from your space if you need them.": [
 "Ce n'est pas dans votre assistant : les paiements, les chiffres du centre, les paramètres et les autres classes restent chez l'admin. Écrivez à l'admin depuis votre espace si vous en avez besoin.",
 "هذا ليس في مساعدك: الدفعات وأرقام المركز والإعدادات والأقسام الأخرى تبقى عند المدير. راسل المدير من فضائك إن احتجتها."
+],
+"It comes back to you with an answer prepared, to read before it goes.": [
+"Il vous revient avec une réponse préparée, à lire avant qu'elle parte.",
+"يعود إليك مع رد جاهز، لتقرأه قبل إرساله."
+],
+"It is now in the messages waiting for your answer.": [
+"Il est maintenant parmi les messages qui attendent votre réponse.",
+"أصبح الآن ضمن الرسائل التي تنتظر ردك."
+],
+"Write what you want: “why?”, “it needs an answer”, “always answer them”, “undo”.": [
+"Écrivez ce que vous voulez : « pourquoi ? », « il faut répondre », « toujours lui répondre », « annuler ».",
+"اكتب ما تريد: «لماذا؟»، «يحتاج ردا»، «أجب عليه دائما»، «تراجع»."
+],
+"Undone: the rule is back as it was. The change was: {0}": [
+"Annulé : la règle est revenue comme avant. Le changement était : {0}",
+"تم التراجع: عادت القاعدة كما كانت. كان التغيير: {0}"
+],
+"By {0}: fewer people than today ({1}) ask to improve “{2}”, and the happy share goes from {3}% to {4}%.": [
+"D'ici le {0} : moins de personnes qu'aujourd'hui ({1}) demandent d'améliorer « {2} », et la part de contents passe de {3} % à {4} %.",
+"بحلول {0}: عدد أقل من اليوم ({1}) يطلب تحسين «{2}»، وتنتقل نسبة الراضين من {3}% إلى {4}%."
+],
+"By {0}: fewer people than today ({1}) ask to improve “{2}”.": [
+"D'ici le {0} : moins de personnes qu'aujourd'hui ({1}) demandent d'améliorer « {2} ».",
+"بحلول {0}: عدد أقل من اليوم ({1}) يطلب تحسين «{2}»."
+],
+"{0} of them asked to improve “{1}”.": [
+"{0} d'entre eux ont demandé d'améliorer « {1} ».",
+"طلب {0} منهم تحسين «{1}»."
+],
+"Say what you changed": [
+"Dites ce que vous avez changé",
+"قل ما الذي غيّرته"
+],
+"Write “you said, we did” on the Social media page.": [
+"Écrivez « vous avez dit, nous avons fait » sur la page Réseaux sociaux.",
+"اكتب «قلتم، فعلنا» في صفحة وسائل التواصل."
+],
+"Post it, and make its video.": [
+"Publiez-le, et faites sa vidéo.",
+"انشره، واصنع الفيديو الخاص به."
+],
+"{0} subject(s) to improve, and no answer published yet.": [
+"{0} sujet(s) à améliorer, et aucune réponse publiée pour l'instant.",
+"{0} موضوع(ات) للتحسين، ولم يُنشر أي رد بعد."
+],
+"By {0}: one answer published, and its post shared.": [
+"D'ici le {0} : une réponse publiée, et sa publication partagée.",
+"بحلول {0}: رد واحد منشور، ومنشوره متداول."
+],
+"Write it": [
+"L'écrire",
+"اكتبه"
+],
+"Share their success": [
+"Partagez leur réussite",
+"شارك نجاحهم"
+],
+"A “their success” post with the figures.": [
+"Une publication « leur réussite » avec les chiffres.",
+"منشور «نجاحهم» مع الأرقام."
+],
+"A video with the testimonials.": [
+"Une vidéo avec les témoignages.",
+"فيديو مع الشهادات."
+],
+"{0}% of those who gave their opinion are happy.": [
+"{0} % de ceux qui ont donné leur avis sont contents.",
+"{0}% ممن أبدوا رأيهم راضون."
+],
+"By {0}: two posts, each at least at your average engagement.": [
+"D'ici le {0} : deux publications, chacune au moins à votre engagement moyen.",
+"بحلول {0}: منشوران، كل منهما على الأقل بمستوى تفاعلك المتوسط."
+],
+"Prepare the posts": [
+"Préparer les publications",
+"حضّر المنشورات"
+],
+"A recap session for {0}": [
+"Une séance de révision pour {0}",
+"حصة مراجعة لـ {0}"
+],
+"One recap session on the weeks marked hard.": [
+"Une séance de révision sur les semaines jugées difficiles.",
+"حصة مراجعة للأسابيع التي وُصفت بالصعبة."
+],
+"The week's summary sent after each session.": [
+"Le résumé de la semaine envoyé après chaque séance.",
+"ملخص الأسبوع يُرسل بعد كل حصة."
+],
+"{0} weekly check-ins of {1} say the pace is too fast.": [
+"{0} bilans de la semaine de {1} disent que le rythme est trop rapide.",
+"{0} من تقييمات الأسبوع في {1} تقول إن الإيقاع سريع جدا."
+],
+"By {0}: in the next two weekly check-ins of {1}, fewer than {2} say the pace is too fast.": [
+"D'ici le {0} : dans les deux prochains bilans de la semaine de {1}, moins de {2} disent que le rythme est trop rapide.",
+"بحلول {0}: في التقييمين الأسبوعيين القادمين لـ {1}، أقل من {2} يقولون إن الإيقاع سريع جدا."
+],
+"Bring {0} back": [
+"Faire revenir {0}",
+"أعد {0}"
+],
+"A personal “we missed you” to each one absent.": [
+"Un « vous nous avez manqué » personnel à chaque absent.",
+"رسالة «افتقدناك» شخصية لكل غائب."
+],
+"The reminder the day before each session (on by default).": [
+"Le rappel la veille de chaque séance (activé par défaut).",
+"التذكير قبل كل حصة بيوم (مفعّل افتراضيا)."
+],
+"{0}% present at the last {1} sessions of {2}.": [
+"{0} % de présents aux {1} dernières séances de {2}.",
+"{0}% حاضرون في آخر {1} حصص لـ {2}."
+],
+"By {0}: presence from {1}% to 85% over the next three sessions.": [
+"D'ici le {0} : la présence passe de {1} % à 85 % sur les trois prochaines séances.",
+"بحلول {0}: يرتفع الحضور من {1}% إلى 85% في الحصص الثلاث القادمة."
+],
+"Prepare the reminder": [
+"Préparer le rappel",
+"حضّر التذكير"
+],
+"Make the weekly questions a game": [
+"Faire des questions de la semaine un jeu",
+"اجعل أسئلة الأسبوع لعبة"
+],
+"Name the best three in the next session.": [
+"Nommer les trois meilleurs à la prochaine séance.",
+"سمِّ أفضل ثلاثة في الحصة القادمة."
+],
+"A small badge after four weeks answered in a row.": [
+"Un petit badge après quatre semaines répondues d'affilée.",
+"شارة صغيرة بعد أربعة أسابيع من الإجابات المتتالية."
+],
+"{0}% of the weekly questions of the last 30 days were answered.": [
+"{0} % des questions de la semaine des 30 derniers jours ont reçu une réponse.",
+"{0}% من أسئلة الأسبوع في آخر 30 يوما تمت الإجابة عنها."
+],
+"By {0}: from {1}% answered to 75%.": [
+"D'ici le {0} : de {1} % de réponses à 75 %.",
+"بحلول {0}: من {1}% إجابات إلى 75%."
+],
+"Open the weekly questions": [
+"Ouvrir les questions de la semaine",
+"افتح أسئلة الأسبوع"
+],
+"“{0}” is named in {1} articles and {2} teaches it: say so in its posts and in the sessions.": [
+"« {0} » est cité dans {1} articles et {2} l'enseigne : dites-le dans ses publications et en séance.",
+"«{0}» مذكور في {1} مقالا و{2} يدرّسه: قل ذلك في منشوراته وفي الحصص."
+],
+"“{0}” is named in {1} articles and no program teaches it yet: a free one-hour workshop would bring people in.": [
+"« {0} » est cité dans {1} articles et aucun programme ne l'enseigne encore : un atelier gratuit d'une heure ferait venir du monde.",
+"«{0}» مذكور في {1} مقالا ولا يدرّسه أي برنامج بعد: ورشة مجانية لمدة ساعة ستجلب الناس."
+],
+"Changing what the inbox sets aside needs the right to answer emails: ask the admin.": [
+"Changer ce que la messagerie met de côté demande le droit de répondre aux emails : demandez à l'administrateur.",
+"تغيير ما يضعه البريد جانبا يتطلب حق الرد على الرسائل: اطلب ذلك من المسؤول."
+],
+"It starts with “{0}” and asks nothing, so it was taken for a thank-you and not answered.": [
+"Il commence par « {0} » et ne demande rien : il a été pris pour un remerciement et n'a pas reçu de réponse.",
+"يبدأ بـ «{0}» ولا يسأل عن شيء، فاعتُبر شكرا ولم يُرد عليه."
+],
+"It only thanks or says it is noted, and asks nothing, so it was not answered.": [
+"Il ne fait que remercier ou dire que c'est noté, et ne demande rien : il n'a pas reçu de réponse.",
+"يكتفي بالشكر أو بقول إنه سجّل الأمر، ولا يسأل عن شيء، فلم يُرد عليه."
+],
+"It came marked as an automatic reply (an out-of-office message or a mailing list), so it was not answered.": [
+"Il est arrivé marqué comme réponse automatique (absence du bureau ou liste de diffusion) : il n'a pas reçu de réponse.",
+"وصل مُعلَّما كرد تلقائي (غياب عن المكتب أو قائمة بريدية)، فلم يُرد عليه."
+],
+"It was a question about the course: it went to the professor, {0}, who answers in the application.": [
+"C'était une question sur le cours : elle est allée au professeur, {0}, qui répond dans l'application.",
+"كان سؤالا عن الدرس: ذهب إلى الأستاذ، {0}، الذي يجيب في التطبيق."
+],
+"It was their opinion on the program, answering the email that asked for it: it is kept with the class.": [
+"C'était son avis sur le programme, en réponse à l'email qui le demandait : il est gardé avec la classe.",
+"كان رأيه في البرنامج، ردا على الرسالة التي طلبته: يُحفظ مع القسم."
+],
+"It said which program their payment was for: the proof waits for you on the Payments page.": [
+"Il disait pour quel programme était son paiement : la preuve vous attend sur la page Paiements.",
+"كان يذكر البرنامج الذي يخصه الدفع: الإثبات ينتظرك في صفحة المدفوعات."
+],
+"It was marked by hand as not needing an answer.": [
+"Il a été marqué à la main comme n'ayant pas besoin de réponse.",
+"تم تعليمه يدويا على أنه لا يحتاج ردا."
+],
+"From now on, only a message made of thanks alone is set aside; one that says anything more is answered.": [
+"Désormais, seul un message fait uniquement de remerciements est mis de côté ; un message qui dit autre chose reçoit une réponse.",
+"من الآن، تُوضع جانبا فقط الرسالة المكوّنة من الشكر وحده؛ والرسالة التي تقول أكثر من ذلك يُرد عليها."
+],
+"From now on, a short message that starts with a word of thanks and asks nothing is set aside again.": [
+"Désormais, un message court qui commence par un remerciement et ne demande rien est de nouveau mis de côté.",
+"من الآن، تُوضع الرسالة القصيرة التي تبدأ بالشكر ولا تسأل عن شيء جانبا من جديد."
+],
+"From now on, every message from {0} is answered, even a simple thank-you.": [
+"Désormais, chaque message de {0} reçoit une réponse, même un simple merci.",
+"من الآن، يُرد على كل رسالة من {0}، حتى على شكر بسيط."
+],
+"{0} is treated like everyone again.": [
+"{0} est de nouveau traité comme tout le monde.",
+"يُعامَل {0} من جديد مثل الجميع."
+],
+"From now on, the messages from {0} are never taken for automatic replies.": [
+"Désormais, les messages de {0} ne sont jamais pris pour des réponses automatiques.",
+"من الآن، لا تُعتبر رسائل {0} أبدا ردودا تلقائية."
+],
+"The messages from {0} marked as automatic are set aside again.": [
+"Les messages de {0} marqués comme automatiques sont de nouveau mis de côté.",
+"تُوضع رسائل {0} المعلَّمة كتلقائية جانبا من جديد."
+],
+"From now on, a message that starts with “{0}” is answered.": [
+"Désormais, un message qui commence par « {0} » reçoit une réponse.",
+"من الآن، يُرد على الرسالة التي تبدأ بـ «{0}»."
+],
+"From now on, a short message that only says “{0}” is set aside.": [
+"Désormais, un message court qui ne dit que « {0} » est mis de côté.",
+"من الآن، تُوضع جانبا الرسالة القصيرة التي لا تقول إلا «{0}»."
+],
+"From now on, only messages shorter than {0} characters can be set aside.": [
+"Désormais, seuls les messages de moins de {0} caractères peuvent être mis de côté.",
+"من الآن، لا يمكن أن توضع جانبا إلا الرسائل الأقصر من {0} حرفا."
+],
+"Words of thanks that start a message set aside: {0}.": [
+"Mots de remerciement qui, en début de message, le mettent de côté : {0}.",
+"كلمات الشكر التي تضع الرسالة جانبا إذا بدأت بها: {0}."
+],
+"Only messages shorter than {0} characters, that ask nothing.": [
+"Seulement les messages de moins de {0} caractères, qui ne demandent rien.",
+"فقط الرسائل الأقصر من {0} حرفا، التي لا تسأل عن شيء."
+],
+"And only when they say nothing but thanks.": [
+"Et seulement quand ils ne disent rien d'autre que merci.",
+"وفقط عندما لا تقول شيئا غير الشكر."
+],
+"Always answered, even for a thank-you: {0}.": [
+"Toujours une réponse, même pour un merci : {0}.",
+"يُرد عليهم دائما، حتى على الشكر: {0}."
+],
+"Never taken for automatic replies: {0}.": [
+"Jamais pris pour des réponses automatiques : {0}.",
+"لا تُعتبر أبدا ردودا تلقائية: {0}."
+],
+"There is no change to undo.": [
+"Il n'y a aucun changement à annuler.",
+"لا يوجد أي تغيير للتراجع عنه."
+],
+"The last change was undone.": [
+"Le dernier changement a été annulé.",
+"تم التراجع عن آخر تغيير."
+],
+"It is already so.": [
+"C'est déjà le cas.",
+"هذا هو الحال فعلا."
+],
+"“{0}” is already one of the words of thanks.": [
+"« {0} » fait déjà partie des mots de remerciement.",
+"«{0}» من كلمات الشكر أصلا."
+],
+"“{0}” is not one of the words that set a message aside, so such messages are already read and answered.": [
+"« {0} » ne fait pas partie des mots qui mettent un message de côté : ces messages sont déjà lus et reçoivent une réponse.",
+"«{0}» ليست من الكلمات التي تضع الرسالة جانبا: هذه الرسائل تُقرأ ويُرد عليها أصلا."
+],
+"It is already so: only a message made of thanks alone is set aside.": [
+"C'est déjà le cas : seul un message fait uniquement de remerciements est mis de côté.",
+"هذا هو الحال فعلا: لا تُوضع جانبا إلا الرسالة المكوّنة من الشكر وحده."
+],
+"This message is read again now.": [
+"Ce message est relu maintenant.",
+"تُعاد قراءة هذه الرسالة الآن."
+],
+"A message is set aside when it only thanks and asks nothing, when it is an automatic reply, or when it went to the professor or was an opinion asked for.": [
+"Un message est mis de côté quand il ne fait que remercier et ne demande rien, quand c'est une réponse automatique, ou quand il est allé au professeur ou était un avis demandé.",
+"توضع الرسالة جانبا عندما تكتفي بالشكر ولا تسأل عن شيء، أو عندما تكون ردا تلقائيا، أو عندما ذهبت إلى الأستاذ أو كانت رأيا مطلوبا."
+],
+"If it needed an answer, say so: {0}": [
+"S'il fallait une réponse, dites-le : {0}",
+"إن كانت تحتاج ردا، قل ذلك: {0}"
+],
+"If it needed an answer, say so: it comes back to you, and no rule needs to change.": [
+"S'il fallait une réponse, dites-le : il vous revient, et aucune règle n'a besoin de changer.",
+"إن كانت تحتاج ردا، قل ذلك: تعود إليك، ولا تحتاج أي قاعدة إلى تغيير."
+],
+"Last change: {0}": [
+"Dernier changement : {0}",
+"آخر تغيير: {0}"
+],
+"Fine: it stays set aside, and nothing changes.": [
+"Entendu : il reste de côté, et rien ne change.",
+"حسنا: تبقى جانبا، ولا شيء يتغير."
+],
+"Fine: nothing changes.": [
+"Entendu : rien ne change.",
+"حسنا: لا شيء يتغير."
+],
+"Which message? Name the person (“the message from Amira needs an answer”), or say it under the message in the inbox.": [
+"Quel message ? Nommez la personne (« le message d'Amira demande une réponse »), ou dites-le sous le message dans la messagerie.",
+"أي رسالة؟ سمِّ الشخص («رسالة أميرة تحتاج ردا»)، أو قل ذلك تحت الرسالة في البريد."
+],
+"This message is not set aside: it was answered or waits for you.": [
+"Ce message n'est pas mis de côté : il a reçu une réponse ou il vous attend.",
+"هذه الرسالة ليست جانبا: تم الرد عليها أو أنها تنتظرك."
+],
+"Done: {0}'s message comes back to you with an answer prepared, to read before it goes.": [
+"C'est fait : le message de {0} vous revient avec une réponse préparée, à lire avant qu'elle parte.",
+"تم: رسالة {0} تعود إليك مع رد جاهز، لتقرأه قبل إرساله."
+],
+"Done: {0}'s message is now in the messages waiting for your answer.": [
+"C'est fait : le message de {0} est maintenant parmi les messages qui attendent votre réponse.",
+"تم: رسالة {0} الآن ضمن الرسائل التي تنتظر ردك."
+],
+"Say “undo” to put it back.": [
+"Dites « annuler » pour revenir en arrière.",
+"قل «تراجع» لإعادة الأمر كما كان."
+],
+"I can explain why a message was set aside (“why?”), bring it back (“it needs an answer”), always answer a person (“always answer them”), change the words (“‘ok’ needs an answer”), show the rules (“the rules”), or undo the last change (“undo”).": [
+"Je peux expliquer pourquoi un message a été mis de côté (« pourquoi ? »), le faire revenir (« il faut répondre »), toujours répondre à une personne (« toujours lui répondre »), changer les mots (« “ok” demande une réponse »), montrer les règles (« les règles »), ou annuler le dernier changement (« annuler »).",
+"يمكنني أن أشرح لماذا وُضعت رسالة جانبا («لماذا؟»)، وأن أعيدها («تحتاج ردا»)، وأن أرد دائما على شخص («أجب عليه دائما»)، وأن أغيّر الكلمات («“ok” تحتاج ردا»)، وأن أعرض القواعد («القواعد»)، أو أن أتراجع عن آخر تغيير («تراجع»)."
+],
+"The inbox": [
+"La messagerie",
+"البريد"
+],
+"They answered {0} of {1} WhatsApp messages (email: {2}).": [
+"Il a répondu à {0} messages WhatsApp sur {1} (email : {2}).",
+"أجاب على {0} من {1} رسائل واتساب (البريد: {2})."
+],
+"They answered {0} of {1} emails, within the hour.": [
+"Il a répondu à {0} emails sur {1}, dans l'heure.",
+"أجاب على {0} من {1} رسائل بريد، خلال ساعة."
+],
+"They answered {0} of {1} emails, in about {2} h.": [
+"Il a répondu à {0} emails sur {1}, en {2} h environ.",
+"أجاب على {0} من {1} رسائل بريد، في نحو {2} ساعة."
+],
+"None of the {0} emails sent was answered: try WhatsApp.": [
+"Aucun des {0} emails envoyés n'a reçu de réponse : essayez WhatsApp.",
+"لم يُرد على أي من الرسائل الـ {0} المرسلة: جرّب واتساب."
+],
+"Not enough messages yet to compare the ways: email.": [
+"Pas encore assez de messages pour comparer les moyens : email.",
+"لا توجد رسائل كافية بعد للمقارنة بين الوسائل: البريد."
+],
+"They usually write around {0} h ({1} times).": [
+"Il écrit d'habitude vers {0} h ({1} fois).",
+"يكتب عادة نحو الساعة {0} ({1} مرات)."
+],
+"No habit known yet: {0} h.": [
+"Aucune habitude connue pour l'instant : {0} h.",
+"لا عادة معروفة بعد: الساعة {0}."
+],
+"{0} {1} at {2}": [
+"{0} {1} à {2}",
+"{0} {1} على الساعة {2}"
+],
+"Presence": [
+"Présence",
+"الحضور"
+],
+"Questions answered": [
+"Questions répondues",
+"أسئلة مُجاب عنها"
+],
+"Score": [
+"Score",
+"النتيجة"
+],
+"Their week": [
+"Sa semaine",
+"أسبوعه"
+],
+"Still owes": [
+"Reste à payer",
+"المتبقي للدفع"
+],
+"The payment reminder went on {0} (only one is sent).": [
+"Le rappel de paiement est parti le {0} (un seul est envoyé).",
+"أُرسل تذكير الدفع يوم {0} (يُرسل تذكير واحد فقط)."
+],
+"The payment reminder goes by itself, once.": [
+"Le rappel de paiement part tout seul, une fois.",
+"يُرسل تذكير الدفع وحده، مرة واحدة."
+],
+"Answers to our messages": [
+"Réponses à nos messages",
+"الردود على رسائلنا"
+],
+"{0} to {1}, by {2}.": [
+"{0} à {1}, par {2}.",
+"{0} إلى {1}، عبر {2}."
+],
+"Send {0}; look again {1}.": [
+"Envoyer {0} ; revoir {1}.",
+"أرسل {0}؛ راجع {1}."
+],
+"Absent from the last {0} sessions.": [
+"Absent aux {0} dernières séances.",
+"غائب عن آخر {0} حصص."
+],
+"Present at {0} of the last {1} sessions.": [
+"Présent à {0} des {1} dernières séances.",
+"حاضر في {0} من آخر {1} حصص."
+],
+"“We missed you”": [
+"« Vous nous avez manqué »",
+"«افتقدناك»"
+],
+"Present at the next session ({0}).": [
+"Présent à la prochaine séance ({0}).",
+"حاضر في الحصة القادمة ({0})."
+],
+"Present at the next session.": [
+"Présent à la prochaine séance.",
+"حاضر في الحصة القادمة."
+],
+"Their questions are waiting": [
+"Ses questions l'attendent",
+"أسئلته في انتظاره"
+],
+"The questions of week {0} answered within two days.": [
+"Les questions de la semaine {0} répondues dans les deux jours.",
+"الإجابة عن أسئلة الأسبوع {0} خلال يومين."
+],
+"The waiting questions answered within two days.": [
+"Les questions en attente répondues dans les deux jours.",
+"الإجابة عن الأسئلة المنتظرة خلال يومين."
+],
+"{0} of their last {1} questions not answered.": [
+"{0} de ses {1} dernières questions sans réponse.",
+"{0} من آخر {1} أسئلة بلا إجابة."
+],
+"A moment to catch up": [
+"Un moment pour rattraper",
+"وقت للاستدراك"
+],
+"Their next score above 60% (now {0}%).": [
+"Son prochain score au-dessus de 60 % (aujourd'hui {0} %).",
+"نتيجته القادمة فوق 60% (الآن {0}%)."
+],
+"{0}% on average on their last {1} answers.": [
+"{0} % en moyenne sur ses {1} dernières réponses.",
+"{0}% في المتوسط على آخر {1} إجابات."
+],
+"Gave their last week {0}/5.": [
+"A donné {0}/5 à sa dernière semaine.",
+"أعطى أسبوعه الأخير {0}/5."
+],
+"Said the pace is too fast.": [
+"A dit que le rythme est trop rapide.",
+"قال إن الإيقاع سريع جدا."
+],
+"Ask what would help": [
+"Demander ce qui l'aiderait",
+"اسأله عما سيساعده"
+],
+"Their next week at 3/5 or more (now {0}/5).": [
+"Sa prochaine semaine à 3/5 ou plus (aujourd'hui {0}/5).",
+"أسبوعه القادم بـ 3/5 أو أكثر (الآن {0}/5)."
+],
+"Present at every one of the last {0} sessions.": [
+"Présent à chacune des {0} dernières séances.",
+"حاضر في كل واحدة من آخر {0} حصص."
+],
+"{0}% on average on their answers.": [
+"{0} % en moyenne sur ses réponses.",
+"{0}% في المتوسط على إجاباته."
+],
+"A word of “bravo”": [
+"Un mot de « bravo »",
+"كلمة «أحسنت»"
+],
+"Still present at every session next month.": [
+"Toujours présent à chaque séance le mois prochain.",
+"حاضر دائما في كل حصة الشهر القادم."
+],
+"Already {0} messages this week without an answer: a call may do better.": [
+"Déjà {0} messages cette semaine sans réponse : un appel ferait peut-être mieux.",
+"بالفعل {0} رسائل هذا الأسبوع دون رد: قد تكون المكالمة أفضل."
+],
+"May drop out": [
+"Risque d'abandon",
+"قد ينقطع"
+],
+"Monday": [
+"Lundi",
+"الإثنين"
+],
+"Tuesday": [
+"Mardi",
+"الثلاثاء"
+],
+"Wednesday": [
+"Mercredi",
+"الأربعاء"
+],
+"Thursday": [
+"Jeudi",
+"الخميس"
+],
+"Friday": [
+"Vendredi",
+"الجمعة"
+],
+"Saturday": [
+"Samedi",
+"السبت"
+],
+"Sunday": [
+"Dimanche",
+"الأحد"
+],
+"Email": [
+"Email",
+"البريد"
+],
+"The trainer": [
+"Le formateur",
+"المكوّن"
+],
+"Being followed and helped": [
+"Être suivi et aidé",
+"المتابعة والمساعدة"
+],
+"The content": [
+"Le contenu",
+"المحتوى"
+],
+"Practice and projects": [
+"Pratique et projets",
+"التطبيق والمشاريع"
+],
+"The atmosphere": [
+"L'ambiance",
+"الأجواء"
+],
+"Organisation": [
+"Organisation",
+"التنظيم"
+],
+"Work and career": [
+"Emploi et carrière",
+"العمل والمسار المهني"
+],
+"Worth the price": [
+"Le rapport qualité-prix",
+"القيمة مقابل السعر"
+],
+"Send “{0}” to {1}, by {2}.": [
+"Envoyer « {0} » à {1}, par {2}.",
+"أرسل «{0}» إلى {1}، عبر {2}."
 ]
 }

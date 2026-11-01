@@ -340,6 +340,7 @@ def ensure_sqlite_compatibility():
             "centre_website": "VARCHAR",
             "friend_look": "TEXT",
             "session_reminder_hours": "INTEGER DEFAULT 24",
+            "reply_rules": "TEXT",
         },
 
         "class_materials": {
@@ -383,6 +384,7 @@ def ensure_sqlite_compatibility():
             "channel": "VARCHAR DEFAULT 'email'",
             "admin_score": "INTEGER",
             "category": "VARCHAR",
+            "set_aside": "TEXT",
         },
 
         # Automatic emails are stored next to the admin's own templates.

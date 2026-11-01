@@ -78,6 +78,23 @@
   .ix-msg.out .ix-msg-foot { justify-content: flex-end; }
   .ix-msg-foot a, .ix-linkbtn { color: var(--primary-berry); font-weight: 700; text-decoration: none; background: none; border: 0; padding: 0; font-size: .72rem; }
   .ix-msg-foot a:hover, .ix-linkbtn:hover { text-decoration: underline; }
+  /* Set aside without an answer: why, "it needs an answer", and a few words with the assistant about it. */
+  .ix-aside-why { display:block; flex-basis:100%; color:#5b5670; line-height:1.45; }
+  .ix-aside-why b { margin:0 4px 0 3px; }
+  .ix-aside-why i { color:#8b7fb0; } .ix-aside-why b { color:#4d4863; }
+  .ix-aside-changed { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:6px; padding:6px 10px; border-radius:12px; background:#f3effc; color:#4d4863; font-size:.74rem; }
+  .ix-aside-changed i { color:#7c3aed; }
+  .ix-aside-chat { margin-top:8px; border:1px solid #e9e2f5; background:#fbf9ff; border-radius:16px; padding:10px; max-width:560px; }
+  .ix-aside-log { display:flex; flex-direction:column; gap:6px; max-height:260px; overflow-y:auto; margin-bottom:8px; }
+  .ix-aside-say { font-size:.8rem; line-height:1.45; padding:7px 11px; border-radius:14px; max-width:92%; white-space:pre-line; }
+  .ix-aside-say.is-bot { background:#fff; border:1px solid #ece6f6; color:#3f3a52; align-self:flex-start; border-bottom-left-radius:4px; }
+  .ix-aside-say.is-me { background:var(--primary-berry); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
+  .ix-aside-say.is-done { border-color:#c4b5fd; background:#f5f3ff; }
+  .ix-aside-form { display:flex; gap:6px; align-items:center; } .ix-aside-form .form-control { border-radius:999px; min-width:0; }
+  .ix-aside-form .ui-btn { flex:none; white-space:nowrap; display:inline-flex; gap:6px; align-items:center; }
+  .ix-aside-hints { display:flex; gap:5px; flex-wrap:wrap; margin-top:7px; }
+  .ix-aside-hints button { border:1px solid #e3dcef; background:#fff; border-radius:999px; padding:3px 10px; font-size:.72rem; font-weight:700; color:#5b5670; }
+  .ix-aside-hints button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
   .ix-sources { font-size: .74rem; color: #5b5470; margin-top: 6px; }
   .ix-sources summary { cursor: pointer; font-weight: 700; color: var(--muted); }
   .ix-sources ul { margin: 6px 0 0; padding-left: 18px; }
@@ -389,10 +406,33 @@
         {{ email_files.attachments(item.files) }}
         <div class="ix-msg-foot">
           {% if message.status == "processing" %}<span><i class="bi bi-hourglass-split"></i> The assistant is reading this email</span>
-          {% elif message.status == "no_reply" %}<span>No answer needed</span>
+          {% elif message.status == "no_reply" %}<span class="ix-aside-why"><i class="bi bi-moon-stars"></i><b>Set aside</b> {{ item.aside.why if item.aside else "" }}</span>
+            <form method="post" action="/inbox/message/{{ message.id }}/needs-answer" class="m-0"><button class="ix-linkbtn"><i class="bi bi-reply"></i> It needs an answer</button></form>
+            <button type="button" class="ix-linkbtn" data-aside-talk="{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-dots"></i> Talk about it</button>
           {% elif message.status == "needs_admin" %}<span class="text-warning-emphasis fw-semibold">Waiting for your answer</span>
           {% elif message.status == "replied" %}<span>Answered {{ message.replied_at | localdt if message.replied_at else "" }}</span>{% endif %}
         </div>
+        {% if item.changed %}
+        <div class="ix-aside-changed"><i class="bi bi-sliders"></i><span>{{ item.changed }}</span>
+          <form method="post" action="/inbox/rules/undo" class="m-0"><input type="hidden" name="thread" value="{{ message.thread_id }}"><button class="ix-linkbtn">Undo</button></form></div>
+        {% endif %}
+        {% if message.status == "no_reply" %}
+        <div class="ix-aside-chat" id="aside-{{ message.id }}" hidden>
+          <div class="ix-aside-log" aria-live="polite">
+            <div class="ix-aside-say is-bot">{% if item.aside and item.aside.change %}<span>If it needed an answer, say so. Then:</span> {{ item.aside.change }}{% else %}<span>If it needed an answer, say so: it comes back to you.</span>{% endif %}</div>
+          </div>
+          <form class="ix-aside-form" data-aside-form="{{ message.id }}">
+            <input class="form-control form-control-sm" name="text" maxlength="600" autocomplete="off" placeholder="“It needs an answer”, “why?”, “always answer them”, “undo”…" aria-label="What you want">
+            <button class="ui-btn primary" type="submit"><i class="bi bi-send"></i><span class="d-none d-sm-inline">Send</span></button>
+          </form>
+          <div class="ix-aside-hints">
+            <button type="button" data-aside-say="It needs an answer">It needs an answer</button>
+            <button type="button" data-aside-say="Why?">Why?</button>
+            <button type="button" data-aside-say="Always answer this person">Always answer this person</button>
+            <button type="button" data-aside-say="Show the rules">Show the rules</button>
+          </div>
+        </div>
+        {% endif %}
       </div>
       {% else %}
       {% set by_admin = message.author == "admin" %}
@@ -675,5 +715,60 @@
     }
   });
 })();
+</script>
+<span id="aside-failed" hidden>The answer did not arrive. Try again in a moment.</span>
+<script>
+  // A set-aside message: "Talk about it" opens a few words with the assistant, which explains and changes the rule when
+  // asked (the answer comes from the rules, never from the local model). The messages part is not refreshed meanwhile.
+  (function () {
+    const region = document.getElementById("live-inbox-messages");
+    function panelOf(id) { return document.getElementById("aside-" + id); }
+    function add(log, text, who, done) {
+      const line = document.createElement("div");
+      line.className = "ix-aside-say " + (who === "me" ? "is-me" : "is-bot") + (done ? " is-done" : "");
+      line.textContent = text;
+      log.appendChild(line);
+      log.scrollTop = log.scrollHeight;
+    }
+    async function send(id, text) {
+      const panel = panelOf(id);
+      if (!panel || !text.trim()) return;
+      const log = panel.querySelector(".ix-aside-log"), input = panel.querySelector("input[name=text]");
+      add(log, text, "me");
+      input.value = "";
+      try {
+        const response = await fetch("/inbox/message/" + id + "/talk", {method: "POST", headers: {"Content-Type": "application/json"},
+                                                                       body: JSON.stringify({text: text})});
+        const data = await response.json();
+        add(log, data.reply || "…", "bot", Boolean(data.changed));
+        if (data.reload) setTimeout(function () { delete region.dataset.liveDirty; window.location.reload(); }, 2600);
+      } catch (error) {
+        add(log, document.getElementById("aside-failed").textContent, "bot");
+      }
+    }
+    document.addEventListener("click", function (event) {
+      const opener = event.target.closest("[data-aside-talk]");
+      if (opener) {
+        const panel = panelOf(opener.dataset.asideTalk);
+        if (!panel) return;
+        panel.hidden = !panel.hidden;
+        opener.setAttribute("aria-expanded", String(!panel.hidden));
+        if (panel.hidden) delete region.dataset.liveDirty;
+        else { region.dataset.liveDirty = "1"; panel.querySelector("input[name=text]").focus(); }
+        return;
+      }
+      const hint = event.target.closest("[data-aside-say]");
+      if (hint) {
+        const panel = hint.closest(".ix-aside-chat");
+        if (panel) send(panel.id.replace("aside-", ""), hint.textContent.trim());
+      }
+    });
+    document.addEventListener("submit", function (event) {
+      const form = event.target.closest("[data-aside-form]");
+      if (!form) return;
+      event.preventDefault();
+      send(form.dataset.asideForm, form.elements.text.value);
+    });
+  })();
 </script>
 {% endblock %}

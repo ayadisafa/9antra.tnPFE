@@ -46,6 +46,8 @@ class CandidateEmail(Base):
     # What the message is about (services/message_categories.py): programs, planning, payment, registration, technical,
     # complaint or general; the orchestrator gives it to the agent of that category.
     category = Column(String, nullable=True, index=True)
+    # Why the assistant set this message aside without an answer (services/reply_rules.py), as JSON: {"rule", ...}.
+    set_aside = Column(Text, nullable=True)
 
     candidate = relationship("Candidate")
     registration = relationship("Registration")
