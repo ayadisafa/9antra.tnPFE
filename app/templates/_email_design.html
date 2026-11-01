@@ -1,0 +1,196 @@
+{# The design of an email beyond its look (services/email_layout.py, clean_design): a banner photo, up to three photos
+   side by side, its colour, the font, the button, the background, the corners, the alignment and the header's icon.
+   editor() draws the controls inside a form (one hidden "design" field holds them as JSON); assets() once per page.
+   Every change fires "input" on the form, so the preview of the page refreshes. #}
+
+{% macro editor(design, opts, files={}, open=False) %}
+{% set design = design or {} %}
+<details class="ed" data-design {{ 'open' if open or design }}>
+  <summary><i class="bi bi-palette2"></i><span>More design: banner, photos, colour, font, button</span>{% if design %}<span class="ed-on">Your design</span>{% endif %}</summary>
+  <input type="hidden" name="design" value="{{ design | tojson | forceescape }}" data-design-value>
+  <div class="ed-grid">
+    <div class="ed-part ed-wide">
+      <div class="ed-label">A banner across the top</div>
+      <div class="ed-banner" data-design-banner>
+        {% set banner = files.get(design.get('banner_id')) if design.get('banner_id') else None %}
+        <img alt="" data-design-banner-img {% if banner %}src="{{ banner.url }}"{% else %}hidden{% endif %}>
+        <button type="button" class="ed-btn" data-design-add="banner"><i class="bi bi-image"></i><span>{{ 'Change the banner' if banner else 'Add a banner' }}</span></button>
+        <button type="button" class="ed-btn ghost" data-design-remove="banner" {% if not banner %}hidden{% endif %}>Remove</button>
+        <input type="file" hidden accept="image/png,image/jpeg,image/gif,image/webp" data-design-file="banner" aria-label="Choose a banner photo">
+      </div>
+      <div class="ed-hint">A wide photo (about 1200 × 400): your centre, a class, an event.</div>
+    </div>
+    <div class="ed-part ed-wide">
+      <div class="ed-label">Photos side by side (up to 3)</div>
+      <div class="ed-gallery" data-design-gallery>
+        {% for file_id in design.get('gallery_ids') or [] %}{% set picture = files.get(file_id) %}{% if picture %}
+        <span class="ed-thumb" data-id="{{ file_id }}"><img alt="" src="{{ picture.url }}"><button type="button" data-design-unphoto aria-label="Remove this photo">&times;</button></span>
+        {% endif %}{% endfor %}
+        <button type="button" class="ed-add" data-design-add="gallery" aria-label="Add a photo"><i class="bi bi-plus-lg"></i></button>
+        <input type="file" hidden accept="image/png,image/jpeg,image/gif,image/webp" data-design-file="gallery" aria-label="Choose a photo">
+      </div>
+    </div>
+    <div class="ed-part">
+      <div class="ed-label">Colour</div>
+      <div class="ed-swatches">
+        <label class="ed-sw is-brand" title="The usual colour (Settings)"><input type="radio" name="_ed_accent" value="" {{ 'checked' if not design.get('accent') }}><span></span></label>
+        {% for colour in ["#7c3aed", "#0ea5e9", "#16a34a", "#f59e0b", "#e11d48", "#0f766e", "#1e293b"] %}
+        <label class="ed-sw" style="--c:{{ colour }};"><input type="radio" name="_ed_accent" value="{{ colour }}" {{ 'checked' if design.get('accent') == colour }}><span></span></label>
+        {% endfor %}
+        <input type="color" class="ed-pick" data-design-pick value="{{ design.get('accent') or '#a42c67' }}" aria-label="Another colour" title="Another colour">
+      </div>
+    </div>
+    {% for key, label, options in [("font", "Font", opts.fonts), ("button", "Button", opts.buttons), ("background", "Background", opts.backgrounds),
+                                   ("corners", "Corners", opts.corners), ("align", "Text", opts.aligns)] %}
+    <div class="ed-part">
+      <div class="ed-label">{{ label }}</div>
+      <div class="ed-chips">{% for value, name in options.items() %}
+        <label class="ed-chip"><input type="radio" name="_ed_{{ key }}" value="{{ value }}" {{ 'checked' if design.get(key) == value or (not design.get(key) and loop.first) }}><span {% if key == 'font' %}style="font-family:{{ opts.font_stacks[value] }};"{% endif %}>{{ name }}</span></label>{% endfor %}</div>
+    </div>
+    {% endfor %}
+    <div class="ed-part ed-wide">
+      <div class="ed-label">Icon of the header</div>
+      <div class="ed-chips">{% for value, pair in opts.icons.items() %}
+        <label class="ed-chip"><input type="radio" name="_ed_icon" value="{{ value }}" {{ 'checked' if design.get('icon', 'cap') == value }}><span class="ed-emoji" data-no-i18n>{{ pair[0] }}</span></label>{% endfor %}</div>
+    </div>
+  </div>
+  <div class="ed-foot"><button type="button" class="ed-btn ghost" data-design-reset><i class="bi bi-arrow-counterclockwise"></i>The usual design</button>
+    <span class="ed-status" data-design-status role="status"></span></div>
+</details>
+{% endmacro %}
+
+{% macro assets() %}
+<style>
+  .ed { margin-top:14px; border:1px solid var(--border-color); border-radius:16px; background:#fcfafd; }
+  .ed > summary { list-style:none; cursor:pointer; display:flex; gap:8px; align-items:center; padding:11px 14px; font-weight:800; font-size:.84rem; color:var(--ink-text); }
+  .ed > summary::-webkit-details-marker { display:none; }
+  .ed > summary i { color:var(--primary-berry); }
+  .ed > summary::after { content:"\F282"; font-family:"bootstrap-icons"; margin-inline-start:auto; transition:transform .2s ease; color:var(--muted); }
+  .ed[open] > summary::after { transform:rotate(180deg); }
+  .ed-on { font-size:.66rem; font-weight:800; border-radius:999px; padding:2px 8px; background:var(--berry-subtle); color:var(--primary-berry); }
+  .ed-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px 18px; padding:0 14px 12px; }
+  .ed-wide { grid-column:1 / -1; }
+  .ed-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin-bottom:6px; }
+  .ed-hint { font-size:.72rem; color:var(--muted); margin-top:4px; }
+  .ed-banner { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .ed-banner img { width:100%; max-height:120px; object-fit:cover; border-radius:12px; border:1px solid var(--border-color); }
+  .ed-btn { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:700; color:var(--ink-text); cursor:pointer; }
+  .ed-btn:hover { border-color:var(--primary-berry); color:var(--primary-berry); } .ed-btn.ghost { background:none; }
+  .ed-gallery { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .ed-thumb { position:relative; width:84px; height:62px; } .ed-thumb img { width:100%; height:100%; object-fit:cover; border-radius:10px; border:1px solid var(--border-color); }
+  .ed-thumb button { position:absolute; top:-7px; right:-7px; width:22px; height:22px; border-radius:50%; border:1px solid var(--border-color); background:#fff; font-size:.85rem; line-height:1; cursor:pointer; }
+  .ed-add { width:62px; height:62px; border-radius:12px; border:1.5px dashed var(--border-color); background:#fff; color:var(--primary-berry); font-size:1.2rem; cursor:pointer; }
+  .ed-add:hover { border-color:var(--primary-berry); }
+  .ed-swatches, .ed-chips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .ed-sw, .ed-chip { position:relative; } .ed-sw input, .ed-chip input { position:absolute; opacity:0; pointer-events:none; }
+  .ed-sw span { display:block; width:26px; height:26px; border-radius:50%; background:var(--c); border:2px solid #fff; box-shadow:0 0 0 1px var(--border-color); cursor:pointer; transition:transform .15s ease; }
+  .ed-sw.is-brand span { background:linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); }
+  .ed-sw input:checked + span { transform:scale(1.14); box-shadow:0 0 0 2px var(--primary-berry); }
+  .ed-pick { width:30px; height:30px; border-radius:50%; border:1px solid var(--border-color); padding:0; cursor:pointer; background:none; }
+  .ed-chip span { display:inline-flex; padding:5px 11px; border-radius:999px; border:1px solid var(--border-color); background:#fff; font-size:.76rem; font-weight:700; color:#5b5670; cursor:pointer; transition:border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease; }
+  .ed-chip span:hover { transform:translateY(-1px); border-color:var(--primary-berry); }
+  .ed-chip input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .ed-chip input:focus-visible + span, .ed-sw input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .ed-emoji { font-size:1rem; padding:3px 9px !important; }
+  .ed-foot { display:flex; gap:10px; align-items:center; padding:0 14px 12px; flex-wrap:wrap; }
+  .ed-status { font-size:.74rem; color:var(--muted); }
+  @media (max-width: 575px) { .ed-grid { grid-template-columns:minmax(0, 1fr); } }
+</style>
+<script>
+(function () {
+  if (window.EmailDesign) return;
+  function root(element) { return element.closest("[data-design]"); }
+  function read(box) {
+    var value = {};
+    try { value = JSON.parse(box.querySelector("[data-design-value]").value || "{}") || {}; } catch (error) { value = {}; }
+    return value;
+  }
+  function write(box, value) {
+    Object.keys(value).forEach(function (key) { if (value[key] === "" || value[key] == null || (Array.isArray(value[key]) && !value[key].length)) delete value[key]; });
+    box.querySelector("[data-design-value]").value = JSON.stringify(value);
+    var form = box.closest("form");
+    if (form) form.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function collect(box) {
+    var value = read(box);
+    ["font", "button", "background", "corners", "align", "icon"].forEach(function (key) {
+      var chosen = box.querySelector('input[name="_ed_' + key + '"]:checked');
+      value[key] = chosen ? chosen.value : "";
+    });
+    var accent = box.querySelector('input[name="_ed_accent"]:checked');
+    value.accent = accent ? accent.value : "";
+    value.gallery_ids = Array.prototype.map.call(box.querySelectorAll(".ed-thumb"), function (thumb) { return thumb.dataset.id; });
+    write(box, value);
+  }
+  async function upload(box, file) {
+    var status = box.querySelector("[data-design-status]");
+    status.textContent = "Adding the photo…";
+    var data = new FormData(); data.append("file", file); data.append("purpose", "image");
+    var response = await fetch("/inbox/files", { method: "POST", body: data });
+    var result = await response.json().catch(function () { return {}; });
+    if (!response.ok) { status.textContent = typeof result.detail === "string" ? result.detail : "The photo could not be added."; return null; }
+    status.textContent = "";
+    return result;
+  }
+  document.addEventListener("change", async function (event) {
+    var box = event.target.closest && root(event.target);
+    if (!box) return;
+    event.stopPropagation();
+    if (event.target.matches("[data-design-file]")) {
+      var file = event.target.files[0]; event.target.value = "";
+      if (!file) return;
+      var added = await upload(box, file);
+      if (!added) return;
+      var value = read(box);
+      if (event.target.dataset.designFile === "banner") {
+        value.banner_id = added.id;
+        var img = box.querySelector("[data-design-banner-img]"); img.src = added.url; img.hidden = false;
+        box.querySelector('[data-design-remove="banner"]').hidden = false;
+        write(box, value);
+      } else {
+        var gallery = box.querySelector("[data-design-gallery]");
+        if (gallery.querySelectorAll(".ed-thumb").length >= 3) { box.querySelector("[data-design-status]").textContent = "Three photos at most."; return; }
+        var thumb = document.createElement("span"); thumb.className = "ed-thumb"; thumb.dataset.id = added.id;
+        thumb.innerHTML = '<img alt=""><button type="button" data-design-unphoto aria-label="Remove this photo">&times;</button>';
+        thumb.querySelector("img").src = added.url;
+        gallery.insertBefore(thumb, gallery.querySelector("[data-design-add]"));
+        collect(box);
+      }
+      return;
+    }
+    if (event.target.matches("[data-design-pick]")) return;
+    collect(box);
+  }, true);
+  document.addEventListener("input", function (event) {
+    var box = event.target.closest && root(event.target);
+    if (!box || !event.target.matches("[data-design-pick]")) return;
+    event.stopPropagation();
+    var own = box.querySelector('input[name="_ed_accent"][data-picked]');
+    if (!own) { own = document.createElement("input"); own.type = "radio"; own.name = "_ed_accent"; own.hidden = true; own.dataset.picked = "1"; box.querySelector(".ed-swatches").appendChild(own); }
+    own.value = event.target.value; own.checked = true; collect(box);
+  }, true);
+  document.addEventListener("click", function (event) {
+    var box = event.target.closest && root(event.target);
+    if (!box) return;
+    var add = event.target.closest("[data-design-add]");
+    if (add) { box.querySelector('[data-design-file="' + add.dataset.designAdd + '"]').click(); return; }
+    if (event.target.closest('[data-design-remove="banner"]')) {
+      var value = read(box); delete value.banner_id;
+      var img = box.querySelector("[data-design-banner-img]"); img.hidden = true; img.removeAttribute("src");
+      event.target.closest("button").hidden = true; write(box, value); return;
+    }
+    var unphoto = event.target.closest("[data-design-unphoto]");
+    if (unphoto) { unphoto.closest(".ed-thumb").remove(); collect(box); return; }
+    if (event.target.closest("[data-design-reset]")) {
+      box.querySelectorAll(".ed-thumb").forEach(function (thumb) { thumb.remove(); });
+      var image = box.querySelector("[data-design-banner-img]"); image.hidden = true; image.removeAttribute("src");
+      box.querySelector('[data-design-remove="banner"]').hidden = true;
+      box.querySelectorAll('.ed-chips, .ed-swatches').forEach(function (group) { var first = group.querySelector("input"); if (first) first.checked = true; });
+      var icon = box.querySelector('input[name="_ed_icon"][value="cap"]'); if (icon) icon.checked = true;
+      write(box, {});
+    }
+  });
+  window.EmailDesign = { value: function (element) { var box = element && (element.matches("[data-design]") ? element : element.querySelector("[data-design]")); return box ? read(box) : {}; } };
+})();
+</script>
+{% endmacro %}

@@ -79,9 +79,9 @@
   </div>
   <div class="wk-box">
     <b><i class="bi bi-chat-square-text"></i>How candidates answer</b>
-    <p>{% if public_url_local %}This computer cannot be reached from outside: a link would not open for candidates.{% else %}Candidates can open a link to this application.{% endif %}</p>
+    <p>{% if public_url_local %}This computer cannot be reached from outside: a link would not open for candidates, so “Automatic” writes the questions in the email. With an address candidates can reach (Settings), they answer on their own page.{% else %}Candidates can open a link to this application.{% endif %} On the page, a clock counts the time on each question and the times they leave the page; you read it with their results.</p>
     <div class="wk-choices">
-      {% for value, label, hint in [('auto', 'Automatic', 'A link when candidates can reach the application, else the questions in the email'), ('email', 'In the email', 'They answer by replying: “1-B, 2-A”'), ('link', 'A link to a page', 'Needs an address candidates can reach')] %}
+      {% for value, label, hint in [('auto', 'Automatic', 'A link when candidates can reach the application, else the questions in the email'), ('email', 'In the email', 'They answer by replying: “1-B, 2-A”'), ('link', 'A link to a page', 'With the clock and the page left; needs an address candidates can reach')] %}
       <label class="wk-choice"><input type="radio" name="way" value="{{ value }}" {{ 'checked' if plan.way == value }}><span>{{ label }}<small>{{ hint }}</small></span></label>
       {% endfor %}
     </div>

@@ -101,15 +101,15 @@ def chat_with_assistant(payload: AssistantMessage, request: Request, db: Session
                     "reminder_id": rem.id,
                 })
 
-    # The answer comes from the application's own data, its guides and what it knows of the website
-    # (see chatbot); the language model is only its last resort.
-    from app.services import auth
+    # The orchestrator reads what the question is about and hands it to that agent; the answer comes from the
+    # application's own data, its guides and what it knows (see chatbot); the language model is only its last resort.
+    from app.services import auth, orchestrator
 
-    found = chatbot.answer(db, message, payload.history, user=auth.current(request), lang=payload.lang)
+    found = orchestrator.dispatch_chat(db, message, payload.history, user=auth.current(request), lang=payload.lang)
     return {"reply": found["reply"], "links": found.get("links") or [], "source": found.get("source"),
             "sources": found.get("sources") or [], "resources": found.get("resources") or [],
             "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations,
-            "schema": found.get("schema")}
+            "schema": found.get("schema"), "agent": found.get("agent"), "category": found.get("category")}
 
 
 @router.post("/auto-send")

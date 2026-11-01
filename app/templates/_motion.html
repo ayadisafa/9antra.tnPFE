@@ -8,6 +8,8 @@
   .mo-bar.is-on { opacity:1; } .mo-bar.is-on span { animation:moRun 8s cubic-bezier(.1,.7,.2,1) forwards; }
   @keyframes moRun { 0% { width:0; } 10% { width:35%; } 40% { width:70%; } 100% { width:92%; } }
   .ui-btn, .btn, .ui-pill, .st-mini, .tp-can-item { position:relative; overflow:hidden; }
+  /* A button that carries a count on its edge (the bell, the messages) shows it whole: no ripple is drawn on it. */
+  .ui-btn:has(> .badge), .btn:has(> .badge) { overflow:visible; }
   .mo-ripple { position:absolute; border-radius:50%; transform:scale(0); background:currentColor; opacity:.22; pointer-events:none; animation:moRipple .55s ease-out forwards; }
   @keyframes moRipple { to { transform:scale(1); opacity:0; } }
   @media (prefers-reduced-motion: reduce) { .mo-bar span { animation:none !important; width:60%; } .mo-ripple { display:none; } }
@@ -40,7 +42,7 @@
   // The ripple, from where the button was pressed.
   document.addEventListener("pointerdown", event => {
     const button = event.target.closest && event.target.closest(".ui-btn, .btn, .ui-pill, .st-mini, .tp-can-item");
-    if (!button || button.disabled) return;
+    if (!button || button.disabled || button.querySelector(":scope > .badge")) return;
     const box = button.getBoundingClientRect(), size = Math.max(box.width, box.height) * 2;
     const ripple = document.createElement("span");
     ripple.className = "mo-ripple";

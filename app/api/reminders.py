@@ -13,7 +13,7 @@ from app.models.admin_reminder import AdminReminder
 from app.models.candidate import Candidate
 from app.models.classgroup import ClassGroup, ClassStatus
 from app.models.program import Program
-from app.services import auth, email_composer, email_threads, reminders
+from app.services import auth, email_composer, email_layout, email_threads, reminder_board, reminders
 from app.services.email_layout import STYLES
 from app.services.schedule_utils import local_now, utc_to_local
 from app.template_context import notification_context
@@ -58,6 +58,8 @@ def reminders_page(request: Request, db: Session = Depends(get_db)):
             "styles": STYLES,
             "variables": email_composer.VARIABLES,
             "suggestions": reminders.suggestions(db),
+            "automatic": reminder_board.items(db),
+            "design_options": email_layout.design_options(),
             "upcoming": [_row(db, item) for item in reminders.upcoming(db)],
             "history": [_row(db, item) for item in reminders.history(db)],
             "default_date": tomorrow.strftime("%Y-%m-%d"),
@@ -76,6 +78,7 @@ class Preview(BaseModel):
     style: str = "brand"
     audience: str = ""
     to: str = ""
+    design: dict = {}
 
 
 @router.post("/reminders/preview")
@@ -85,7 +88,7 @@ def preview(payload: Preview, db: Session = Depends(get_db)):
     candidate, registration_id = people[0] if people else (None, None)
     rendered = email_composer.render(
         db, subject=payload.subject, title=payload.title, body=payload.body or "Votre message apparaît ici.",
-        style=payload.style, candidate=candidate, registration_id=registration_id, browser=True,
+        style=payload.style, candidate=candidate, registration_id=registration_id, browser=True, design=payload.design,
     )
     return {"html": rendered["html"], "subject": rendered["subject"], "people": len(people),
             "unknown": email_composer.unknown_variables(payload.subject, payload.title, payload.body)}
@@ -95,7 +98,7 @@ def preview(payload: Preview, db: Session = Depends(get_db)):
 def create(request: Request, audience: str = Form(""), to_candidate: str = Form(""), to_class: str = Form(""), to_program: str = Form(""),
            to_professor: str = Form(""), subject: str = Form(""), title: str = Form(""), body: str = Form(""), style: str = Form("brand"),
            when: str = Form("later"), date: str = Form(""), time: str = Form(""), channel: str = Form("email"),
-           repeat: str = Form("once"), until: str = Form(""), db: Session = Depends(get_db)):
+           repeat: str = Form("once"), until: str = Form(""), design: str = Form(""), db: Session = Depends(get_db)):
     target = {"candidate": to_candidate, "class": to_class, "program": to_program, "professor": to_professor}.get(audience, "")
     stop = None
     if until.strip() and repeat != "once":
@@ -118,7 +121,8 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
     user = auth.current(request)
     try:
         reminder = reminders.create(db, audience=audience, audience_id=target or None, subject=subject, title=title, body=body,
-                                    style=style, send_at=send_at, by=getattr(user, "name", None), channel=channel, repeat=repeat, until=stop)
+                                    style=style, send_at=send_at, by=getattr(user, "name", None), channel=channel, repeat=repeat, until=stop,
+                                    design=design or None)
     except ValueError as problem:
         return _back(error=str(problem), anchor="#new")
     if reminder.repeat == "absence":
@@ -127,6 +131,33 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
     moment = _t("within a minute") if send_at is None else utc_to_local(reminder.send_at).strftime("%d/%m %H:%M")
     rhythm = {"weekly": _t("then every week"), "monthly": _t("then every month")}.get(reminder.repeat, "")
     return _back(notice=_t("The reminder goes {0} {1} to {2} ({3}).", moment, rhythm, people, reminder.audience_label).replace("  ", " "))
+
+
+@router.post("/reminders/auto/{key}/switch")
+def switch_automatic(key: str, on: str = Form("1"), db: Session = Depends(get_db)):
+    try:
+        return _back(notice=reminder_board.switch(db, key, on == "1"), anchor="#auto")
+    except (ValueError, KeyError) as problem:
+        db.rollback()
+        return _back(error=str(problem), anchor="#auto")
+
+
+@router.post("/reminders/auto/{key}/timing")
+def time_automatic(key: str, value: str = Form(""), db: Session = Depends(get_db)):
+    try:
+        return _back(notice=reminder_board.set_timing(db, key, value), anchor="#auto")
+    except ValueError as problem:
+        db.rollback()
+        return _back(error=str(problem), anchor="#auto")
+
+
+@router.post("/reminders/auto/{key}/reset")
+def reset_automatic(key: str, db: Session = Depends(get_db)):
+    try:
+        return _back(notice=reminder_board.reset(db, key), anchor="#auto")
+    except ValueError as problem:
+        db.rollback()
+        return _back(error=str(problem), anchor="#auto")
 
 
 def _one(db: Session, reminder_id: str) -> AdminReminder:

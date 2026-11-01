@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Agents · 9antra{% endblock %}
+{% block page_title %}Agents{% endblock %}
+{% block live_topics %}inbox{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .ag-flow { display:grid; grid-template-columns:minmax(0, .9fr) 44px minmax(0, .8fr) 44px minmax(0, 1.6fr) 44px minmax(0, .9fr); align-items:center; gap:0; background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:20px; margin-bottom:22px; }
+  .ag-col { display:grid; gap:8px; min-width:0; }
+  .ag-col-h { font-size:.66rem; font-weight:800; letter-spacing:.07em; text-transform:uppercase; color:#9b95b0; margin-bottom:2px; }
+  .ag-node { display:flex; gap:9px; align-items:center; padding:8px 11px; border-radius:14px; border:1px solid var(--border-color); background:#fcfafd; font-size:.78rem; font-weight:700; color:var(--ink-text); min-width:0; }
+  .ag-node i { color:var(--primary-berry); font-size:1rem; flex:none; }
+  .ag-node b { margin-inline-start:auto; font-size:.8rem; color:var(--muted); }
+  .ag-node span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .ag-brain { display:grid; place-items:center; text-align:center; gap:8px; padding:18px 10px; border-radius:22px; background:linear-gradient(160deg, var(--primary-berry), var(--berry-dark)); color:#fff; position:relative; }
+  .ag-brain i { font-size:2rem; } .ag-brain b { font-size:.92rem; } .ag-brain small { font-size:.72rem; opacity:.85; line-height:1.35; }
+  .ag-brain::before { content:""; position:absolute; inset:-5px; border-radius:26px; border:2px solid var(--primary-berry); opacity:0; }
+  .ag-mini { display:grid; grid-template-columns:repeat(auto-fill, minmax(130px, 1fr)); gap:6px; }
+  .ag-mini a { display:flex; gap:6px; align-items:center; padding:6px 9px; border-radius:12px; border:1px solid var(--border-color); font-size:.74rem; font-weight:700; color:var(--ink-text); text-decoration:none; background:#fff; transition:border-color .15s ease, transform .15s ease, box-shadow .2s ease; min-width:0; }
+  .ag-mini a i { color:var(--agent); } .ag-mini a span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ag-mini a:hover, .ag-mini a.is-lit { border-color:var(--agent); transform:translateY(-2px); box-shadow:0 8px 18px -10px var(--agent); }
+  .ag-arrow { height:2px; position:relative; background:repeating-linear-gradient(90deg, var(--primary-berry) 0 7px, transparent 7px 13px); opacity:.55; }
+  .ag-arrow::after { content:""; position:absolute; right:-2px; top:-5px; border:6px solid transparent; border-left:8px solid var(--primary-berry); }
+  body.dir-rtl .ag-arrow::after, [dir="rtl"] .ag-arrow::after { right:auto; left:-2px; border-left:6px solid transparent; border-right:8px solid var(--primary-berry); }
+  @media (prefers-reduced-motion: no-preference) {
+    .ag-arrow { animation:agFlow 1.1s linear infinite; background-size:13px 2px; }
+    .ag-brain::before { animation:agPulse 2.4s ease-out infinite; }
+    .ag-brain i { animation:agThink 3.2s ease-in-out infinite; }
+    .ag-card { animation:agIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 40ms); }
+    .ag-card:hover .ag-ico i, .ag-card.is-lit .ag-ico i { animation:agWiggle .7s ease-in-out; }
+  }
+  @keyframes agFlow { from { background-position:0 0; } to { background-position:13px 0; } }
+  @keyframes agPulse { 0% { opacity:.6; transform:scale(.96); } 100% { opacity:0; transform:scale(1.08); } }
+  @keyframes agThink { 0%, 100% { transform:rotate(0) scale(1); } 30% { transform:rotate(-8deg) scale(1.06); } 60% { transform:rotate(6deg); } }
+  @keyframes agIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes agWiggle { 0%, 100% { transform:rotate(0); } 25% { transform:rotate(-12deg) scale(1.1); } 60% { transform:rotate(9deg); } }
+
+  .ag-try { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px 20px; margin-bottom:22px; }
+  .ag-try form { display:flex; gap:8px; flex-wrap:wrap; }
+  .ag-try input { flex:1 1 260px; min-width:0; border:1.5px solid var(--border-color); border-radius:14px; padding:9px 13px; font-size:.88rem; }
+  .ag-try input:focus { outline:none; border-color:var(--primary-berry); }
+  .ag-examples { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .ag-examples button { border:1px dashed var(--border-color); background:#fcfafd; border-radius:999px; padding:4px 11px; font-size:.74rem; font-weight:700; color:#5b5670; cursor:pointer; }
+  .ag-examples button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .ag-result { margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:.84rem; min-height:30px; }
+  .ag-pill { display:inline-flex; gap:6px; align-items:center; border-radius:999px; padding:4px 12px; font-weight:800; font-size:.78rem; color:var(--c); background:color-mix(in srgb, var(--c) 12%, #fff); }
+  .ag-why { color:var(--muted); font-size:.78rem; }
+
+  .ag-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; margin-bottom:24px; }
+  .ag-card { background:#fff; border:1px solid var(--border-color); border-top:4px solid var(--agent); border-radius:20px; padding:16px; display:flex; flex-direction:column; gap:8px; min-width:0; scroll-margin-top:90px; transition:box-shadow .2s ease, transform .2s ease; }
+  .ag-card.is-lit { box-shadow:0 0 0 3px color-mix(in srgb, var(--agent) 35%, transparent), var(--shadow-soft); transform:translateY(-3px); }
+  .ag-card-h { display:flex; gap:11px; align-items:center; }
+  .ag-ico { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; flex:none; background:color-mix(in srgb, var(--agent) 13%, #fff); color:var(--agent); font-size:1.2rem; }
+  .ag-card h3 { font-size:.95rem; font-weight:800; margin:0; color:var(--ink-text); }
+  .ag-card p { font-size:.8rem; color:#4a445e; margin:0; line-height:1.5; }
+  .ag-reads { display:flex; gap:4px; flex-wrap:wrap; } .ag-reads span { font-size:.67rem; font-weight:700; border-radius:999px; padding:2px 8px; background:#f3eff9; color:#5b5470; }
+  .ag-count { display:flex; gap:8px; align-items:center; font-size:.74rem; color:var(--muted); font-weight:700; margin-top:auto; }
+  .ag-count .ui-bar { flex:1; } .ag-count .ui-bar > span { display:block; height:100%; background:var(--agent); border-radius:99px; }
+  .ag-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.7fr); gap:16px; align-items:start; }
+  .ag-row { display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:10px; align-items:center; padding:9px 0; border-top:1px solid var(--border-color); font-size:.8rem; }
+  .ag-row:first-child { border-top:0; }
+  .ag-row .ag-asked { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#4a445e; }
+  .ag-row .ag-meta { font-size:.7rem; color:var(--muted); }
+  .ag-outcome { font-size:.68rem; font-weight:800; border-radius:999px; padding:2px 9px; background:#f1eff5; color:#5b5670; white-space:nowrap; }
+  .ag-outcome.sent, .ag-outcome.answered { background:#e8f7ee; color:#15803d; } .ag-outcome.admin { background:#fdecef; color:#be123c; }
+  .ag-outcome.draft { background:#fff6e6; color:#b45309; }
+  .ag-cat { display:flex; gap:8px; align-items:center; font-size:.8rem; padding:6px 0; } .ag-cat i { color:var(--c); } .ag-cat .ui-bar { flex:1; } .ag-cat .ui-bar > span { display:block; height:100%; background:var(--c); }
+  @media (max-width: 1199px) { .ag-flow { grid-template-columns:minmax(0, 1fr); gap:10px; } .ag-arrow { width:2px; height:26px; margin:0 auto; background:repeating-linear-gradient(180deg, var(--primary-berry) 0 7px, transparent 7px 13px); }
+    .ag-arrow::after { right:-5px; top:auto; bottom:-4px; border:6px solid transparent; border-top:8px solid var(--primary-berry); } }
+  @media (max-width: 991px) { .ag-two { grid-template-columns:minmax(0, 1fr); } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Agents</h2>
+    <p>Every question in the assistant's window and every email, WhatsApp message or SMS is read for what it is about, then handled by the agent of that subject. A complaint always comes to you; the local model never chooses the agent.</p>
+  </div>
+  <nav class="ui-pills" aria-label="Period">
+    {% for days, label in [(1, 'Today'), (7, '7 days'), (30, '30 days'), (90, '90 days')] %}<a class="ui-pill {{ 'active' if view.days == days }}" href="/assistant/agents?days={{ days }}">{{ label }}</a>{% endfor %}
+  </nav>
+</div>
+
+<section class="ag-flow" aria-label="How a request travels">
+  <div class="ag-col">
+    <div class="ag-col-h">Where it comes from</div>
+    {% for channel in view.channels %}<div class="ag-node"><i class="bi {{ channel.icon }}"></i><span>{{ channel.label }}</span><b>{{ channel.count }}</b></div>{% endfor %}
+  </div>
+  <div class="ag-arrow" aria-hidden="true"></div>
+  <div class="ag-brain"><i class="bi bi-diagram-3-fill"></i><b>The orchestrator</b><small>Reads the category with word lists, in French, English, Tunisian and Arabic</small></div>
+  <div class="ag-arrow" aria-hidden="true"></div>
+  <div class="ag-col">
+    <div class="ag-col-h">The agents</div>
+    <div class="ag-mini">{% for agent in view.agents %}<a href="#{{ agent.key }}" data-agent="{{ agent.key }}" style="--agent:{{ agent.colour }};"><i class="bi {{ agent.icon }}"></i><span>{{ agent.name }}</span></a>{% endfor %}</div>
+  </div>
+  <div class="ag-arrow" aria-hidden="true"></div>
+  <div class="ag-col">
+    <div class="ag-col-h">What came of it</div>
+    {% set totals = {} %}
+    {% for agent in view.agents %}{% for outcome in agent.outcomes %}{% set _ = totals.update({outcome.key: totals.get(outcome.key, 0) + outcome.count}) %}{% endfor %}{% endfor %}
+    <div class="ag-node"><i class="bi bi-check2-circle" style="color:#16a34a;"></i><span>Answered</span><b>{{ totals.get('answered', 0) + totals.get('sent', 0) }}</b></div>
+    <div class="ag-node"><i class="bi bi-pencil" style="color:#b45309;"></i><span>A draft for you</span><b>{{ totals.get('draft', 0) }}</b></div>
+    <div class="ag-node"><i class="bi bi-person-raised-hand" style="color:#be123c;"></i><span>Brought to you</span><b>{{ totals.get('admin', 0) }}</b></div>
+    <div class="ag-node"><i class="bi bi-dash-circle"></i><span>No answer</span><b>{{ totals.get('none', 0) }}</b></div>
+  </div>
+</section>
+
+<section class="ag-try" id="try">
+  <div class="ui-card-title mb-2"><i class="bi bi-magic"></i>Try a sentence</div>
+  <form id="ag-form"><input id="ag-input" maxlength="500" placeholder="Write what a candidate or you could ask…" aria-label="A sentence to sort"><button class="ui-btn primary"><i class="bi bi-signpost-2"></i>Which agent?</button></form>
+  <div class="ag-examples">{% for example in examples %}<button type="button" data-example>{{ example }}</button>{% endfor %}</div>
+  <div class="ag-result" id="ag-result" aria-live="polite"><span class="ag-why">Nothing is answered or sent: it only shows where the sentence would go, and why.</span></div>
+</section>
+
+<div class="ag-grid">
+  {% for agent in view.agents %}
+  <article class="ag-card" id="{{ agent.key }}" style="--agent:{{ agent.colour }}; --i:{{ loop.index0 }};">
+    <div class="ag-card-h"><span class="ag-ico"><i class="bi {{ agent.icon }}"></i></span><h3>{{ agent.name }}</h3></div>
+    <p>{{ agent.does }}</p>
+    <div class="ag-reads">{% for item in agent.reads %}<span>{{ item }}</span>{% endfor %}</div>
+    <div class="ag-count"><span>{{ agent.total }}</span><div class="ui-bar"><span style="width:{{ agent.pct }}%;"></span></div>
+      {% for outcome in agent.outcomes[:2] %}<span class="ag-outcome {{ outcome.key }}">{{ outcome.label }} {{ outcome.count }}</span>{% endfor %}</div>
+  </article>
+  {% endfor %}
+</div>
+
+<div class="ag-two">
+  <section class="ui-card">
+    <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-tags"></i>What the messages are about</div><div class="ui-card-sub">The categories of the requests of the period</div></div></div>
+    {% set most = (view.categories | map(attribute='count') | max) if view.categories else 1 %}
+    {% for category in view.categories %}
+    <div class="ag-cat" style="--c:{{ category.colour }};"><i class="bi {{ category.icon }}"></i><span style="min-width:120px;">{{ category.label }}</span><div class="ui-bar"><span style="width:{{ (category.count / most * 100) | round }}%;"></span></div><b>{{ category.count }}</b></div>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-tags"></i><strong>Nothing yet</strong>The categories show as soon as questions and messages arrive.</div>
+    {% endfor %}
+  </section>
+  <section class="ui-card" data-live-region id="latest">
+    <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-clock-history"></i>The latest requests</div><div class="ui-card-sub">Who handled each one, and what came of it</div></div></div>
+    {% for run in view.latest %}
+    <div class="ag-row">
+      <span class="ag-pill" style="--c:{{ run.agent.colour }};" title="{{ run.category.label }}{% if run.why %}: {{ run.why | join(', ') }}{% endif %}"><i class="bi {{ run.agent.icon }}"></i>{{ run.agent.name }}</span>
+      <div style="min-width:0;"><div class="ag-asked" data-no-i18n>{{ run.asked }}</div>
+        <div class="ag-meta"><i class="bi {{ run.channel[1] }}"></i> {{ run.channel[0] }} · {{ run.category.label }} · {{ run.at.strftime('%d/%m %H:%M') }}{% if run.took_ms is not none %} · {{ run.took_ms }} ms{% endif %}</div></div>
+      {% if run.ref %}<a class="ag-outcome {{ run.outcome_key }}" href="/inbox?message={{ run.ref }}">{{ run.outcome }}</a>{% else %}<span class="ag-outcome {{ run.outcome_key }}">{{ run.outcome }}</span>{% endif %}
+    </div>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-diagram-3"></i><strong>No request yet</strong>Ask the assistant something, or wait for the next message: it shows here with its agent.</div>
+    {% endfor %}
+  </section>
+</div>
+
+<script>
+(function () {
+  var form = document.getElementById("ag-form"), input = document.getElementById("ag-input"), result = document.getElementById("ag-result");
+  function light(key) {
+    document.querySelectorAll(".ag-card, .ag-mini a").forEach(function (item) { item.classList.toggle("is-lit", (item.id || item.dataset.agent) === key); });
+  }
+  function show(data) {
+    result.innerHTML = "";
+    var category = document.createElement("span"); category.className = "ag-pill"; category.style.setProperty("--c", data.category.colour);
+    category.innerHTML = '<i class="bi ' + data.category.icon + '"></i>'; category.append(document.createTextNode(data.category.label));
+    var arrow = document.createElement("i"); arrow.className = "bi bi-arrow-right";
+    var agent = document.createElement("a"); agent.className = "ag-pill"; agent.href = "#" + data.agent.key; agent.style.setProperty("--c", data.agent.colour);
+    agent.innerHTML = '<i class="bi ' + data.agent.icon + '"></i>'; agent.append(document.createTextNode(data.agent.name));
+    var why = document.createElement("span"); why.className = "ag-why";
+    why.textContent = (data.category.why || []).length ? "← " + data.category.why.join(", ") : "";
+    result.append(category, arrow, agent, why);
+    light(data.agent.key);
+  }
+  form.addEventListener("submit", function (event) {
+    event.preventDefault();
+    var text = input.value.trim(); if (!text) return;
+    fetch("/assistant/agents/route", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: text }) })
+      .then(function (answer) { return answer.ok ? answer.json() : null; }).then(function (data) { if (data) show(data); }).catch(function () {});
+  });
+  document.querySelectorAll("[data-example]").forEach(function (button) {
+    button.addEventListener("click", function () { input.value = button.textContent; form.requestSubmit(); });
+  });
+})();
+</script>
+{% endblock %}

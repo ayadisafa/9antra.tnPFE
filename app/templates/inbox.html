@@ -240,7 +240,7 @@
   </div>
 </div>
 
-{% set keep_filters = ("&q=" ~ (search | urlencode) if search else "") ~ ("&candidate=" ~ candidate_filter.id if candidate_filter else "") %}
+{% set keep_filters = ("&q=" ~ (search | urlencode) if search else "") ~ ("&candidate=" ~ candidate_filter.id if candidate_filter else "") ~ ("&category=" ~ current_category if current_category else "") %}
 {% set keep = keep_filters ~ ("&view=all" if whole_history else "") %}
 
 {% if counts.to_send %}
@@ -259,8 +259,23 @@
       <a class="ix-filter {% if key == current_filter %}active{% endif %}" href="/inbox?filter={{ key }}{{ keep }}">{{ label }}{% if counts[key] is defined %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
       {% endfor %}
     </div>
+    {% if categories %}
+    <div class="ix-cats" aria-label="What the messages are about">
+      <a class="ix-cat {{ 'is-on' if not current_category }}" href="/inbox?filter={{ current_filter }}{{ ('&q=' ~ (search | urlencode)) if search }}"><i class="bi bi-grid"></i>All subjects</a>
+      {% for item in categories %}<a class="ix-cat {{ 'is-on' if current_category == item.key }}" style="--c:{{ item.colour }};" href="/inbox?filter={{ current_filter }}&category={{ item.key }}{{ ('&q=' ~ (search | urlencode)) if search }}"><i class="bi {{ item.icon }}"></i>{{ item.label }}<span class="n">{{ item.count }}</span></a>{% endfor %}
+    </div>
+    <style>
+      .ix-cats { display:flex; gap:5px; padding:0 14px 10px; overflow-x:auto; scrollbar-width:thin; }
+      .ix-cat { flex:none; display:inline-flex; gap:5px; align-items:center; font-size:.7rem; font-weight:700; padding:4px 10px; border-radius:999px; border:1px solid var(--border-color); color:#6b6180; text-decoration:none; white-space:nowrap; transition:border-color .15s ease, color .15s ease, background .15s ease; }
+      .ix-cat i { color:var(--c, var(--primary-berry)); } .ix-cat .n { opacity:.7; }
+      .ix-cat:hover { border-color:var(--c, var(--primary-berry)); color:var(--c, var(--primary-berry)); }
+      .ix-cat.is-on { background:var(--c, var(--primary-berry)); border-color:var(--c, var(--primary-berry)); color:#fff; } .ix-cat.is-on i { color:#fff; }
+      .ix-catchip { display:inline-flex; gap:4px; align-items:center; font-size:.66rem; font-weight:800; border-radius:999px; padding:2px 8px; color:var(--c); background:color-mix(in srgb, var(--c) 12%, #fff); white-space:nowrap; }
+    </style>
+    {% endif %}
     <form class="ix-search" method="get" action="/inbox">
       <input type="hidden" name="filter" value="{{ current_filter }}">
+      {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
       {% if candidate_filter %}<input type="hidden" name="candidate" value="{{ candidate_filter.id }}">{% endif %}
       <input class="form-control form-control-sm" type="search" name="q" value="{{ search }}" placeholder="Search a candidate or a subject" aria-label="Search discussions">
     </form>
@@ -283,7 +298,7 @@
           </div>
           <div class="ix-row-subject">{{ thread.subject or "No subject" }}</div>
           <div class="ix-row-snippet">{{ thread.last_snippet or "" }}</div>
-          <div class="mt-1 d-flex flex-wrap gap-1">{{ thread_chip(thread) }}</div>
+          <div class="mt-1 d-flex flex-wrap gap-1">{% set sorted_as = thread_categories.get(thread.id) %}{% if sorted_as and sorted_as.key != 'general' %}<span class="ix-catchip" style="--c:{{ sorted_as.colour }};"><i class="bi {{ sorted_as.icon }}"></i>{{ sorted_as.label }}</span>{% endif %}{{ thread_chip(thread) }}</div>
         </div>
       </a>
       {% else %}
@@ -364,6 +379,7 @@
           <span class="ix-msg-who">{% if message.channel == "whatsapp" %}<i class="bi bi-whatsapp ix-wa"></i> {% endif %}{{ selected.candidate.full_name or selected.candidate.email }}</span>
           <span>{{ message.received_at | localdt }}</span>
           {% if message.language %}<span class="ix-chip quiet">{{ language_labels.get(message.language, message.language) }}</span>{% endif %}
+          {% if message.category %}{% set sorted_as = category_of(message.category) %}<span class="ix-catchip" style="--c:{{ sorted_as.colour }};" title="What it is about: the agent of this subject handled it"><i class="bi {{ sorted_as.icon }}"></i>{{ sorted_as.label }}</span>{% endif %}
           {% if message.intent and message.intent in intent_labels %}<span class="ix-chip quiet">{{ intent_labels[message.intent] }}</span>{% endif %}
           {% if message.emotions %}{% import "_emoji.html" as emo %}{% set felt = message.emotions | fromjson %}{% for item in felt.emotions[:3] %}<span class="ix-chip {{ 'bad' if item.key in ('frustrated', 'disappointed') else 'warn' if item.key in ('worried', 'confused', 'urgent') else 'ok' }}" title="Words that showed it: {{ item.words | join(', ') }}. {{ felt.how }}">{{ emo.feel(item.key) }} {{ item.label }}</span>{% endfor %}
           {% elif message.sentiment in ("concerned", "frustrated") %}<span class="ix-chip bad">{{ message.sentiment | capitalize }}</span>{% endif %}
@@ -516,6 +532,10 @@
         <label class="ix-reword" title="Your words are reworded and sent at once. When the rewording changes a figure, it waits for you instead.">
           <input type="checkbox" name="reword" value="true" id="reword-send" {{ 'checked' if reword_default }}>
           <span><b>Reword and send at once</b> · no waiting: “Send answer” rewords your words in the language chosen, then sends. When the rewording would change a figure, it waits for your eye. Untick to read it first.</span>
+        </label>
+        <label class="ix-reword" title="Your words are kept as information every assistant uses (email, WhatsApp, the assistant's window), in any language.">
+          <input type="checkbox" name="remember" value="true" id="reply-remember">
+          <span><b>Keep this information for the next ones</b> · what you wrote becomes something every assistant knows, for the next candidates who ask (What the assistant knows › What you told the assistants).</span>
         </label>
         <style>.ix-reword { display:flex; gap:8px; align-items:flex-start; font-size:.8rem; color:#5b5470; margin-top:8px; background:#faf8fd; border-radius:12px; padding:8px 10px; }
                .ix-reword input { margin-top:3px; accent-color:var(--primary-berry); } .ix-reword b { color:var(--ink-text); }</style>

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% import "_email_design.html" as design_ui %}
 
 {% block title %}Reminders · 9antra{% endblock %}
 {% block page_title %}Reminders{% endblock %}
@@ -42,11 +43,111 @@
 {% include "_flash.html" %}
 <div class="ui-head">
   <div>
-    <h2>Your own reminders</h2>
-    <p>Remind one candidate, a class, a program or everyone about anything, now or at the time you choose. The automatic reminders (payment, first session, level check) keep working by themselves; these are the ones you decide.</p>
+    <h2>Reminders</h2>
+    <p>Every reminder the application sends by itself, and your own: switch each on or off, change when it goes, rewrite its words and its design, or put the original back.</p>
   </div>
-  <div class="ui-actions"><a class="ui-btn primary" href="#new"><i class="bi bi-plus-lg"></i>New reminder</a></div>
+  <div class="ui-actions"><a class="ui-btn" href="#auto"><i class="bi bi-bell"></i>Every reminder</a><a class="ui-btn primary" href="#new"><i class="bi bi-plus-lg"></i>New reminder</a></div>
 </div>
+
+<section class="rb" id="auto">
+  <h3 class="rm-h"><i class="bi bi-bell-fill rb-bell"></i>Every reminder the application sends by itself</h3>
+  <p class="rm-p">Switch each one on or off, change when it goes, rewrite its words and its design (a banner, photos, your colours), or put the original back: its words, its design and its timing.</p>
+  <div class="rb-grid">
+    {% for item in automatic %}
+    <article class="rb-card {{ 'is-on' if item.on else 'is-off' }}" id="auto-{{ item.key }}" style="--i:{{ loop.index0 }};">
+      <div class="rb-top">
+        <span class="rb-ico m-{{ item.motion }}" aria-hidden="true"><i class="bi {{ item.icon }}"></i></span>
+        <div class="rb-name"><b>{{ item.name }}</b>
+          <span class="rb-who"><i class="bi {{ 'bi-people-fill' if item.who == 'Candidates' else 'bi-mortarboard-fill' }}"></i>{{ item.who }}</span></div>
+        {% if item.switchable %}
+        <form method="post" action="/reminders/auto/{{ item.key }}/switch" class="rb-switch-form">
+          <input type="hidden" name="on" value="{{ '0' if item.on else '1' }}">
+          <button class="rb-switch" role="switch" aria-checked="{{ 'true' if item.on else 'false' }}" aria-label="{{ item.name }}: {{ 'switch it off' if item.on else 'switch it on' }}"
+                  title="{{ 'On: click to switch it off' if item.on else 'Off: click to switch it on' }}"><span></span></button>
+        </form>
+        {% else %}<span class="rb-always" title="It cannot be switched off">Always on</span>{% endif %}
+      </div>
+      <p class="rb-what">{{ item.what }}</p>
+      <div class="rb-when">
+        <i class="bi bi-clock-history"></i>
+        {% if item.timing %}
+        <form method="post" action="/reminders/auto/{{ item.key }}/timing" class="rb-time">
+          {% if item.timing.kind == 'hours' or item.timing.single %}
+          <input type="number" name="value" min="{{ item.timing.least }}" max="{{ item.timing.most }}" value="{{ item.timing.value }}" aria-label="{{ item.timing.after }}">
+          {% else %}
+          <input type="text" name="value" value="{{ item.timing.value }}" inputmode="numeric" pattern="[0-9 ,;]+" maxlength="40" aria-label="{{ item.timing.after }}" style="width:110px;">
+          {% endif %}
+          <span>{{ item.timing.after }}</span>
+          <button class="rb-save" aria-label="Save the timing"><i class="bi bi-check2"></i></button>
+        </form>
+        {% else %}<span>{{ item.when }}</span>{% endif %}
+      </div>
+      <div class="rb-chips">
+        {% if item.changed %}<span class="ui-chip info"><i class="bi bi-pencil"></i>Changed by you</span>{% endif %}
+        {% if item.designed %}<span class="ui-chip info"><i class="bi bi-palette2"></i>Your design</span>{% endif %}
+        {% if item.needs_mail and item.on %}<span class="ui-chip warn">Email to set up</span>{% endif %}
+        {% if item.sent is not none %}<span class="ui-chip"><i class="bi bi-send-check"></i>{{ item.sent }} <span>in 30 days</span></span>{% endif %}
+      </div>
+      <div class="rb-foot">
+        <a class="ui-btn sm" href="{{ item.edit }}"><i class="bi bi-brush"></i>{{ 'Its words and its design' if item.key not in ('resources', 'course_questions') else 'Change it' }}</a>
+        {% if item.key != 'course_questions' %}
+        <form method="post" action="/reminders/auto/{{ item.key }}/reset" data-confirm="Put this reminder back as it was at first (its words, its design and its timing)?">
+          <button class="ui-btn ghost sm"><i class="bi bi-arrow-counterclockwise"></i>The original</button></form>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+<style>
+  .rb { margin-bottom:30px; scroll-margin-top:90px; }
+  .rb-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:14px; }
+  .rb-card { position:relative; display:flex; flex-direction:column; gap:9px; background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:15px 16px; min-width:0; overflow:hidden; scroll-margin-top:90px; transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+  .rb-card::before { content:""; position:absolute; inset:0 0 auto; height:4px; background:linear-gradient(90deg, var(--primary-berry), var(--accent-gold-dark, #d97706)); opacity:.9; transition:opacity .2s ease; }
+  .rb-card:hover { box-shadow:var(--shadow-soft); transform:translateY(-2px); }
+  .rb-card.is-off { background:#fbfafd; } .rb-card.is-off::before { opacity:.15; }
+  .rb-top { display:flex; gap:11px; align-items:center; }
+  .rb-ico { width:44px; height:44px; border-radius:15px; display:grid; place-items:center; flex:none; font-size:1.25rem; color:var(--primary-berry); background:var(--berry-subtle); }
+  .rb-card.is-off .rb-ico { color:#9b95b0; background:#f1eff5; filter:grayscale(1); }
+  .rb-name { min-width:0; flex:1; } .rb-name b { display:block; font-size:.9rem; color:var(--ink-text); line-height:1.25; }
+  .rb-who { display:inline-flex; gap:4px; align-items:center; font-size:.68rem; font-weight:800; color:var(--muted); }
+  .rb-what { font-size:.8rem; color:#4a445e; line-height:1.5; margin:0; }
+  .rb-when { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.8rem; font-weight:700; color:var(--ink-text); background:var(--gold-subtle, #fff7e8); border-radius:12px; padding:7px 10px; }
+  .rb-when > i { color:var(--accent-gold-dark, #b45309); }
+  .rb-time { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:0; }
+  .rb-time input { width:72px; border:1px solid var(--border-color); border-radius:10px; padding:3px 8px; font-weight:700; font-size:.82rem; background:#fff; }
+  .rb-time { flex-wrap:nowrap; min-width:0; flex:1; } .rb-time span { font-weight:600; color:#5b5670; min-width:0; font-size:.76rem; line-height:1.3; } .rb-save { flex:none; }
+  .rb-save { width:28px; height:28px; border-radius:50%; border:0; background:var(--primary-berry); color:#fff; display:grid; place-items:center; cursor:pointer; }
+  .rb-chips { display:flex; gap:5px; flex-wrap:wrap; } .rb-chips:empty { display:none; }
+  .rb-foot { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:auto; } .rb-foot form { margin:0; }
+  .rb-switch-form { margin:0; flex:none; }
+  .rb-switch { width:46px; height:26px; border-radius:999px; border:0; padding:3px; background:#d9d4e5; cursor:pointer; transition:background .2s ease; display:flex; }
+  .rb-switch span { width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 6px rgba(0,0,0,.2); transition:transform .25s cubic-bezier(.3,1.4,.5,1); }
+  .rb-switch[aria-checked="true"] { background:#16a34a; } .rb-switch[aria-checked="true"] span { transform:translateX(20px); }
+  [dir="rtl"] .rb-switch[aria-checked="true"] span { transform:translateX(-20px); }
+  .rb-switch:focus-visible { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .rb-always { font-size:.66rem; font-weight:800; color:#15803d; background:#e8f7ee; border-radius:999px; padding:2px 8px; flex:none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .rb-card { animation:rbIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 50ms); }
+    .rb-card.is-on .rb-ico.m-ring i { display:inline-block; transform-origin:50% 8%; animation:rbRing 2.6s ease-in-out infinite; }
+    .rb-card.is-on .rb-ico.m-pulse i { display:inline-block; animation:rbPulse 1.9s ease-in-out infinite; }
+    .rb-card.is-on .rb-ico.m-flip i { display:inline-block; animation:rbFlip 3.2s ease-in-out infinite; }
+    .rb-card.is-on .rb-ico.m-swing i { display:inline-block; transform-origin:30% 30%; animation:rbSwing 2.4s ease-in-out infinite; }
+    .rb-card.is-on .rb-ico.m-bounce i { display:inline-block; animation:rbBounce 2s ease-in-out infinite; }
+    .rb-card.is-on .rb-ico { animation:rbHalo 2.6s ease-out infinite; }
+    .rb-bell { display:inline-block; transform-origin:50% 10%; animation:rbRing 3s ease-in-out infinite; }
+  }
+  @keyframes rbIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @keyframes rbRing { 0%, 60%, 100% { transform:rotate(0); } 64% { transform:rotate(16deg); } 70% { transform:rotate(-14deg); } 76% { transform:rotate(10deg); } 82% { transform:rotate(-6deg); } 88% { transform:rotate(2deg); } }
+  @keyframes rbPulse { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.18); } }
+  @keyframes rbFlip { 0%, 40% { transform:rotate(0); } 55%, 90% { transform:rotate(180deg); } 100% { transform:rotate(360deg); } }
+  @keyframes rbSwing { 0%, 100% { transform:rotate(0); } 25% { transform:rotate(-12deg); } 75% { transform:rotate(12deg); } }
+  @keyframes rbBounce { 0%, 100% { transform:translateY(0); } 40% { transform:translateY(-5px); } 60% { transform:translateY(1px); } }
+  @keyframes rbHalo { 0% { box-shadow:0 0 0 0 color-mix(in srgb, var(--primary-berry) 30%, transparent); } 70%, 100% { box-shadow:0 0 0 9px transparent; } }
+</style>
+
+<h3 class="rm-h"><i class="bi bi-pencil-square"></i>Your own reminders</h3>
+<p class="rm-p">Remind one candidate, a class, a program or everyone about anything, now or at the time you choose.</p>
 
 <div class="rm-how">
   <div><b><i class="bi bi-1-circle-fill"></i>Choose who</b>One person, a class, everyone of a program, those who still owe something, or everybody.</div>
@@ -104,6 +205,8 @@
 
       <div class="rm-label">Look</div>
       <div class="d-flex gap-3 flex-wrap">{% for key, style in styles.items() %}<label style="font-size:.84rem;" title="{{ style[1] }}"><input type="radio" name="style" value="{{ key }}" {{ 'checked' if (chosen.style if chosen else 'brand') == key }}> {{ style[0] }}</label>{% endfor %}</div>
+
+      {{ design_ui.editor({}, design_options) }}
 
       <div class="rm-label">How it reaches them</div>
       <div class="d-flex gap-3 flex-wrap">
@@ -196,7 +299,7 @@
       const target = form.querySelector('select[data-for="' + audience.value + '"]');
       fetch("/reminders/preview", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         subject: form.subject.value, title: form.title.value, body: body.value, style: form.style.value,
-        audience: audience.value, to: target ? target.value : "" }) })
+        audience: audience.value, to: target ? target.value : "", design: window.EmailDesign ? window.EmailDesign.value(form) : {} }) })
         .then(function (answer) { return answer.ok ? answer.json() : null; })
         .then(function (data) {
           if (!data) return;
@@ -247,4 +350,5 @@
   showTarget(); preview();
 })();
 </script>
+{{ design_ui.assets() }}
 {% endblock %}

@@ -108,6 +108,24 @@
   .db-said-avatar { width:36px; height:36px; border-radius:50%; background:var(--berry-subtle); color:var(--primary-berry); display:grid; place-items:center; font-weight:800; flex:none; }
   .db-said-card p { margin:0; font-size:.82rem; color:#4a445e; line-height:1.55; }
   .db-said-tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:auto; }
+  .db-said-filters { display:flex; gap:6px; flex-wrap:wrap; margin:2px 0 14px; }
+  .db-said-filter { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.78rem; font-weight:700; color:#5b5670; cursor:pointer; transition:border-color .15s ease, background .15s ease, color .15s ease, transform .15s ease; }
+  .db-said-filter i { color:var(--c, var(--primary-berry)); }
+  .db-said-filter span { font-size:.7rem; font-weight:800; background:#f1eff5; border-radius:999px; padding:0 7px; color:#5b5670; }
+  .db-said-filter:hover { transform:translateY(-1px); border-color:var(--c, var(--primary-berry)); }
+  .db-said-filter.is-on { background:var(--c, var(--primary-berry)); border-color:var(--c, var(--primary-berry)); color:#fff; } .db-said-filter.is-on i { color:#fff; }
+  .db-said-filter.is-on span { background:rgba(255,255,255,.25); color:#fff; }
+  .db-said-filter.is-alert { --c:#d97706; }
+  .db-said-two { display:grid; gap:2px; }
+  .db-said-card { border-top:3px solid var(--c, var(--border-color)); }
+  .db-said-card[hidden] { display:none; }
+  .db-said-source { display:block; font-size:.7rem; font-weight:800; color:var(--c, var(--muted)); line-height:1.4; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .db-said-source i { margin-right:4px; }
+  .db-said-mood { font-size:.86rem; } .db-said-mood small { font-size:.68rem; color:var(--muted); font-weight:700; }
+  .db-said-improve { display:flex; gap:6px; align-items:flex-start; font-size:.76rem !important; color:#92400e !important; background:var(--gold-subtle); border-radius:10px; padding:6px 9px; }
+  .db-said-open { margin-inline-start:auto; color:var(--muted); font-size:.8rem; } .db-said-open:hover { color:var(--primary-berry); }
+  .db-said-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+  .db-said-links { display:flex; gap:12px; flex-wrap:wrap; }
   @media (max-width: 1100px) { .db-said-top { grid-template-columns:1fr 1fr; } .db-said-box.wide { grid-column:1 / -1; } }
   @media (max-width: 560px) { .db-said-top { grid-template-columns:1fr; } .db-said-card { flex-basis:82vw; } }
   @media (prefers-reduced-motion: reduce) { .db-said-card { transition:none; } }
@@ -1092,37 +1110,44 @@
   </div>
 </details>
 
-<!-- What candidates say: every feedback published on the website, read and analysed -->
-{% if said.total %}
+<!-- What people say: every feedback, wherever it was given (9antra.tn, the reviews in the application, the weekly check-ins) -->
+{% if voices.total %}
 <section class="db-card db-said" id="live-dashboard-feedback">
   <div class="db-card-head">
     <div>
-      <div class="db-title"><i class="bi bi-chat-heart-fill"></i>What your candidates say</div>
-      <div class="db-sub">The {{ said.total }} feedback published on 9antra.tn, read one by one: who said it, what they said, how it sounds and what it is about.</div>
+      <div class="db-title"><i class="bi bi-chat-heart-fill"></i>What people say</div>
+      <div class="db-sub">{{ voices.total }} feedback, wherever they were given: published on 9antra.tn, the reviews at the end of a program and the weekly check-ins, read together.</div>
     </div>
-    <a class="ui-link" href="/website#feedback">Open on the Website page</a>
+    <a class="ui-link" href="/social#listen">Answer them: we listen</a>
   </div>
 
-  {% if said.read or said.rated %}
+  <div class="db-said-filters" role="group" aria-label="Which feedback to show">
+    <button type="button" class="db-said-filter is-on" data-said-filter="all"><i class="bi bi-collection"></i>Everything<span>{{ voices.total }}</span></button>
+    {% for source in voices.sources %}{% if source.count %}
+    <button type="button" class="db-said-filter" data-said-filter="{{ source.key }}" style="--c:{{ source.colour }};"><i class="bi {{ source.icon }}"></i>{{ source.label }}<span>{{ source.count }}</span></button>
+    {% endif %}{% endfor %}
+    {% if voices.to_answer %}<button type="button" class="db-said-filter is-alert" data-said-filter="answer"><i class="bi bi-exclamation-circle"></i>Needs an answer<span>{{ voices.to_answer }}</span></button>{% endif %}
+  </div>
+
   <div class="db-said-top">
-    {% if said.happy_share is not none %}
+    {% if voices.happy_share is not none %}
     <div class="db-said-box">
-      <div class="db-said-ring" style="--pct:{{ said.happy_share }};"><div>{{ said.happy_share }}%</div></div>
-      <div><b>are happy</b><span>{{ said.counts.positive }} happy · {{ said.counts.mixed }} mixed · {{ said.counts.negative }} unhappy, out of {{ said.judged }} read</span></div>
+      <div class="db-said-ring" style="--pct:{{ voices.happy_share }};"><div>{{ voices.happy_share }}%</div></div>
+      <div><b>are happy</b><span>{{ voices.counts.positive }} happy · {{ voices.counts.mixed }} mixed · {{ voices.counts.negative }} unhappy, out of {{ voices.judged }} read</span></div>
     </div>
     {% endif %}
-    {% if said.stars %}
+    {% if voices.stars %}
     <div class="db-said-box">
-      <div class="db-said-stars"><b>{{ said.stars }}</b><span>{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < said.stars | round(0, 'floor') else 'bi-star-half' if n < said.stars else 'bi-star' }}"></i>{% endfor %}</span></div>
-      <div><b>stars on average</b><span>{{ said.rated }} of them show a rating</span></div>
+      <div class="db-said-stars"><b>{{ voices.stars }}</b><span>{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < voices.stars | round(0, 'floor') else 'bi-star-half' if n < voices.stars else 'bi-star' }}"></i>{% endfor %}</span></div>
+      <div><b>stars on average</b><span>{{ voices.rated }} of them give stars{% if voices.recommend_pct is not none %} · {{ voices.recommend_pct }}% <span>recommend us</span>{% endif %}</span></div>
     </div>
     {% endif %}
-    {% if said.themes %}
+    {% if voices.subjects %}
     <div class="db-said-box wide">
       <div style="min-width:0; width:100%;">
         <b>What they talk about</b>
         <div class="db-said-themes">
-          {% for theme in said.themes[:5] %}
+          {% for theme in voices.subjects[:5] %}
           <div class="db-said-theme" title="{{ theme.count }} feedback, {{ theme.happy }} of them happy">
             <span class="name"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>
             <span class="bar"><span style="width:{{ theme.share }}%;"></span></span>
@@ -1134,37 +1159,68 @@
     </div>
     {% endif %}
   </div>
-  {% if said.praise %}
-  <div class="db-said-words"><span class="db-sub">Words that come back:</span>{% for word, count in said.praise %}<span class="ui-chip ok">{{ word }}{% if count > 1 %} · {{ count }}{% endif %}</span>{% endfor %}</div>
+  {% if voices.improve or voices.praise %}
+  <div class="db-said-two">
+    {% if voices.improve %}
+    <div class="db-said-words"><span class="db-sub"><i class="bi bi-tools me-1"></i>To improve, from what they said:</span>{% for theme in voices.improve %}<span class="ui-chip warn"><i class="bi {{ theme.icon }}"></i>{{ theme.label }} · {{ theme.count }}</span>{% endfor %}</div>
+    {% endif %}
+    {% if voices.praise %}
+    <div class="db-said-words"><span class="db-sub">Words that come back:</span>{% for word, count in voices.praise %}<span class="ui-chip ok">{{ word }}{% if count > 1 %} · {{ count }}{% endif %}</span>{% endfor %}</div>
+    {% endif %}
+  </div>
   {% endif %}
-  {% endif %}
-  {% if said.to_answer %}
-  <div class="db-said-alert"><i class="bi bi-exclamation-circle-fill"></i><span><b>{{ said.to_answer | length }} feedback {{ 'are' if said.to_answer | length != 1 else 'is' }} not fully happy.</b> They are first in the row below: read them and answer the person.</span></div>
+  {% if voices.to_answer %}
+  <div class="db-said-alert"><i class="bi bi-exclamation-circle-fill"></i><span><b>{{ voices.to_answer }} feedback {{ 'are' if voices.to_answer != 1 else 'is' }} not fully happy.</b> They come first below: read them and answer the person, then say what you did on the Social media page (“We listen”).</span></div>
   {% endif %}
 
-  <div class="db-said-row" tabindex="0" aria-label="Every feedback, one after the other">
-    {% for row in (said.to_answer + (said.rows | rejectattr('reading.sentiment', 'in', ['negative', 'mixed']) | list)) %}
-    <article class="db-said-card {{ 'is-waiting' if not row.text }}">
+  <div class="db-said-row" id="db-said-row" tabindex="0" aria-label="Every feedback, one after the other">
+    {% for row in voices.rows %}
+    <article class="db-said-card {{ 'is-waiting' if not row.text and row.waiting }}" data-source="{{ row.source }}" data-answer="{{ '1' if row.sentiment in ('negative', 'mixed') else '0' }}"
+             style="--c:{{ row.source_view.colour }};">
       <div class="db-said-who">
         <span class="db-said-avatar">{{ (row.name or '?')[:1] | upper }}</span>
         <div style="min-width:0;">
-          <b>{{ row.name or 'A candidate' }}</b>
-          {% if row.stars %}<span class="db-said-mini">{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < row.stars else 'bi-star' }}"></i>{% endfor %}</span>{% endif %}
+          <b data-no-i18n>{{ row.name or 'A candidate' }}</b>
+          {% if row.stars %}<span class="db-said-mini">{% for n in range(5) %}<i class="bi {{ 'bi-star-fill' if n < row.stars else 'bi-star' }}"></i>{% endfor %}</span>
+          {% elif row.mood %}<span class="db-said-mood">{{ ['', '😞', '😕', '😐', '🙂', '😄'][row.mood] }} <small>{{ row.mood }}/5</small></span>{% endif %}
         </div>
-        {% if row.text %}<span class="ui-chip {{ row.view.tone }} ms-auto"><i class="bi {{ row.view.icon }}"></i>{{ row.view.label }}</span>{% endif %}
+        {% if row.sentiment %}<span class="ui-chip {{ row.view.tone }} ms-auto"><i class="bi {{ row.view.icon }}"></i>{{ row.view.label }}</span>{% endif %}
       </div>
+      <span class="db-said-source"><i class="bi {{ row.source_view.icon }}"></i>{{ row.source_view.label }}{% if row.program %} · <span data-no-i18n>{{ row.program }}</span>{% endif %}</span>
       {% if row.text %}
-      <p>“{{ row.text[:230] }}{{ '…' if row.text | length > 230 }}”</p>
-      <div class="db-said-tags">{% for theme in row.themes[:3] %}<span class="ui-chip brand"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>{% endfor %}{% if row.reading.language %}<span class="ui-chip muted">{{ row.reading.language }}</span>{% endif %}</div>
+      <p data-no-i18n>“{{ row.text[:230] }}{{ '…' if row.text | length > 230 }}”</p>
       {% elif row.waiting %}
       <p class="db-sub">Not read yet: it is read by itself in the next minutes.</p>
+      {% elif row.source == 'weekly' %}
+      <p class="db-sub">Gave their week a {{ row.mood or '?' }}/5, without a word.</p>
       {% else %}
-      <p class="db-sub">Its text could not be read from the picture.</p>
+      <p class="db-sub">Its text could not be read.</p>
       {% endif %}
+      {% if row.improve %}<p class="db-said-improve"><i class="bi bi-tools"></i><span data-no-i18n>{{ row.improve[:160] }}</span></p>{% endif %}
+      <div class="db-said-tags">{% for theme in row.theme_views %}<span class="ui-chip brand"><i class="bi {{ theme.icon }}"></i>{{ theme.label }}</span>{% endfor %}{% if row.when %}<span class="ui-chip muted">{{ row.when.strftime('%d/%m/%Y') }}</span>{% endif %}<a class="db-said-open" href="{{ row.url }}" aria-label="Open where it was given"><i class="bi bi-box-arrow-up-right"></i></a></div>
     </article>
     {% endfor %}
   </div>
-  <div class="db-sub" style="margin-top:8px;"><i class="bi bi-arrow-left-right me-1"></i>Slide to read them all{% if said.waiting %} · {{ said.waiting }} still to read{% endif %}</div>
+  <div class="db-said-foot">
+    <span class="db-sub"><i class="bi bi-arrow-left-right me-1"></i>Slide to read them all{% if voices.waiting %} · {{ voices.waiting }} still to read{% endif %}</span>
+    <span class="db-said-links"><a class="ui-link" href="/website#feedback">Website feedback</a><a class="ui-link" href="/quiz/weekly">Weekly check-ins</a><a class="ui-link" href="/programs/all">Reviews by program</a></span>
+  </div>
+  <script>
+  (function () {
+    var row = document.getElementById("db-said-row");
+    if (!row) return;
+    document.querySelectorAll("[data-said-filter]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        var wanted = button.dataset.saidFilter;
+        document.querySelectorAll("[data-said-filter]").forEach(function (other) { other.classList.toggle("is-on", other === button); });
+        row.querySelectorAll(".db-said-card").forEach(function (card) {
+          card.hidden = !(wanted === "all" || card.dataset.source === wanted || (wanted === "answer" && card.dataset.answer === "1"));
+        });
+        row.scrollTo({ left: 0, behavior: "smooth" });
+      });
+    });
+  })();
+  </script>
 </section>
 {% endif %}
 

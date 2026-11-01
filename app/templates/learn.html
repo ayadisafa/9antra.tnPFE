@@ -58,6 +58,20 @@
     .feel textarea:focus { outline:none; border-color:var(--berry); }
     .thanks { margin-top:18px; border-radius:14px; padding:13px 15px; background:#f4f1f9; font-size:.9rem; color:#4a445e; }
     @media (max-width: 520px) { .faces { gap:5px; } .face span { font-size:.66rem; padding:8px 2px 6px; } .face b { font-size:1.4rem; } }
+    /* The clock: how long, which question, and the times the page was left. */
+    .timer { position:sticky; top:8px; z-index:5; display:flex; gap:12px; align-items:center; flex-wrap:wrap; margin:16px 0 0; padding:9px 14px; border-radius:14px; background:rgba(255,255,255,.94); border:1px solid var(--line); box-shadow:0 10px 24px -18px rgba(36,26,56,.5); font-size:.86rem; backdrop-filter:blur(6px); }
+    .timer .dot { width:9px; height:9px; border-radius:50%; background:var(--mint); box-shadow:0 0 0 0 rgba(21,128,61,.5); animation:tick 1.6s ease-out infinite; }
+    .timer b { font-variant-numeric:tabular-nums; font-size:1rem; }
+    .timer .where { color:var(--muted); font-weight:600; }
+    .timer .away { margin-left:auto; color:var(--gold); font-weight:700; }
+    .timer .bar { flex-basis:100%; height:4px; border-radius:99px; background:var(--line); overflow:hidden; }
+    .timer .bar span { display:block; height:100%; width:0; background:var(--berry); transition:width .3s ease; }
+    .noted { margin-top:10px; font-size:.82rem; color:var(--muted); display:flex; gap:7px; align-items:flex-start; }
+    .back { margin-top:12px; background:var(--gold-soft); color:#7c4a03; border-radius:12px; padding:9px 13px; font-size:.86rem; font-weight:600; }
+    fieldset[data-q] { scroll-margin-top:70px; transition:background .2s ease; border-radius:14px; }
+    fieldset[data-q].is-here legend .num { background:var(--berry); color:#fff; }
+    @keyframes tick { 0% { box-shadow:0 0 0 0 rgba(21,128,61,.45); } 80%, 100% { box-shadow:0 0 0 8px rgba(21,128,61,0); } }
+    @media (prefers-reduced-motion: reduce) { .timer .dot { animation:none; } }
     @media (prefers-reduced-motion: reduce) { .option, .face span { transition:none; } }
   </style>
 </head>
@@ -122,10 +136,16 @@
     <h1>{{ quiz.course_name }}</h1>
     <p class="lead">Une seule réponse par question, sans vos notes. Ce n'est pas un examen : le résultat nous aide à savoir ce qu'il faut revoir ensemble. La correction s'affiche dès l'envoi.</p>
     {% if problem %}<div class="problem" role="alert">{{ problem }}</div>{% endif %}
+    <div class="timer" id="lq-timer"><span class="dot" aria-hidden="true"></span><b id="lq-clock">0:00</b>
+      <span class="where" id="lq-where">Question 1 / {{ result.total }}</span><span class="away" id="lq-away" hidden></span>
+      <div class="bar" aria-hidden="true"><span id="lq-bar"></span></div></div>
+    <div class="noted"><span aria-hidden="true">⏱</span><span>Le temps passé sur chaque question et les moments où vous quittez cette page sont notés pour votre formateur. Restez sur la page jusqu'à l'envoi.</span></div>
+    <div class="back" id="lq-back" role="status" hidden></div>
+    <input type="hidden" name="attention" id="lq-attention" value="">
 
     {% for row in result.rows %}
     {% set question_index = loop.index0 %}
-    <fieldset>
+    <fieldset data-q="{{ question_index }}">
       <legend><span class="num">{{ loop.index }}</span><span>{{ row.question }}</span></legend>
       {% for option in row.options %}
       <label class="option">
@@ -174,6 +194,64 @@
     </div>
     <button class="submit" type="submit">Envoyer mes réponses</button>
   </form>
+  <script>
+  (function () {
+    var form = document.querySelector("form.card"), total = {{ result.total }};
+    if (!form || !total) return;
+    var per = [], current = 0, seconds = 0, left = 0, awayTotal = 0, blurs = 0, awaySince = null, answered = {};
+    for (var index = 0; index < total; index++) per.push({ s: 0, changes: 0, away_s: 0, first_s: 0 });
+    var clock = document.getElementById("lq-clock"), where = document.getElementById("lq-where"), bar = document.getElementById("lq-bar");
+    var awayBox = document.getElementById("lq-away"), back = document.getElementById("lq-back");
+    var fields = Array.prototype.slice.call(form.querySelectorAll("fieldset[data-q]"));
+    function minutes(value) { var m = Math.floor(value / 60), s = value % 60; return m + ":" + (s < 10 ? "0" : "") + s; }
+    function mark() {
+      fields.forEach(function (field, index) { field.classList.toggle("is-here", index === current); });
+      where.textContent = "Question " + (current + 1) + " / " + total;
+      bar.style.width = Math.round(Object.keys(answered).length / total * 100) + "%";
+    }
+    // The question being read: the one nearest the middle of the screen (or the last one touched).
+    function nearest() {
+      var middle = window.innerHeight / 2, best = current, distance = Infinity;
+      fields.forEach(function (field, index) {
+        var box = field.getBoundingClientRect(), gap = Math.abs((box.top + box.bottom) / 2 - middle);
+        if (box.bottom > 0 && box.top < window.innerHeight && gap < distance) { distance = gap; best = index; }
+      });
+      return best;
+    }
+    window.addEventListener("scroll", function () { current = nearest(); mark(); }, { passive: true });
+    form.addEventListener("change", function (event) {
+      var match = /^q(\d+)$/.exec(event.target.name || "");
+      if (!match) return;
+      var index = parseInt(match[1], 10);
+      if (answered[index]) per[index].changes += 1; else per[index].first_s = seconds;
+      answered[index] = 1; current = index; mark();
+    });
+    function goAway() {
+      if (awaySince !== null) return;
+      awaySince = Date.now(); left += 1;
+    }
+    function comeBack() {
+      if (awaySince === null) return;
+      var gone = Math.round((Date.now() - awaySince) / 1000);
+      awaySince = null; awayTotal += gone; per[current].away_s += gone;
+      awayBox.hidden = false; awayBox.textContent = "Page quittée " + left + " fois";
+      if (gone >= 3) { back.hidden = false; back.textContent = "Vous avez quitté la page pendant " + (gone >= 60 ? minutes(gone) : gone + " s") + ". C'est noté ; continuez sans vos notes."; }
+    }
+    document.addEventListener("visibilitychange", function () { if (document.hidden) goAway(); else if (document.hasFocus()) comeBack(); });
+    window.addEventListener("blur", function () { blurs += 1; goAway(); });
+    window.addEventListener("focus", function () { if (!document.hidden) comeBack(); });
+    setInterval(function () {
+      seconds += 1;
+      if (awaySince === null) per[current].s += 1;
+      clock.textContent = minutes(seconds);
+    }, 1000);
+    form.addEventListener("submit", function () {
+      comeBack();
+      document.getElementById("lq-attention").value = JSON.stringify({ total_s: seconds, left: left, away_s: awayTotal, blurs: blurs, per_question: per });
+    });
+    mark();
+  })();
+  </script>
   {% endif %}
 
   <div class="foot">{{ app_name or "9antra" }} · centre de formation</div>

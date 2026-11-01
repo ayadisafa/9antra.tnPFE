@@ -468,6 +468,15 @@ def reminders_tick():
         logger.exception("Telling the professors of their new classes failed.")
         system_status.problem("reminders", exc)
     try:
+        # Each candidate reminded of their next session, some hours before it (24 by default).
+        from app.services import session_reminders
+
+        session_reminders.send_due(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Reminding the candidates of their next session failed.")
+        system_status.problem("reminders", exc)
+    try:
         # Candidates' questions their professor has not answered: the professor after a day, the admin after two.
         from app.services import course_questions
 
@@ -643,6 +652,17 @@ def knowledge_tick():
     except Exception:
         db.rollback()
         logger.exception("Knowledge refresh failed.")
+    try:
+        # Every message gets its category (the ones that came before categories), the old agent runs go, and the admin
+        # hears of what is new in the application (once per release).
+        from app.services import message_categories, orchestrator, whats_new
+
+        message_categories.backfill(db)
+        orchestrator.forget_old(db)
+        whats_new.announce(db)
+    except Exception:
+        db.rollback()
+        logger.exception("Sorting the messages failed.")
     finally:
         db.close()
 

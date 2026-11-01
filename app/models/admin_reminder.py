@@ -10,6 +10,7 @@ class AdminReminder(Base):
     """A reminder the admin wrote: to whom, what it says, and when it goes."""
 
     __tablename__ = "admin_reminders"
+    design = Column(Text, nullable=True)      # email_layout.clean_design, as JSON (see the automatic emails)
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     audience = Column(String, nullable=False)          # candidate | class | program | unpaid | everyone

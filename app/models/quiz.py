@@ -63,6 +63,9 @@ class Quiz(Base):
     feedback = Column(Text, nullable=True)
     insight = Column(Text, nullable=True)
     answer_source = Column(String, nullable=True)   # page | google_form
+    # How the questions page was answered (services/attention.py): the time on each question, and how often and how long
+    # the candidate left the page; as JSON.
+    attention = Column(Text, nullable=True)
     external_id = Column(String, nullable=True, index=True)     # the Google Forms response
 
 

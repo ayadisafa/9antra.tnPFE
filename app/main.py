@@ -53,6 +53,8 @@ from app.api.videos import router as videos_router
 from app.api.proofs import router as proofs_router
 from app.api.program_files import router as program_files_router
 from app.api.sms import router as sms_router
+from app.api.agents import router as agents_router
+from app.api.social import router as social_router
 from app.services.auth import AccessGate, SecurityHeaders
 from app.services.realtime import broadcaster, install_session_hooks
 
@@ -187,6 +189,8 @@ ensure_sqlite_compatibility()
 app.include_router(auth_router)
 app.include_router(page_pdf_router)    # every page as a PDF: before the pages, whose addresses would catch …/pdf
 app.include_router(friend_router)      # /account/friend: what Yasmine, the animated friend, says
+app.include_router(agents_router)      # /assistant/agents: who handles what; /whats-new
+app.include_router(social_router)      # /social: posts, stories, videos, we listen, engagement
 app.include_router(sms_router)         # /sms/webhook: the SMS the Android phone receives
 app.include_router(whatsapp_router)    # /whatsapp/webhook: where Meta delivers the messages candidates send
 app.include_router(teacher_router)

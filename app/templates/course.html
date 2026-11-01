@@ -414,6 +414,10 @@
               {% elif row.sent %}Received {{ row.total }} questions, no answer yet
               {% else %}The email was not delivered{% endif %}
             </div>
+            {% if row.attention %}
+            <div class="co-attention {{ 'is-watch' if row.attention.tone == 'watch' }}" title="Measured on the questions page">
+              <i class="bi {{ 'bi-eye' if row.attention.tone == 'watch' else 'bi-stopwatch' }}"></i><span>{{ row.attention.lines | join(' ') }}</span></div>
+            {% endif %}
           </div>
           {% if row.done %}
           <div style="width:120px;" class="d-none d-sm-block"><div class="ui-bar {{ 'is-full' if row.score >= 80 else ('is-low' if row.score < 50 else '') }}"><span style="width:{{ row.score }}%;"></span></div></div>
@@ -432,6 +436,8 @@
         </div>
         {% endif %}
 
+        <style>.co-attention { display:flex; gap:6px; align-items:flex-start; font-size:.74rem; color:#5b5670; margin-top:4px; line-height:1.45; }
+               .co-attention i { color:var(--primary-berry); margin-top:1px; } .co-attention.is-watch { color:#92400e; } .co-attention.is-watch i { color:#d97706; }</style>
         {% if results.sent %}{% include "_week_feelings.html" %}{% endif %}
       </div>
     </section>

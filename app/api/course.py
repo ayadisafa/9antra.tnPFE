@@ -548,5 +548,8 @@ async def learn_answer(token: str, request: Request, db: Session = Depends(get_d
     if any(answer is None for answer in answers):
         return _learn_page(request, quiz, weekly_questions.result_of(quiz),
                            problem="Merci de répondre à toutes les questions avant d'envoyer.")
+    from app.services import attention
+
+    attention.store(quiz, form.get("attention"), len(questions))      # the time on each question, the page left
     weekly_questions.grade(db, quiz, answers, feedback=week_insights.clean_feedback(form), source="page")
     return RedirectResponse(f"/learn/{token}", status_code=303)

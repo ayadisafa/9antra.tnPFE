@@ -187,13 +187,55 @@ def _uidvalidity(connection, folder: str) -> str | None:
     return match.group(1).decode() if match else None
 
 
+_DROPPED = 0                 # checks in a row that the mail server cut off
+SHOW_AFTER = 3               # a cut connection is shown as a problem only from the third in a row
+
+
+def _dropped(exc: Exception) -> bool:
+    """A connection the server closed or that broke on the way (“socket error: EOF”): worth one more try."""
+    import socket
+    import ssl
+
+    return isinstance(exc, (imaplib.IMAP4.abort, ssl.SSLError, ConnectionError, TimeoutError, socket.timeout, EOFError)) \
+        or "eof" in str(exc).lower()
+
+
 def poll(db: Session) -> dict:
-    """Import the emails that arrived since the last check. Never raises."""
+    """Import the emails that arrived since the last check. Never raises. A connection the server cuts (Gmail does it
+    now and then) is tried again at once; it is shown as a problem only when it keeps happening."""
+    global _DROPPED
     if not configured():
         return {"status": "not_configured", "imported": 0}
     if not _poll_lock.acquire(blocking=False):
         return {"status": "busy", "imported": 0}
+    try:
+        outcome = _poll_once(db)
+        if outcome.get("status") == "error" and outcome.get("dropped"):
+            logger.info("The mail server closed the connection; trying again with a new one.")
+            outcome = _poll_once(db)
+        if outcome.get("status") == "error" and outcome.get("dropped"):
+            _DROPPED += 1
+            if _DROPPED < SHOW_AFTER:
+                logger.info("The mailbox could not be read this time (the server closed the connection): it is tried again in a minute.")
+                return {"status": "retry", "imported": outcome.get("imported", 0)}
+        elif outcome.get("status") == "ok":
+            _DROPPED = 0
+        if outcome.get("status") == "error":
+            logger.warning("Mailbox check failed: %s", outcome.get("error"))
+            try:
+                state = get_state(db)
+                state.last_checked_at = utcnow()
+                state.last_error = outcome.get("error")
+                db.commit()
+            except Exception:
+                db.rollback()
+        return outcome
+    finally:
+        _poll_lock.release()
 
+
+def _poll_once(db: Session) -> dict:
+    """One check of the mailbox: {"status": ok | error, "imported", "error", "dropped"}."""
     settings = config()
     state = get_state(db)
     imported = ignored = 0
@@ -250,26 +292,20 @@ def poll(db: Session) -> dict:
         return {"status": "ok", "imported": imported, "ignored": ignored, "first_connection": first_connection}
     except Exception as exc:
         db.rollback()
-        logger.warning("Mailbox check failed: %s", exc)
-        try:
-            state = get_state(db)
-            state.last_checked_at = utcnow()
-            state.last_error = _explain(exc)
-            db.commit()
-        except Exception:
-            db.rollback()
-        return {"status": "error", "imported": imported, "error": _explain(exc)}
+        return {"status": "error", "imported": imported, "error": _explain(exc), "dropped": _dropped(exc)}
     finally:
         if connection is not None:
             try:
                 connection.logout()
             except Exception:
                 pass
-        _poll_lock.release()
 
 
 def _explain(exc: Exception) -> str:
     text = str(exc)
+    if _dropped(exc):
+        return ("The mail server closed the connection several times in a row (it happens with Gmail): "
+                "the mailbox is read again every minute. If it lasts, check the internet connection.")
     if isinstance(exc, imaplib.IMAP4.error) and re.search(r"auth|credential|login|password", text, re.IGNORECASE):
         return (
             "The mailbox refused the password. For Gmail, use an app password and make sure "

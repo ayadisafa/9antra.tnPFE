@@ -11,7 +11,7 @@ import json
 
 SECTIONS = [
     # key, name shown, icon, where it starts, the addresses that belong to it
-    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard")),
+    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard", "/whats-new")),
     ("candidates", "Candidates", "bi-people-fill", "/candidate/all", ("/candidate",)),
     ("classes", "Classes", "bi-easel2-fill", "/classes/", ("/classes",)),
     ("programs", "Programs", "bi-journal-bookmark-fill", "/programs/all", ("/programs",)),
@@ -21,6 +21,7 @@ SECTIONS = [
     ("payments", "Payments", "bi-cash-coin", "/payments", ("/payments", "/payment")),
     ("reminders", "Reminders", "bi-alarm-fill", "/reminders", ("/reminders",)),
     ("website", "Website", "bi-globe2", "/website", ("/website",)),
+    ("social", "Social media", "bi-megaphone-fill", "/social", ("/social",)),
     ("system", "How it is working", "bi-activity", "/system", ("/system",)),
     ("settings", "Settings", "bi-gear-fill", "/settings", ("/settings",)),
     ("data", "All the data", "bi-table", "/data", ("/data",)),
@@ -41,7 +42,8 @@ EVERYONE = ("/account", "/logout", "/language", "/i18n/", "/find", "/realtime", 
 ADMIN_ONLY = ("/settings/team", "/system/backups", "/system/backup-folder", "/settings/email-account", "/settings/whatsapp", "/settings/sms")
 _READING = {"GET", "HEAD", "OPTIONS"}
 # Some forms only read (a preview, the search, the assistant's chat): they need looking, not changing.
-_READS_BY_POST = ("/reminders/preview", "/inbox/compose/preview", "/inbox/templates/preview", "/i18n/seen", "/assistant/chat")
+_READS_BY_POST = ("/reminders/preview", "/inbox/compose/preview", "/inbox/templates/preview", "/i18n/seen", "/assistant/chat",
+                  "/assistant/agents/route")
 
 
 def clean(value) -> dict[str, str]:

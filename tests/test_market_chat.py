@@ -212,7 +212,7 @@ data = api.json()
 check("the chat on every page answers with the reply and its links", api.status_code == 200 and "candidate" in data["reply"] and data["links"][0]["url"] == "/payments" and data["source"] == "system", data.get("reply", "")[:100])
 check("it offers questions to start from", len(admin.get("/assistant/suggestions").json()["suggestions"]) >= 4)
 home = admin.get("/").text
-check("the chat window is ready for links and suggestions", "assistant-links" in home and "assistant-suggest" in home and "Who has not paid? Which classes cannot start?" in home)
+check("the chat window is ready for links and suggestions", "assistant-links" in home and "assistant-suggest" in home and "Who has not paid? What is trendy in AI?" in home)
 check("somebody not signed in cannot ask it", TestClient(main.app, follow_redirects=False).post("/assistant/chat", json={"message": "Who has not paid?"}).status_code in (401, 302, 303))
 db.close()
 check.done()

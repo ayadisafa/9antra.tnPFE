@@ -806,7 +806,7 @@ check("page: its editor opens with its own variables", status == 200 and "questi
 db.expire_all()
 quiz4 = next(q for q in wq.quizzes_of(db, klass.id, 4) if q.candidate_id == amal.id)
 status, html = page(f"/learn/{quiz4.access_token}")
-check("learn: the candidate's page opens with the questions", status == 200 and "Envoyer mes réponses" in html and 'name="q0"' in html and html.count("<fieldset>") == len(wq.questions_in(quiz4)) + 5, status)
+check("learn: the candidate's page opens with the questions", status == 200 and "Envoyer mes réponses" in html and 'name="q0"' in html and html.count("<fieldset") == len(wq.questions_in(quiz4)) + 5, status)
 check("learn: it shows nothing of the admin application", "sidebar" not in html and "/inbox" not in html and "Dashboard" not in html and "notif" not in html.lower())
 check("learn: it does not give the answers away", "correct_answer" not in html and "Bonne réponse" not in html)
 response = client.get(f"/learn/{quiz4.access_token}")

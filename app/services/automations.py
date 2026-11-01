@@ -24,7 +24,7 @@ def listing(db: Session) -> list[dict]:
     hours = welcome.reminder_hours(db)
     resources = resource_reminders.settings_of(db)
     weekly_auto = db.query(ClassGroup).filter(ClassGroup.weekly_questions_mode == "auto").count()
-    from app.services import session_check
+    from app.services import session_check, session_reminders
 
     session_plan = session_check.settings_of(db)
     way = channels.choice(db)
@@ -44,6 +44,8 @@ def listing(db: Session) -> list[dict]:
               email_templates.is_on(db, "quiz_invitation"), "/quiz/all#timing"),
         _item("countdown", "⏰", "ring", "Countdown before the first session", "J-7, J-3, J-1: livelier reminders with the date, the hour and what to bring.",
               f"{days.replace(',', ', ')} days before", email_templates.get(db, "training_reminder").sends_itself, "/settings#classes"),
+        _item("session_reminder", "🔔", "ring", "Reminder before each session", "Each candidate is reminded of their next session: the day, the hours, the place, what it is about.",
+              f"{session_reminders.hours_before(db)} h before each session", email_templates.get(db, "session_reminder").sends_itself, "/reminders#auto"),
         _item("links", "🔗", "pulse", "Session links", "Each candidate gets their own link to the session's meeting.",
               "Within the hour before each session", email_templates.get(db, "session_link").sends_itself, "/inbox/templates?key=session_link"),
         _item("weekly", "📝", "bounce", "Weekly questions", "After each week, the candidates of the classes set to automatic get the week's questions.",
@@ -76,6 +78,6 @@ def listing(db: Session) -> list[dict]:
     ]
     if not email_threads.smtp_configured():
         for item in found:
-            if item["key"] in ("welcome", "payment", "level", "countdown", "links", "reviews", "report"):
+            if item["key"] in ("welcome", "payment", "level", "countdown", "session_reminder", "links", "reviews", "report"):
                 item.update(state="setup", label="Email to set up", change="/settings#email")
     return found

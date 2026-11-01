@@ -488,6 +488,125 @@ SMTP_PASSWORD=your-app-password</div>
       </form>
     </div>
   </details>
+  <details class="st-card st-fold" id="character" data-fold style="--i:4;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-person-hearts"></i></span>
+      <span class="st-fold-text"><span class="st-title">The assistant's character</span><span class="st-sub">Her name, woman or man, the hair, the clothes, the colours, the glasses and the voice.</span></span>
+      <span class="st-fold-state"><span class="st-chip" data-no-i18n>{{ friend_look.name }}</span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      {% import "_friend_figure.html" as figure %}
+      <div class="fl-wrap">
+        <div class="fl-stage" aria-hidden="true">
+          <svg class="fr-fig fl-big" id="fl-preview" viewBox="0 0 120 150" {{ figure.attrs(friend_look) }}>
+            <ellipse class="fr-shadow" cx="60" cy="144" rx="30" ry="5"/>
+            <g class="fl-float">
+              {{ figure.back_hair() }}
+              <path class="fr-top" d="M28 142 C28 113 41 100 60 100 C79 100 92 113 92 142 Z"/>
+              {{ figure.outfit() }}
+              <rect class="fr-skin" x="53" y="83" width="14" height="21" rx="6"/>
+              {{ figure.head(blink=False) }}
+            </g>
+          </svg>
+          <div class="fl-name" id="fl-name" data-no-i18n>{{ friend_look.name }}</div>
+          <div class="fl-mini">{{ figure.mini(friend_look, "fl-mini-fig") }}<span>In the assistant's window</span></div>
+        </div>
+        <form method="post" action="/settings/friend" class="fl-form" id="fl-form">
+          <label class="form-label" for="fl-name-input">Name</label>
+          <input class="form-control mb-3" id="fl-name-input" name="name" maxlength="24" value="{{ friend_look.name }}" data-no-i18n>
+          <div class="fl-label">Woman or man</div>
+          <div class="fl-options">{% for key, label in friend_options.genders.items() %}<label class="fl-opt"><input type="radio" name="gender" value="{{ key }}" {{ 'checked' if friend_look.gender == key }}><span>{{ label }}</span></label>{% endfor %}</div>
+          <div class="fl-label">Hair</div>
+          <div class="fl-options">{% for key, label in friend_options.hairs.items() %}<label class="fl-opt"><input type="radio" name="hair" value="{{ key }}" {{ 'checked' if friend_look.hair == key }}><span>{{ label }}</span></label>{% endfor %}</div>
+          <div class="fl-label">Colour of the hair or the headscarf</div>
+          <div class="fl-swatches">{% for colour in friend_options.hair_colours %}<label class="fl-sw" style="--c:{{ colour }};" title="{{ colour }}"><input type="radio" name="hair_colour" value="{{ colour }}" {{ 'checked' if friend_look.hair_colour == colour }}><span></span></label>{% endfor %}
+            <input type="color" class="fl-pick" data-for="hair_colour" value="{{ friend_look.hair_colour }}" aria-label="Another colour" title="Another colour"></div>
+          <div class="fl-label">Skin</div>
+          <div class="fl-swatches">{% for colour in friend_options.skins %}<label class="fl-sw" style="--c:{{ colour }};" title="{{ colour }}"><input type="radio" name="skin" value="{{ colour }}" {{ 'checked' if friend_look.skin == colour }}><span></span></label>{% endfor %}</div>
+          <div class="fl-label">Clothes</div>
+          <div class="fl-options">{% for key, label in friend_options.outfits.items() %}<label class="fl-opt"><input type="radio" name="outfit" value="{{ key }}" {{ 'checked' if friend_look.outfit == key }}><span>{{ label }}</span></label>{% endfor %}</div>
+          <div class="fl-label">Colour of the clothes</div>
+          <div class="fl-swatches">
+            <label class="fl-sw is-brand" title="The application's colour"><input type="radio" name="outfit_colour" value="" {{ 'checked' if not friend_look.outfit_colour }}><span></span></label>
+            {% for colour in ["#0ea5e9", "#16a34a", "#f59e0b", "#1e293b", "#e11d48", "#7c3aed", "#ffffff"] %}<label class="fl-sw" style="--c:{{ colour }};" title="{{ colour }}"><input type="radio" name="outfit_colour" value="{{ colour }}" {{ 'checked' if friend_look.outfit_colour == colour }}><span></span></label>{% endfor %}
+            <input type="color" class="fl-pick" data-for="outfit_colour" value="{{ friend_look.outfit_colour or '#a42c67' }}" aria-label="Another colour" title="Another colour"></div>
+          <div class="d-flex gap-4 flex-wrap mt-3">
+            <label class="form-check form-switch m-0"><input class="form-check-input" type="checkbox" role="switch" name="glasses" value="1" {{ 'checked' if friend_look.glasses }}> <span class="form-check-label fw-semibold">Glasses</span></label>
+            <label class="form-check form-switch m-0" id="fl-beard"><input class="form-check-input" type="checkbox" role="switch" name="beard" value="1" {{ 'checked' if friend_look.beard }}> <span class="form-check-label fw-semibold">Beard</span></label>
+          </div>
+          <div class="fl-label">Voice (when the voice is on)</div>
+          <div class="fl-options">{% for key, label in friend_options.voices.items() %}<label class="fl-opt"><input type="radio" name="voice" value="{{ key }}" {{ 'checked' if friend_look.voice == key }}><span>{{ label }}</span></label>{% endfor %}</div>
+          <div class="d-flex gap-2 flex-wrap mt-4">
+            <button class="btn btn-berry px-4"><i class="bi bi-check2 me-1"></i>Save the character</button>
+            <button class="btn btn-light border fw-semibold" name="reset" value="1" formnovalidate data-confirm="Go back to Yasmine as she was at first?"><i class="bi bi-arrow-counterclockwise me-1"></i>The original</button>
+          </div>
+          <div class="form-text mt-2">She is the same for everyone: the admin, the team and the professors. Each one hears her in the language they chose.</div>
+        </form>
+      </div>
+      <style>
+        .fl-wrap { display:grid; grid-template-columns:220px minmax(0, 1fr); gap:24px; align-items:start; }
+        .fl-stage { position:sticky; top:calc(var(--stick-top, 0px) + 12px); text-align:center; background:radial-gradient(circle at 50% 38%, var(--berry-subtle), #fff 70%); border:1px solid var(--border-color); border-radius:20px; padding:16px 10px 14px; }
+        .fl-big { width:150px; height:188px; overflow:visible; filter:drop-shadow(0 12px 16px rgba(60,20,80,.25)); }
+        .fl-name { font-weight:800; color:var(--primary-berry); margin-top:4px; }
+        .fl-mini { display:flex; gap:8px; align-items:center; justify-content:center; font-size:.72rem; color:var(--muted); margin-top:10px; }
+        .fl-mini-fig { width:34px; height:34px; border-radius:11px; background:var(--primary-berry); padding:2px; }
+        .fl-label { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:16px 0 7px; }
+        .fl-options { display:flex; flex-wrap:wrap; gap:6px; }
+        .fl-opt { position:relative; } .fl-opt input { position:absolute; opacity:0; pointer-events:none; }
+        .fl-opt span { display:inline-flex; padding:6px 13px; border-radius:999px; border:1px solid var(--border-color); font-size:.8rem; font-weight:700; color:#5b5670; cursor:pointer; transition:background .15s ease, border-color .15s ease, color .15s ease, transform .15s ease; }
+        .fl-opt span:hover { transform:translateY(-1px); border-color:var(--primary-berry); }
+        .fl-opt input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+        .fl-opt input:focus-visible + span, .fl-sw input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+        .fl-swatches { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+        .fl-sw { position:relative; } .fl-sw input { position:absolute; opacity:0; pointer-events:none; }
+        .fl-sw span { display:block; width:28px; height:28px; border-radius:50%; background:var(--c); border:2px solid #fff; box-shadow:0 0 0 1px var(--border-color); cursor:pointer; transition:transform .15s ease, box-shadow .15s ease; }
+        .fl-sw.is-brand span { background:linear-gradient(135deg, var(--primary-berry), var(--berry-dark)); }
+        .fl-sw input:checked + span { transform:scale(1.12); box-shadow:0 0 0 2px var(--primary-berry); }
+        .fl-pick { width:32px; height:32px; border:1px solid var(--border-color); border-radius:50%; padding:0; background:none; cursor:pointer; }
+        @media (prefers-reduced-motion: no-preference) { .fl-float { animation:frFloat 3.4s ease-in-out infinite; } }
+        @keyframes frFloat { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-4px); } }
+        @media (max-width: 767px) { .fl-wrap { grid-template-columns:minmax(0, 1fr); } .fl-stage { position:static; } }
+      </style>
+      <script>
+      (function () {
+        var form = document.getElementById("fl-form");
+        if (!form) return;
+        var figures = function () { return document.querySelectorAll("#fl-preview, .fl-mini-fig"); };
+        function value(name) { var chosen = form.querySelector('input[name="' + name + '"]:checked'); return chosen ? chosen.value : ""; }
+        function draw() {
+          var gender = value("gender");
+          document.getElementById("fl-beard").hidden = gender !== "male";
+          figures().forEach(function (svg) {
+            svg.dataset.gender = gender; svg.dataset.hair = value("hair"); svg.dataset.outfit = value("outfit");
+            svg.dataset.glasses = form.querySelector('input[name="glasses"]').checked ? "1" : "0";
+            svg.dataset.beard = gender === "male" && form.querySelector('input[name="beard"]').checked ? "1" : "0";
+            svg.style.setProperty("--fr-hair", value("hair_colour") || "#3b2622");
+            svg.style.setProperty("--fr-skin", value("skin") || "#f4c6a2");
+            if (value("outfit_colour")) svg.style.setProperty("--fr-top", value("outfit_colour")); else svg.style.removeProperty("--fr-top");
+          });
+          document.getElementById("fl-name").textContent = document.getElementById("fl-name-input").value.trim() || "Yasmine";
+        }
+        // Another colour from the picker becomes the chosen one.
+        form.querySelectorAll(".fl-pick").forEach(function (pick) {
+          pick.addEventListener("input", function () {
+            var name = pick.dataset.for, radio = form.querySelector('input[name="' + name + '"][data-picked]');
+            if (!radio) { radio = document.createElement("input"); radio.type = "radio"; radio.name = name; radio.hidden = true; radio.dataset.picked = "1"; pick.parentNode.appendChild(radio); }
+            radio.value = pick.value; radio.checked = true; draw();
+          });
+        });
+        // A man starts with short hair (still changeable).
+        form.querySelectorAll('input[name="gender"]').forEach(function (radio) {
+          radio.addEventListener("change", function () {
+            var hair = form.querySelector('input[name="hair"][value="' + (radio.value === "male" ? "short" : "bun") + '"]');
+            if (hair && ["bun", "short"].indexOf(value("hair")) >= 0) hair.checked = true;
+          });
+        });
+        form.addEventListener("input", draw); form.addEventListener("change", draw); draw();
+      })();
+      </script>
+    </div>
+  </details>
   <details class="st-card st-fold" id="whatsapp" data-fold style="--i:5;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span>

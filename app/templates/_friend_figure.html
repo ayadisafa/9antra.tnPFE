@@ -1,0 +1,111 @@
+{# The assistant's figure (services/friend.py, her character): every hair, headscarf, outfit, glasses and beard is drawn,
+   and the data- attributes of the svg show only the chosen ones. The same drawing is used in the corner of every page,
+   in the assistant's window and in the Settings preview (which only changes the attributes). #}
+
+{% macro attrs(look) -%}
+data-gender="{{ look.gender }}" data-hair="{{ look.hair }}" data-outfit="{{ look.outfit }}" data-glasses="{{ '1' if look.glasses else '0' }}" data-beard="{{ '1' if look.beard else '0' }}"
+style="--fr-skin:{{ look.skin }}; --fr-hair:{{ look.hair_colour }};{% if look.outfit_colour %} --fr-top:{{ look.outfit_colour }};{% endif %}"
+{%- endmacro %}
+
+{% macro style() %}
+<style id="friend-figure">
+  .fr-fig .fr-skin { fill:var(--fr-skin, #f4c6a2); } .fr-fig .fr-hair { fill:var(--fr-hair, #3b2622); }
+  .fr-fig .fr-top { fill:var(--fr-top, var(--primary-berry)); } .fr-fig .fr-sleeve { stroke:var(--fr-top, var(--primary-berry)); }
+  .fr-fig .fr-beardline { stroke:var(--fr-hair, #3b2622); }
+  .fr-fig .v { display:none; }
+  .fr-fig[data-hair="bun"] .v-h-bun, .fr-fig[data-hair="long"] .v-h-long, .fr-fig[data-hair="short"] .v-h-short,
+  .fr-fig[data-hair="curly"] .v-h-curly, .fr-fig[data-hair="hijab"] .v-h-hijab, .fr-fig[data-hair="bald"] .v-h-bald,
+  .fr-fig[data-outfit="blouse"] .v-o-blouse, .fr-fig[data-outfit="blazer"] .v-o-blazer, .fr-fig[data-outfit="hoodie"] .v-o-hoodie,
+  .fr-fig[data-outfit="shirt"] .v-o-shirt, .fr-fig[data-outfit="tshirt"] .v-o-tshirt,
+  .fr-fig[data-glasses="1"] .v-glasses, .fr-fig[data-beard="1"] .v-beard { display:inline; }
+  .fr-fig[data-gender="male"] .fr-earring, .fr-fig[data-hair="hijab"] .fr-earring, .fr-fig[data-hair="hijab"] .fr-ear { display:none; }
+  .fr-fig[data-gender="male"] .fr-brow { stroke-width:2.9; } .fr-fig[data-gender="male"] .fr-cheek { opacity:.18; }
+  .fr-fig[data-gender="male"] .fr-lash { display:none; }
+  .fr-fig .fr-glass { fill:rgba(255,255,255,.18); stroke:#2b1d33; stroke-width:2; } .fr-fig .fr-glass-line { stroke:#2b1d33; stroke-width:2; fill:none; stroke-linecap:round; }
+  .fr-fig .fr-shade { fill:rgba(20,10,30,.2); } .fr-fig .fr-light { fill:#fff; } .fr-fig .fr-tie { fill:#1e293b; }
+  .fr-fig .fr-string { stroke:#fff; stroke-width:1.6; stroke-linecap:round; fill:none; opacity:.85; }
+  .fr-fig .fr-round-collar { stroke:rgba(255,255,255,.75); stroke-width:2.4; fill:none; stroke-linecap:round; }
+</style>
+{% endmacro %}
+
+{# The hair (or headscarf) behind the head and the body. #}
+{% macro back_hair() %}
+<path class="fr-hair v v-h-bun v-h-long" d="M27 60 C24 30 43 15 62 15 C83 15 98 32 95 60 C97 82 92 98 85 106 L37 106 C29 94 25 78 27 60 Z"/>
+<path class="fr-hair v v-h-long" d="M30 96 C30 108 34 116 40 120 L46 104 Z M90 96 C90 108 86 116 80 120 L74 104 Z"/>
+<path class="fr-hair v v-h-short" d="M29 62 C26 33 44 19 61 19 C80 19 95 33 91 62 L87 62 L87 50 L33 50 L33 62 Z"/>
+<g class="v v-h-curly">
+  <circle class="fr-hair" cx="31" cy="50" r="9"/><circle class="fr-hair" cx="35" cy="34" r="9.5"/><circle class="fr-hair" cx="47" cy="23" r="10"/>
+  <circle class="fr-hair" cx="62" cy="19" r="10.5"/><circle class="fr-hair" cx="77" cy="23" r="10"/><circle class="fr-hair" cx="89" cy="34" r="9.5"/>
+  <circle class="fr-hair" cx="91" cy="50" r="9"/><circle class="fr-hair" cx="31" cy="66" r="8"/><circle class="fr-hair" cx="90" cy="66" r="8"/>
+  <circle class="fr-hair" cx="34" cy="80" r="7"/><circle class="fr-hair" cx="87" cy="80" r="7"/>
+</g>
+<path class="fr-hair v v-h-hijab" d="M22 64 C20 30 40 12 60 12 C80 12 100 30 98 64 C98 88 96 106 92 118 L28 118 C24 106 22 88 22 64 Z"/>
+{% endmacro %}
+
+{# The clothes over the torso path. #}
+{% macro outfit() %}
+<path class="fr-collar v v-o-blouse" d="M50 101.5 L60 112 L70 101.5"/>
+<circle class="fr-gold v v-o-blouse" cx="60" cy="122" r="2.2"/>
+<g class="v v-o-blazer">
+  <path class="fr-light" d="M52 101 L60 124 L68 101 Z"/>
+  <path class="fr-shade" d="M49 101 L57 122 L47 113 Z M71 101 L63 122 L73 113 Z"/>
+  <circle class="fr-shade" cx="60" cy="131" r="1.9"/><circle class="fr-shade" cx="60" cy="138" r="1.9"/>
+</g>
+<g class="v v-o-hoodie">
+  <path class="fr-shade" d="M38 105 C42 96 50 93 60 93 C70 93 78 96 82 105 C74 101 67 100 60 100 C53 100 46 101 38 105 Z"/>
+  <path class="fr-string" d="M55 104 L54 121 M65 104 L66 121"/>
+  <path class="fr-shade" d="M44 129 L76 129 L72 141 L48 141 Z"/>
+</g>
+<g class="v v-o-shirt">
+  <path class="fr-light" d="M49 100 L59 107 L54 112 Z M71 100 L61 107 L66 112 Z"/>
+  <path class="fr-tie" d="M57.3 102 L62.7 102 L61.2 107.5 L64.5 128 L60 134 L55.5 128 L58.8 107.5 Z"/>
+</g>
+<path class="fr-round-collar v v-o-tshirt" d="M50 101.5 Q60 111 70 101.5"/>
+{% endmacro %}
+
+{# The head: ears, face, the hair over it, the eyes, beard and glasses. #}
+{% macro head(blink=True) %}
+<circle class="fr-skin fr-ear" cx="33" cy="61" r="5"/><circle class="fr-skin fr-ear" cx="87" cy="61" r="5"/>
+<circle class="fr-gold fr-earring" cx="33" cy="69" r="2.4"/><circle class="fr-gold fr-earring" cx="87" cy="69" r="2.4"/>
+<ellipse class="fr-skin" cx="60" cy="57" rx="27" ry="30"/>
+<path class="fr-hair v v-h-bun v-h-long v-h-short" d="M32 52 C34 30 51 23 64 25 C79 26 89 36 88 53 C81 43 71 38 59 39 C48 40 40 45 32 52 Z"/>
+<circle class="fr-hair v v-h-bun" cx="63" cy="17" r="10"/>
+<g class="v v-h-curly">
+  <circle class="fr-hair" cx="42" cy="36" r="7.5"/><circle class="fr-hair" cx="54" cy="30" r="7.5"/><circle class="fr-hair" cx="67" cy="30" r="7.5"/>
+  <circle class="fr-hair" cx="79" cy="36" r="7"/>
+</g>
+<path class="fr-hair v v-h-bald" d="M36 42 C42 32 50 29 60 29 C70 29 78 32 84 42 C77 36 69 34 60 34 C51 34 43 36 36 42 Z" opacity=".35"/>
+<g class="v v-h-hijab">
+  <path class="fr-hair" d="M31 54 C33 33 46 25 60 25 C74 25 87 33 89 54 C82 41 72 35 60 35 C48 35 38 41 31 54 Z"/>
+  <path class="fr-hair" d="M33 74 C40 91 50 96 60 96 C70 96 80 91 87 74 L89 100 C80 110 40 110 31 100 Z"/>
+</g>
+<path class="fr-brow" d="M44 49 Q50 45 55 48"/><path class="fr-brow" d="M65 48 Q70 45 76 49"/>
+<g class="{{ 'fr-eyes' if blink else '' }}">
+  <ellipse class="fr-eye" cx="50" cy="58" rx="3.6" ry="4.4"/><ellipse class="fr-eye" cx="70" cy="58" rx="3.6" ry="4.4"/>
+  <circle class="fr-shine" cx="51.3" cy="56.4" r="1.2"/><circle class="fr-shine" cx="71.3" cy="56.4" r="1.2"/>
+</g>
+<circle class="fr-cheek" cx="43" cy="67" r="4.5"/><circle class="fr-cheek" cx="77" cy="67" r="4.5"/>
+<path class="fr-nose" d="M60 61 Q58 66 61 67"/>
+<g class="v v-beard">
+  <path class="fr-hair" d="M34 63 C34 81 45 93 60 93 C75 93 86 81 86 63 C82 75 73 82 60 82 C47 82 38 75 34 63 Z"/>
+  <path class="fr-hair" d="M51.5 70.5 Q60 66 68.5 70.5 Q60 73.5 51.5 70.5 Z"/>
+</g>
+<path class="fr-smile" d="M51 72 Q60 80 69 72"/>
+<ellipse class="fr-talk" cx="60" cy="74" rx="5.5" ry="4"/>
+<g class="v v-glasses">
+  <circle class="fr-glass" cx="50" cy="58" r="7.6"/><circle class="fr-glass" cx="70" cy="58" r="7.6"/>
+  <path class="fr-glass-line" d="M57.6 57.5 Q60 55.5 62.4 57.5 M42.4 57 L34 55 M77.6 57 L86 55"/>
+</g>
+{% endmacro %}
+
+{# Only the face, in a circle: the small face that calls her back, and the assistant window's avatar. #}
+{% macro mini(look, css_class="") %}
+<svg class="fr-fig {{ css_class }}" viewBox="22 2 76 80" aria-hidden="true" {{ attrs(look) }}>
+  <path class="fr-hair v v-h-bun v-h-long" d="M27 60 C24 30 43 15 62 15 C83 15 98 32 95 60 L95 82 L27 82 Z"/>
+  <path class="fr-hair v v-h-hijab" d="M22 64 C20 30 40 12 60 12 C80 12 100 30 98 64 L98 82 L22 82 Z"/>
+  <path class="fr-hair v v-h-short" d="M29 62 C26 33 44 19 61 19 C80 19 95 33 91 62 L87 62 L87 50 L33 50 L33 62 Z"/>
+  <g class="v v-h-curly"><circle class="fr-hair" cx="31" cy="50" r="9"/><circle class="fr-hair" cx="35" cy="34" r="9.5"/><circle class="fr-hair" cx="47" cy="23" r="10"/>
+    <circle class="fr-hair" cx="62" cy="19" r="10.5"/><circle class="fr-hair" cx="77" cy="23" r="10"/><circle class="fr-hair" cx="89" cy="34" r="9.5"/><circle class="fr-hair" cx="91" cy="50" r="9"/></g>
+  {{ head(blink=False) }}
+</svg>
+{% endmacro %}

@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}What's new · 9antra{% endblock %}
+{% block page_title %}What's new{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .wn-release { position:relative; padding-inline-start:34px; margin-bottom:28px; }
+  .wn-release::before { content:""; position:absolute; inset-inline-start:11px; top:30px; bottom:-28px; width:2px; background:linear-gradient(var(--primary-berry), transparent); opacity:.35; }
+  .wn-release:last-child::before { display:none; }
+  .wn-dot { position:absolute; inset-inline-start:0; top:4px; width:24px; height:24px; border-radius:50%; background:var(--primary-berry); color:#fff; display:grid; place-items:center; font-size:.75rem; box-shadow:0 0 0 5px var(--berry-subtle); }
+  .wn-release.is-old .wn-dot { background:#cfc8e0; box-shadow:0 0 0 5px #f3eff9; }
+  .wn-head { display:flex; gap:10px; align-items:baseline; flex-wrap:wrap; margin-bottom:12px; }
+  .wn-head h3 { font-size:1.05rem; font-weight:800; margin:0; color:var(--ink-text); }
+  .wn-head span { font-size:.78rem; color:var(--muted); font-weight:700; }
+  .wn-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+  .wn-item { display:grid; grid-template-columns:42px minmax(0, 1fr); gap:12px; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:14px; text-decoration:none; color:inherit; transition:border-color .15s ease, transform .15s ease, box-shadow .2s ease; }
+  .wn-item:hover { border-color:var(--primary-berry); transform:translateY(-2px); box-shadow:var(--shadow-soft); }
+  .wn-ico { width:42px; height:42px; border-radius:14px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.15rem; }
+  .wn-item b { display:block; font-size:.88rem; color:var(--ink-text); margin-bottom:3px; }
+  .wn-item .wn-text { display:block; font-size:.79rem; color:#4a445e; line-height:1.5; }
+  .wn-item em { display:inline-flex; gap:4px; align-items:center; font-style:normal; font-size:.74rem; font-weight:800; color:var(--primary-berry); margin-top:6px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .wn-item { animation:wnIn .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 55ms); }
+    .wn-release:first-child .wn-dot { animation:wnGlow 2.2s ease-in-out infinite; }
+    .wn-item:hover .wn-ico i { animation:wnPop .5s ease; }
+  }
+  @keyframes wnIn { from { opacity:0; transform:translateY(10px) scale(.98); } to { opacity:1; transform:none; } }
+  @keyframes wnGlow { 0%, 100% { box-shadow:0 0 0 5px var(--berry-subtle); } 50% { box-shadow:0 0 0 10px transparent; } }
+  @keyframes wnPop { 50% { transform:scale(1.25) rotate(-8deg); } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ui-head">
+  <div>
+    <h2>What's new</h2>
+    <p>Everything added to the application, the newest first, and where to find it. You get a notification each time something new arrives.</p>
+  </div>
+</div>
+{% for release in releases %}
+<section class="wn-release {{ 'is-old' if not loop.first }}">
+  <span class="wn-dot"><i class="bi {{ 'bi-stars' if loop.first else 'bi-check2' }}"></i></span>
+  <div class="wn-head"><h3>{{ release.title }}</h3><span>{{ release.day.strftime('%d/%m/%Y') }}</span></div>
+  <div class="wn-grid">
+    {% for item in release["items"] %}
+    <a class="wn-item" href="{{ item.url }}" style="--i:{{ loop.index0 }};"><span class="wn-ico"><i class="bi {{ item.icon }}"></i></span>
+      <div style="min-width:0;"><b>{{ item.title }}</b><span class="wn-text">{{ item.text }}</span><em>Open <i class="bi bi-arrow-right"></i></em></div></a>
+    {% endfor %}
+  </div>
+</section>
+{% endfor %}
+{% endblock %}

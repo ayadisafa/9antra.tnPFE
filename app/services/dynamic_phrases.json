@@ -713,5 +713,135 @@
 "en": "{0} asks for the course of week {1}",
 "fr": "{0} demande le cours de la semaine {1}",
 "ar": "يطلب {0} درس الأسبوع {1}"
+},
+{
+"en": "What's new: {0}",
+"fr": "Nouveautés : {0}",
+"ar": "الجديد: {0}"
+},
+{
+"en": "{0} new things in the application. Open What's new to see each one.",
+"fr": "{0} nouveautés dans l'application. Ouvrez Nouveautés pour voir chacune.",
+"ar": "{0} أشياء جديدة في التطبيق. افتح «الجديد» لرؤية كل واحد."
+},
+{
+"en": "“{0}” is on: it goes by itself.",
+"fr": "« {0} » est activé : il part tout seul.",
+"ar": "«{0}» مفعّل: يُرسل وحده."
+},
+{
+"en": "“{0}” is off: the application no longer sends it by itself.",
+"fr": "« {0} » est désactivé : l'application ne l'envoie plus d'elle-même.",
+"ar": "«{0}» متوقف: لم يعد التطبيق يرسله من تلقاء نفسه."
+},
+{
+"en": "“{0}” is back as at first: its words, its design and its timing.",
+"fr": "« {0} » est revenu comme au début : ses mots, son design et son moment.",
+"ar": "عاد «{0}» كما كان في البداية: كلماته وتصميمه وتوقيته."
+},
+{
+"en": "The payment reminder now goes {0} h after registering.",
+"fr": "Le rappel de paiement part maintenant {0} h après l'inscription.",
+"ar": "يُرسل تذكير الدفع الآن بعد {0} س من التسجيل."
+},
+{
+"en": "The reminder before each session now goes {0} h before it.",
+"fr": "Le rappel avant chaque séance part maintenant {0} h avant elle.",
+"ar": "يُرسل التذكير قبل كل حصة الآن قبلها بـ{0} س."
+},
+{
+"en": "The countdown now goes J-{0}.",
+"fr": "Le compte à rebours part maintenant à J-{0}.",
+"ar": "يُرسل العدّ التنازلي الآن في J-{0}."
+},
+{
+"en": "The countdown now goes J-{0}, also in {1} class(es) not started yet.",
+"fr": "Le compte à rebours part maintenant à J-{0}, aussi dans {1} classe(s) pas encore commencée(s).",
+"ar": "يُرسل العدّ التنازلي الآن في J-{0}، وأيضا في {1} قسم لم يبدأ بعد."
+},
+{
+"en": "Professors are reminded {0} days before each week.",
+"fr": "Les formateurs sont rappelés {0} jours avant chaque semaine.",
+"ar": "يُذكَّر المكوّنون قبل كل أسبوع بـ{0} أيام."
+},
+{
+"en": "{0} is back as at first.",
+"fr": "{0} est revenu(e) comme au début.",
+"ar": "عاد {0} كما كان في البداية."
+},
+{
+"en": "{0} has a new look: every page shows it now.",
+"fr": "{0} a un nouveau look : chaque page le montre maintenant.",
+"ar": "لـ{0} مظهر جديد: كل صفحة تُظهره الآن."
+},
+{
+"en": "Answer sent. Kept for the next ones: every assistant uses this information from now on.",
+"fr": "Réponse envoyée. Gardé pour les suivants : chaque assistant utilise cette information dès maintenant.",
+"ar": "أُرسل الجواب. حُفظ للقادمين: يستعمل كل مساعد هذه المعلومة من الآن."
+},
+{
+"en": "A complaint (its words: {0}): complaints always come to you, the assistant does not answer them alone.",
+"fr": "Une réclamation (ses mots : {0}) : les réclamations vous arrivent toujours, l'assistant n'y répond pas seul.",
+"ar": "شكوى (كلماتها: {0}): الشكاوى تصلك دائما، ولا يجيب عنها المساعد وحده."
+},
+{
+"en": "“{0}” get {1}× the engagement of “{2}”: make more of them.",
+"fr": "« {0} » obtiennent {1}× l'engagement de « {2} » : faites-en davantage.",
+"ar": "«{0}» تحصل على {1}× تفاعل «{2}»: أكثر منها."
+},
+{
+"en": "Posts about “{0}” get the most engagement ({1}%): post them more often.",
+"fr": "Les publications « {0} » ont le plus d'engagement ({1} %) : publiez-en plus souvent.",
+"ar": "منشورات «{0}» تحصل على أكبر تفاعل ({1}٪): انشرها أكثر."
+},
+{
+"en": "{0} is your best day ({1}% engagement).",
+"fr": "{0} est votre meilleur jour ({1} % d'engagement).",
+"ar": "{0} هو أفضل يوم لك ({1}٪ تفاعل)."
+},
+{
+"en": "Post in the morning: it is when your posts do best.",
+"fr": "Publiez le matin : c'est là que vos publications marchent le mieux.",
+"ar": "انشر صباحا: حينها تنجح منشوراتك أكثر."
+},
+{
+"en": "Post in the afternoon: it is when your posts do best.",
+"fr": "Publiez l'après-midi : c'est là que vos publications marchent le mieux.",
+"ar": "انشر بعد الظهر: حينها تنجح منشوراتك أكثر."
+},
+{
+"en": "Post in the evening: it is when your posts do best.",
+"fr": "Publiez le soir : c'est là que vos publications marchent le mieux.",
+"ar": "انشر مساء: حينها تنجح منشوراتك أكثر."
+},
+{
+"en": "Post at night: it is when your posts do best.",
+"fr": "Publiez la nuit : c'est là que vos publications marchent le mieux.",
+"ar": "انشر ليلا: حينها تنجح منشوراتك أكثر."
+},
+{
+"en": "Few comments ({0}% of interactions): end your posts with a question to people.",
+"fr": "Peu de commentaires ({0} % des interactions) : terminez vos publications par une question aux gens.",
+"ar": "تعليقات قليلة ({0}٪ من التفاعلات): اختم منشوراتك بسؤال للناس."
+},
+{
+"en": "{0} post(s) in 30 days: aim for two a week; the ideas below are ready.",
+"fr": "{0} publication(s) en 30 jours : visez deux par semaine ; les idées ci-dessous sont prêtes.",
+"ar": "{0} منشور في 30 يوما: استهدف منشورين في الأسبوع؛ الأفكار أدناه جاهزة."
+},
+{
+"en": "Add the numbers of your last posts (reactions, comments, shares, views): the comparisons start from three posts with numbers.",
+"fr": "Ajoutez les chiffres de vos dernières publications (réactions, commentaires, partages, vues) : les comparaisons commencent à partir de trois publications avec des chiffres.",
+"ar": "أضف أرقام آخر منشوراتك (تفاعلات، تعليقات، مشاركات، مشاهدات): تبدأ المقارنات من ثلاثة منشورات بأرقام."
+},
+{
+"en": "Facebook: {0} new post(s), {1} updated.",
+"fr": "Facebook : {0} nouvelle(s) publication(s), {1} mise(s) à jour.",
+"ar": "Facebook: {0} منشور جديد، {1} محدّث."
+},
+{
+"en": "The mail server closed the connection several times in a row (it happens with Gmail): the mailbox is read again every minute. If it lasts, check the internet connection.",
+"fr": "Le serveur mail a fermé la connexion plusieurs fois de suite (cela arrive avec Gmail) : la boîte est relue chaque minute. Si cela dure, vérifiez la connexion internet.",
+"ar": "أغلق خادم البريد الاتصال عدة مرات متتالية (يحدث ذلك مع Gmail): يُقرأ الصندوق من جديد كل دقيقة. إن استمر، تحقّق من الاتصال بالإنترنت."
 }
 ]

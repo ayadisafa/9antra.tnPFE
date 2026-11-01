@@ -18,14 +18,48 @@ class Question(BaseModel):
     lang: str | None = None          # chosen in her window: en, fr, ar, tn (none: the language of the question)
 
 
-@router.post("/account/guide")
-def ask_the_guide(payload: Question, request: Request, db: Session = Depends(get_db)):
-    """Yasmine's answers for everyone: how to do things here (for what this person may do), what the courses teach."""
-    from app.services import howto
+class Conversation(Question):
+    history: list[dict[str, str]] = Field(default_factory=list)
 
-    found = howto.answer(db, payload.message.strip(), auth.current(request), lang=payload.lang)
+
+@router.post("/account/guide")
+def ask_the_guide(payload: Conversation, request: Request, db: Session = Depends(get_db)):
+    """The assistant for everyone who is not given the whole assistant: a professor gets the professors' agent (their
+    classes, their candidates, the courses, the guide), a team member the guide agent (how to do things here, for what
+    they may do, what the courses teach)."""
+    import time
+
+    from app.services import howto, orchestrator
+
+    user = auth.current(request)
+    message = payload.message.strip()
+    started = time.monotonic()
+    routed = orchestrator.route(message, user)
+    if getattr(user, "is_professor", False):
+        from app.services import professor_assistant
+
+        found = professor_assistant.answer(db, message, payload.history, user=user, lang=payload.lang)
+        agent = "professor"
+    else:
+        found = howto.answer(db, message, user, lang=payload.lang)
+        agent = "guide"
+    orchestrator.note(db, agent=agent, category=routed["category"], channel="professor" if agent == "professor" else "chat",
+                      outcome="answered", asked=message, user_id=getattr(user, "id", None), took_ms=int((time.monotonic() - started) * 1000))
+    db.commit()
     return {"reply": found["reply"], "links": found.get("links") or [], "sources": found.get("sources") or [], "resources": found.get("resources") or [],
-            "schema": found.get("schema")}
+            "schema": found.get("schema"), "suggestions": found.get("suggestions") or [],
+            "agent": orchestrator.agent_of(agent), "category": {key: routed["category"][key] for key in ("key", "label", "icon", "colour")}}
+
+
+@router.get("/account/guide/suggestions")
+def guide_suggestions(request: Request, lang: str = ""):
+    """A few questions to start with, for a professor or a team member."""
+    from app.services import professor_assistant
+
+    user = auth.current(request)
+    if getattr(user, "is_professor", False):
+        return {"suggestions": professor_assistant.suggestions(lang or translations.clean_language(request.cookies.get("lang")))}
+    return {"suggestions": ["How do I change my password?", "What does the DevOps program teach?", "How does someone register?"]}
 
 
 @router.get("/account/friend")

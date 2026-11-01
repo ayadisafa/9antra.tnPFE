@@ -27,6 +27,7 @@ class EmailTemplate(Base):
     is_active = Column(Boolean, default=True, nullable=True)      # automatic emails: sent by the system or not
     cta_label = Column(String, nullable=True)   # button
     cta_url = Column(String, nullable=True)
+    design = Column(Text, nullable=True)      # email_layout.clean_design, as JSON: banner, photos, colour, font, button…
     channel = Column(String, nullable=True)     # automatic emails: email | both | whatsapp (empty: email)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(

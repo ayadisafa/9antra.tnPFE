@@ -894,5 +894,485 @@
 "Not checked: there is nothing to read in it. Write a few lines about what it shows.": [
 "Non vérifié : il n'y a rien à y lire. Écrivez quelques lignes sur ce qu'il montre.",
 "لم يُراجَع: لا شيء يُقرأ فيه. اكتب بضعة أسطر عمّا يُظهره."
+],
+"Answered in {0}.": [
+"Répondu en {0}.",
+"أجاب في {0}."
+],
+"Left the page {0} time(s), {1} away in all.": [
+"A quitté la page {0} fois, {1} d'absence en tout.",
+"غادر الصفحة {0} مرة، {1} غيابا في المجموع."
+],
+"Stayed on the page the whole time.": [
+"Est resté sur la page tout le temps.",
+"بقي في الصفحة طوال الوقت."
+],
+"question {0}: right after {1} away from the page": [
+"question {0} : juste après {1} hors de la page",
+"السؤال {0}: صحيح بعد {1} خارج الصفحة"
+],
+"question {0}: answered in {1}": [
+"question {0} : répondue en {1}",
+"السؤال {0}: أجاب في {1}"
+],
+"Worth a word: {0}.": [
+"À en parler : {0}.",
+"يستحق كلمة: {0}."
+],
+"Changed an answer {0} time(s).": [
+"A changé une réponse {0} fois.",
+"غيّر جوابا {0} مرة."
+],
+"What a professor's assistant may read": [
+"Ce que l'assistant d'un formateur peut lire",
+"ما يحق لمساعد المكوّن قراءته"
+],
+"No class is given to you yet: the admin gives you one from the Classes page, and it appears in your space.": [
+"Aucune classe ne vous est encore confiée : l'admin vous en donne une depuis la page Classes, et elle apparaît dans votre espace.",
+"لم يُسند إليك أي قسم بعد: يُسند لك المدير قسما من صفحة الأقسام، فيظهر في فضائك."
+],
+"Your classes": [
+"Vos classes",
+"أقسامك"
+],
+"Your classes:": [
+"Vos classes :",
+"أقسامك:"
+],
+"{0} candidates": [
+"{0} candidats",
+"{0} مترشحين"
+],
+"No session is planned in your classes from today.": [
+"Aucune séance n'est prévue dans vos classes à partir d'aujourd'hui.",
+"لا حصة مبرمجة في أقسامك ابتداء من اليوم."
+],
+"Your classes' sessions": [
+"Les séances de vos classes",
+"حصص أقسامك"
+],
+"Your next sessions:": [
+"Vos prochaines séances :",
+"حصصك القادمة:"
+],
+"week {0}": [
+"semaine {0}",
+"الأسبوع {0}"
+],
+"{0}, session of {1}: absent: {2}.": [
+"{0}, séance du {1} : absents : {2}.",
+"{0}، حصة {1}: الغائبون: {2}."
+],
+"{0}, session of {1}: nobody was absent.": [
+"{0}, séance du {1} : personne n'était absent.",
+"{0}، حصة {1}: لم يغب أحد."
+],
+"{0}, session of {1}: the attendance is not marked yet.": [
+"{0}, séance du {1} : la présence n'est pas encore faite.",
+"{0}، حصة {1}: لم يُسجَّل الحضور بعد."
+],
+"No session of your classes has taken place yet.": [
+"Aucune séance de vos classes n'a encore eu lieu.",
+"لم تُنجز أي حصة من أقسامك بعد."
+],
+"The attendance of your classes": [
+"La présence de vos classes",
+"حضور أقسامك"
+],
+"No level check of your candidates has an answer yet.": [
+"Aucun test de niveau de vos candidats n'a encore de réponse.",
+"لا يوجد بعد اختبار مستوى أجاب عنه مترشحوك."
+],
+"The level checks of your candidates": [
+"Les tests de niveau de vos candidats",
+"اختبارات مستوى مترشحيك"
+],
+"The level of your candidates, from their level check:": [
+"Le niveau de vos candidats, d'après leur test de niveau :",
+"مستوى مترشحيك، حسب اختبار مستواهم:"
+],
+"Sessions marked: {0}; absent {1}, late {2}.": [
+"Séances notées : {0} ; absent {1}, en retard {2}.",
+"الحصص المسجّلة: {0}؛ غياب {1}، تأخر {2}."
+],
+"Takes part: {0}.": [
+"Participation : {0}.",
+"المشاركة: {0}."
+],
+"very active": [
+"très actif",
+"نشيط جدا"
+],
+"takes part": [
+"participe",
+"يشارك"
+],
+"quiet": [
+"discret",
+"هادئ"
+],
+"Level check: {0}.": [
+"Test de niveau : {0}.",
+"اختبار المستوى: {0}."
+],
+"Their contact details and payments stay with the admin.": [
+"Ses coordonnées et ses paiements restent chez l'admin.",
+"بيانات الاتصال به ودفعاته تبقى عند المدير."
+],
+"{0}, week {1}: {2}.": [
+"{0}, semaine {1} : {2}.",
+"{0}، الأسبوع {1}: {2}."
+],
+"The program in the application: {0}": [
+"La formation dans l'application : {0}",
+"البرنامج في التطبيق: {0}"
+],
+"Quoted as written: no sentence was added": [
+"Cité tel quel : aucune phrase n'a été ajoutée",
+"مقتبس كما هو: لم تُضف أي جملة"
+],
+"Here is what the application knows about it, quoted from its sources:": [
+"Voici ce que l'application en sait, cité depuis ses sources :",
+"هذا ما يعرفه التطبيق عن ذلك، مقتبسا من مصادره:"
+],
+"The journal has no article about {0} from the last {1} days yet: it reads the news every 6 hours (Journal page).": [
+"Le journal n'a pas encore d'article sur {0} des {1} derniers jours : il lit les nouvelles toutes les 6 heures (page Journal).",
+"ليس في الجريدة بعد مقال عن {0} من آخر {1} يوما: تقرأ الأخبار كل 6 ساعات (صفحة الجريدة)."
+],
+"The journal has no article from the last {0} days yet: it reads the news every 6 hours (Journal page).": [
+"Le journal n'a pas encore d'article des {0} derniers jours : il lit les nouvelles toutes les 6 heures (page Journal).",
+"ليس في الجريدة بعد مقال من آخر {0} يوما: تقرأ الأخبار كل 6 ساعات (صفحة الجريدة)."
+],
+"The journal": [
+"Le journal",
+"الجريدة"
+],
+"What is new in {0} ({1} articles in {2} days):": [
+"Les nouveautés en {0} ({1} articles en {2} jours) :",
+"الجديد في {0} ({1} مقالا في {2} يوما):"
+],
+"The words the articles repeat: {0}.": [
+"Les mots que les articles répètent : {0}.",
+"الكلمات التي تكرّرها المقالات: {0}."
+],
+"Not taught here yet: {0}. A session or a week to consider.": [
+"Pas encore enseigné ici : {0}. Une séance ou une semaine à envisager.",
+"لا يُدرَّس هنا بعد: {0}. حصة أو أسبوع يستحق التفكير."
+],
+"Already taught here: {0}. Say so in the posts and on the program's page.": [
+"Déjà enseigné ici : {0}. Dites-le dans les publications et sur la page de la formation.",
+"يُدرَّس هنا من قبل: {0}. قل ذلك في المنشورات وفي صفحة البرنامج."
+],
+"What is new in each field ({0} articles in {1} days), the busiest first:": [
+"Les nouveautés de chaque domaine ({0} articles en {1} jours), les plus actifs d'abord :",
+"الجديد في كل مجال ({0} مقالا في {1} يوما)، الأنشط أولا:"
+],
+"The job offers read so far ask most for: {0}.": [
+"Les offres d'emploi lues jusqu'ici demandent surtout : {0}.",
+"عروض الشغل المقروءة حتى الآن تطلب خاصة: {0}."
+],
+"Services the centre could add, the best supported first:": [
+"Les services que le centre pourrait ajouter, les mieux appuyés d'abord :",
+"الخدمات التي يمكن للمركز إضافتها، الأكثر سندا أولا:"
+],
+"A program in {0}: {1} job offers ask for it and no program teaches it here.": [
+"Une formation en {0} : {1} offres d'emploi la demandent et aucune formation ne l'enseigne ici.",
+"برنامج في {0}: تطلبه {1} عروض شغل ولا يدرّسه أي برنامج هنا."
+],
+"The job offers": [
+"Les offres d'emploi",
+"عروض الشغل"
+],
+"The ones that follow the centre's name come from what “{0}” means.": [
+"Ceux qui suivent le nom du centre viennent de ce que veut dire « {0} ».",
+"التي تتبع اسم المركز تأتي من معنى «{0}»."
+],
+"Ideas that suit a training centre (fixed list)": [
+"Des idées qui conviennent à un centre de formation (liste fixe)",
+"أفكار تناسب مركز تكوين (قائمة ثابتة)"
+],
+"Length: {0} letters, {1}.": [
+"Longueur : {0} lettres, {1}.",
+"الطول: {0} حروف، {1}."
+],
+"short and easy to remember": [
+"court et facile à retenir",
+"قصير وسهل الحفظ"
+],
+"fine": [
+"correct",
+"مقبول"
+],
+"long: people will shorten it": [
+"long : les gens le raccourciront",
+"طويل: سيختصره الناس"
+],
+"How it is said: {0}.": [
+"Prononciation : {0}.",
+"النطق: {0}."
+],
+"figures used as letters, natural for Tunisians on WhatsApp, harder to spell for others": [
+"des chiffres utilisés comme lettres, naturels pour les Tunisiens sur WhatsApp, plus difficiles à épeler pour les autres",
+"أرقام مستعملة كحروف، طبيعية للتونسيين على WhatsApp، وأصعب في التهجئة للآخرين"
+],
+"hard to say: many consonants together": [
+"difficile à dire : beaucoup de consonnes à la suite",
+"صعب النطق: حروف ساكنة كثيرة متتالية"
+],
+"easy to say in French, Arabic and English": [
+"facile à dire en français, en arabe et en anglais",
+"سهل النطق بالفرنسية والعربية والإنجليزية"
+],
+"What it means: {0}": [
+"Ce qu'il veut dire : {0}",
+"معناه: {0}"
+],
+"no meaning I know: it can still work, but its story has to be told.": [
+"aucun sens que je connaisse : il peut marcher quand même, mais il faut raconter son histoire.",
+"لا معنى أعرفه: قد ينجح رغم ذلك، لكن يجب رواية قصته."
+],
+"How it stands out: {0}.": [
+"Originalité : {0}.",
+"التميّز: {0}."
+],
+"only common words: easy to confuse with other centres": [
+"uniquement des mots courants : facile à confondre avec d'autres centres",
+"كلمات شائعة فقط: سهل الخلط مع مراكز أخرى"
+],
+"one common word: the other one carries it": [
+"un mot courant : l'autre le porte",
+"كلمة شائعة: الأخرى تحمله"
+],
+"its own word: easy to find online": [
+"son propre mot : facile à trouver en ligne",
+"كلمته الخاصة: سهل إيجاده على الإنترنت"
+],
+"What it fits: {0}.": [
+"Ce à quoi il convient : {0}.",
+"ما يناسبه: {0}."
+],
+"every program the centre teaches, and what comes after them (a job)": [
+"chaque formation que le centre enseigne, et ce qui vient après (un emploi)",
+"كل برنامج يدرّسه المركز، وما يأتي بعده (شغل)"
+],
+"some programs more than others": [
+"certaines formations plus que d'autres",
+"بعض البرامج أكثر من غيرها"
+],
+"A strong name: keep it and tell its story.": [
+"Un nom fort : gardez-le et racontez son histoire.",
+"اسم قوي: احتفظ به واروِ قصته."
+],
+"A good name, with one point to watch.": [
+"Un bon nom, avec un point à surveiller.",
+"اسم جيد، مع نقطة يجب الانتباه إليها."
+],
+"A name to explain, or to rethink.": [
+"Un nom à expliquer, ou à repenser.",
+"اسم يحتاج شرحا، أو إعادة تفكير."
+],
+"“{0}”: {1}/10. {2}": [
+"« {0} » : {1}/10. {2}",
+"«{0}»: {1} من 10. {2}"
+],
+"Services it suggests:": [
+"Les services qu'il suggère :",
+"الخدمات التي يقترحها:"
+],
+"A reading by fixed criteria: length, how it is said, what it means, how it stands out, what it fits": [
+"Une lecture selon des critères fixes : longueur, prononciation, sens, originalité, adéquation",
+"قراءة حسب معايير ثابتة: الطول، النطق، المعنى، التميّز، الملاءمة"
+],
+"Artificial intelligence": [
+"Intelligence artificielle",
+"الذكاء الاصطناعي"
+],
+"DevOps and cloud": [
+"DevOps et cloud",
+"DevOps والسحابة"
+],
+"Cyber security": [
+"Cybersécurité",
+"الأمن السيبراني"
+],
+"Web development": [
+"Développement web",
+"تطوير الويب"
+],
+"Python": [
+"Python",
+"Python بايثون"
+],
+"Mobile": [
+"Mobile",
+"تطبيقات الهاتف"
+],
+"BI and data": [
+"BI et données",
+"ذكاء الأعمال والبيانات"
+],
+"Internet of things": [
+"Internet des objets",
+"إنترنت الأشياء"
+],
+"Digital marketing": [
+"Marketing digital",
+"التسويق الرقمي"
+],
+"Tech in general": [
+"La tech en général",
+"التكنولوجيا عموما"
+],
+"Internships with partner companies: the bridge to a first job": [
+"Des stages avec des entreprises partenaires : le pont vers un premier emploi",
+"تربصات مع مؤسسات شريكة: الجسر نحو أول شغل"
+],
+"CV, LinkedIn and interview coaching at the end of each program": [
+"Un accompagnement CV, LinkedIn et entretien à la fin de chaque formation",
+"مرافقة في السيرة الذاتية وLinkedIn والمقابلة في نهاية كل برنامج"
+],
+"A job board for the centre's former candidates": [
+"Un espace d'offres d'emploi pour les anciens candidats du centre",
+"فضاء عروض شغل لقدماء مترشحي المركز"
+],
+"Mentoring by former candidates who found work": [
+"Un mentorat par d'anciens candidats qui ont trouvé un emploi",
+"مرافقة من قدماء المترشحين الذين وجدوا شغلا"
+],
+"Training for companies' teams: the bridge the other way": [
+"Des formations pour les équipes des entreprises : le pont dans l'autre sens",
+"تكوين لفرق المؤسسات: الجسر في الاتجاه الآخر"
+],
+"Short certifying workshops (one skill, one weekend)": [
+"Des ateliers certifiants courts (une compétence, un week-end)",
+"ورشات قصيرة بشهادة (مهارة واحدة، نهاية أسبوع)"
+],
+"A skills check before and after each program": [
+"Un bilan des compétences avant et après chaque formation",
+"تقييم المهارات قبل كل برنامج وبعده"
+],
+"Preparation for international certifications": [
+"Préparation aux certifications internationales",
+"التحضير للشهادات الدولية"
+],
+"Open project evenings in the lab": [
+"Des soirées projets ouvertes au lab",
+"أمسيات مشاريع مفتوحة في المخبر"
+],
+"Hackathons with a local company's real problem": [
+"Des hackathons sur le vrai problème d'une entreprise locale",
+"هاكاثونات حول مشكل حقيقي لمؤسسة محلية"
+],
+"A demo day where candidates show their projects": [
+"Un demo day où les candidats montrent leurs projets",
+"يوم عرض يقدّم فيه المترشحون مشاريعهم"
+],
+"Monthly meetups with professionals": [
+"Des rencontres mensuelles avec des professionnels",
+"لقاءات شهرية مع مهنيين"
+],
+"An online community for candidates and former candidates": [
+"Une communauté en ligne pour les candidats et les anciens",
+"مجتمع على الإنترنت للمترشحين والقدماء"
+],
+"Talks by alumni": [
+"Des conférences d'anciens",
+"محاضرات للقدماء"
+],
+"Preparation for certifications (AWS, Cisco, Microsoft, Google)": [
+"Préparation aux certifications (AWS, Cisco, Microsoft, Google)",
+"التحضير للشهادات (AWS، Cisco، Microsoft، Google)"
+],
+"Courses for teenagers in the holidays (coding, robotics)": [
+"Des cours pour les adolescents pendant les vacances (code, robotique)",
+"دروس للمراهقين في العطل (برمجة، روبوتيك)"
+],
+"Evening and weekend formats for people who work": [
+"Des formats du soir et du week-end pour ceux qui travaillent",
+"صيغ مسائية وفي نهاية الأسبوع لمن يعمل"
+],
+"Self-paced online courses from the videos already recorded": [
+"Des cours en ligne à son rythme, à partir des vidéos déjà enregistrées",
+"دروس عن بعد حسب الوتيرة الخاصة، من الفيديوهات المسجّلة"
+],
+"“9antra” (قنطرة) means “bridge” in Tunisian: a bridge from learning to a job, a story told in one word.": [
+"« 9antra » (قنطرة) veut dire « pont » en tunisien : un pont entre l'apprentissage et l'emploi, une histoire racontée en un mot.",
+"«9antra» (قنطرة) تعني «جسر» بالتونسية: جسر من التعلّم إلى الشغل، قصة تُروى في كلمة واحدة."
+],
+"“Qantra” (قنطرة) means “bridge”: a bridge from learning to a job.": [
+"« Qantra » (قنطرة) veut dire « pont » : un pont entre l'apprentissage et l'emploi.",
+"«Qantra» (قنطرة) تعني «جسر»: جسر من التعلّم إلى الشغل."
+],
+"“Kantra” (قنطرة) means “bridge”: a bridge from learning to a job.": [
+"« Kantra » (قنطرة) veut dire « pont » : un pont entre l'apprentissage et l'emploi.",
+"«Kantra» (قنطرة) تعني «جسر»: جسر من التعلّم إلى الشغل."
+],
+"“Qantara” (قنطرة) means “bridge”: a bridge from learning to a job.": [
+"« Qantara » (قنطرة) veut dire « pont » : un pont entre l'apprentissage et l'emploi.",
+"«Qantara» (قنطرة) تعني «جسر»: جسر من التعلّم إلى الشغل."
+],
+"قنطرة means “bridge”: a bridge from learning to a job.": [
+"قنطرة veut dire « pont » : un pont entre l'apprentissage et l'emploi.",
+"قنطرة تعني «جسر»: جسر من التعلّم إلى الشغل."
+],
+"“Bridge”: from learning to a job, a clear promise.": [
+"« Bridge » : de l'apprentissage à l'emploi, une promesse claire.",
+"«Bridge»: من التعلّم إلى الشغل، وعد واضح."
+],
+"“Pont”: from learning to a job, a clear promise.": [
+"« Pont » : de l'apprentissage à l'emploi, une promesse claire.",
+"«Pont»: من التعلّم إلى الشغل، وعد واضح."
+],
+"“Skill”: abilities, close to what employers look for.": [
+"« Skill » : des compétences, proches de ce que cherchent les employeurs.",
+"«Skill»: مهارات، قريبة مما يبحث عنه المشغّلون."
+],
+"“Skills”: abilities, close to what employers look for.": [
+"« Skills » : des compétences, proches de ce que cherchent les employeurs.",
+"«Skills»: مهارات، قريبة مما يبحث عنه المشغّلون."
+],
+"“Lab”: a place to try and build, practical.": [
+"« Lab » : un lieu pour essayer et construire, concret.",
+"«Lab»: مكان للتجربة والبناء، عملي."
+],
+"“Labs”: places to try and build, practical.": [
+"« Labs » : des lieux pour essayer et construire, concrets.",
+"«Labs»: أماكن للتجربة والبناء، عملية."
+],
+"“Hub”: where people meet, a community.": [
+"« Hub » : là où les gens se rencontrent, une communauté.",
+"«Hub»: حيث يلتقي الناس، مجتمع."
+],
+"“Code”: programming; narrow if the centre also teaches marketing or BI.": [
+"« Code » : la programmation ; étroit si le centre enseigne aussi le marketing ou la BI.",
+"«Code»: البرمجة؛ ضيّق إن كان المركز يدرّس أيضا التسويق أو ذكاء الأعمال."
+],
+"“Coding”: programming; narrow if the centre also teaches marketing or BI.": [
+"« Coding » : la programmation ; étroit si le centre enseigne aussi le marketing ou la BI.",
+"«Coding»: البرمجة؛ ضيّق إن كان المركز يدرّس أيضا التسويق أو ذكاء الأعمال."
+],
+"“Future”: momentum, a little common.": [
+"« Future » : de l'élan, un peu courant.",
+"«Future»: اندفاع، شائع قليلا."
+],
+"“Futur”: momentum, a little common.": [
+"« Futur » : de l'élan, un peu courant.",
+"«Futur»: اندفاع، شائع قليلا."
+],
+"“Next”: momentum, a little common.": [
+"« Next » : de l'élan, un peu courant.",
+"«Next»: اندفاع، شائع قليلا."
+],
+"“Desk”: a work place, calm and practical.": [
+"« Desk » : un lieu de travail, calme et pratique.",
+"«Desk»: مكان عمل، هادئ وعملي."
+],
+"“Campus”: a place of study, neutral.": [
+"« Campus » : un lieu d'études, neutre.",
+"«Campus»: مكان دراسة، محايد."
+],
+"That is not in your assistant: payments, the centre's figures, the settings and the other classes stay with the admin. Write to the admin from your space if you need them.": [
+"Ce n'est pas dans votre assistant : les paiements, les chiffres du centre, les paramètres et les autres classes restent chez l'admin. Écrivez à l'admin depuis votre espace si vous en avez besoin.",
+"هذا ليس في مساعدك: الدفعات وأرقام المركز والإعدادات والأقسام الأخرى تبقى عند المدير. راسل المدير من فضائك إن احتجتها."
 ]
 }

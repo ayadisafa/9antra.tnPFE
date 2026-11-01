@@ -254,7 +254,7 @@ check("it shows who answered, with their level and what it means", "yasmine ben 
 check("the steps of their answers are drawn", "The bases" in text and 'aria-label="3 of 3"' in text and 'aria-label="0 of 2"' in text)
 check("what they know, what is new, what they expect", "Already practised" in text and "New for them" in text and "Trouver un emploi ou un stage" in text and "Je suis disponible le soir." in text)
 check("it says what each program asks", "What each program asks" in text and "8 check questions (DevOps)" in text and "/quiz/preview/" in text)
-check("nothing of the old quiz centre is left", "Quiz center" not in text and "agent" not in text.lower().replace("user-agent", ""), "old words")
+check("nothing of the old quiz centre is left", "Quiz center" not in text and "quiz agent" not in text.lower() and "QuizAgent" not in text, "old words")
 focus = admin.get(f"/quiz/all?focus={quiz.id}").text
 check("a notification leads to the candidate's line", f'class="lv-row is-focus" id="level-{quiz.id}"' in focus)
 preview = admin.get(f"/quiz/preview/{devops.id}")

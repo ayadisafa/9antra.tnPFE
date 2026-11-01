@@ -1,6 +1,9 @@
-{# Yasmine, the animated friend: she says hi, tells what is waiting today, explains the page, answers questions
-   (through the assistant) and reacts to news. What she says comes from /account/friend (services/friend.py).
+{# Yasmine, the animated friend and the assistant: she says hi, tells what is waiting today, explains the page, opens
+   the assistant's window when clicked (one assistant, base.html) and reacts to news. What she says comes from
+   /account/friend (services/friend.py); how she looks is her character in Settings (_friend_figure.html).
    She can speak with the voices of this computer; she can be told to be quiet, or hidden, on this browser. #}
+{% import "_friend_figure.html" as figure %}
+{{ figure.style() }}
 <style id="friend-look">
   .fr { position:fixed; left:calc(268px + 22px); bottom:16px; z-index:1070; width:104px; height:132px; }
   body.menu-right .fr { left:auto; right:calc(268px + 22px); }
@@ -82,13 +85,18 @@
   @keyframes frWave { 0% { transform:rotate(78deg); } 18% { transform:rotate(-6deg); } 34% { transform:rotate(14deg); } 50% { transform:rotate(-6deg); } 66% { transform:rotate(14deg); } 82% { transform:rotate(-2deg); } 100% { transform:rotate(78deg); } }
   @keyframes frPop { from { opacity:0; transform:translateY(8px) scale(.92); } to { opacity:1; transform:none; } }
   @keyframes frBadge { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.15); } }
+  .fr.is-listening .fr-svg { filter:drop-shadow(0 0 0 rgba(0,0,0,0)) drop-shadow(0 10px 18px color-mix(in srgb, var(--primary-berry) 45%, transparent)); }
+  .fr.is-listening::after { content:""; position:absolute; inset:-6px; border-radius:50%; border:2px solid var(--primary-berry); opacity:.0; pointer-events:none; }
+  @media (prefers-reduced-motion: no-preference) { .fr.is-listening::after { animation:frListen 1.8s ease-out infinite; } }
+  @keyframes frListen { 0% { opacity:.55; transform:scale(.85); } 100% { opacity:0; transform:scale(1.25); } }
+  .fr-back .fr-fig { width:100%; height:100%; }
   @media print { .fr, .fr-back { display:none !important; } }
 </style>
 
 <div class="fr" id="friend" hidden>
   <div class="fr-bubble" id="fr-bubble" role="status" aria-live="polite" hidden>
     <button type="button" class="fr-x" id="fr-close" aria-label="Close">&times;</button>
-    <div class="fr-name" id="fr-name">Yasmine</div>
+    <div class="fr-name" id="fr-name" data-no-i18n>{{ friend_look.name }}</div>
     <div class="fr-text" id="fr-text"></div>
     <div class="fr-schema" id="fr-schema"></div>
     <div class="fr-actions" id="fr-actions"></div>
@@ -104,15 +112,14 @@
     </select>
     </div>
   </div>
-  <button type="button" class="fr-face" id="fr-face" aria-label="Yasmine, your friend: click to talk with her">
-    <svg class="fr-svg" viewBox="0 0 120 150" aria-hidden="true">
+  <button type="button" class="fr-face" id="fr-face" aria-label="{{ friend_look.name }}: click to talk">
+    <svg class="fr-svg fr-fig" id="fr-figure" viewBox="0 0 120 150" aria-hidden="true" {{ figure.attrs(friend_look) }}>
       <ellipse class="fr-shadow" cx="60" cy="144" rx="30" ry="5"/>
       <g class="fr-all">
-        <path class="fr-hair" d="M27 60 C24 30 43 15 62 15 C83 15 98 32 95 60 C97 82 92 98 85 106 L37 106 C29 94 25 78 27 60 Z"/>
+        {{ figure.back_hair() }}
         <g class="fr-torso">
           <path class="fr-top" d="M28 142 C28 113 41 100 60 100 C79 100 92 113 92 142 Z"/>
-          <path class="fr-collar" d="M50 101.5 L60 112 L70 101.5"/>
-          <circle class="fr-gold" cx="60" cy="122" r="2.2"/>
+          {{ figure.outfit() }}
         </g>
         <rect class="fr-skin" x="53" y="83" width="14" height="21" rx="6"/>
         <g class="fr-arm">
@@ -120,37 +127,16 @@
           <circle class="fr-skin" cx="102" cy="76" r="7"/>
         </g>
         <g class="fr-head">
-          <circle class="fr-skin" cx="33" cy="61" r="5"/><circle class="fr-skin" cx="87" cy="61" r="5"/>
-          <circle class="fr-gold" cx="33" cy="69" r="2.4"/><circle class="fr-gold" cx="87" cy="69" r="2.4"/>
-          <ellipse class="fr-skin" cx="60" cy="57" rx="27" ry="30"/>
-          <path class="fr-hair" d="M32 52 C34 30 51 23 64 25 C79 26 89 36 88 53 C81 43 71 38 59 39 C48 40 40 45 32 52 Z"/>
-          <circle class="fr-hair" cx="63" cy="17" r="10"/>
-          <path class="fr-brow" d="M44 49 Q50 45 55 48"/><path class="fr-brow" d="M65 48 Q70 45 76 49"/>
-          <g class="fr-eyes">
-            <ellipse class="fr-eye" cx="50" cy="58" rx="3.6" ry="4.4"/><ellipse class="fr-eye" cx="70" cy="58" rx="3.6" ry="4.4"/>
-            <circle class="fr-shine" cx="51.3" cy="56.4" r="1.2"/><circle class="fr-shine" cx="71.3" cy="56.4" r="1.2"/>
-          </g>
-          <circle class="fr-cheek" cx="43" cy="67" r="4.5"/><circle class="fr-cheek" cx="77" cy="67" r="4.5"/>
-          <path class="fr-nose" d="M60 61 Q58 66 61 67"/>
-          <path class="fr-smile" d="M51 72 Q60 80 69 72"/>
-          <ellipse class="fr-talk" cx="60" cy="74" rx="5.5" ry="4"/>
+          {{ figure.head() }}
         </g>
       </g>
     </svg>
     <span class="fr-badge" id="fr-badge" hidden></span>
   </button>
-  <button type="button" class="fr-hide" id="fr-hide" title="Hide Yasmine (call her back with the small face)" aria-label="Hide Yasmine">&minus;</button>
+  <button type="button" class="fr-hide" id="fr-hide" title="Hide her (call her back with the small face)" aria-label="Hide the assistant">&minus;</button>
 </div>
-<button type="button" class="fr-back" id="fr-back" hidden title="Call Yasmine back" aria-label="Call Yasmine back">
-  <svg viewBox="22 2 76 80" aria-hidden="true">
-    <path class="fr-hair" d="M27 60 C24 30 43 15 62 15 C83 15 98 32 95 60 L95 82 L27 82 Z"/>
-    <ellipse class="fr-skin" cx="60" cy="57" rx="27" ry="30"/>
-    <path class="fr-hair" d="M32 52 C34 30 51 23 64 25 C79 26 89 36 88 53 C81 43 71 38 59 39 C48 40 40 45 32 52 Z"/>
-    <circle class="fr-hair" cx="63" cy="17" r="10"/>
-    <ellipse class="fr-eye" cx="50" cy="58" rx="3.6" ry="4.4"/><ellipse class="fr-eye" cx="70" cy="58" rx="3.6" ry="4.4"/>
-    <circle class="fr-cheek" cx="43" cy="67" r="4.5"/><circle class="fr-cheek" cx="77" cy="67" r="4.5"/>
-    <path class="fr-smile" d="M51 72 Q60 80 69 72"/>
-  </svg>
+<button type="button" class="fr-back" id="fr-back" hidden title="Call the assistant back" aria-label="Call the assistant back">
+  {{ figure.mini(friend_look) }}
 </button>
 
 <script>
@@ -182,9 +168,11 @@
     try {
       window.speechSynthesis.cancel();
       var utterance = new SpeechSynthesisUtterance(text.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu, ""));
-      utterance.lang = data.voice_lang; utterance.rate = 1.02; utterance.pitch = 1.12;
+      var man = data.voice === "male";
+      utterance.lang = data.voice_lang; utterance.rate = 1.02; utterance.pitch = man ? 0.92 : 1.12;
       var voices = window.speechSynthesis.getVoices().filter(function (voice) { return voice.lang && voice.lang.slice(0, 2) === data.voice_lang.slice(0, 2); });
-      var liked = voices.filter(function (voice) { return /julie|hortense|denise|eloise|amelie|zira|aria|jenny|female|femme/i.test(voice.name); });
+      var liked = voices.filter(function (voice) { return man ? /paul|henri|claude|guy|david|mark|george|thomas|remy|hamed|naayf|male|homme/i.test(voice.name)
+                                                                : /julie|hortense|denise|eloise|amelie|zira|aria|jenny|hoda|zariyah|female|femme/i.test(voice.name); });
       if (liked.length || voices.length) utterance.voice = (liked[0] || voices[0]);
       utterance.onstart = function () { root.classList.add("is-talking"); };
       utterance.onend = function () { root.classList.remove("is-talking"); };
@@ -244,9 +232,11 @@
       else (line.links || []).slice(0, 3).forEach(function (item, number) { link(item.label, item.url, number === 0); });
       if (line.url) link(data.words.open, line.url, true);
       if (index < queue.length - 1) button(data.words.next + " (" + (index + 1) + "/" + queue.length + ")", function () { say(index + 1); });
+      // One assistant: what you ask her goes to its window.
+      if (window.openAssistant) button(data.words.ask.replace(/[.…]+$/, ""), function () { close(); window.openAssistant(); }, !line.url && index === queue.length - 1);
     });
     speak(line.text);
-    ask.hidden = !(data && data.can_ask);
+    ask.hidden = !(data && data.can_ask) || !!window.openAssistant;
     if (options.autoHide) hideTimer = setTimeout(function () { if (!bubble.matches(":hover") && document.activeElement !== input) close(); }, options.autoHide);
   }
 
@@ -290,11 +280,17 @@
   function load(then) {
     fetch("/account/friend?path=" + encodeURIComponent(location.pathname) + "&lang=" + encodeURIComponent(chosen()), { headers: { accept: "application/json" } })
       .then(function (response) { return response.ok ? response.json() : null; })
-      .then(function (answer) { if (answer) { data = answer; then(); } })
+      .then(function (answer) { if (answer) { data = answer; window.friendData = answer; then(); } })
       .catch(function () {});
   }
+  // The assistant's window reads its answers aloud through her (when her voice is on), and she reacts when it opens.
+  window.friendSpeak = function (text) { if (text) speak(String(text).slice(0, 600)); };
+  document.addEventListener("assistant:open", function () { close(); wave(); root.classList.add("is-listening"); });
+  document.addEventListener("assistant:close", function () { root.classList.remove("is-listening"); });
 
   document.getElementById("fr-face").addEventListener("click", function () {
+    // One assistant: she opens its window (with what waits today as its first message).
+    if (window.toggleAssistant) { window.toggleAssistant(); return; }
     if (!data) return;
     if (!bubble.hidden) { close(); return; }
     wave();

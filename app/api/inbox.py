@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from sqlalchemy import exists, or_
+from sqlalchemy import exists, func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -37,6 +37,7 @@ from app.services import (
 )
 from app.services import document_pdf, program_pdf
 from app.services.background import run_in_background
+from app.services import email_layout
 from app.services.email_layout import STYLES
 from app.services.email_threads import utcnow
 from app.services.schedule_utils import utc_to_local
@@ -144,8 +145,16 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
         current = "conversations"
     search = (params.get("q") or "").strip()
     candidate_id = params.get("candidate") or None
+    from app.services import message_categories
+
+    category = params.get("category") if params.get("category") in message_categories.CATEGORIES else None
+    # One message (the agents page): its discussion is opened, whatever the filter.
+    wanted = db.get(CandidateEmail, params.get("message")) if params.get("message") else None
 
     query = db.query(EmailThread).options(joinedload(EmailThread.candidate))
+    if category:
+        query = query.filter(exists().where(CandidateEmail.thread_id == EmailThread.id, CandidateEmail.direction == "inbound",
+                                            CandidateEmail.category == category))
     if candidate_id:
         query = query.filter(EmailThread.candidate_id == candidate_id)
         current = "all" if not params.get("filter") else current
@@ -181,7 +190,7 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
     )
 
     selected = None
-    selected_id = params.get("thread")
+    selected_id = params.get("thread") or (wanted.thread_id if wanted is not None else None)
     if selected_id:
         selected = db.get(EmailThread, selected_id)
     elif threads:
@@ -239,6 +248,18 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
     settings = get_settings(db)
     state = mailbox_service.get_state(db)
     pending_sources = _parse_sources(pending) if pending else {}
+    # What each listed discussion is about: the category of its latest incoming message.
+    thread_categories = {}
+    if threads:
+        for thread_id, sorted_as in (db.query(CandidateEmail.thread_id, CandidateEmail.category)
+                                     .filter(CandidateEmail.thread_id.in_([thread.id for thread in threads]),
+                                             CandidateEmail.direction == "inbound", CandidateEmail.category.isnot(None))
+                                     .order_by(CandidateEmail.received_at.asc()).all()):
+            thread_categories[thread_id] = message_categories.label_of(sorted_as)
+    category_counts = dict(
+        db.query(CandidateEmail.category, func.count(func.distinct(CandidateEmail.thread_id)))
+        .filter(CandidateEmail.direction == "inbound", CandidateEmail.category.isnot(None)).group_by(CandidateEmail.category).all()
+    )
     db.commit()
     return templates.TemplateResponse(
         request=request,
@@ -247,6 +268,11 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
             "active_page": "inbox",
             "filters": FILTERS,
             "current_filter": current,
+            "categories": [{**message_categories.label_of(key), "count": category_counts.get(key, 0)}
+                           for key in message_categories.CATEGORIES if category_counts.get(key)],
+            "current_category": category,
+            "thread_categories": thread_categories,
+            "category_of": message_categories.label_of,
             "counts": counts,
             "search": search,
             "candidate_filter": db.get(Candidate, candidate_id) if candidate_id else None,
@@ -359,9 +385,11 @@ def reply(
     attachment_ids: list[str] = Form(default=[]),
     reword: bool = Form(False),
     reword_language: str = Form(""),
+    remember: bool = Form(False),
     db: Session = Depends(get_db),
 ):
     thread = _thread_or_404(db, thread_id)
+    note = body.strip()           # the admin's own words, kept as they are when asked to remember them
     if reword and body.strip():
         # "Reword and send at once": the admin's words (any language) as a proper reply; sent only when nothing changed.
         last_inbound = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
@@ -397,6 +425,16 @@ def reply(
                   "Fix it in Settings, then use “Send again”.",
         )
     notice = "Test discussion: your answer was recorded, not sent." if message.status == "test" else "Answer sent."
+    if remember and note:
+        from app.services import knowledge_service
+
+        try:
+            knowledge_service.save_fact(db, text=note)
+            db.commit()
+            notice += " Kept for the next ones: every assistant uses this information from now on."
+        except ValueError as err:
+            db.rollback()
+            notice += f" Not kept: {err}"
     if untaught:
         notice += " Not learned: it is written in Tunisian. Tick “Reword and send at once” so the system learns it in French or English."
     taught = db.get(KnowledgeEntry, getattr(message, "taught_entry_id", None) or "")
@@ -708,6 +746,7 @@ class AutoEmailDraft(BaseModel):
     image_position: str = "top"
     attachment_ids: list[str] = []
     candidate_id: str | None = None
+    design: dict = {}
 
 
 class DraftRequest(BaseModel):
@@ -952,6 +991,7 @@ def _draft_template(db: Session, payload: AutoEmailDraft) -> email_templates.Tem
         show_details=payload.show_details, cta_label=payload.cta_label, cta_url=payload.cta_url,
         image_id=payload.image_id or None, image_position=payload.image_position,
         attachment_ids=email_files.parse_ids(payload.attachment_ids),
+        design=email_layout.clean_design(payload.design),
     )
 
 
@@ -995,6 +1035,8 @@ def templates_page(request: Request, db: Session = Depends(get_db)):
             "candidates": db.query(Candidate).order_by(Candidate.full_name).all(),
             "initial_preview": preview["html"],
             "initial_subject": preview["subject"],
+            "design_options": email_layout.design_options(),
+            "design_files": email_templates.design_files(db, current.design),
         })
     return templates.TemplateResponse(request=request, name="inbox_templates.html", context=context)
 
@@ -1061,6 +1103,7 @@ def save_auto(
     attachment_ids: list[str] = Form(default=[]),
     channel: str = Form("auto"),
     hours: str = Form(""),
+    design: str = Form(""),
     db: Session = Depends(get_db),
 ):
     spec = _auto_or_404(key)
@@ -1073,6 +1116,7 @@ def save_auto(
             db, key, subject=subject, title=title, body=body, closing=closing, style=style,
             show_details=show_details, is_active=is_active, cta_label=cta_label, cta_url=cta_url,
             image_id=image_id or None, image_position=image_position, attachment_ids=attachment_ids, channel=channel,
+            design=design or None,
         )
     except ValueError as err:
         db.rollback()

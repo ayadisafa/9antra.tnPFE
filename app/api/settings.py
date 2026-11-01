@@ -88,6 +88,7 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "session_check": __import__("app.services.session_check", fromlist=["settings_of"]).settings_of(db),
             "sm": _sms_view(db, request),
             "rules": {"never": settings.assistant_never or "", "notes": settings.assistant_notes or ""},
+            "friend_options": _friend_options(),
             "centre_banks": _centre_banks(settings),
             "wa_trial": request.query_params.get("wa_trial"),
             "notice": request.query_params.get("notice"),
@@ -250,6 +251,29 @@ def test_sms():
 def test_whatsapp():
     ok, text = whatsapp.test_connection()
     return _back(notice=text, anchor="#whatsapp") if ok else _back(error=text, anchor="#whatsapp")
+
+
+def _friend_options() -> dict:
+    from app.services import friend
+
+    return {"genders": friend.GENDERS, "hairs": friend.HAIRS, "outfits": friend.OUTFITS, "voices": friend.VOICES,
+            "skins": friend.SKINS, "hair_colours": friend.HAIR_COLOURS}
+
+
+@router.post("/friend")
+def save_friend(name: str = Form(""), gender: str = Form("female"), hair: str = Form("bun"), hair_colour: str = Form(""),
+                skin: str = Form(""), outfit: str = Form("blouse"), outfit_colour: str = Form(""), glasses: str = Form(""),
+                beard: str = Form(""), voice: str = Form("auto"), reset: str = Form(""), db: Session = Depends(get_db)):
+    """The assistant's character, the same for everyone (or the original again)."""
+    from app.services import friend
+
+    if reset:
+        chosen = friend.save_look(db, {})
+        return _back(notice=f"{chosen['name']} is back as at first.", anchor="#character")
+    chosen = friend.save_look(db, {"name": name, "gender": gender, "hair": hair, "hair_colour": hair_colour, "skin": skin,
+                                   "outfit": outfit, "outfit_colour": outfit_colour, "glasses": bool(glasses), "beard": bool(beard),
+                                   "voice": voice})
+    return _back(notice=f"{chosen['name']} has a new look: every page shows it now.", anchor="#character")
 
 
 @router.post("/assistant-rules")

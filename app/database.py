@@ -338,6 +338,8 @@ def ensure_sqlite_compatibility():
             "centre_tax_id": "VARCHAR",
             "centre_email": "VARCHAR",
             "centre_website": "VARCHAR",
+            "friend_look": "TEXT",
+            "session_reminder_hours": "INTEGER DEFAULT 24",
         },
 
         "class_materials": {
@@ -364,7 +366,8 @@ def ensure_sqlite_compatibility():
             "channel": "VARCHAR DEFAULT 'email'",
         },
         "admin_reminders": {"channel": "VARCHAR DEFAULT 'email'", "repeat": "VARCHAR DEFAULT 'once'", "until": "DATETIME",
-                            "times": "INTEGER DEFAULT 0", "done_keys": "TEXT"},
+                            "times": "INTEGER DEFAULT 0", "done_keys": "TEXT",
+                            "design": "TEXT"},
 
         "candidate_emails": {
             "emotions": "TEXT",
@@ -379,6 +382,7 @@ def ensure_sqlite_compatibility():
             "attachments": "TEXT",
             "channel": "VARCHAR DEFAULT 'email'",
             "admin_score": "INTEGER",
+            "category": "VARCHAR",
         },
 
         # Automatic emails are stored next to the admin's own templates.
@@ -393,6 +397,7 @@ def ensure_sqlite_compatibility():
             "cta_label": "VARCHAR",
             "cta_url": "VARCHAR",
             "channel": "VARCHAR",
+            "design": "TEXT",
         },
 
         # The picture shown next to a program: found on the web or uploaded.
@@ -421,6 +426,7 @@ def ensure_sqlite_compatibility():
             "feedback": "TEXT",
             "insight": "TEXT",
             "answer_source": "VARCHAR",
+            "attention": "TEXT",
             "external_id": "VARCHAR",
         },
 

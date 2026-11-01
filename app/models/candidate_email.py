@@ -43,6 +43,9 @@ class CandidateEmail(Base):
     channel = Column(String, default="email", nullable=True, index=True)   # email | whatsapp
     emotions = Column(Text, nullable=True)        # what the candidate felt, read with word lists (services/emotions.py), as JSON
     admin_score = Column(Integer, nullable=True)        # the admin's verdict on an assistant's answer: 1 right, -1 wrong
+    # What the message is about (services/message_categories.py): programs, planning, payment, registration, technical,
+    # complaint or general; the orchestrator gives it to the agent of that category.
+    category = Column(String, nullable=True, index=True)
 
     candidate = relationship("Candidate")
     registration = relationship("Registration")

@@ -40,12 +40,15 @@ home = admin.get("/")
 text = home.text
 check("the dashboard opens", home.status_code == 200, home.status_code)
 check("the copy holds the feedback read from the website", said["total"] >= 29 and said["read"] >= 25, (said["total"], said["read"]))
-check("every feedback is on the dashboard", text.count('class="db-said-card') == said["total"], (text.count('class="db-said-card'), said["total"]))
+from app.services import feedback_hub
+voices = feedback_hub.overview(db)
+check("every feedback is on the dashboard, the website's and the application's", text.count('class="db-said-card') == voices["total"] >= said["total"],
+      (text.count('class="db-said-card'), voices["total"], said["total"]))
 check("with who said it and what they said", all(row["name"] in text for row in said["rows"][:6] if row["name"]) and "“" in text)
-check("with how each one sounds", text.count('class="db-said-who"') == said["total"] and "ui-chip ok ms-auto" in text)
+check("with how each one sounds", text.count('class="db-said-who"') == voices["total"] and "ui-chip ok ms-auto" in text)
 check("and the analysis of all of them: share of happy, stars, what they talk about, the words that come back",
-      f'{said["happy_share"]}%' in text and "are happy" in text and "stars on average" in text and "What they talk about" in text and "Words that come back" in text)
-check("the themes are those found in the feedback", all(theme["label"] in text for theme in said["themes"][:3]), [t["label"] for t in said["themes"][:3]])
+      f'{voices["happy_share"]}%' in text and "are happy" in text and "stars on average" in text and "What they talk about" in text and "Words that come back" in text)
+check("the themes are those found in the feedback", all(theme["label"] in text for theme in voices["subjects"][:3]), [t["label"] for t in voices["subjects"][:3]])
 check("it leads to the Website page", 'href="/website#feedback"' in text)
 
 # ======================================================================

@@ -1,0 +1,384 @@
+{% extends "base.html" %}
+
+{% block title %}Social media · 9antra{% endblock %}
+{% block page_title %}Social media{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .so-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; position:sticky; top:calc(var(--stick-top, 86px) + 4px); z-index:5; }
+  .so-tab { display:inline-flex; gap:7px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:7px 14px; font-size:.82rem; font-weight:800; color:#5b5670; text-decoration:none; box-shadow:0 6px 16px -14px rgba(36,26,56,.6); transition:transform .15s ease, border-color .15s ease, color .15s ease; }
+  .so-tab:hover { transform:translateY(-1px); border-color:var(--primary-berry); color:var(--primary-berry); } .so-tab i { color:var(--primary-berry); }
+  .so-section { scroll-margin-top:150px; margin-bottom:34px; }
+  .so-h { display:flex; justify-content:space-between; align-items:flex-end; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+  .so-h h3 { font-size:1.12rem; font-weight:800; margin:0; display:flex; gap:9px; align-items:center; color:var(--ink-text); } .so-h h3 i { color:var(--primary-berry); }
+  .so-h p { font-size:.83rem; color:var(--muted); margin:3px 0 0; max-width:760px; }
+  .so-pills { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .so-pill { border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:700; color:#5b5670; text-decoration:none; }
+  .so-pill.is-on { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .so-ideas { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px; }
+  .so-idea { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; min-width:0; transition:transform .18s ease, box-shadow .18s ease; }
+  .so-idea:hover { transform:translateY(-3px); box-shadow:var(--shadow-soft); }
+  .so-preview { position:relative; background:#f4eff8; aspect-ratio:1 / 1; }
+  .so-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+  .so-topic { position:absolute; top:10px; right:10px; display:inline-flex; gap:5px; align-items:center; background:rgba(255,255,255,.92); border-radius:999px; padding:3px 10px; font-size:.72rem; font-weight:800; color:var(--ink-text); }
+  .so-topic i { color:var(--primary-berry); }
+  .so-body { padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .so-caption { font-size:.78rem; color:#4a445e; white-space:pre-line; max-height:7.6em; overflow:hidden; position:relative; line-height:1.45; }
+  .so-caption::after { content:""; position:absolute; inset:auto 0 0; height:2em; background:linear-gradient(transparent, #fff); }
+  .so-tags { font-size:.72rem; color:var(--primary-berry); font-weight:700; overflow-wrap:anywhere; }
+  .so-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
+  .so-published { border-top:1px dashed var(--border-color); padding-top:8px; }
+  .so-published summary { font-size:.76rem; font-weight:800; color:var(--primary-berry); cursor:pointer; list-style:none; } .so-published summary::-webkit-details-marker { display:none; }
+  .so-mini-form { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.6fr); gap:6px; margin-top:8px; }
+  .so-mini-form .form-select, .so-mini-form .form-control { font-size:.78rem; border-radius:10px; padding:5px 8px; }
+  .so-mini-form button { grid-column:1 / -1; }
+  .so-box { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:18px; }
+  .so-make { display:grid; grid-template-columns:minmax(0, 1.25fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .so-label { font-size:.66rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; margin:12px 0 7px; }
+  .so-label:first-child { margin-top:0; }
+  .so-choices { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+  .so-choice { position:relative; } .so-choice input { position:absolute; opacity:0; pointer-events:none; }
+  .so-choice span { display:block; border:1.5px solid var(--border-color); border-radius:16px; padding:10px 12px; cursor:pointer; height:100%; transition:border-color .15s ease, background .15s ease, transform .15s ease; }
+  .so-choice span b { display:block; font-size:.84rem; color:var(--ink-text); } .so-choice span small { display:block; font-size:.72rem; color:var(--muted); line-height:1.35; margin-top:2px; }
+  .so-choice span:hover { transform:translateY(-1px); border-color:var(--primary-berry); }
+  .so-choice input:checked + span { border-color:var(--primary-berry); background:var(--berry-subtle); }
+  .so-choice input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+  .so-chips { display:flex; gap:6px; flex-wrap:wrap; }
+  .so-chip { position:relative; } .so-chip input { position:absolute; opacity:0; pointer-events:none; }
+  .so-chip span { display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); border-radius:999px; padding:6px 12px; font-size:.78rem; font-weight:700; color:#5b5670; cursor:pointer; }
+  .so-chip input:checked + span { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .so-note { font-size:.74rem; color:var(--muted); margin-top:8px; line-height:1.45; }
+  .so-videos { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:14px; }
+  .so-video { background:#fff; border:1px solid var(--border-color); border-radius:20px; overflow:hidden; display:flex; flex-direction:column; min-width:0; }
+  .so-video video { width:100%; background:#1d1430; display:block; aspect-ratio:9 / 16; object-fit:contain; }
+  .so-video.is-square video { aspect-ratio:1 / 1; }
+  .so-video-body { padding:10px 12px 12px; display:flex; flex-direction:column; gap:6px; }
+  .so-video-body b { font-size:.86rem; color:var(--ink-text); } .so-video-body small { font-size:.72rem; color:var(--muted); }
+  .so-working { display:grid; place-items:center; aspect-ratio:9 / 16; background:linear-gradient(160deg, var(--primary-berry), #5a1440); color:#fff; text-align:center; padding:20px; font-size:.84rem; font-weight:700; }
+  .so-working .ui-spin { width:34px; height:34px; border-width:3px; margin:0 auto 12px; }
+  .so-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .so-listen { display:grid; gap:10px; }
+  .so-proposal { border:1px solid var(--border-color); border-left:4px solid #d97706; border-radius:16px; padding:12px 14px; background:#fff; }
+  .so-proposal b { display:flex; gap:7px; align-items:center; font-size:.86rem; color:var(--ink-text); } .so-proposal b i { color:#d97706; }
+  .so-proposal q { display:block; font-size:.78rem; color:#4a445e; margin:6px 0 8px; font-style:italic; }
+  .so-proposal textarea, .so-answer textarea, .so-answer input { width:100%; border:1px solid var(--border-color); border-radius:12px; padding:7px 10px; font-size:.8rem; }
+  .so-answer { border:1px solid var(--border-color); border-radius:16px; padding:12px 14px; background:#fff; display:grid; gap:6px; }
+  .so-said { font-size:.8rem; color:#4a445e; } .so-said b, .so-did b { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; display:block; }
+  .so-did { font-size:.82rem; color:var(--ink-text); font-weight:600; background:#e9f9ef; border-radius:10px; padding:6px 10px; }
+  .so-did.is-missing { background:var(--gold-subtle); color:#92400e; font-weight:600; }
+  .so-stats { display:grid; grid-template-columns:repeat(auto-fit, minmax(170px, 1fr)); gap:12px; margin-bottom:14px; }
+  .so-advice { display:grid; gap:8px; }
+  .so-advice div { display:flex; gap:10px; align-items:flex-start; background:#fff; border:1px solid var(--border-color); border-radius:14px; padding:10px 12px; font-size:.82rem; color:#4a445e; }
+  .so-advice i { color:var(--primary-berry); font-size:1rem; margin-top:1px; }
+  .so-bars { display:grid; gap:7px; }
+  .so-bar { display:grid; grid-template-columns:minmax(0, 1.2fr) minmax(60px, 2fr) auto; gap:10px; align-items:center; font-size:.78rem; }
+  .so-bar span { font-weight:700; color:#4d4863; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .so-bar em { font-style:normal; font-weight:800; color:var(--ink-text); white-space:nowrap; }
+  .so-bar .ui-bar > span { display:block; height:100%; background:linear-gradient(90deg, #d97706, var(--primary-berry)); border-radius:99px; }
+  .so-table { width:100%; border-collapse:collapse; font-size:.8rem; }
+  .so-table th { font-size:.66rem; text-transform:uppercase; letter-spacing:.05em; color:#9b95b0; text-align:left; padding:8px 8px; border-bottom:1px solid var(--border-color); white-space:nowrap; }
+  .so-table td { padding:9px 8px; border-bottom:1px solid var(--border-color); vertical-align:top; }
+  .so-table td.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .so-text { max-width:280px; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#4a445e; }
+  .so-rate { display:flex; gap:6px; align-items:center; min-width:110px; } .so-rate .ui-bar { flex:1; }
+  .so-form { display:grid; grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); gap:8px; margin-top:10px; }
+  .so-form label { font-size:.7rem; font-weight:800; color:#9b95b0; text-transform:uppercase; letter-spacing:.04em; display:grid; gap:4px; }
+  .so-form .wide { grid-column:1 / -1; }
+  .so-form .form-control, .so-form .form-select { font-size:.82rem; border-radius:10px; }
+  .so-scroll { overflow-x:auto; }
+  @media (prefers-reduced-motion: no-preference) { .so-idea, .so-video { animation:soIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 45ms); } }
+  @keyframes soIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @media (max-width: 991px) { .so-make, .so-two { grid-template-columns:minmax(0, 1fr); } .so-tabs { position:static; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Social media</h2>
+    <p>Posts, stories and videos made from your own figures and what people said, ready to share; what you did about their feedback; and how each post did.</p>
+  </div>
+</div>
+
+<nav class="so-tabs" aria-label="Parts of the page">
+  <a class="so-tab" href="#create"><i class="bi bi-magic"></i>Posts and stories</a>
+  <a class="so-tab" href="#videos"><i class="bi bi-camera-reels"></i>Videos</a>
+  <a class="so-tab" href="#listen"><i class="bi bi-ear"></i>We listen</a>
+  <a class="so-tab" href="#engagement"><i class="bi bi-graph-up"></i>Engagement</a>
+</nav>
+
+<!-- ============ Posts and stories ============ -->
+<section class="so-section" id="create">
+  <div class="so-h">
+    <div><h3><i class="bi bi-magic"></i>Posts and stories, ready to share</h3>
+      <p>Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text, post it, then tell the page so its numbers can be followed.</p></div>
+    <div class="so-pills" aria-label="Language and look">
+      {% for key, name in languages.items() %}<a class="so-pill {{ 'is-on' if lang == key }}" href="/social?lang={{ key }}&look={{ look }}#create" data-no-i18n>{{ name }}</a>{% endfor %}
+      <span style="width:8px;"></span>
+      {% for key, name in looks.items() %}<a class="so-pill {{ 'is-on' if look == key }}" href="/social?lang={{ lang }}&look={{ key }}#create">{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% else %}<span>Berry</span>{% endif %}</a>{% endfor %}
+    </div>
+  </div>
+  <div class="so-ideas">
+    {% for idea in ideas %}
+    <article class="so-idea" style="--i:{{ loop.index0 }};">
+      <div class="so-preview">
+        <img src="/social/image?idea={{ idea.key | urlencode }}&fmt=post&look={{ look }}&lang={{ lang }}" alt="{{ idea.title }}" loading="lazy">
+        <span class="so-topic"><i class="bi {{ idea.icon }}"></i>{{ idea.title }}</span>
+      </div>
+      <div class="so-body">
+        <div class="so-caption" data-no-i18n>{{ idea.caption }}</div>
+        <div class="so-tags" data-no-i18n>{{ idea.hashtags }}</div>
+        <div class="so-actions">
+          <a class="ui-btn sm" href="/social/image?idea={{ idea.key | urlencode }}&fmt=post&look={{ look }}&lang={{ lang }}&download=1"><i class="bi bi-download"></i>Post 1:1</a>
+          <a class="ui-btn sm" href="/social/image?idea={{ idea.key | urlencode }}&fmt=story&look={{ look }}&lang={{ lang }}&download=1"><i class="bi bi-phone"></i>Story 9:16</a>
+          <button type="button" class="ui-btn sm" data-copy="{{ idea.caption }}&#10;&#10;{{ idea.hashtags }}"><i class="bi bi-clipboard"></i><span>Copy the text</span></button>
+        </div>
+        <details class="so-published">
+          <summary><i class="bi bi-check2-circle"></i> I posted it</summary>
+          <form method="post" action="/social/posts" class="so-mini-form">
+            <input type="hidden" name="topic" value="{{ idea.topic }}"><input type="hidden" name="kind" value="post">
+            <input type="hidden" name="text" value="{{ idea.caption }}">
+            <select class="form-select" name="platform" aria-label="Where">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select>
+            <input class="form-control" name="link" placeholder="Its link (optional)" aria-label="Its link">
+            <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Follow its numbers</button>
+          </form>
+        </details>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ============ Videos ============ -->
+<section class="so-section" id="videos">
+  <div class="so-h">
+    <div><h3><i class="bi bi-camera-reels"></i>Motivating videos, with music</h3>
+      <p>Their success, what you did about their feedback, the next sessions: scenes that come in one after the other, figures that count up, and music. Made on this computer in about a minute, as MP4 for Facebook, Instagram, TikTok and LinkedIn.</p></div>
+  </div>
+  <div class="so-make">
+    <form class="so-box" method="post" action="/social/video" enctype="multipart/form-data" id="so-video-form">
+      <div class="so-label">What it tells</div>
+      <div class="so-choices">
+        {% for key, value in video_kinds.items() %}
+        <label class="so-choice"><input type="radio" name="kind" value="{{ key }}" {{ 'checked' if key == 'both' }}><span><b>{{ value[0] }}</b><small>{{ value[1] }}</small></span></label>
+        {% endfor %}
+      </div>
+      <div class="so-label">Format</div>
+      <div class="so-chips">{% for key, label in formats.items() %}<label class="so-chip"><input type="radio" name="fmt" value="{{ key }}" {{ 'checked' if key == 'story' }}><span><i class="bi {{ 'bi-phone' if key == 'story' else 'bi-square' }}"></i>{{ label }}</span></label>{% endfor %}</div>
+      <div class="so-label">Language and look</div>
+      <div class="so-chips">
+        {% for key, name in languages.items() %}<label class="so-chip"><input type="radio" name="lang" value="{{ key }}" {{ 'checked' if key == lang }}><span data-no-i18n>{{ name }}</span></label>{% endfor %}
+        {% for key, name in looks.items() %}<label class="so-chip"><input type="radio" name="look" value="{{ key }}" {{ 'checked' if key == look }}><span>{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% else %}<span>Berry</span>{% endif %}</span></label>{% endfor %}
+      </div>
+      <div class="so-label">Music</div>
+      <div class="so-chips">
+        {% for key, value in moods.items() %}<label class="so-chip"><input type="radio" name="mood" value="{{ key }}" {{ 'checked' if key == 'inspiring' }}><span><i class="bi bi-music-note-beamed"></i>{% if key == 'inspiring' %}<span>Inspiring</span>{% elif key == 'upbeat' %}<span>Upbeat</span>{% elif key == 'calm' %}<span>Calm</span>{% else %}{{ value.name }}{% endif %}</span></label>{% endfor %}
+        <label class="so-chip"><input type="radio" name="mood" value="own"><span><i class="bi bi-upload"></i>Your own music</span></label>
+        <label class="so-chip"><input type="radio" name="mood" value="none"><span><i class="bi bi-volume-mute"></i>No music</span></label>
+      </div>
+      <div id="so-own" hidden>
+        {% if music_files %}<select class="form-select form-select-sm mt-2" name="music_file" aria-label="A music file already added">
+          <option value="">A file you added before…</option>{% for name in music_files %}<option value="{{ name }}">{{ name }}</option>{% endfor %}</select>{% endif %}
+        <input class="form-control form-control-sm mt-2" type="file" name="music" accept=".mp3,.wav,.m4a,.aac,.ogg,audio/*" aria-label="Your music file">
+        <div class="so-note">Use music you have the right to use (your own, or from a free library such as the YouTube Audio Library). It fades out at the end of the video.</div>
+      </div>
+      <div class="so-note"><i class="bi bi-info-circle me-1"></i>The music offered here is composed on this computer (chords, piano, bass and light drums), so it is free to use everywhere. Testimonials only use words already public, or reviews whose author agreed, with the first name only.</div>
+      <button class="ui-btn primary mt-3" {{ 'disabled' if not video_ready }}><i class="bi bi-film"></i>Make the video</button>
+      {% if not video_ready %}<div class="ui-chip warn mt-2">ffmpeg is missing on this computer: install the imageio-ffmpeg package.</div>{% endif %}
+    </form>
+    <div>
+      {% if videos %}
+      <div class="so-videos" id="so-videos">
+        {% for item in videos %}{% set asset = item.asset %}
+        <article class="so-video {{ 'is-square' if item.spec.fmt == 'post' }}" style="--i:{{ loop.index0 }};">
+          {% if asset.status == 'ready' %}
+          <video controls preload="metadata" src="/social/video/{{ asset.id }}"></video>
+          {% elif asset.status == 'working' %}
+          <div class="so-working"><div><span class="ui-spin"></span>Being made…<br><small>about a minute</small></div></div>
+          {% else %}
+          <div class="so-working" style="background:#fdecef; color:#9f1239;"><div><i class="bi bi-exclamation-triangle fs-3"></i><br><span data-no-i18n>{{ asset.error }}</span></div></div>
+          {% endif %}
+          <div class="so-video-body">
+            <b>{{ video_kinds.get(item.spec.kind, ('Video', ''))[0] }}</b>
+            <small>{{ asset.created_at.strftime('%d/%m %H:%M') }}{% if asset.seconds %} · {{ asset.seconds }} s{% endif %}{% if asset.size %} · {{ (asset.size / 1048576) | round(1) }} MB{% endif %} · <span data-no-i18n>{{ item.spec.lang | upper }}</span></small>
+            <div class="so-actions">
+              {% if asset.status == 'ready' %}<a class="ui-btn sm" href="/social/video/{{ asset.id }}?download=1"><i class="bi bi-download"></i>Download</a>{% endif %}
+              <form method="post" action="/social/video/{{ asset.id }}/delete" data-confirm="Remove this video?"><button class="ui-btn ghost sm icon danger" aria-label="Remove this video"><i class="bi bi-trash"></i></button></form>
+            </div>
+            {% if asset.status == 'ready' %}
+            <details class="so-published">
+              <summary><i class="bi bi-check2-circle"></i> I posted it</summary>
+              <form method="post" action="/social/posts" class="so-mini-form">
+                <input type="hidden" name="kind" value="video"><input type="hidden" name="asset_id" value="{{ asset.id }}">
+                <input type="hidden" name="topic" value="{{ 'listen' if item.spec.kind == 'listen' else 'program' if item.spec.kind == 'program' else 'success' }}">
+                <select class="form-select" name="platform" aria-label="Where">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select>
+                <input class="form-control" name="link" placeholder="Its link (optional)" aria-label="Its link">
+                <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Follow its numbers</button>
+              </form>
+            </details>
+            {% endif %}
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-camera-reels"></i><strong>No video yet</strong>Choose what it tells and its music, then “Make the video”.</div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ We listen ============ -->
+<section class="so-section" id="listen">
+  <div class="so-h">
+    <div><h3><i class="bi bi-ear"></i>We listen: you said, we did</h3>
+      <p>What people asked to improve, from the reviews and the feedback that is not fully happy. Write what you did about it: it becomes a post and a scene of the “we listen” videos, so everyone sees that their voice counts.</p></div>
+  </div>
+  <div class="so-two">
+    <div class="so-listen">
+      <div class="so-label">What people asked to improve</div>
+      {% for item in proposals %}
+      <form class="so-proposal" method="post" action="/social/listen">
+        <b><i class="bi {{ item.icon }}"></i>{{ item.label }} <span class="ui-chip warn">{{ item.count }}</span></b>
+        {% if item.quote %}<q data-no-i18n>{{ item.quote }}</q>{% endif %}
+        <input type="hidden" name="theme" value="{{ item.theme }}">
+        <textarea name="you_said" rows="2" aria-label="What they said, in a few words" data-no-i18n>{{ item.quote[:160] if item.quote else item.label }}</textarea>
+        <textarea class="mt-2" name="we_did" rows="2" placeholder="What we did about it…" aria-label="What we did"></textarea>
+        <button class="ui-btn sm primary mt-2"><i class="bi bi-check2"></i>Keep it</button>
+      </form>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-emoji-smile"></i><strong>Nothing asked to improve</strong>When a review or a feedback asks for something, it shows here.</div>
+      {% endfor %}
+      <details class="so-proposal" style="border-left-color:var(--primary-berry);">
+        <summary style="font-weight:800; font-size:.84rem; cursor:pointer;"><i class="bi bi-plus-lg"></i> Something else people said</summary>
+        <form method="post" action="/social/listen" class="mt-2">
+          <textarea name="you_said" rows="2" placeholder="You said…" aria-label="What they said"></textarea>
+          <textarea class="mt-2" name="we_did" rows="2" placeholder="We did…" aria-label="What we did"></textarea>
+          <button class="ui-btn sm primary mt-2"><i class="bi bi-check2"></i>Keep it</button>
+        </form>
+      </details>
+    </div>
+    <div class="so-listen">
+      <div class="so-label">What you answered ({{ answers | length }})</div>
+      {% for answer in answers %}
+      <form class="so-answer" method="post" action="/social/listen">
+        <input type="hidden" name="answer_id" value="{{ answer.id }}">
+        <div class="so-said"><b>You said</b><input name="you_said" value="{{ answer.you_said }}" aria-label="What they said" data-no-i18n></div>
+        <div class="so-did {{ 'is-missing' if not answer.we_did }}"><b>We did</b><textarea name="we_did" rows="2" aria-label="What we did" placeholder="What we did about it…" data-no-i18n>{{ answer.we_did or '' }}</textarea></div>
+        <div class="so-actions"><button class="ui-btn sm"><i class="bi bi-check2"></i>Save</button>
+          <button class="ui-btn ghost sm icon danger" formaction="/social/listen/{{ answer.id }}/delete" data-confirm="Remove this answer?" aria-label="Remove"><i class="bi bi-trash"></i></button></div>
+      </form>
+      {% else %}
+      <div class="ui-empty"><i class="bi bi-ear"></i><strong>No answer yet</strong>Answer one of the requests on the left: it appears here and in the posts.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============ Engagement ============ -->
+{% set e = engagement %}
+<section class="so-section" id="engagement">
+  <div class="so-h">
+    <div><h3><i class="bi bi-graph-up"></i>How your posts do</h3>
+      <p>Engagement = reactions, comments, shares, saves and clicks for every 100 people reached (or 100 followers when the reach is not known). Compared by kind, subject, network, day and hour; the advice comes from those numbers.</p></div>
+    {% if e.facebook %}<form method="post" action="/social/posts/facebook"><button class="ui-btn sm"><i class="bi bi-facebook"></i>Read Facebook's numbers now</button></form>
+    {% else %}<span class="ui-chip muted" title="Settings › Identity: the page ID and its access token"><i class="bi bi-facebook"></i>Facebook not connected: type the numbers</span>{% endif %}
+  </div>
+  <div class="so-stats">
+    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-collection"></i></div><div><div class="ui-stat-num">{{ e.month }}</div><div class="ui-stat-label">posts in 30 days</div></div></div>
+    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-heart-pulse"></i></div><div><div class="ui-stat-num">{{ e.average if e.average is not none else '—' }}{% if e.average is not none %}%{% endif %}</div><div class="ui-stat-label">average engagement</div></div></div>
+    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-trophy"></i></div><div><div class="ui-stat-num">{{ e.best_rate if e.best_rate is not none else '—' }}{% if e.best_rate is not none %}%{% endif %}</div><div class="ui-stat-label">best post</div></div></div>
+    {% for item in e.followers[:2] %}<div class="ui-stat"><div class="ui-stat-ico"><i class="bi {{ item.platform[1] }}"></i></div><div><div class="ui-stat-num">{{ item.count }}</div><div class="ui-stat-label">{{ item.platform[0] }} followers</div></div></div>{% endfor %}
+  </div>
+  <div class="so-two">
+    <div class="so-box">
+      <div class="so-label">What the numbers say</div>
+      <div class="so-advice">{% for item in e.advice %}<div><i class="bi {{ item.icon }}"></i><span data-no-i18n>{{ shown(item.text) }}</span></div>{% endfor %}</div>
+      {% for title, rows in [('By kind', e.by_kind), ('By subject', e.by_topic), ('By network', e.by_platform), ('By day', e.by_day), ('By time of day', e.by_hour)] %}
+      {% if rows %}
+      <div class="so-label">{{ title }}</div>
+      <div class="so-bars">{% for row in rows %}<div class="so-bar"><span>{{ row.label }}</span><div class="ui-bar"><span style="width:{{ row.pct }}%;"></span></div><em>{{ row.average }}% <small class="text-muted">· {{ row.count }}</small></em></div>{% endfor %}</div>
+      {% endif %}
+      {% endfor %}
+    </div>
+    <div class="so-box">
+      <div class="so-label">Add a post and its numbers</div>
+      <form method="post" action="/social/posts" class="so-form">
+        <label>Network<select class="form-select" name="platform">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select></label>
+        <label>Kind<select class="form-select" name="kind"><option value="post">Post</option><option value="story">Story</option><option value="video">Video or reel</option></select></label>
+        <label>Subject<select class="form-select" name="topic"><option value="">—</option>{% for key, value in topics.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}<option value="other">Other</option></select></label>
+        <label>Published<input class="form-control" type="datetime-local" name="published_at"></label>
+        <label>Reactions<input class="form-control" name="reactions" inputmode="numeric" placeholder="0"></label>
+        <label>Comments<input class="form-control" name="comments" inputmode="numeric" placeholder="0"></label>
+        <label>Shares<input class="form-control" name="shares" inputmode="numeric" placeholder="0"></label>
+        <label>Saves<input class="form-control" name="saves" inputmode="numeric" placeholder="0"></label>
+        <label>Clicks<input class="form-control" name="clicks" inputmode="numeric" placeholder="0"></label>
+        <label>Views or reach<input class="form-control" name="views" inputmode="numeric" placeholder="1.2k"></label>
+        <label>Followers<input class="form-control" name="followers" inputmode="numeric"></label>
+        <label class="wide">Link<input class="form-control" name="link" placeholder="https://…"></label>
+        <label class="wide">Its text<textarea class="form-control" name="text" rows="2"></textarea></label>
+        <div class="wide"><button class="ui-btn primary sm"><i class="bi bi-plus-lg"></i>Add it</button></div>
+      </form>
+    </div>
+  </div>
+  <div class="so-box mt-3 so-scroll">
+    {% if e.posts %}
+    <table class="so-table">
+      <thead><tr><th>Published</th><th>Where</th><th>Post</th><th class="text-end">Reactions</th><th class="text-end">Comments</th><th class="text-end">Shares</th><th class="text-end">Views</th><th>Engagement</th><th></th></tr></thead>
+      <tbody>
+        {% set best = e.best_rate or 1 %}
+        {% for row in e.posts %}{% set post = row.post %}
+        <tr>
+          <td class="num">{{ post.published_at.strftime('%d/%m/%Y') if post.published_at else '—' }}</td>
+          <td style="white-space:nowrap;"><i class="bi {{ row.platform[1] }}" style="color:{{ row.platform[2] }};"></i> {% if post.kind == 'story' %}<span>Story</span>{% elif post.kind == 'video' %}<span>Video or reel</span>{% else %}<span>Post</span>{% endif %}</td>
+          <td>{% if row.topic[0] %}<span class="ui-chip brand">{{ row.topic[0] }}</span>{% endif %}<div class="so-text" data-no-i18n>{% if post.link %}<a href="{{ post.link }}" target="_blank" rel="noopener">{{ post.text or post.link }}</a>{% else %}{{ post.text or '' }}{% endif %}</div></td>
+          <td class="num">{{ post.reactions if post.reactions is not none else '—' }}</td>
+          <td class="num">{{ post.comments if post.comments is not none else '—' }}</td>
+          <td class="num">{{ post.shares if post.shares is not none else '—' }}</td>
+          <td class="num">{{ post.views if post.views is not none else '—' }}</td>
+          <td>{% if row.rate is not none %}<div class="so-rate"><div class="ui-bar"><span style="width:{{ [100, (row.rate / best * 100) | round] | min }}%; display:block; height:100%; background:var(--primary-berry); border-radius:99px;"></span></div><b>{{ row.rate }}%</b></div>{% else %}<span class="text-muted" style="font-size:.74rem;">add its numbers</span>{% endif %}</td>
+          <td style="white-space:nowrap;">
+            <details style="display:inline-block;"><summary class="ui-btn ghost sm icon" aria-label="Its numbers"><i class="bi bi-pencil"></i></summary>
+              <form method="post" action="/social/posts" class="so-form" style="min-width:260px;">
+                <input type="hidden" name="post_id" value="{{ post.id }}">
+                {% for name in ('reactions', 'comments', 'shares', 'saves', 'clicks', 'views', 'followers') %}
+                <label>{{ name | capitalize }}<input class="form-control" name="{{ name }}" value="{{ post[name] if post[name] is not none else '' }}" inputmode="numeric"></label>
+                {% endfor %}
+                <div class="wide"><button class="ui-btn sm primary"><i class="bi bi-check2"></i>Save</button></div>
+              </form>
+            </details>
+            <form method="post" action="/social/posts/{{ post.id }}/delete" data-confirm="Remove this post from the list?" style="display:inline;"><button class="ui-btn ghost sm icon danger" aria-label="Remove"><i class="bi bi-trash"></i></button></form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="ui-empty" style="border:0;"><i class="bi bi-graph-up"></i><strong>No post followed yet</strong>Add your last posts and their numbers, or press “I posted it” under an idea or a video.</div>
+    {% endif %}
+  </div>
+</section>
+
+<script>
+(function () {
+  document.querySelectorAll("[data-copy]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var done = function () { var label = button.querySelector("span"); var was = label.textContent; label.textContent = "Copied"; setTimeout(function () { label.textContent = was; }, 1600); };
+      if (navigator.clipboard) navigator.clipboard.writeText(button.dataset.copy).then(done, function () {});
+    });
+  });
+  var form = document.getElementById("so-video-form"), own = document.getElementById("so-own");
+  if (form && own) form.addEventListener("change", function () { own.hidden = (form.querySelector('input[name="mood"]:checked') || {}).value !== "own"; });
+  {% if working %}
+  // A video is being made: the page looks again every few seconds, and shows it when it is ready.
+  var timer = setInterval(function () {
+    fetch("/social/videos/state").then(function (answer) { return answer.ok ? answer.json() : null; }).then(function (data) {
+      if (data && !data.working) { clearInterval(timer); window.location.hash = "videos"; window.location.reload(); }
+    }).catch(function () {});
+  }, 5000);
+  {% endif %}
+})();
+</script>
+{% endblock %}

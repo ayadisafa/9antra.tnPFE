@@ -1334,7 +1334,10 @@ def result_of(quiz: Quiz) -> dict:
 
 
 def week_results(db: Session, class_group: ClassGroup, week_number: int) -> dict:
-    """How the class did on one week: who answered, the average, what was missed most."""
+    """How the class did on one week: who answered, the average, what was missed most, and how each one answered (the
+    time, the page left)."""
+    from app.services import attention
+
     quizzes = quizzes_of(db, class_group.id, week_number)
     candidates = {
         candidate.id: candidate for candidate in db.query(Candidate).filter(
@@ -1353,6 +1356,7 @@ def week_results(db: Session, class_group: ClassGroup, week_number: int) -> dict
             "done": result["done"],
             "right": result["right"], "total": result["total"],
             "score": result["score"], "level": result["level"],
+            "attention": attention.reading(quiz, result["rows"]) if result["done"] else None,
         })
         if result["done"]:
             for row in result["rows"]:

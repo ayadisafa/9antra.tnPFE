@@ -60,6 +60,95 @@ _BOX = re.compile(r"^\s*\[(?:box|cadre|carre|carré)(?:[ :]+([a-zéè]+))?\]\s*(
 _BOX_COLOURS = {"gold": "#d97706", "or": "#d97706", "green": "#16a34a", "vert": "#16a34a", "grey": "#8a84a0", "gray": "#8a84a0", "gris": "#8a84a0"}
 
 
+# The design an email can have beyond its look (all optional: an empty design changes nothing).
+FONTS = {
+    "jakarta": ("Modern", FONT),
+    "rounded": ("Rounded", "'Nunito','Trebuchet MS',Verdana,sans-serif"),
+    "serif": ("Elegant", "Georgia,'Times New Roman',serif"),
+    "classic": ("Classic", "Arial,Helvetica,sans-serif"),
+}
+BUTTONS = {"pill": "Rounded", "square": "Square", "outline": "Outlined", "wide": "Full width"}
+BACKGROUNDS = {"soft": "Soft lilac", "white": "White", "tint": "In its colour", "dark": "Night"}
+CORNERS = {"round": "Round", "square": "Straight"}
+ALIGNS = {"left": "Left", "center": "Centred"}
+ICONS = {"cap": ("🎓", "&#127891;"), "clock": ("⏰", "&#9200;"), "calendar": ("📅", "&#128197;"), "party": ("🎉", "&#127881;"),
+         "idea": ("💡", "&#128161;"), "rocket": ("🚀", "&#128640;"), "books": ("📚", "&#128218;"), "check": ("✅", "&#9989;"),
+         "heart": ("💜", "&#128156;"), "star": ("⭐", "&#11088;"), "bell": ("🔔", "&#128276;"), "laptop": ("💻", "&#128187;")}
+GALLERY_MOST = 3
+
+
+def design_options() -> dict:
+    """What the design editor offers (templates/_email_design.html)."""
+    return {"fonts": {key: name for key, (name, _) in FONTS.items()}, "font_stacks": {key: stack for key, (_, stack) in FONTS.items()},
+            "buttons": BUTTONS, "backgrounds": BACKGROUNDS, "corners": CORNERS, "aligns": ALIGNS, "icons": ICONS}
+
+
+def clean_design(value) -> dict:
+    """Only what is known, with known values; an empty dict for the original design."""
+    if isinstance(value, str):
+        import json
+
+        try:
+            value = json.loads(value or "{}")
+        except ValueError:
+            value = {}
+    if not isinstance(value, dict):
+        return {}
+    found = {}
+    for key, allowed in (("font", FONTS), ("button", BUTTONS), ("background", BACKGROUNDS), ("corners", CORNERS),
+                         ("align", ALIGNS), ("icon", ICONS)):
+        if value.get(key) in allowed:
+            found[key] = value[key]
+    if _HEX.match(str(value.get("accent") or "")):
+        found["accent"] = str(value["accent"]).lower()
+    if isinstance(value.get("banner_id"), str) and re.match(r"^[\w-]{8,64}$", value["banner_id"]):
+        found["banner_id"] = value["banner_id"]
+    gallery = [item for item in (value.get("gallery_ids") or []) if isinstance(item, str) and re.match(r"^[\w-]{8,64}$", item)]
+    if gallery:
+        found["gallery_ids"] = list(dict.fromkeys(gallery))[:GALLERY_MOST]
+    # What is the same as the original is not kept.
+    for key, default in (("font", "jakarta"), ("button", "pill"), ("background", "soft"), ("corners", "round"), ("align", "left"), ("icon", "cap")):
+        if found.get(key) == default:
+            found.pop(key)
+    return found
+
+
+def _banner(src: str | None) -> str:
+    if not src:
+        return ""
+    return (f'<tr><td style="padding:0;line-height:0;font-size:0;"><img src="{html.escape(src, quote=True)}" alt="" width="600" '
+            'style="display:block;width:100%;max-width:600px;height:auto;border:0;border-radius:20px 20px 0 0;"></td></tr>')
+
+
+def _gallery(sources) -> str:
+    sources = [src for src in (sources or []) if src][:GALLERY_MOST]
+    if not sources:
+        return ""
+    width = int(100 / len(sources))
+    cells = "".join(
+        f'<td width="{width}%" valign="top" style="padding:0 {4 if index < len(sources) - 1 else 0}px 0 {4 if index else 0}px;">'
+        f'<img src="{html.escape(src, quote=True)}" alt="" style="display:block;width:100%;height:auto;border:0;border-radius:14px;"></td>'
+        for index, src in enumerate(sources))
+    return (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 20px;">'
+            f'<tr>{cells}</tr></table>')
+
+
+def apply_design(markup: str, design: dict | None, accent: str) -> str:
+    """The finished email with its design laid over it (fonts, corners, background, icon)."""
+    design = design or {}
+    if design.get("font") in FONTS and design["font"] != "jakarta":
+        markup = markup.replace(FONT, FONTS[design["font"]][1])
+    if design.get("corners") == "square":
+        markup = (markup.replace("border-radius:20px 20px 0 0", "border-radius:4px 4px 0 0")
+                  .replace("border-radius:0 0 20px 20px", "border-radius:0 0 4px 4px").replace("border-radius:14px", "border-radius:4px"))
+    background = {"white": "#ffffff", "tint": _tint(accent, .86), "dark": "#1d1430"}.get(design.get("background") or "")
+    if background:
+        markup = markup.replace(CANVAS, background)
+    if design.get("icon") in ICONS and design["icon"] != "cap":
+        markup = markup.replace("&#127891;", ICONS[design["icon"]][1])
+    return markup
+
+
 def strip_marks(text: str | None) -> str:
     """The text without the marks that only shape the HTML version."""
     lines = []
@@ -303,12 +392,27 @@ def _bullets(title: str | None, bullets, accent: str) -> str:
     return f'{heading}<ul style="margin:0 0 16px;padding-left:22px;color:{INK_SOFT};">{items}</ul>'
 
 
-def _button(cta, accent: str) -> str:
+def _button(cta, accent: str, shape: str = "pill") -> str:
     if not cta or not cta[0] or not cta[1]:
         return ""
     label, url = cta
     if not re.match(r"^https?://", url.strip(), re.IGNORECASE):
         return ""
+    if shape in ("square", "outline", "wide"):
+        radius = "8px" if shape == "square" else "999px"
+        filled = shape != "outline"
+        wide = 'width="100%" ' if shape == "wide" else ""
+        fill = f'bgcolor="{accent}" ' if filled else ""
+        background = accent if filled else "#ffffff"
+        shown = "block" if shape == "wide" else "inline-block"
+        ink = "#ffffff" if filled else accent
+        return (
+            f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" {wide}style="margin:6px 0 20px;"><tr>'
+            f'<td align="center" {fill}style="background:{background};border-radius:{radius};border:2px solid {accent};">'
+            f'<a href="{html.escape(url.strip(), quote=True)}" style="display:{shown};padding:12px 26px;font-family:{FONT};'
+            f'font-size:14px;font-weight:700;color:{ink};text-decoration:none;">{html.escape(label)}</a>'
+            '</td></tr></table>'
+        )
     return (
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 20px;"><tr>'
         f'<td align="center" bgcolor="{accent}" style="background:{accent};border-radius:999px;">'
@@ -388,6 +492,9 @@ def render_email(
     image_width: int | None = None,
     image_position: str = "top",
     links=None,
+    design: dict | None = None,
+    banner_src: str | None = None,
+    gallery=None,
 ) -> str:
     """Render one complete HTML email in the 9antra design.
 
@@ -396,7 +503,8 @@ def render_email(
     `image_src` is a photo shown above the text ("top") or under it ("bottom").
     `links` are (label, address) pairs shown as buttons under the text.
     """
-    accent = clean_accent(accent)
+    design = design or {}
+    accent = clean_accent(design.get("accent") or accent)
     style = style if style in STYLES else "brand"
     fixed = _FIXED.get(lang, _FIXED["fr"])
     signature = DEFAULT_SIGNATURE if signature is None else signature
@@ -418,8 +526,13 @@ def render_email(
         if preheader else ""
     )
     top_padding = "22px" if style == "letter" else "30px"
+    header_html = _header(style, title, accent, fixed["tagline"])
+    if banner_src:
+        # The banner takes the card's round top: the header under it is straight.
+        header_html = _banner(banner_src) + header_html.replace("border-radius:20px 20px 0 0;", "", 1)
+    centred = "text-align:center;" if design.get("align") == "center" else ""
 
-    return f"""<!DOCTYPE html>
+    markup = f"""<!DOCTYPE html>
 <html lang="{html.escape(lang)}">
 <head>
 <meta charset="utf-8">
@@ -432,14 +545,15 @@ def render_email(
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="{CANVAS}" style="width:100%;background:{CANVAS};">
 <tr><td align="center" style="padding:28px 12px 34px;">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;">
-{_header(style, title, accent, fixed["tagline"])}
-<tr><td bgcolor="#ffffff" style="background:#ffffff;border:1px solid {BORDER};border-top:0;border-radius:0 0 20px 20px;padding:{top_padding} 32px 30px;font-family:{FONT};font-size:15px;line-height:1.65;color:{TEXT};">
+{header_html}
+<tr><td bgcolor="#ffffff" style="background:#ffffff;border:1px solid {BORDER};border-top:0;border-radius:0 0 20px 20px;padding:{top_padding} 32px 30px;font-family:{FONT};font-size:15px;line-height:1.65;color:{TEXT};{centred}">
 {photo_html if photo_top else ""}
 {greeting_html}
 {body_html}
 {_rows_table(rows, accent)}
 {_bullets(bullets_title, bullets, accent)}
-{_button(cta, accent)}
+{_gallery(gallery)}
+{_button(cta, accent, design.get("button") or "pill")}
 {closing_html}
 {"" if photo_top else photo_html}
 {_more(links, accent, fixed["more"])}
@@ -454,6 +568,7 @@ def render_email(
 </table>
 </body>
 </html>"""
+    return apply_design(markup, design, accent) if design else markup
 
 
 def render_plain(

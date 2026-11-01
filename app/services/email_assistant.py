@@ -1184,7 +1184,28 @@ def source_line(found: dict, language: str = "fr") -> str:
 
 
 def process_inbound(db: Session, message: CandidateEmail) -> str:
-    """Handle one stored incoming email. Returns replied | needs_admin | no_reply."""
+    """Handle one stored incoming email. Returns replied | needs_admin | no_reply. The orchestrator writes down which
+    agent handled it (its category) and what came of it."""
+    import time
+
+    from app.services import orchestrator
+
+    started = time.monotonic()
+    outcome = _process_inbound(db, message)
+    thread = db.get(EmailThread, message.thread_id)
+    channel = getattr(thread, "channel", None) or message.channel or "email"
+    from app.services import message_categories
+
+    orchestrator.note(db, agent=message.category or "general", category={**message_categories.label_of(message.category),
+                                                                         "by": getattr(message, "_category_by", None),
+                                                                         "why": getattr(message, "_category_why", None)},
+                      channel=channel if channel in ("email", "whatsapp", "sms") else "email",
+                      outcome=orchestrator.email_outcome(outcome), asked=f"{message.subject or ''} {message.body or ''}".strip(),
+                      ref=message.id, took_ms=int((time.monotonic() - started) * 1000))
+    return outcome
+
+
+def _process_inbound(db: Session, message: CandidateEmail) -> str:
     thread = db.get(EmailThread, message.thread_id)
     candidate = message.candidate
     settings = get_settings(db)
@@ -1200,6 +1221,12 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     analysis["subject"] = subject
     message.language = analysis["language"]
     message.intent = analysis["intent"]
+    from app.services import message_categories
+
+    # What it is about, for the inbox and for the agent that answers it.
+    sorted_as = message_categories.categorize(f"{subject}\n{message.body or ''}", intent=analysis["intent"])
+    message.category = sorted_as["key"]
+    message._category_by, message._category_why = sorted_as["by"], sorted_as["why"]
     message.sentiment = analysis["sentiment"]
     message.analysis = analysis["summary"]
     from app.services import emotions
@@ -1294,6 +1321,10 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
             db, thread, message, candidate,
             f"Sensitive subject ({INTENT_LABELS[analysis['intent']].lower()}): these always come to you.", None,
         )
+    if message.category == "complaint" and sorted_as["by"] == "words":
+        words = ", ".join(word for word in sorted_as["why"] if not word.startswith("("))
+        return _ask_admin(db, thread, message, candidate,
+                          f"A complaint (its words: {words}): complaints always come to you, the assistant does not answer them alone.", None)
 
     from app.services import course_questions      # here: it reads the classes and the team
 

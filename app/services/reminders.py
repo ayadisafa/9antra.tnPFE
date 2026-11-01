@@ -12,6 +12,7 @@ until the admin has read it and chosen a time.
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timedelta, timezone
 
@@ -153,9 +154,15 @@ def label_of(db: Session, audience: str, audience_id: str | None) -> str:
     return AUDIENCES.get(audience, audience)
 
 
+def design_of(reminder) -> dict:
+    from app.services import email_layout
+
+    return email_layout.clean_design(getattr(reminder, "design", None))
+
+
 def create(db: Session, *, audience: str, audience_id: str | None, subject: str, body: str, title: str | None = None,
            style: str = "brand", send_at: datetime | None = None, by: str | None = None, channel: str = "email",
-           repeat: str = "once", until: datetime | None = None) -> AdminReminder:
+           repeat: str = "once", until: datetime | None = None, design=None) -> AdminReminder:
     """Keep a reminder. `send_at` is UTC; None means at the next pass, within a minute. `repeat`: once, weekly, monthly,
     or absence (it then waits, and goes to each candidate of its choice the moment they are marked absent)."""
     if audience not in AUDIENCES:
@@ -176,6 +183,11 @@ def create(db: Session, *, audience: str, audience_id: str | None, subject: str,
         channel=channel if channel in ("email", "both", "whatsapp") else "email", repeat=repeat, until=until, times=0,
         status="watching" if repeat == "absence" else "scheduled",
     )
+    from app.services import email_layout, email_templates
+
+    design = email_layout.clean_design(design)
+    email_templates.check_design(db, design)
+    reminder.design = json.dumps(design) if design else None
     db.add(reminder)
     db.commit()
     return reminder
@@ -207,7 +219,7 @@ def _to_professor(db: Session, reminder: AdminReminder, person) -> bool:
         return re.sub(r"\{(\w+)\}", lambda found: names.get(found.group(1), ""), text or "")
 
     rendered = email_composer.render(db, subject=filled(reminder.subject), title=filled(reminder.title or ""), body=filled(reminder.body),
-                                     style=reminder.style)
+                                     style=reminder.style, design=design_of(reminder))
     delivered = False
     if reminder.channel != "whatsapp" or whatsapp.normalise(getattr(person, "phone", None)) is None:
         try:
@@ -251,7 +263,7 @@ def send(db: Session, reminder: AdminReminder) -> tuple[int, int]:
             continue
         try:
             fields = dict(subject=reminder.subject, title=reminder.title or "", body=reminder.body, style=reminder.style,
-                          registration_id=registration_id)
+                          registration_id=registration_id, design=design_of(reminder))
             texted = channel in ("both", "whatsapp") and whatsapp.normalise(person.phone) is not None
             delivered = False
             if channel != "whatsapp" or not texted:
@@ -319,7 +331,7 @@ def answer_absences(db: Session, limit: int = 20) -> int:
                     continue
             try:
                 if email_composer.send_one(db, person, subject=reminder.subject, title=reminder.title or "", body=reminder.body,
-                                           style=reminder.style, registration_id=mark.registration_id):
+                                           style=reminder.style, registration_id=mark.registration_id, design=design_of(reminder)):
                     reminder.sent_count = (reminder.sent_count or 0) + 1
                     reminder.times = (reminder.times or 0) + 1
                     reminder.sent_at = datetime.utcnow()

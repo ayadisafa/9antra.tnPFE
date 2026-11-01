@@ -505,8 +505,27 @@
                         <span>Website</span>
                     </a>
                 </li>
+                <li class="nav-item tone-rose">
+                    <a href="/social" class="nav-link {% if active_page == 'social' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-megaphone-fill"></i></span>
+                        <span>Social media</span>
+                    </a>
+                </li>
 
                 <li class="nav-section-label">System</li>
+                <li class="nav-item tone-violet">
+                    <a href="/assistant/agents" class="nav-link {% if active_page == 'agents' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-diagram-3-fill"></i></span>
+                        <span>Agents</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-gold">
+                    <a href="/whats-new" class="nav-link {% if active_page == 'whats_new' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-stars"></i></span>
+                        <span>What's new</span>
+                        {% if whats_new_unread %}<span class="nav-count" title="New in the application">{{ whats_new_unread }}</span>{% endif %}
+                    </a>
+                </li>
                 <li class="nav-item tone-mint">
                     <a href="/system" class="nav-link {% if active_page == 'system' %}active{% endif %}">
                         <span class="nav-ico"><i class="bi bi-activity"></i></span>
@@ -636,10 +655,13 @@
                     </ul>
                 </div>
                 {% endif %}
+                {% if page_guide %}
+                {# “How this page works”: shown or hidden again with this one button, whatever was chosen before. #}
+                <button type="button" class="topbar-help guide-toggle" data-guide-show aria-pressed="false" aria-controls="pageGuide"
+                        title="How this page works: show it or hide it" aria-label="How this page works: show it or hide it"><i class="bi bi-signpost-2"></i></button>
+                {% endif %}
                 {% if page_tour %}
                 <button type="button" class="topbar-help" data-tour-show title="What you can do on this page" aria-label="What you can do on this page"><i class="bi bi-question-lg"></i></button>
-                {% elif page_guide %}
-                <button type="button" class="topbar-help" data-guide-show title="How this page works" aria-label="How this page works"><i class="bi bi-question-lg"></i></button>
                 {% endif %}
                 {# The language of the pages, for whoever is signed in; remembered on this browser. #}
                 <div class="dropdown" data-no-i18n>
@@ -975,15 +997,32 @@
     // After the page has settled (pictures, the first live refresh).
     window.addEventListener("load", () => window.setTimeout(show, 450));
   })();
-  // The explanation at the top of a page: closed and opened again, remembered on this browser.
+  // The explanation at the top of a page: its button at the top shows it and hides it again (the cross hides it too);
+  // remembered on this browser, page by page. It slides in and out, unless the computer asks for less motion.
+  window.markGuideButtons = (open) => document.querySelectorAll("[data-guide-show]").forEach(button => {
+    button.setAttribute("aria-pressed", open ? "true" : "false");
+    button.classList.toggle("is-on", open);
+  });
   document.addEventListener("click", event => {
     const guide = document.getElementById("pageGuide");
     if (!guide) return;
     const hide = event.target.closest("[data-guide-hide]"), show = event.target.closest("[data-guide-show]");
     if (!hide && !show) return;
-    guide.hidden = hide ? true : !guide.hidden;
-    try { localStorage.setItem("guide:" + guide.dataset.guide, guide.hidden ? "hidden" : "shown"); } catch (error) {}
-    if (!guide.hidden) guide.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    const open = hide ? false : guide.hidden;
+    const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (open) {
+      guide.hidden = false;
+      guide.classList.remove("is-leaving");
+      if (!still) { guide.classList.remove("is-arriving"); void guide.offsetWidth; guide.classList.add("is-arriving"); }
+      guide.scrollIntoView({ behavior: still ? "auto" : "smooth", block: "nearest" });
+    } else if (still) {
+      guide.hidden = true;
+    } else {
+      guide.classList.add("is-leaving");
+      window.setTimeout(() => { if (guide.classList.contains("is-leaving")) { guide.hidden = true; guide.classList.remove("is-leaving"); } }, 260);
+    }
+    window.markGuideButtons(open);
+    try { localStorage.setItem("guide:" + guide.dataset.guide, open ? "shown" : "hidden"); } catch (error) {}
   });
   // Where this person was, so signing in again brings them back to it.
   {% if current_user and current_user.id %}
@@ -1007,10 +1046,22 @@
 </script>
 
 <style>
-  .assistant-launcher { position:fixed; right:24px; bottom:24px; z-index:1080; width:54px; height:54px; border:0; border-radius:50%; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); box-shadow:0 12px 30px -10px rgba(80,20,70,.65); }
-  .assistant-panel { position:fixed; right:24px; bottom:88px; z-index:1079; width:min(390px,calc(100vw - 32px)); height:540px; display:none; flex-direction:column; overflow:hidden; border:1px solid var(--border-color); border-radius:22px; background:#fff; box-shadow:0 20px 60px -20px rgba(40,20,60,.4); }
-  .assistant-panel.open { display:flex; animation:assistantIn .2s ease both; }
-  .assistant-head { display:flex; align-items:center; gap:10px; padding:14px 16px; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); }
+  .assistant-panel { position:fixed; left:calc(268px + 140px); bottom:18px; z-index:1079; width:min(400px,calc(100vw - 32px)); height:min(580px, calc(100vh - 36px)); display:none; flex-direction:column; overflow:hidden; border:1px solid var(--border-color); border-radius:22px; background:#fff; box-shadow:0 20px 60px -20px rgba(40,20,60,.4); }
+  body.menu-right .assistant-panel { left:auto; right:calc(268px + 140px); }
+  @media (max-width: 991px) { .assistant-panel, body.menu-right .assistant-panel { left:8px; right:8px; width:auto; bottom:calc(78px + env(safe-area-inset-bottom, 0px)); height:min(calc(100vh - 170px), 620px); border-radius:22px; } }
+  .assistant-panel.open { display:flex; z-index:1095; animation:assistantIn .24s cubic-bezier(.2,.9,.3,1.2) both; }
+  .assistant-avatar .fr-fig { width:36px; height:36px; display:block; }
+  .assistant-agent { display:flex; width:fit-content; align-items:center; gap:5px; margin:0 0 6px; padding:2px 9px 2px 7px; border-radius:999px; font-size:.68rem; font-weight:800; color:var(--agent, #6b7280); background:color-mix(in srgb, var(--agent, #6b7280) 12%, #fff); }
+  .assistant-agent i { font-size:.8rem; }
+  .assistant-agent .cat { font-weight:700; opacity:.8; }
+  .assistant-today { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+  .assistant-today a { display:flex; gap:8px; align-items:center; text-decoration:none; color:var(--ink-text); font-size:.78rem; font-weight:600; padding:6px 10px; border-radius:12px; border:1px solid var(--border-color); background:#fff; transition:border-color .15s ease, transform .15s ease; }
+  .assistant-today a:hover { border-color:var(--primary-berry); transform:translateX(2px); }
+  .assistant-today a i { color:var(--primary-berry); } .assistant-today a.bad i { color:#e11d48; } .assistant-today a.warn i { color:#d97706; }
+  .assistant-head { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; padding:12px 14px 10px; color:#fff; background:linear-gradient(135deg,var(--primary-berry),var(--berry-dark)); }
+  .assistant-who { flex:1 1 0; min-width:0; line-height:1.25; }
+  .assistant-who .small { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .assistant-tools { flex-basis:100%; display:flex; gap:8px; align-items:center; justify-content:flex-end; }
   .assistant-lang { border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.14); color:#fff; border-radius:999px; font-size:.72rem; font-weight:700; padding:3px 8px; max-width:96px; cursor:pointer; }
   .assistant-lang option { color:#241a38; }
   .assistant-avatar { display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.2); font-size:1.1rem; }
@@ -1035,24 +1086,30 @@
   .assistant-sources a { color:var(--primary-berry); font-weight:700; text-decoration:none; } .assistant-sources a:hover { text-decoration:underline; }
   @keyframes assistantPulse { 50% { transform:translateY(-3px); opacity:.45; } }
 </style>
-{% if is_admin or can_use_assistant %}
-<button class="assistant-launcher" id="assistant-launcher" type="button" aria-label="Open assistant"><i class="bi bi-chat-dots-fill fs-5"></i></button>
-<section class="assistant-panel" id="assistant-panel" aria-label="9antra assistant">
+{% if current_user and current_user.id %}
+{% import "_friend_figure.html" as figure %}
+{% set whole_assistant = is_admin or can_use_assistant %}
+<section class="assistant-panel" id="assistant-panel" aria-label="9antra assistant"
+         data-ask-url="{{ '/assistant/chat' if whole_assistant else '/account/guide' }}"
+         data-suggest-url="{{ '/assistant/suggestions' if whole_assistant else '/account/guide/suggestions' }}">
   <header class="assistant-head">
-    <div class="assistant-avatar"><i class="bi bi-robot"></i></div>
-    <div class="flex-grow-1"><strong>9antra Assistant</strong><div class="small opacity-75">Ask anything, or ask it to send a message</div></div>
+    <div class="assistant-avatar">{{ figure.mini(friend_look) }}</div>
+    <div class="assistant-who"><strong data-no-i18n>{{ friend_look.name }}</strong>
+      <span class="small opacity-75">{% if whole_assistant %}Ask anything, or ask to send a message{% elif current_user.is_professor %}Your classes, your candidates, the courses{% else %}How to do things here{% endif %}</span></div>
+    <button class="btn btn-sm text-white" id="assistant-close" type="button" aria-label="Close assistant"><i class="bi bi-x-lg"></i></button>
+    <div class="assistant-tools">
     <select class="assistant-lang" id="assistant-lang" data-no-i18n aria-label="Language of the answers" title="The language they guide you in. Automatic: the language of your question.">
       <option value="">Auto</option><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option><option value="tn">Tounsi</option>
     </select>
-    <label class="assistant-auto" title="On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.">
-      <input type="checkbox" id="assistant-auto" {{ 'checked' if assistant_auto_send }}> Send at once</label>
-    <button class="btn btn-sm text-white" id="assistant-close" type="button" aria-label="Close assistant"><i class="bi bi-x-lg"></i></button>
+    {% if whole_assistant %}<label class="assistant-auto" title="On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.">
+      <input type="checkbox" id="assistant-auto" {{ 'checked' if assistant_auto_send }}> Send at once</label>{% endif %}
+    </div>
   </header>
-  <div class="assistant-messages" id="assistant-messages"><div class="assistant-msg bot">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, or what 9antra.tn says. I answer from what is in the application right now, in English or in French, and I show my sources and resources.
-<span>You can also ask me to send:</span> <span data-no-i18n>“envoie un email à Fares pour lui dire que la séance de samedi est annulée”, “send a WhatsApp to Nour saying …”, “sms au 98 123 456 : …”</span>. <span>I reword it (add</span> <span data-no-i18n>“tel quel”</span> <span>to keep your words) and tell you, for each person, what went and why not.</span></div></div>
+  <div class="assistant-messages" id="assistant-messages">{% if whole_assistant %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, what is trendy in any field, or what 9antra.tn says. Each question goes to the agent of its subject, and I show my sources.
+<span>You can also ask me to send:</span> <span data-no-i18n>“envoie un email à Fares pour lui dire que la séance de samedi est annulée”, “send a WhatsApp to Nour saying …”, “sms au 98 123 456 : …”</span>. <span>I reword it (add</span> <span data-no-i18n>“tel quel”</span> <span>to keep your words) and tell you, for each person, what went and why not.</span></div>{% elif current_user.is_professor %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me about your classes, your next sessions, who was absent, your candidates' level, what the course covers, or how to do something here.</div>{% else %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me how to do something here, or what a program teaches.</div>{% endif %}</div>
   <form class="assistant-compose" id="assistant-form">
     <div class="input-group">
-      <textarea class="form-control" id="assistant-input" placeholder="Who has not paid? Which classes cannot start?"></textarea>
+      <textarea class="form-control" id="assistant-input" placeholder="{{ 'Who has not paid? What is trendy in AI?' if whole_assistant else 'When is my next session?' if current_user.is_professor else 'How do I change my password?' }}"></textarea>
       <button class="btn btn-primary" type="submit" aria-label="Send"><i class="bi bi-send-fill"></i></button>
     </div>
   </form>
@@ -1590,9 +1647,8 @@ document.addEventListener("submit", event => {
 {% endif %}
 </script>
 <script>
-{% if is_admin or can_use_assistant %}
+{% if current_user and current_user.id %}
 (() => {
-    const launcher = document.getElementById("assistant-launcher");
     const panel = document.getElementById("assistant-panel");
     // The language the assistant and Yasmine guide in: chosen in either window, kept on this browser.
     const languageChoice = document.getElementById("assistant-lang");
@@ -1610,7 +1666,7 @@ document.addEventListener("submit", event => {
     const form = document.getElementById("assistant-form");
     const input = document.getElementById("assistant-input");
     const messages = document.getElementById("assistant-messages");
-    if (!launcher || !panel || !form || !input || !messages) return;
+    if (!panel || !form || !input || !messages) return;
     // "Send at once": remembered for everyone who asks the assistant to send (it can be switched back at any time).
     const auto = document.getElementById("assistant-auto");
     if (auto) auto.addEventListener("change", () => {
@@ -1619,10 +1675,25 @@ document.addEventListener("submit", event => {
     });
 
     const history = [];
-    const addMessage = (text, role, links, sources, resources, schema) => {
+    const addMessage = (text, role, links, sources, resources, schema, agent, category) => {
         const item = document.createElement("div");
         item.className = `assistant-msg ${role}`;
         item.textContent = schema && window.drawSchema ? "" : text;
+        // Which agent answered, and what the question was about (the orchestrator's reading).
+        if (agent && agent.name) {
+            const chip = document.createElement("div");
+            chip.className = "assistant-agent";
+            chip.style.setProperty("--agent", agent.colour || "#6b7280");
+            chip.title = agent.does || "";
+            const icon = document.createElement("i"); icon.className = "bi " + (agent.icon || "bi-robot");
+            chip.append(icon, document.createTextNode(agent.name));
+            if (category && category.label && category.key !== "general") {
+                const cat = document.createElement("span"); cat.className = "cat";
+                cat.textContent = " · " + category.label;
+                chip.appendChild(cat);
+            }
+            messages.appendChild(chip);      // apart from the answer, so the page's language reaches it
+        }
         // A how-to, or what is still missing: drawn as a diagram.
         if (schema && window.drawSchema) item.appendChild(window.drawSchema(schema));
         // What you typed, and the assistant's answer in the language you asked in: never swapped word by word.
@@ -1678,12 +1749,44 @@ document.addEventListener("submit", event => {
         messages.scrollTop = messages.scrollHeight;
     };
     let greeted = false;
-    launcher.addEventListener("click", () => {
-        if (!greeted) { greeted = true; fetch("/assistant/suggestions").then(r => r.ok ? r.json() : null).then(d => { if (d && d.suggestions) showSuggestions(d.suggestions); }).catch(() => {}); }
-        panel.classList.toggle("open");
-        if (panel.classList.contains("open")) input.focus();
-    });
-    close?.addEventListener("click", () => panel.classList.remove("open"));
+    // What Yasmine says first: what waits today, each line leading to its place (from /account/friend).
+    const today = data => {
+        if (!data || !(data.lines || []).length) return;
+        const item = document.createElement("div");
+        item.className = "assistant-msg bot";
+        item.setAttribute("data-no-i18n", "");
+        item.append(document.createTextNode(data.greeting));
+        const list = document.createElement("div");
+        list.className = "assistant-today";
+        data.lines.slice(0, 6).forEach(line => {
+            const a = document.createElement(line.url ? "a" : "span");
+            if (line.url) a.href = line.url;
+            a.className = line.tone || "";
+            const icon = document.createElement("i"); icon.className = "bi " + (line.icon || "bi-dot");
+            a.append(icon, document.createTextNode(line.text));
+            list.appendChild(a);
+        });
+        item.appendChild(list);
+        messages.insertBefore(item, messages.firstChild);
+    };
+    // Yasmine opens it (the corner figure): window.openAssistant(question) also asks a question at once.
+    window.openAssistant = (question) => {
+        if (!greeted) {
+            greeted = true;
+            fetch(panel.dataset.suggestUrl).then(r => r.ok ? r.json() : null).then(d => { if (d && d.suggestions) showSuggestions(d.suggestions); }).catch(() => {});
+            if (window.friendData) today(window.friendData);
+            else fetch("/account/friend?path=" + encodeURIComponent(location.pathname) + "&lang=" + encodeURIComponent(guideLanguage()),
+                       { headers: { accept: "application/json" } })
+                .then(r => r.ok ? r.json() : null).then(d => { if (d) { window.friendData = window.friendData || d; today(d); } }).catch(() => {});
+        }
+        panel.classList.add("open");
+        document.dispatchEvent(new CustomEvent("assistant:open"));
+        if (question) { input.value = question; form.requestSubmit(); } else input.focus({ preventScroll: true });
+    };
+    window.closeAssistant = () => { panel.classList.remove("open"); document.dispatchEvent(new CustomEvent("assistant:close")); };
+    window.toggleAssistant = () => panel.classList.contains("open") ? window.closeAssistant() : window.openAssistant();
+    close?.addEventListener("click", () => window.closeAssistant());
+    document.addEventListener("keydown", event => { if (event.key === "Escape" && panel.classList.contains("open")) window.closeAssistant(); });
     input.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.shiftKey) {
             event.preventDefault();
@@ -1702,7 +1805,7 @@ document.addEventListener("submit", event => {
         messages.appendChild(working);
         messages.scrollTop = messages.scrollHeight;
         try {
-            const response = await fetch("/assistant/chat", {
+            const response = await fetch(panel.dataset.askUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ message: text, history, lang: guideLanguage() || null })
@@ -1710,8 +1813,9 @@ document.addEventListener("submit", event => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || "Assistant request failed");
             working.remove();
-            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema);
+            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema, data.agent, data.category);
             if (data.suggestions && data.suggestions.length) showSuggestions(data.suggestions);
+            if (window.friendSpeak) window.friendSpeak(data.reply);       // Yasmine reads it aloud when her voice is on
         } catch (error) {
             working.remove();
             addMessage("Something went wrong while looking that up. Try again in a moment.", "bot");

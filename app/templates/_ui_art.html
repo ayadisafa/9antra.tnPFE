@@ -145,13 +145,18 @@
       {% endfor %}
     </ol>
   </div>
-  <button type="button" class="guide-close" data-guide-hide title="Hide this explanation. The “?” at the top of the page brings it back." aria-label="Hide this explanation"><i class="bi bi-x-lg"></i></button>
+  <button type="button" class="guide-close" data-guide-hide title="Hide this explanation. The signpost button at the top of the page brings it back." aria-label="Hide this explanation"><i class="bi bi-x-lg"></i></button>
 </section>
 <script>
-  // Out of the way unless asked for: the "?" at the top opens it (Yasmine explains the page too). Kept open when opened.
+  // Out of the way unless asked for: the signpost button at the top shows it and hides it (Yasmine explains the page
+  // too). Kept open when opened, on this browser.
   (() => {
     const guide = document.getElementById("pageGuide");
     try { if (localStorage.getItem("guide:" + guide.dataset.guide) === "shown") guide.hidden = false; } catch (error) {}
+    document.querySelectorAll("[data-guide-show]").forEach(button => {
+      button.setAttribute("aria-pressed", guide.hidden ? "false" : "true");
+      button.classList.toggle("is-on", !guide.hidden);
+    });
   })();
 </script>
 {%- endmacro %}

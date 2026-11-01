@@ -64,7 +64,7 @@ check("team chat: open to them", rim_client.get("/inbox/team").status_code == 20
 check("inbox: not open to them", rim_client.get("/inbox").status_code in (303, 403))
 check("assistant: they can ask it", rim_client.post("/assistant/chat", json={"message": "who has not paid?"}).status_code == 200)
 page = rim_client.get("/inbox/team").text
-check("assistant: its button is on their pages", 'id="assistant-launcher"' in page)
+check("assistant: its window is on their pages, asking the whole assistant", 'data-ask-url="/assistant/chat"' in page)
 check("team page: not theirs", rim_client.get("/settings/team").status_code in (303, 403))
 
 response = admin.post("/settings/team/add", data={"name": "Mehdi Manager", "email": "mehdi.manager@test.local", "password": "mehdi-man-12",

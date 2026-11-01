@@ -76,7 +76,7 @@ def render(db: Session, *, subject: str, body: str, title: str | None = None, st
            candidate: Candidate | None = None, registration_id: str | None = None,
            cta_label: str | None = None, cta_url: str | None = None,
            image_id: str | None = None, image_position: str = "top", attachment_ids=None,
-           browser: bool = False) -> dict:
+           browser: bool = False, design=None) -> dict:
     """One recipient's email: subject, plain text, HTML and the files that go with it.
 
     `browser=True` is for previews: the photo is then read from this server.
@@ -89,7 +89,7 @@ def render(db: Session, *, subject: str, body: str, title: str | None = None, st
         db, subject=subject, title=title, body=body, style=style, context=context,
         cta_label=cta_label, cta_url=cta_url,
         image=email_templates.find_image(db, image_id), image_position=image_position,
-        attachments=email_files.load(db, attachment_ids), browser=browser,
+        attachments=email_files.load(db, attachment_ids), browser=browser, design=design,
     )
 
 

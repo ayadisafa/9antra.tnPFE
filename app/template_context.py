@@ -65,6 +65,9 @@ def notification_context(request: Request) -> dict:
             "can_use_assistant": bool(getattr(user, "is_staff", False) and (user.permissions or {}).get("assistant") in ("view", "edit")),
             "member_unread": 0,
             "sidebar_programs": [],
+            # The assistant's character (Settings), drawn in the corner and in the assistant's window.
+            "friend_look": __import__("app.services.friend", fromlist=["look"]).look(db),
+            "whats_new_unread": 0,
         }
         if not user.is_admin:
             if user.id:
@@ -93,6 +96,8 @@ def notification_context(request: Request) -> dict:
         from app.services import team_messages
 
         context["team_unread"] = team_messages.unread_count(db)
+        context["whats_new_unread"] = len(__import__("app.services.whats_new", fromlist=["unread"]).unread(db)["items"]) \
+            if __import__("app.services.whats_new", fromlist=["unread"]).unread(db) else 0
 
         counts = dict(
             db.query(Registration.program_id, func.count(Registration.id))

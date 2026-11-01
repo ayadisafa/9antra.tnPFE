@@ -104,6 +104,77 @@ _WORDS["tn"] = _TUNISIAN
 LANGUAGES = ("fr", "en", "ar", "tn")
 
 
+# Her character, chosen in Settings › The assistant's character (kept as JSON in system_settings.friend_look).
+GENDERS = {"female": "Woman", "male": "Man"}
+HAIRS = {"bun": "Bun", "long": "Long", "short": "Short", "curly": "Curly", "hijab": "Headscarf", "bald": "Shaved"}
+OUTFITS = {"blouse": "Blouse", "blazer": "Blazer", "hoodie": "Hoodie", "shirt": "Shirt and tie", "tshirt": "T-shirt"}
+VOICES = {"auto": "As the character", "female": "A woman's voice", "male": "A man's voice"}
+SKINS = ["#f9d7bd", "#f4c6a2", "#e0a77f", "#c68642", "#8d5524", "#5c3a21"]
+HAIR_COLOURS = ["#1f1512", "#3b2622", "#6b3e26", "#a0522d", "#d4a24c", "#9ca3af", "#7c3aed"]
+LOOK_DEFAULTS = {"name": NAME, "gender": "female", "hair": "bun", "hair_colour": "#3b2622", "skin": "#f4c6a2",
+                 "outfit": "blouse", "outfit_colour": "", "glasses": False, "beard": False, "voice": "auto"}
+_COLOUR = __import__("re").compile(r"^#[0-9a-fA-F]{6}$")
+
+
+def clean_look(value) -> dict:
+    """Her character with every part known: what was not chosen (or not understood) is the original."""
+    import json
+
+    if isinstance(value, str):
+        try:
+            value = json.loads(value or "{}")
+        except ValueError:
+            value = {}
+    value = value if isinstance(value, dict) else {}
+    look = dict(LOOK_DEFAULTS)
+    name = " ".join(str(value.get("name") or "").split())[:24]
+    if name:
+        look["name"] = name
+    for key, allowed in (("gender", GENDERS), ("hair", HAIRS), ("outfit", OUTFITS), ("voice", VOICES)):
+        if value.get(key) in allowed:
+            look[key] = value[key]
+    for key in ("hair_colour", "skin", "outfit_colour"):
+        if _COLOUR.match(str(value.get(key) or "")):
+            look[key] = str(value[key]).lower()
+    look["glasses"] = value.get("glasses") in (True, "1", "on", "true", 1)
+    look["beard"] = look["gender"] == "male" and value.get("beard") in (True, "1", "on", "true", 1)
+    if "gender" in value and "hair" not in value and look["gender"] == "male":
+        look["hair"] = "short"
+    return look
+
+
+def look(db: Session) -> dict:
+    from app.services.settings_service import get_settings
+
+    return clean_look(getattr(get_settings(db), "friend_look", None))
+
+
+def save_look(db: Session, values: dict) -> dict:
+    import json
+
+    from app.services.settings_service import get_settings
+
+    chosen = clean_look(values)
+    get_settings(db).friend_look = json.dumps(chosen, ensure_ascii=False) if chosen != LOOK_DEFAULTS else None
+    db.commit()
+    return chosen
+
+
+def voice_of(chosen: dict) -> str:
+    return chosen["voice"] if chosen["voice"] in ("female", "male") else chosen["gender"]
+
+
+def _gendered(words: dict, lang: str, chosen: dict) -> dict:
+    """Her words for a man: “votre ami”, “صديقك”, “sa7bek”."""
+    if chosen["gender"] != "male":
+        return words
+    words = dict(words)
+    swap = {"fr": ("votre amie", "votre ami"), "ar": ("صديقتك", "صديقك"), "tn": ("sa7btek", "sa7bek")}.get(lang)
+    if swap:
+        words["intro"] = words["intro"].replace(*swap)
+    return words
+
+
 def language_of(ui_lang: str | None) -> str:
     return ui_lang if ui_lang in ("fr", "ar") else "en"
 
@@ -315,13 +386,22 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
     from app.services.schedule_utils import local_now
 
     lang = guide_lang if guide_lang in LANGUAGES else language_of(ui_lang)
-    words = _WORDS[lang]
+    chosen = look(db)
+    words = _gendered(_WORDS[lang], lang, chosen)
     written = "fr" if lang == "tn" else lang
     now_utc, now_local = datetime.utcnow(), local_now()
     part = "morning" if now_local.hour < 12 else "afternoon" if now_local.hour < 18 else "evening"
     first_name = ((getattr(user, "name", "") or "").split() or [""])[0].capitalize()
     is_admin = bool(getattr(user, "is_admin", False))
     lines = lines_for_admin(db, words, now_utc, now_local) if is_admin else []
+    if is_admin:
+        from app.services import whats_new
+
+        fresh = whats_new.unread(db)
+        if fresh:
+            lines.append({"text": {"fr": "Du nouveau dans l'application : {0}.", "ar": "جديد في التطبيق: {0}.", "tn": "Fama jdid fel application : {0}.",
+                                   "en": "Something new in the application: {0}."}[lang].format(_in_language(db, written, fresh["title"])),
+                          "url": "/whats-new", "icon": "bi-stars", "tone": "info"})
     if not is_admin and getattr(user, "id", None):
         from app.services import team_messages
 
@@ -344,11 +424,12 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
         tip = {"text": words["page"].format(title=title.rstrip("."), text=text), "key": "tour:" + tour["key"]}
     cheer = words["cheers"][now_local.toordinal() % len(words["cheers"])]
     return {
-        "name": NAME, "lang": lang, "voice_lang": {"fr": "fr-FR", "tn": "fr-FR", "ar": "ar-SA"}.get(lang, "en-US"),
+        "name": chosen["name"], "lang": lang, "voice_lang": {"fr": "fr-FR", "tn": "fr-FR", "ar": "ar-SA"}.get(lang, "en-US"),
+        "voice": voice_of(chosen), "gender": chosen["gender"],
         "greeting": (f"{words[part]}{' ' + first_name if first_name else ''} !" if lang == "fr" else
                      f"{words[part]}{' ' + first_name if first_name else ''}!" if lang in ("ar", "tn") else
                      f"{words[part]}{', ' + first_name if first_name else ''}!"),
-        "intro": words["intro"].format(name=NAME),
+        "intro": words["intro"].format(name=chosen["name"]),
         "lines": lines, "tip": tip, "cheer": cheer,
         "can_ask": True,
         # The admin (and whoever was given the assistant) asks the assistant; everyone else asks the guide.

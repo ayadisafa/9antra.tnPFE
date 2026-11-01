@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "_email_files.html" as email_files %}
+{% import "_email_design.html" as design_ui %}
 {% block title %}Email templates · 9antra{% endblock %}
 {% block page_title %}Email templates{% endblock %}
 {% block live_topics %}{% if not current %}email_templates{% endif %}{% endblock %}
@@ -215,6 +216,7 @@
           </label>
           {% endfor %}
         </div>
+        {{ design_ui.editor(current.design, design_options, design_files) }}
       </div>
 
       <hr style="border-color: var(--border-color); opacity: 1;">
@@ -266,6 +268,7 @@
 </div>
 
 {{ email_files.assets() }}
+{% if current %}{{ design_ui.assets() }}{% endif %}
 <script>
 (() => {
   const KEY = {{ spec.key | tojson }};
@@ -294,6 +297,7 @@
     image_position: window.EmailFiles.imagePosition(picker),
     attachment_ids: window.EmailFiles.fileIds(picker),
     candidate_id: previewFor.value || null,
+    design: window.EmailDesign ? window.EmailDesign.value(form) : {},
   });
 
   // ---------- personal details ----------

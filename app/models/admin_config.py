@@ -129,6 +129,10 @@ class SystemSettings(Base):
     centre_tax_id = Column(String, nullable=True)
     centre_email = Column(String, nullable=True)
     centre_website = Column(String, nullable=True)
+    # The assistant's character (services/friend.py): name, man or woman, hair, clothes, colours, glasses, voice; as JSON.
+    friend_look = Column(Text, nullable=True)
+    # The reminder before each session: how many hours before it goes (services/session_reminders.py).
+    session_reminder_hours = Column(Integer, nullable=True, default=24)
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

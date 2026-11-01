@@ -24,7 +24,7 @@ from app.models.email_file import EmailFile
 from app.models.email_template import EmailTemplate
 from app.models.registration import Registration, RegistrationStatus
 from app.services import email_files, email_threads
-from app.services.email_layout import STYLES, branding, render_email, render_plain, strip_marks, text_to_html
+from app.services.email_layout import STYLES, branding, clean_design, render_email, render_plain, strip_marks, text_to_html
 from app.services.email_service import EmailConfigurationError, EmailDeliveryError, send_email
 from app.services.schedule_utils import class_start_dt, describe_schedule_fr, format_date_fr, local_now
 from app.services.settings_service import get_settings, parse_reminder_days
@@ -157,7 +157,7 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
           closing: str | None = None, style: str = "brand", rows=None, topics=None,
           image: EmailFile | None = None, image_position: str = "top", attachments=(),
           cta_label: str | None = None, cta_url: str | None = None,
-          lang: str = "fr", browser: bool = False, signed: bool = True) -> dict:
+          lang: str = "fr", browser: bool = False, signed: bool = True, design: dict | None = None) -> dict:
     """One candidate's email from a template: subject, plain text, HTML and files.
 
     `browser=True` makes the photo point at this server, for previews; an
@@ -176,6 +176,12 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
     image_src = None
     if image is not None:
         image_src = email_files.url_of(image.id) if browser else email_files.cid_src(image)
+    design = clean_design(design)
+    banner = find_image(db, design.get("banner_id"))
+    pictures = [picture for picture in (find_image(db, item) for item in design.get("gallery_ids") or []) if picture is not None]
+
+    def src(picture):
+        return email_files.url_of(picture.id) if browser else email_files.cid_src(picture)
 
     # The text version (also what the discussion shows) has no use for the bold marks.
     text = render_plain(
@@ -184,13 +190,14 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
         cta=cta, closing=_BOLD.sub(r"\1", final_closing) or None, signature=brand["signature"],
     )
     html_body = render_email(
-        title=final_title, body_html=text_to_html(final_body, brand["accent"]),
+        title=final_title, body_html=text_to_html(final_body, design.get("accent") or brand["accent"]),
         rows=rows, bullets=topics, bullets_title="Au programme :" if topics else None,
-        closing_html=text_to_html(final_closing, brand["accent"]) if final_closing else "",
+        closing_html=text_to_html(final_closing, design.get("accent") or brand["accent"]) if final_closing else "",
         cta=cta, style=style if style in STYLES else "brand", lang=lang,
         preheader=email_threads.snippet(strip_marks(final_body), 110),
         image_src=image_src, image_width=image.width if image is not None else None,
-        image_position=image_position or "top", **brand,
+        image_position=image_position or "top", design=design,
+        banner_src=src(banner) if banner is not None else None, gallery=[src(picture) for picture in pictures], **brand,
     )
     return {
         "subject": final_subject,
@@ -198,9 +205,16 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
         "signature": brand["signature"],
         "text": text,
         "html": html_body,
-        "inline": [image] if image is not None else [],
+        "inline": [picture for picture in ([image] if image is not None else []) + ([banner] if banner is not None else []) + pictures],
         "files": list(attachments or []),
     }
+
+
+def check_design(db: Session, design: dict) -> None:
+    """The banner and the photos of a design must be pictures that were added (not a document)."""
+    for file_id in [design.get("banner_id"), *(design.get("gallery_ids") or [])]:
+        if file_id and find_image(db, file_id) is None:
+            raise ValueError("A photo of the design is no longer there: add it again.")
 
 
 def find_image(db: Session, image_id: str | None) -> EmailFile | None:
@@ -491,6 +505,30 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         ),
     ),
     AutoEmail(
+        key="session_reminder", group="Registration and class",
+        name="Reminder before each session",
+        when="Sent to each candidate some hours before every session of their class: 24 hours by default (the day "
+             "before); change the hours on the Reminders page. Once per session and candidate. Rewrite it, switch it off, "
+             "or put the original back here.",
+        subject="{first_name}, rappel : votre séance de {session_date}",
+        title="Votre prochaine séance",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Petit rappel : votre prochaine séance de « {program_name} » a lieu **{session_date}**, {session_hours}.\n\n"
+            "[box]\n**Au programme**\n{session_topic}\n\n"
+            "[box gold]\n**Où**\n{session_place}\n\n"
+            "Pensez à venir avec votre ordinateur chargé et vos questions de la dernière séance."
+        ),
+        closing="Un empêchement ? Répondez simplement à cet email pour prévenir votre formateur.",
+        extra=(
+            ("session_date", "Day of the session", "samedi 17 octobre"),
+            ("session_hours", "Hours of the session", "09:00 – 13:00"),
+            ("session_topic", "What the session is about", "Conteneurs avec Docker"),
+            ("session_place", "Where it takes place", "en ligne : votre lien personnel arrive une heure avant la séance"),
+            ("class_name", "The class", "DevOps · Groupe A"),
+        ),
+    ),
+    AutoEmail(
         key="next_program_wait", group="Registration and class",
         name="A second program, after the first",
         when="Sent once to a candidate who pays for a program while they follow another class: one program at a "
@@ -606,6 +644,7 @@ class Template:
     customized: bool = False
     updated_at: object = None
     channel: str = "auto"           # auto (as chosen above the inbox) | both (email and WhatsApp) | whatsapp (first)
+    design: dict = field(default_factory=dict)      # email_layout.clean_design: banner, photos, colour, font, button…
 
     @property
     def key(self) -> str:
@@ -614,6 +653,14 @@ class Template:
     @property
     def sends_itself(self) -> bool:
         return self.is_active or not self.spec.switchable
+
+
+def _differs(spec: AutoEmail, row: EmailTemplate) -> bool:
+    return ((row.subject or "") != spec.subject or (row.title or "") != (spec.title or "") or (row.body or "").strip() != spec.body.strip()
+            or (row.closing or "") != (spec.closing or "") or (row.style or spec.style) != spec.style or bool(row.image_id)
+            or bool(email_files.parse_ids(row.attachment_ids)) or (row.cta_label or "") != (spec.cta_label or "")
+            or (row.cta_url or "") != (spec.cta_url or "") or bool(clean_design(getattr(row, "design", None)))
+            or (row.channel or "auto") not in ("auto", "email") or row.show_details is False)
 
 
 def _from_row(spec: AutoEmail, row: EmailTemplate | None) -> Template:
@@ -629,8 +676,9 @@ def _from_row(spec: AutoEmail, row: EmailTemplate | None) -> Template:
         image_id=row.image_id, image_position=row.image_position or "top",
         attachment_ids=email_files.parse_ids(row.attachment_ids),
         cta_label=row.cta_label or "", cta_url=row.cta_url or "",
-        customized=True, updated_at=row.updated_at,
+        customized=_differs(spec, row), updated_at=row.updated_at,
         channel=row.channel if row.channel in ("both", "whatsapp") else "auto",     # "email" before 19 Oct meant the same
+        design=clean_design(getattr(row, "design", None)),
     )
 
 
@@ -656,7 +704,7 @@ def variables_for(key: str) -> list[tuple[str, str, str]]:
 def save(db: Session, key: str, *, subject: str, body: str, title: str = "", closing: str = "",
          style: str = "brand", show_details: bool = True, is_active: bool = True,
          image_id: str | None = None, image_position: str = "top", attachment_ids=None,
-         cta_label: str = "", cta_url: str = "", channel: str = "auto") -> EmailTemplate:
+         cta_label: str = "", cta_url: str = "", channel: str = "auto", design=None) -> EmailTemplate:
     """Keep the admin's version of an automatic email."""
     spec = AUTO_EMAILS[key]
     if not (subject or "").strip() or not (body or "").strip():
@@ -689,8 +737,37 @@ def save(db: Session, key: str, *, subject: str, body: str, title: str = "", clo
     row.cta_label = (cta_label or "").strip()[:80] or None
     row.cta_url = (cta_url or "").strip()[:500] or None
     row.channel = channel if channel in ("auto", "both", "whatsapp") else "auto"
+    design = clean_design(design)
+    check_design(db, design)
+    row.design = json.dumps(design) if design else None
     db.flush()
     return row
+
+
+def set_active(db: Session, key: str, on: bool) -> None:
+    """Switch an automatic email on or off without touching its words (the original stays the original)."""
+    spec = AUTO_EMAILS[key]
+    row = db.query(EmailTemplate).filter(EmailTemplate.key == key).first()
+    if row is None:
+        if on:
+            return
+        row = EmailTemplate(key=key, name=spec.name, subject=spec.subject, title=spec.title or None, body=spec.body,
+                            closing=spec.closing or None, style=spec.style, show_details=True,
+                            cta_label=spec.cta_label or None, cta_url=spec.cta_url or None)
+        db.add(row)
+    row.is_active = bool(on) or not spec.switchable
+    db.flush()
+
+
+def design_files(db: Session, design: dict | None) -> dict:
+    """The photos of a design, for its editor: {file id: {"url", "name"}}."""
+    found = {}
+    design = clean_design(design)
+    for file_id in [design.get("banner_id"), *(design.get("gallery_ids") or [])]:
+        image = find_image(db, file_id)
+        if image is not None:
+            found[image.id] = {"url": email_files.url_of(image.id), "name": image.filename}
+    return found
 
 
 def reset(db: Session, key: str) -> bool:
@@ -849,7 +926,7 @@ def computed_values(key: str, registration: Registration | None) -> dict | None:
 # ------------------------------------------------------------------
 
 # The registration and class emails: a paid candidate is told there that they can ask their professor.
-_PROFESSOR_KEYS = {"enrollment", "class_scheduled", "class_rescheduled", "class_moved", "training_reminder", "session_link"}
+_PROFESSOR_KEYS = {"enrollment", "class_scheduled", "class_rescheduled", "class_moved", "training_reminder", "session_link", "session_reminder"}
 
 
 def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
@@ -915,7 +992,7 @@ def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
         topics=topics if show_details and spec.topics else None,
         image=find_image(db, template.image_id), image_position=template.image_position,
         attachments=email_files.load(db, template.attachment_ids),
-        browser=browser, signed=spec.signed, **fields,
+        browser=browser, signed=spec.signed, design=template.design, **fields,
     )
 
 

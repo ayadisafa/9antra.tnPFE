@@ -268,7 +268,8 @@ def grounded(db: Session, message: str, fr: bool, facts: str) -> dict | None:
     data = email_assistant.llm_json(
         "You are the assistant of 9antra, a training centre, inside its management application. Answer in one to four short "
         "sentences, in " + ("French" if fr else "English") + ", only from the numbered extracts and the figures given. "
-        "If they do not answer the question, reply exactly: UNKNOWN. Say which extracts you used. "
+        "If they do not answer the question, reply exactly: UNKNOWN. After each sentence, put the number of the extract it "
+        "comes from in square brackets, like [1]. Say which extracts you used. "
         'Answer with one JSON object: {"reply": "...", "used": [1, 2]}',
         f"Figures of the application: {facts}\n\nExtracts:\n{numbered or '(none)'}\n\nQuestion: {message}",
         max_tokens=260,
@@ -277,14 +278,20 @@ def grounded(db: Session, message: str, fr: bool, facts: str) -> dict | None:
     if not reply or "UNKNOWN" in reply.upper() or len(reply) < 8:
         return None
     used = []
-    for number in (data or {}).get("used") or []:
+    import re as _re
+
+    cited = [*((data or {}).get("used") or []), *_re.findall(r"\[(\d+)\]", reply)]
+    for number in cited:
         try:
             index = int(number) - 1
         except (TypeError, ValueError):
             continue
         if 0 <= index < len(extracts) and extracts[index] not in used:
             used.append(extracts[index])
-    sources = [of_entry(db, entry) for entry in used] or [link("The application's figures")]
+    # A number that is not one of the extracts is taken out of the answer, so every [n] leads to its source.
+    reply = _re.sub(r"\s*\[(\d+)\]", lambda match: f" [{match.group(1)}]" if 0 < int(match.group(1)) <= len(extracts) else "", reply).strip()
+    sources = [{**of_entry(db, entry), "label": f"[{extracts.index(entry) + 1}] " + of_entry(db, entry)["label"]} for entry in used] \
+        or [link("The application's figures")]
     sources.append(link("Written by the local model from these sources: check it"))
     return {"reply": reply, "links": [], "source": "model", "sources": sources}
 
