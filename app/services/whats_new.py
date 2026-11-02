@@ -13,6 +13,48 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-02b", "day": date(2026, 11, 2), "title": "Yasmine and her agents: one per program, and an assistant you can question",
+        "items": [
+            {"icon": "bi-journal-code", "title": "One agent per program",
+             "text": "Each program has its own agent, born with the program: what it teaches week by week, its price, hours, next session and professors, "
+                     "and what was learnt about it. Yasmine asks the other agents when she does not know, and says whom she asked.", "url": "/assistant/agents#program-agents"},
+            {"icon": "bi-chat-square-text", "title": "Ask the email assistant why",
+             "text": "Under each answer it sent: “why?” says where the answer came from and how sure it was; “the right answer is …” teaches it for next time, "
+                     "and “send it” sends the correction. Also in Yasmine's window: “why did you answer Amira that way?”.", "url": "/inbox?filter=auto"},
+            {"icon": "bi-mortarboard", "title": "Professors' answers, reworded and learnt",
+             "text": "A technical question goes to the candidate's professor, by email too, and the candidate gets the professor's email. The professor's few words "
+                     "become a full answer, and the answer is learnt; a professor can also simply reply to the email.", "url": "/inbox"},
+            {"icon": "bi-spellcheck", "title": "Words with mistakes understood",
+             "text": "“inscripton”, “paimant”, “formtion pyhton”: read as meant, in the emails and in Yasmine's window, and shown as read.", "url": "/inbox"},
+            {"icon": "bi-person-heart", "title": "Change Yasmine by asking her",
+             "text": "“Call yourself Salma”, “put on glasses”, “a man's voice”, “wear a blazer”; her settings are also one click away in her window.", "url": "/settings#character"},
+            {"icon": "bi-translate", "title": "Every word translated",
+             "text": "The last words of the pages written in French and Arabic, pieces of code no longer counted as words, and the local model translating more at a time.", "url": "/settings/translations"},
+            {"icon": "bi-stars", "title": "What needs you, alive",
+             "text": "Figures count up on every page, what waits for you breathes gently, and each page's main button catches the light once.", "url": "/"},
+        ],
+    },
+    {
+        "key": "2026-11-02", "day": date(2026, 11, 2), "title": "Marketing: trends, the best times, and Yasmine who changes the system",
+        "items": [
+            {"icon": "bi-fire", "title": "What is trending in posts",
+             "text": "Counted from the marketing articles the journal reads, and from your own posts; with what posts look like this year.", "url": "/social#trends"},
+            {"icon": "bi-palette2", "title": "Posts redesigned",
+             "text": "Two new looks, Bold and Bright: big type, strong contrast, crisp shapes. Bold is the one chosen first.", "url": "/social#create"},
+            {"icon": "bi-music-note-beamed", "title": "This year's music",
+             "text": "Videos now have dance-pop, lo-fi or cinematic music, chosen for each kind of video, unless you choose otherwise.", "url": "/social#videos"},
+            {"icon": "bi-clock-history", "title": "When to post",
+             "text": "The moments most of your people can interact, from when they write, answer and register, and how your posts did.", "url": "/social#timing"},
+            {"icon": "bi-megaphone", "title": "Marketing this week, on the dashboard",
+             "text": "Four posts at the best moments and advice from your records, each made in one click or by Yasmine.", "url": "/#dashboard-marketing"},
+            {"icon": "bi-sliders2", "title": "Yasmine changes the system",
+             "text": "Ask her: “set the confidence to 80%”, “turn off the session reminder”, “the menu on the right”. She says what it was, and “undo” puts it back. "
+                     "She also answers everything about your marketing.", "url": "/assistant/agents"},
+            {"icon": "bi-diagram-3", "title": "Every functionality, with its schema",
+             "text": "Each page explains itself in steps you can click, and “How it works” lists them all.", "url": "/guide#every"},
+        ],
+    },
+    {
         "key": "2026-11-01b", "day": date(2026, 11, 1), "title": "Smart suggestions, and nothing hidden any more",
         "items": [
             {"icon": "bi-moon-stars", "title": "Messages set aside: you decide",

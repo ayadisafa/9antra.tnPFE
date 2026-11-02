@@ -142,12 +142,15 @@ def frames(pictures: list, durations: list[float]):
             yield canvas.convert("RGB").tobytes()
 
 
-def make(db: Session, *, kind: str = "both", fmt: str = "story", lang: str = "fr", look: str = "berry", mood: str = "inspiring",
+def make(db: Session, *, kind: str = "both", fmt: str = "story", lang: str = "fr", look: str = social_images.DEFAULT_LOOK, mood: str = "trend",
          music_file: str | None = None, title: str | None = None) -> SocialAsset:
-    """Writes the video down as waiting (its file comes from render())."""
-    spec = {"kind": kind if kind in KINDS else "both", "fmt": fmt if fmt in FORMATS else "story", "lang": lang if lang in social_content.LANGUAGES else "fr",
-            "look": look if look in social_images.LOOKS else "berry", "mood": mood if mood in social_music.MOODS or mood == "none" else "inspiring",
-            "music_file": music_file}
+    """Writes the video down as waiting (its file comes from render()). The music is the trending one that fits the
+    kind of video unless another is chosen ("none" for none)."""
+    kind = kind if kind in KINDS else "both"
+    if mood not in social_music.MOODS and mood != "none":
+        mood = social_music.FOR_VIDEO.get(kind, social_music.TRENDING[0])
+    spec = {"kind": kind, "fmt": fmt if fmt in FORMATS else "story", "lang": lang if lang in social_content.LANGUAGES else "fr",
+            "look": look if look in social_images.LOOKS else social_images.DEFAULT_LOOK, "mood": mood, "music_file": music_file}
     asset = SocialAsset(kind="video", title=title or KINDS[spec["kind"]][0], status="working", spec=json.dumps(spec))
     db.add(asset)
     db.commit()

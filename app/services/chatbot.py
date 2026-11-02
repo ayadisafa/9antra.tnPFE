@@ -536,8 +536,8 @@ def _model(db: Session, message: str, fr: bool) -> dict | None:
 
 
 SUGGESTIONS = [
-    "What should I do today?", "Send me all the programs in PDF", "Who has not paid?", "Which classes cannot start?",
-    "Who registered this week?", "What should we add to DevOps?", "What can you do?",
+    "What should I do today?", "Who has not paid?", "What should I post this week?", "What can you change?",
+    "Why did you answer the last email that way?", "Which classes cannot start?", "Send me all the programs in PDF", "What can you do?",
 ]
 
 

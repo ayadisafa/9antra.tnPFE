@@ -92,6 +92,66 @@
   @media (prefers-reduced-motion: no-preference) { .so-idea, .so-video { animation:soIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 45ms); } }
   @keyframes soIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
   @media (max-width: 991px) { .so-make, .so-two { grid-template-columns:minmax(0, 1fr); } .so-tabs { position:static; } }
+  /* Marketing parts: strong colours, and motion that shows the counts (bars grow to their share, squares come in). */
+  .so-hot { color:#f97316; margin-inline-start:4px; font-size:.72rem; }
+  .so-chip input:checked + span .so-hot, .so-pill.is-on .so-hot { color:#fde68a; }
+  .so-idea:target { outline:4px solid var(--accent-gold, #f9b555); outline-offset:3px; }
+  .mk .so-h h3 { font-size:1.22rem; }
+  .mk-plan { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:12px; }
+  .mk-slot { position:relative; display:flex; flex-direction:column; gap:8px; padding:16px; border-radius:20px; text-decoration:none; color:#fff; overflow:hidden;
+             background:linear-gradient(150deg, #3b0f2f 0%, #1f0a1a 100%); box-shadow:0 18px 34px -24px rgba(31,10,26,.9);
+             animation:mkRise .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 90ms); transition:transform .18s ease; }
+  .mk-slot::after { content:""; position:absolute; right:-40px; top:-40px; width:120px; height:120px; border-radius:50%; background:var(--primary-berry); opacity:.55; }
+  .mk-slot:hover { transform:translateY(-3px); color:#fff; }
+  .mk-when { display:flex; align-items:baseline; gap:8px; position:relative; z-index:1; } .mk-when b { font-size:1.1rem; color:#f9b555; }
+  .mk-when span { font-size:.78rem; font-weight:800; background:rgba(255,255,255,.14); border-radius:999px; padding:2px 9px; }
+  .mk-what { display:flex; flex-direction:column; gap:2px; position:relative; z-index:1; } .mk-what i { color:#f9b555; font-size:1.2rem; }
+  .mk-what b { font-size:1rem; } .mk-what small { color:#f3c9dc; font-size:.78rem; }
+  .mk-format { font-size:.76rem; font-weight:700; color:#fde68a; } .mk-why { font-size:.78rem; color:#e9dcf0; }
+  .mk-go { margin-top:auto; font-weight:800; font-size:.8rem; color:#fff; display:inline-flex; gap:6px; align-items:center; }
+  .mk-slot:hover .mk-go i { transform:translateX(4px); } .mk-go i { transition:transform .18s ease; }
+  .mk-tips { margin-top:16px; display:grid; gap:8px; }
+  .mk-tip { display:flex; gap:12px; align-items:center; padding:11px 14px; border-radius:16px; background:#fff; border:2px solid #f1e3ee; text-decoration:none; color:inherit;
+            animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 70ms); transition:border-color .15s ease, transform .15s ease; }
+  .mk-tip:hover { border-color:var(--primary-berry); transform:translateX(3px); }
+  .mk-tip > i:first-child { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; background:var(--primary-berry); color:#fff; font-size:1.05rem; }
+  .mk-tip span { display:flex; flex-direction:column; min-width:0; } .mk-tip b { font-size:.86rem; color:var(--ink-text); } .mk-tip small { font-size:.74rem; color:#6b6180; }
+  .mk-tip-go { margin-inline-start:auto; color:var(--primary-berry); }
+  .mk-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:14px; }
+  .mk-bar { display:flex; flex-direction:column; gap:4px; padding:9px 0; border-top:1px solid #f1ecf6; text-decoration:none; color:inherit; }
+  .mk-bar:first-of-type { border-top:0; }
+  .mk-bar-top { display:flex; justify-content:space-between; gap:8px; } .mk-bar-top b { font-size:.86rem; color:var(--ink-text); }
+  .mk-bar-top em { font-style:normal; font-size:.74rem; font-weight:800; color:var(--primary-berry); white-space:nowrap; }
+  .mk-bar-track { height:10px; border-radius:99px; background:#f3edf7; overflow:hidden; }
+  .mk-bar-track span { display:block; height:100%; width:var(--w); border-radius:inherit; background:linear-gradient(90deg, var(--primary-berry), #f97316);
+                       animation:mkGrow 1s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 120ms + 150ms); }
+  .mk-bar small { font-size:.74rem; color:#6b6180; }
+  .mk-own { font-size:.8rem; margin:0 0 4px; }
+  .mk-design { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px; }
+  .mk-design-card { display:flex; flex-direction:column; gap:4px; padding:12px; border-radius:16px; background:#1f0a1a; color:#fff; text-decoration:none;
+                    animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 80ms); transition:transform .15s ease; }
+  .mk-design-card:hover { transform:translateY(-2px); color:#fff; }
+  .mk-design-card i { font-size:1.3rem; color:#f9b555; } .mk-design-card b { font-size:.86rem; } .mk-design-card small { font-size:.74rem; color:#e9dcf0; }
+  .mk-best { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; margin-bottom:14px; }
+  .mk-best-card { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:18px; background:#fff; border:2px solid var(--primary-berry);
+                  animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 90ms); }
+  .mk-best-card span { display:flex; flex-direction:column; gap:2px; } .mk-best-card b { font-size:.92rem; color:var(--ink-text); } .mk-best-card small { font-size:.74rem; color:#6b6180; }
+  .mk-rank { width:34px; height:34px; flex:none; border-radius:50%; display:grid !important; place-items:center; background:var(--primary-berry); color:#fff; font-weight:900; }
+  .mk-best-card:first-child .mk-rank { background:#f97316; animation:mkPulse 2.2s ease-in-out infinite; }
+  .mk-heat { display:grid; gap:4px; overflow-x:auto; }
+  .mk-heat-row { display:grid; grid-template-columns:96px repeat(6, minmax(44px, 1fr)); gap:4px; align-items:center; }
+  .mk-heat-row.is-head span { font-size:.68rem; font-weight:800; color:#8a84a0; text-align:center; white-space:nowrap; }
+  .mk-heat-row b { font-size:.78rem; color:var(--ink-text); }
+  .mk-cell { height:34px; border-radius:9px; display:grid; place-items:center; background:color-mix(in srgb, var(--primary-berry) calc(var(--s) * 1%), #f6f1f8);
+             animation:mkPop .4s ease both; animation-delay:calc(var(--d) * 14ms); }
+  .mk-cell em { font-style:normal; font-size:.66rem; font-weight:800; color:#fff; opacity:.9; }
+  .mk-cell:not(.is-top) em { color:#5b5670; } .mk-cell.is-top { box-shadow:inset 0 0 0 2px #f9b555; } .mk-cell.is-top em { color:#fff; }
+  @keyframes mkRise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  @keyframes mkGrow { from { width:0; } }
+  @keyframes mkPop { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
+  @keyframes mkPulse { 50% { box-shadow:0 0 0 8px rgba(249,115,22,.18); } }
+  @media (max-width: 991px) { .mk-two { grid-template-columns:minmax(0, 1fr); } }
+  @media (prefers-reduced-motion: reduce) { .mk-slot, .mk-tip, .mk-design-card, .mk-best-card, .mk-cell, .mk-bar-track span, .mk-rank { animation:none !important; } }
 </style>
 {% endblock %}
 
@@ -105,11 +165,93 @@
 </div>
 
 <nav class="so-tabs" aria-label="Parts of the page">
+  <a class="so-tab" href="#plan"><i class="bi bi-calendar-week"></i>This week</a>
+  <a class="so-tab" href="#trends"><i class="bi bi-fire"></i>Trending</a>
+  <a class="so-tab" href="#timing"><i class="bi bi-clock-history"></i>Best times</a>
   <a class="so-tab" href="#create"><i class="bi bi-magic"></i>Posts and stories</a>
   <a class="so-tab" href="#videos"><i class="bi bi-camera-reels"></i>Videos</a>
   <a class="so-tab" href="#listen"><i class="bi bi-ear"></i>We listen</a>
   <a class="so-tab" href="#engagement"><i class="bi bi-graph-up"></i>Engagement</a>
 </nav>
+
+<!-- ============ This week: what to post, and when ============ -->
+<section class="so-section mk" id="plan">
+  <div class="so-h">
+    <div><h3><i class="bi bi-calendar-week"></i>This week: what to post, and when</h3>
+      <p>Four posts at the moments your people are most active, each made from your own records. Click one to make it.</p></div>
+  </div>
+  <div class="mk-plan">
+    {% for item in plan %}
+    <a class="mk-slot" href="{{ item.href }}" style="--i:{{ loop.index0 }};">
+      <span class="mk-when"><b>{{ item.day }}</b><span data-no-i18n>{{ item.date }} · {{ item.time }}</span></span>
+      <span class="mk-what"><i class="bi {{ item.icon }}"></i><b>{{ item.title }}</b>{% if item.headline %}<small data-no-i18n>{{ item.headline }}</small>{% endif %}</span>
+      <span class="mk-format"><i class="bi {{ item.format_icon }}"></i>{{ item.format_label }}{% if item.music %} · <i class="bi bi-music-note-beamed"></i>{{ item.music }}{% endif %}</span>
+      <span class="mk-why">{{ item.why }}</span>
+      <span class="mk-go">Make it <i class="bi bi-arrow-right"></i></span>
+    </a>
+    {% else %}
+    <p class="so-empty">Nothing to post yet: the ideas come from your programs, feedback and classes.</p>
+    {% endfor %}
+  </div>
+  <div class="mk-tips">
+    <div class="so-label"><i class="bi bi-lightbulb"></i> Marketing advice, from your records</div>
+    {% for tip in tips %}
+    <a class="mk-tip" href="{{ tip.href }}" style="--i:{{ loop.index0 }};"><i class="bi {{ tip.icon }}"></i><span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span><i class="bi bi-arrow-right mk-tip-go"></i></a>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- ============ What is trending in posts ============ -->
+<section class="so-section mk" id="trends">
+  <div class="so-h">
+    <div><h3><i class="bi bi-fire"></i>What is trending in posts</h3>
+      <p>Counted from the marketing articles the journal read in the last 45 days (<span data-no-i18n>{{ trends.articles }}</span>) and from your own posts; then what posts look like this year.</p></div>
+  </div>
+  <div class="mk-two">
+    <div class="so-box">
+      <div class="so-label">What the marketing articles talk about</div>
+      {% for item in trends.subjects %}
+      <a class="mk-bar" href="{{ item.href }}" style="--w:{{ item.share }}%; --i:{{ loop.index0 }};">
+        <span class="mk-bar-top"><b>{{ item.label }}</b><em><span data-no-i18n>{{ item.articles }}</span> <span>articles</span></em></span>
+        <span class="mk-bar-track"><span></span></span>
+        <small>{{ item.means }}</small>
+      </a>
+      {% else %}
+      <p class="so-empty">The journal has no marketing article of the last weeks yet.</p>
+      {% endfor %}
+      {% if trends.own %}
+      <div class="so-label mt-3">On your own posts</div>
+      {% for item in trends.own %}<p class="mk-own"><b>{{ item.what }}</b> · “{{ item.best }}” <span data-no-i18n>{{ item.average }}%</span> · “{{ item.other }}” <span data-no-i18n>{{ item.other_average }}%</span></p>{% endfor %}
+      {% endif %}
+    </div>
+    <div class="so-box">
+      <div class="so-label">What posts look like this year <span class="ui-chip muted">General practice, not counted</span></div>
+      <div class="mk-design">
+        {% for item in trends.design %}<a class="mk-design-card" href="{{ item.href }}" style="--i:{{ loop.index0 }};"><i class="bi {{ item.icon }}"></i><b>{{ item.title }}</b><small>{{ item.text }}</small></a>{% endfor %}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ When most of your people can interact ============ -->
+<section class="so-section mk" id="timing">
+  <div class="so-h">
+    <div><h3><i class="bi bi-clock-history"></i>When most of your people can interact</h3>
+      <p>Each square is a day and a time of day: the deeper the colour, the better the moment. Counted from the moments your people wrote, answered their questions or registered in the last six months (<span data-no-i18n>{{ times.counted }}</span>) and from your posts with numbers (<span data-no-i18n>{{ times.posts }}</span>), with a general starting point (evening, then lunch) while those are few.</p></div>
+  </div>
+  <div class="mk-best">
+    {% for slot in times.best %}
+    <div class="mk-best-card" style="--i:{{ loop.index0 }};"><span class="mk-rank">{{ loop.index }}</span>
+      <span><b>{{ slot.day }} · <span data-no-i18n>{{ slot.band[0] }}–{{ slot.band[1] }} h</span></b>{% for why in slot.why %}<small>{{ why }}</small>{% endfor %}</span></div>
+    {% endfor %}
+  </div>
+  <div class="mk-heat" role="table" aria-label="The best moments of the week">
+    <div class="mk-heat-row is-head" role="row"><span></span>{% for band in times.bands %}<span role="columnheader" data-no-i18n>{{ band }}</span>{% endfor %}</div>
+    {% for row in times.grid %}{% set day = loop.index0 %}
+    <div class="mk-heat-row" role="row"><b role="rowheader">{{ row.day }}</b>{% for cell in row.cells %}<span class="mk-cell {{ 'is-top' if cell.score >= 70 }}" role="cell" style="--s:{{ cell.score }}; --d:{{ day * 6 + loop.index0 }};" title="{{ cell.score }}/100"><em data-no-i18n>{{ cell.score }}</em></span>{% endfor %}</div>
+    {% endfor %}
+  </div>
+</section>
 
 <!-- ============ Posts and stories ============ -->
 <section class="so-section" id="create">
@@ -119,12 +261,12 @@
     <div class="so-pills" aria-label="Language and look">
       {% for key, name in languages.items() %}<a class="so-pill {{ 'is-on' if lang == key }}" href="/social?lang={{ key }}&look={{ look }}#create" data-no-i18n>{{ name }}</a>{% endfor %}
       <span style="width:8px;"></span>
-      {% for key, name in looks.items() %}<a class="so-pill {{ 'is-on' if look == key }}" href="/social?lang={{ lang }}&look={{ key }}#create">{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% else %}<span>Berry</span>{% endif %}</a>{% endfor %}
+      {% for key, name in looks.items() %}<a class="so-pill {{ 'is-on' if look == key }}" href="/social?lang={{ lang }}&look={{ key }}#create">{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% elif key == 'bold' %}<span>Bold</span>{% elif key == 'bright' %}<span>Bright</span>{% else %}<span>Berry</span>{% endif %}{% if key in trend_looks %}<i class="bi bi-fire so-hot" title="This year's design"></i>{% endif %}</a>{% endfor %}
     </div>
   </div>
   <div class="so-ideas">
     {% for idea in ideas %}
-    <article class="so-idea" style="--i:{{ loop.index0 }};">
+    <article class="so-idea" id="idea-{{ idea.key | replace(':', '-') }}" style="--i:{{ loop.index0 }};">
       <div class="so-preview">
         <img src="/social/image?idea={{ idea.key | urlencode }}&fmt=post&look={{ look }}&lang={{ lang }}" alt="{{ idea.title }}" loading="lazy">
         <span class="so-topic"><i class="bi {{ idea.icon }}"></i>{{ idea.title }}</span>
@@ -164,7 +306,7 @@
       <div class="so-label">What it tells</div>
       <div class="so-choices">
         {% for key, value in video_kinds.items() %}
-        <label class="so-choice"><input type="radio" name="kind" value="{{ key }}" {{ 'checked' if key == 'both' }}><span><b>{{ value[0] }}</b><small>{{ value[1] }}</small></span></label>
+        <label class="so-choice"><input type="radio" name="kind" value="{{ key }}" {{ 'checked' if key == chosen_kind }}><span><b>{{ value[0] }}</b><small>{{ value[1] }}</small></span></label>
         {% endfor %}
       </div>
       <div class="so-label">Format</div>
@@ -172,11 +314,12 @@
       <div class="so-label">Language and look</div>
       <div class="so-chips">
         {% for key, name in languages.items() %}<label class="so-chip"><input type="radio" name="lang" value="{{ key }}" {{ 'checked' if key == lang }}><span data-no-i18n>{{ name }}</span></label>{% endfor %}
-        {% for key, name in looks.items() %}<label class="so-chip"><input type="radio" name="look" value="{{ key }}" {{ 'checked' if key == look }}><span>{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% else %}<span>Berry</span>{% endif %}</span></label>{% endfor %}
+        {% for key, name in looks.items() %}<label class="so-chip"><input type="radio" name="look" value="{{ key }}" {{ 'checked' if key == look }}><span>{% if key == 'light' %}<span>Light</span>{% elif key == 'night' %}<span>Night</span>{% elif key == 'bold' %}<span>Bold</span>{% elif key == 'bright' %}<span>Bright</span>{% else %}<span>Berry</span>{% endif %}{% if key in trend_looks %}<i class="bi bi-fire so-hot" title="This year's design"></i>{% endif %}</span></label>{% endfor %}
       </div>
       <div class="so-label">Music</div>
       <div class="so-chips">
-        {% for key, value in moods.items() %}<label class="so-chip"><input type="radio" name="mood" value="{{ key }}" {{ 'checked' if key == 'inspiring' }}><span><i class="bi bi-music-note-beamed"></i>{% if key == 'inspiring' %}<span>Inspiring</span>{% elif key == 'upbeat' %}<span>Upbeat</span>{% elif key == 'calm' %}<span>Calm</span>{% else %}{{ value.name }}{% endif %}</span></label>{% endfor %}
+        <label class="so-chip"><input type="radio" name="mood" value="trend" checked><span><i class="bi bi-fire"></i>The trending one for this video</span></label>
+        {% for key, value in moods.items() %}<label class="so-chip"><input type="radio" name="mood" value="{{ key }}"><span><i class="bi {{ 'bi-fire' if key in trending_moods else 'bi-music-note-beamed' }}"></i>{% if key == 'inspiring' %}<span>Inspiring</span>{% elif key == 'upbeat' %}<span>Upbeat</span>{% elif key == 'calm' %}<span>Calm</span>{% elif key == 'pop' %}<span>Dance-pop</span>{% elif key == 'lofi' %}<span>Lo-fi</span>{% elif key == 'cinematic' %}<span>Cinematic</span>{% else %}{{ value.name }}{% endif %}</span></label>{% endfor %}
         <label class="so-chip"><input type="radio" name="mood" value="own"><span><i class="bi bi-upload"></i>Your own music</span></label>
         <label class="so-chip"><input type="radio" name="mood" value="none"><span><i class="bi bi-volume-mute"></i>No music</span></label>
       </div>

@@ -29,7 +29,30 @@
     .jr-stop:nth-child(even) .jr-card, .jr-stop:nth-child(even) .jr-art { order:initial; }
     .jr-art { max-width:170px; margin:0; }
   }
-  @media (prefers-reduced-motion: reduce) { .jr-road::after { animation:none; } }
+  @media (prefers-reduced-motion: reduce) { .jr-road::after { animation:none; } .fn-card { animation:none !important; } }
+  /* Every functionality: a card each, its schema from top to bottom, a link on each step and on the page. */
+  .fn { max-width:1180px; margin:54px auto 0; }
+  .fn-title { text-align:center; font-weight:900; font-size:1.55rem; letter-spacing:-.02em; color:var(--ink-text); margin:0 0 6px; }
+  .fn-lead { text-align:center; color:#5b5670; margin:0 auto 22px; max-width:640px; }
+  .fn-nav { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
+  .fn-nav a { padding:6px 14px; border-radius:999px; background:#1f0a1a; color:#fff; font-size:.8rem; font-weight:800; text-decoration:none; }
+  .fn-nav a:hover { background:var(--primary-berry); }
+  .fn-group { font-weight:900; font-size:1.05rem; color:var(--ink-text); margin:26px 0 12px; display:flex; gap:10px; align-items:center; scroll-margin-top:110px; }
+  .fn-group::after { content:""; flex:1; height:3px; border-radius:3px; background:linear-gradient(90deg, var(--primary-berry), transparent); }
+  .fn-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:14px; }
+  .fn-card { display:flex; flex-direction:column; gap:12px; background:#fff; border:2px solid #efe7f6; border-radius:22px; padding:16px; scroll-margin-top:110px;
+             animation:fnRise .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 60ms); }
+  .fn-card:target { border-color:var(--primary-berry); box-shadow:0 0 0 4px color-mix(in srgb, var(--primary-berry) 18%, transparent); }
+  .fn-head { display:flex; gap:12px; align-items:flex-start; }
+  .fn-art { width:64px; flex:none; } .fn-art svg { width:100%; height:auto; }
+  .fn-head h4 { font-size:.98rem; font-weight:800; margin:0 0 3px; color:var(--ink-text); } .fn-head p { font-size:.8rem; color:#5b5670; margin:0; line-height:1.5; }
+  .fn-steps { flex-direction:column; flex-wrap:nowrap; }
+  .fn-steps .guide-step { width:100%; }
+  .fn-steps .guide-arrow { width:auto; height:16px; margin-left:26px; }
+  .fn-steps .guide-arrow::before { width:2px; height:100%; background:repeating-linear-gradient(180deg, #d5cde6 0 4px, transparent 4px 7px); }
+  .fn-steps .guide-arrow span { display:none; }
+  .fn-card .ui-btn { align-self:flex-start; margin-top:auto; }
+  @keyframes fnRise { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:none; } }
 </style>
 {% endblock %}
 
@@ -54,4 +77,22 @@
 </div>
 
 <p class="jr-end">Every page starts with its own short explanation. Close it once you know the page; the <b>?</b> at the top brings it back.</p>
+
+<section class="fn" id="every">
+  <h2 class="fn-title">Every functionality, with its schema</h2>
+  <p class="fn-lead">Each card says what a page is for, step by step. Click a step to go where it is done, or open the page.</p>
+  <nav class="fn-nav" aria-label="Parts">{% for group in everything %}<a href="#part-{{ loop.index }}">{{ group.title }}</a>{% endfor %}</nav>
+  {% for group in everything %}
+  <h3 class="fn-group" id="part-{{ loop.index }}">{{ group.title }}</h3>
+  <div class="fn-grid">
+    {% for item in group.pages %}
+    <article class="fn-card" id="fn-{{ item.key }}" style="--i:{{ loop.index0 }};">
+      <div class="fn-head"><span class="fn-art">{{ pictures.scene(item.art) }}</span><div><h4>{{ item.title }}</h4><p>{{ item.text }}</p></div></div>
+      {{ pictures.steps(item, "fn-steps") }}
+      <a class="ui-btn soft sm" href="{{ item.url }}">Open it<i class="bi bi-arrow-right"></i></a>
+    </article>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</section>
 {% endblock %}

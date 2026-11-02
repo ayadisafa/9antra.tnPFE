@@ -262,6 +262,16 @@ def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
         # Tunisian in Latin letters, or Arabic letters the list knows well enough: read in French by the rules and the search.
         understood = derja.to_french(body)
         subject, body = derja.to_french(subject), understood
+    # Words written with mistakes are read as the words they were meant to be ("inscripton", "paimant").
+    from app.services import spelling
+
+    fixes, put_right = [], None
+    if not understood and not arabic:
+        body_fixed, fixes = spelling.correct(body)
+        subject_fixed, subject_fixes = spelling.correct(subject)
+        if fixes or subject_fixes:
+            subject, body, put_right = subject_fixed, body_fixed, body_fixed
+            fixes = subject_fixes + fixes
     text = f"{subject}\n{body}"
     tokens = knowledge_service.tokenize(text)
     lowered = text.lower()
@@ -310,6 +320,8 @@ def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
     return {
         "language": "fr" if understood and not arabic else _detect_language(f"{subject}\n{body}") if not arabic else "ar",
         "derja": understood,
+        "understood": put_right,             # the message with its spelling put right (None when nothing was)
+        "fixes": fixes,
         "intent": "greeting" if thanks_only else intent,
         # Everything except a plain thank-you is handled: answered, or shown to the admin.
         "needs_reply": not thanks_only,
@@ -1022,7 +1034,7 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
 
     from app.services import course_requests
 
-    text_asked = f"{analysis.get('subject') or ''}\n{analysis.get('derja') or message.body or ''}"
+    text_asked = f"{analysis.get('subject') or ''}\n{analysis.get('derja') or analysis.get('understood') or message.body or ''}"
     # The course of another program than theirs is never attached (see process_inbound: “register first”).
     material = None if course_requests.other_program_asked(db, candidate, text_asked) else course_requests.answer(db, candidate, analysis, message)
     if material is not None:
@@ -1245,6 +1257,9 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     message.emotions = json.dumps(feelings, ensure_ascii=False) if feelings["emotions"] else None
     if analysis.get("derja"):
         message.analysis = "Written in Tunisian; understood as: " + email_threads.snippet(analysis["derja"], 150)
+    elif analysis.get("fixes"):
+        message.analysis = ("Read with its spelling put right (" + ", ".join(f"“{wrong}” → “{right}”" for wrong, right in analysis["fixes"][:5])
+                            + "). " + (message.analysis or ""))
     message.question = analysis["question"] if analysis["needs_reply"] else None
 
     from app.services import payment_proofs      # here: it reads pictures, which most messages do not need
@@ -1342,7 +1357,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     from app.services import course_questions      # here: it reads the classes and the team
 
     reply_language = "en" if analysis["language"] == "en" else "fr"
-    asked_text = analysis.get("derja") or message.body or ""
+    asked_text = analysis.get("derja") or analysis.get("understood") or message.body or ""
     # A reply with the answers to the weekly questions (“1-B, 2-A”): graded at once, the score and corrections sent back.
     from app.services import weekly_questions
 

@@ -125,8 +125,55 @@
   .db-said-improve { display:flex; gap:6px; align-items:flex-start; font-size:.76rem !important; color:#92400e !important; background:var(--gold-subtle); border-radius:10px; padding:6px 9px; }
   .db-said-open { margin-inline-start:auto; color:var(--muted); font-size:.8rem; } .db-said-open:hover { color:var(--primary-berry); }
   .db-said-foot { display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; align-items:center; margin-top:8px; }
-  /* Ideas to keep them engaged: folded; the folded row says how many. */
-  .db-ideas { margin-top:14px; border:1px solid #efe7f6; border-radius:18px; background:linear-gradient(135deg, #fffaf0, #faf6ff); }
+  /* Ideas to keep them engaged: folded; the folded row says how many. Strong colours; when opened, the ideas come in
+     one after the other, and each says why, the plan and the target. */
+  .db-ideas { margin-top:14px; border:0; border-radius:20px; background:#1f0a1a; color:#fff; overflow:hidden; }
+  .db-ideas > summary { background:linear-gradient(120deg, var(--primary-berry), #f97316); }
+  .db-ideas > summary .db-sub, .db-ideas-sum span { color:#ffe9d6 !important; }
+  .db-ideas .db-ideas-sum b { color:#fff !important; font-size:1rem !important; }
+  .db-ideas .db-ideas-chev { color:#fff !important; }
+  .db-ideas .db-ideas-ico { background:#fff !important; color:#f97316 !important; animation:dbGlow 2.4s ease-in-out infinite; }
+  .db-ideas .db-ideas-grid { padding-top:16px !important; }
+  .db-ideas .db-ideas-label { color:#f9b555 !important; }
+  .db-ideas[open] .db-idea, .db-ideas[open] .db-field { animation:dbRise .45s cubic-bezier(.2,.8,.2,1) both; }
+  .db-ideas .db-idea:nth-child(3), .db-ideas .db-field:nth-child(3) { animation-delay:.08s; } .db-ideas .db-idea:nth-child(4), .db-ideas .db-field:nth-child(4) { animation-delay:.16s; }
+  .db-ideas .db-idea:nth-child(5), .db-ideas .db-field:nth-child(5) { animation-delay:.24s; } .db-ideas .db-idea:nth-child(n+6), .db-ideas .db-field:nth-child(n+6) { animation-delay:.32s; }
+  .db-ideas .db-idea { border:0 !important; border-left:5px solid #f97316 !important; }
+  .db-idea-tag { display:inline-block; font-size:.64rem; font-weight:900; letter-spacing:.06em; text-transform:uppercase; color:var(--primary-berry); margin-top:4px; }
+  .db-idea-target .db-idea-tag { color:#15803d; margin:0; }
+  .db-ideas .db-field { border:0 !important; }
+  @keyframes dbRise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
+  @keyframes dbGlow { 50% { box-shadow:0 0 0 7px rgba(255,255,255,.22); } }
+  @media (prefers-reduced-motion: reduce) { .db-ideas[open] .db-idea, .db-ideas[open] .db-field, .db-ideas .db-ideas-ico, .db-market-slot, .db-market-tip, .db-market-moment, .db-market-ico { animation:none !important; } }
+  /* Marketing this week: dark slots in their order, the best moments as badges, advice with where to do it. */
+  .db-market { background:linear-gradient(160deg, #fff 0%, #fff7f0 100%); border:2px solid #fbd5b5; }
+  .db-market-ico { color:#f97316; animation:dbShout 2.8s ease-in-out infinite; transform-origin:left center; }
+  .db-market-links { display:flex; gap:12px; flex-wrap:wrap; }
+  .db-market-best { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .db-market-best-label { font-size:.72rem; font-weight:900; letter-spacing:.05em; text-transform:uppercase; color:#9a3412; display:inline-flex; gap:6px; align-items:center; }
+  .db-market-moment { display:inline-flex; gap:7px; align-items:center; padding:6px 12px; border-radius:999px; background:#1f0a1a; color:#fff; font-size:.8rem; font-weight:700;
+                      animation:dbRise .4s ease both; animation-delay:calc(var(--i) * 90ms); }
+  .db-market-moment b { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:#f97316; font-size:.7rem; }
+  .db-market-plan { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; }
+  .db-market-slot { display:flex; flex-direction:column; gap:6px; padding:14px; border-radius:18px; background:linear-gradient(150deg, #3b0f2f, #1f0a1a); color:#fff;
+                    animation:dbRise .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 100ms); }
+  .db-market-when { display:flex; gap:8px; align-items:baseline; } .db-market-when b { color:#f9b555; font-size:1rem; }
+  .db-market-when span { font-size:.76rem; font-weight:800; background:rgba(255,255,255,.14); border-radius:999px; padding:1px 8px; }
+  .db-market-what { font-weight:800; font-size:.9rem; display:flex; gap:7px; align-items:center; } .db-market-what i { color:#f9b555; }
+  .db-market-format { font-size:.74rem; color:#fde68a; font-weight:700; display:flex; gap:6px; align-items:center; }
+  .db-market-go { color:#fff; font-weight:800; font-size:.78rem; text-decoration:none; display:inline-flex; gap:5px; align-items:center; }
+  .db-market-go:hover { color:#f9b555; } .db-market-go i { transition:transform .15s ease; } .db-market-go:hover i { transform:translateX(3px); }
+  .db-market-tips { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:8px; margin-top:12px; }
+  .db-market-tip { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid #f6dcc8;
+                   animation:dbRise .45s ease both; animation-delay:calc(var(--i) * 80ms + 200ms); }
+  .db-market-tip > i { width:32px; height:32px; flex:none; border-radius:10px; display:grid; place-items:center; background:#f97316; color:#fff; }
+  .db-market-tip span { display:flex; flex-direction:column; min-width:0; } .db-market-tip b { font-size:.82rem; color:var(--ink-text); } .db-market-tip small { font-size:.72rem; color:#6b6180; }
+  .db-market-open { margin-inline-start:auto; color:#9a3412; }
+  .db-market-ask { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+  .db-ask { border:2px solid #1f0a1a; background:#fff; color:#1f0a1a; border-radius:999px; padding:6px 14px; font-size:.8rem; font-weight:800; display:inline-flex; gap:7px; align-items:center;
+            transition:background .15s ease, color .15s ease, transform .15s ease; }
+  .db-ask:hover { background:#1f0a1a; color:#fff; transform:translateY(-1px); }
+  @keyframes dbShout { 0%, 70%, 100% { transform:none; } 78% { transform:rotate(-12deg) scale(1.12); } 86% { transform:rotate(8deg) scale(1.12); } }
   .db-ideas > summary { list-style:none; display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer; }
   .db-ideas > summary::-webkit-details-marker { display:none; }
   .db-ideas-ico { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:var(--gold-subtle, #fef3c7); color:#b45309; flex:none; }
@@ -1238,9 +1285,10 @@
         {% for idea in ideas.plans %}
         <article class="db-idea">
           <div class="db-idea-head"><i class="bi {{ idea.icon }}"></i><b>{{ idea.title }}</b></div>
-          <p class="db-idea-why">{% for fact in idea.why %}<span>{{ fact }}</span>{% endfor %}</p>
+          <p class="db-idea-why"><span class="db-idea-tag">Why</span>{% for fact in idea.why %}<span>{{ fact }}</span>{% endfor %}</p>
+          <span class="db-idea-tag">Plan</span>
           <ol class="db-idea-plan">{% for step in idea.plan %}<li>{{ step }}</li>{% endfor %}</ol>
-          <p class="db-idea-target"><i class="bi bi-bullseye"></i><span>{{ idea.target }}</span></p>
+          <p class="db-idea-target"><i class="bi bi-bullseye"></i><span><span class="db-idea-tag">Target</span> {{ idea.target }}</span></p>
           <a class="ui-link" href="{{ idea.href }}">{{ idea.action }} <i class="bi bi-arrow-right"></i></a>
         </article>
         {% else %}
@@ -1283,6 +1331,48 @@
     });
   })();
   </script>
+</section>
+{% endif %}
+
+{% if marketing and (marketing.plan or marketing.tips) %}
+<section class="db-card db-market" id="dashboard-marketing">
+  <div class="db-card-head">
+    <div>
+      <div class="db-title"><i class="bi bi-megaphone-fill db-market-ico"></i>Marketing this week</div>
+      <div class="db-sub">What to post, when your people are most there, and what to do next. Each one is made in one click, or by Yasmine.</div>
+    </div>
+    <span class="db-market-links"><a class="ui-link" href="/social#plan">The whole plan</a><a class="ui-link" href="/social#trends">What is trending</a></span>
+  </div>
+  {% if marketing.best %}
+  <div class="db-market-best">
+    <span class="db-market-best-label"><i class="bi bi-clock-history"></i>Best moments</span>
+    {% for slot in marketing.best %}<span class="db-market-moment" style="--i:{{ loop.index0 }};"><b>{{ loop.index }}</b>{{ slot.day }} · <span data-no-i18n>{{ slot.band[0] }}–{{ slot.band[1] }} h</span></span>{% endfor %}
+  </div>
+  {% endif %}
+  <div class="db-market-plan">
+    {% for item in marketing.plan %}
+    <div class="db-market-slot" style="--i:{{ loop.index0 }};">
+      <span class="db-market-when"><b>{{ item.day }}</b><span data-no-i18n>{{ item.time }}</span></span>
+      <span class="db-market-what"><i class="bi {{ item.icon }}"></i>{{ item.title }}</span>
+      <span class="db-market-format"><i class="bi {{ item.format_icon }}"></i>{{ item.format_label }}</span>
+      <span class="db-market-do"><a class="db-market-go" href="{{ item.href }}">Make it <i class="bi bi-arrow-right"></i></a></span>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="db-market-tips">
+    {% for tip in marketing.tips %}
+    <div class="db-market-tip" style="--i:{{ loop.index0 }};">
+      <i class="bi {{ tip.icon }}"></i>
+      <span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span>
+      <a class="db-market-open" href="{{ tip.href }}" aria-label="Open where it is done"><i class="bi bi-box-arrow-up-right"></i></a>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="db-market-ask">
+    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-chat-heart"></i>Ask Yasmine for this week's plan<span hidden data-q>What should I post this week?</span></button>
+    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-clock"></i>When should I post?<span hidden data-q>When should I post?</span></button>
+    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-fire"></i>What is trending?<span hidden data-q>What is trending in posts?</span></button>
+  </div>
 </section>
 {% endif %}
 

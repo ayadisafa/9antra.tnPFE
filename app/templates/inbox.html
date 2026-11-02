@@ -95,6 +95,8 @@
   .ix-aside-hints { display:flex; gap:5px; flex-wrap:wrap; margin-top:7px; }
   .ix-aside-hints button { border:1px solid #e3dcef; background:#fff; border-radius:999px; padding:3px 10px; font-size:.72rem; font-weight:700; color:#5b5670; }
   .ix-aside-hints button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
+  .ix-review-open { display:inline-flex; gap:5px; align-items:center; margin:6px 0 2px; }
+  .ix-review-chat { margin-left:auto; }
   .ix-sources { font-size: .74rem; color: #5b5470; margin-top: 6px; }
   .ix-sources summary { cursor: pointer; font-weight: 700; color: var(--muted); }
   .ix-sources ul { margin: 6px 0 0; padding-left: 18px; }
@@ -408,7 +410,7 @@
           {% if message.status == "processing" %}<span><i class="bi bi-hourglass-split"></i> The assistant is reading this email</span>
           {% elif message.status == "no_reply" %}<span class="ix-aside-why"><i class="bi bi-moon-stars"></i><b>Set aside</b> {{ item.aside.why if item.aside else "" }}</span>
             <form method="post" action="/inbox/message/{{ message.id }}/needs-answer" class="m-0"><button class="ix-linkbtn"><i class="bi bi-reply"></i> It needs an answer</button></form>
-            <button type="button" class="ix-linkbtn" data-aside-talk="{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-dots"></i> Talk about it</button>
+            <button type="button" class="ix-linkbtn" data-aside-talk="{{ message.id }}" data-chat-open="aside-{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-dots"></i> Talk about it</button>
           {% elif message.status == "needs_admin" %}<span class="text-warning-emphasis fw-semibold">Waiting for your answer</span>
           {% elif message.status == "replied" %}<span>Answered {{ message.replied_at | localdt if message.replied_at else "" }}</span>{% endif %}
         </div>
@@ -417,19 +419,19 @@
           <form method="post" action="/inbox/rules/undo" class="m-0"><input type="hidden" name="thread" value="{{ message.thread_id }}"><button class="ix-linkbtn">Undo</button></form></div>
         {% endif %}
         {% if message.status == "no_reply" %}
-        <div class="ix-aside-chat" id="aside-{{ message.id }}" hidden>
+        <div class="ix-aside-chat" id="aside-{{ message.id }}" data-chat-url="/inbox/message/{{ message.id }}/talk" hidden>
           <div class="ix-aside-log" aria-live="polite">
             <div class="ix-aside-say is-bot">{% if item.aside and item.aside.change %}<span>If it needed an answer, say so. Then:</span> {{ item.aside.change }}{% else %}<span>If it needed an answer, say so: it comes back to you.</span>{% endif %}</div>
           </div>
-          <form class="ix-aside-form" data-aside-form="{{ message.id }}">
+          <form class="ix-aside-form" data-chat-form>
             <input class="form-control form-control-sm" name="text" maxlength="600" autocomplete="off" placeholder="“It needs an answer”, “why?”, “always answer them”, “undo”…" aria-label="What you want">
             <button class="ui-btn primary" type="submit"><i class="bi bi-send"></i><span class="d-none d-sm-inline">Send</span></button>
           </form>
           <div class="ix-aside-hints">
-            <button type="button" data-aside-say="It needs an answer">It needs an answer</button>
-            <button type="button" data-aside-say="Why?">Why?</button>
-            <button type="button" data-aside-say="Always answer this person">Always answer this person</button>
-            <button type="button" data-aside-say="Show the rules">Show the rules</button>
+            <button type="button" data-chat-say>It needs an answer</button>
+            <button type="button" data-chat-say>Why?</button>
+            <button type="button" data-chat-say>Always answer this person</button>
+            <button type="button" data-chat-say>Show the rules</button>
           </div>
         </div>
         {% endif %}
@@ -479,6 +481,20 @@
             <button class="right {{ 'is-on' if message.admin_score == 1 }}"><i class="bi bi-hand-thumbs-up"></i> Right</button></form>
           <form method="post" action="/inbox/message/{{ message.id }}/score"><input type="hidden" name="verdict" value="{{ 'clear' if message.admin_score == -1 else 'wrong' }}">
             <button class="wrong {{ 'is-on' if message.admin_score == -1 }}"><i class="bi bi-hand-thumbs-down"></i> Wrong</button></form>
+        </div>
+        <button type="button" class="ix-linkbtn ix-review-open" data-chat-open="review-{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-square-text"></i> Ask why, or correct it in a few words</button>
+        <div class="ix-aside-chat ix-review-chat" id="review-{{ message.id }}" data-chat-url="/inbox/message/{{ message.id }}/review" data-chat-first="Why?" hidden>
+          <div class="ix-aside-log" aria-live="polite"></div>
+          <form class="ix-aside-form" data-chat-form>
+            <input class="form-control form-control-sm" name="text" maxlength="1500" autocomplete="off" placeholder="“Why?”, “it was right”, “the right answer is …”, “send it”" aria-label="What you want">
+            <button class="ui-btn primary" type="submit"><i class="bi bi-send"></i><span class="d-none d-sm-inline">Send</span></button>
+          </form>
+          <div class="ix-aside-hints">
+            <button type="button" data-chat-say>Why?</button>
+            <button type="button" data-chat-say>It was right</button>
+            <button type="button" data-chat-say data-chat-fill="The right answer is: ">The right answer is…</button>
+            <button type="button" data-chat-say>Send it</button>
+          </div>
         </div>
         <details class="ix-correct" {{ 'open' if message.admin_score == -1 }}>
           <summary>Correct it: write the right answer, the assistant learns it</summary>
@@ -722,7 +738,7 @@
   // asked (the answer comes from the rules, never from the local model). The messages part is not refreshed meanwhile.
   (function () {
     const region = document.getElementById("live-inbox-messages");
-    function panelOf(id) { return document.getElementById("aside-" + id); }
+    function panelOf(id) { return document.getElementById(id); }
     function add(log, text, who, done) {
       const line = document.createElement("div");
       line.className = "ix-aside-say " + (who === "me" ? "is-me" : "is-bot") + (done ? " is-done" : "");
@@ -733,11 +749,12 @@
     async function send(id, text) {
       const panel = panelOf(id);
       if (!panel || !text.trim()) return;
+      const url = panel.dataset.chatUrl;
       const log = panel.querySelector(".ix-aside-log"), input = panel.querySelector("input[name=text]");
       add(log, text, "me");
       input.value = "";
       try {
-        const response = await fetch("/inbox/message/" + id + "/talk", {method: "POST", headers: {"Content-Type": "application/json"},
+        const response = await fetch(url, {method: "POST", headers: {"Content-Type": "application/json"},
                                                                        body: JSON.stringify({text: text})});
         const data = await response.json();
         add(log, data.reply || "…", "bot", Boolean(data.changed));
@@ -747,27 +764,40 @@
       }
     }
     document.addEventListener("click", function (event) {
-      const opener = event.target.closest("[data-aside-talk]");
+      const opener = event.target.closest("[data-chat-open]");
       if (opener) {
-        const panel = panelOf(opener.dataset.asideTalk);
+        const panel = panelOf(opener.dataset.chatOpen);
         if (!panel) return;
         panel.hidden = !panel.hidden;
         opener.setAttribute("aria-expanded", String(!panel.hidden));
         if (panel.hidden) delete region.dataset.liveDirty;
-        else { region.dataset.liveDirty = "1"; panel.querySelector("input[name=text]").focus(); }
+        else {
+          region.dataset.liveDirty = "1";
+          panel.querySelector("input[name=text]").focus();
+          // About an answer, the conversation starts with why, asked for the admin in the page language.
+          const first = panel.querySelector("[data-chat-say]");
+          if (panel.dataset.chatFirst && first && !panel.querySelector(".ix-aside-say")) send(panel.id, first.textContent.trim());
+        }
         return;
       }
-      const hint = event.target.closest("[data-aside-say]");
+      const hint = event.target.closest("[data-chat-say]");
       if (hint) {
         const panel = hint.closest(".ix-aside-chat");
-        if (panel) send(panel.id.replace("aside-", ""), hint.textContent.trim());
+        if (!panel) return;
+        if (hint.dataset.chatFill) {               // "the right answer is…": written in the field, for the admin to finish
+          const input = panel.querySelector("input[name=text]");
+          input.value = hint.textContent.replace(/…\s*$/, "").trim() + " : ";
+          input.focus();
+          return;
+        }
+        send(panel.id, hint.textContent.trim());
       }
     });
     document.addEventListener("submit", function (event) {
-      const form = event.target.closest("[data-aside-form]");
+      const form = event.target.closest("[data-chat-form]");
       if (!form) return;
       event.preventDefault();
-      send(form.dataset.asideForm, form.elements.text.value);
+      send(form.closest(".ix-aside-chat").id, form.elements.text.value);
     });
   })();
 </script>

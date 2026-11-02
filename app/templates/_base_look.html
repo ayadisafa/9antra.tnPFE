@@ -234,6 +234,14 @@
     0%, 32%, 100% { border-color:var(--border-color); box-shadow:none; transform:none; }
     6%, 24% { border-color:var(--primary-berry); box-shadow:0 12px 24px -16px var(--primary-berry); transform:translateY(-2px); }
   }
+  .guide-steps.four .guide-step, .guide-steps.four .guide-arrow span { animation-duration:10s; }      /* four steps: the same rhythm */
+  .guide-step-go { display:flex; gap:10px; align-items:center; color:inherit; text-decoration:none; }
+  .guide-step.has-link { cursor:pointer; transition:border-color .15s ease, transform .15s ease; }
+  .guide-step.has-link:hover { border-color:var(--primary-berry); transform:translateY(-2px); }
+  .guide-step-out { font-size:.7rem; color:var(--muted); margin-inline-start:2px; }
+  .guide-step.has-link:hover .guide-step-out { color:var(--primary-berry); }
+  .guide-all { display:inline-flex; gap:6px; align-items:center; margin-top:10px; font-size:.76rem; font-weight:800; color:var(--primary-berry); text-decoration:none; }
+  .guide-all:hover { text-decoration:underline; }
   .guide-arrow { width:36px; position:relative; display:flex; align-items:center; }
   .guide-arrow::before { content:""; width:100%; height:2px; background:repeating-linear-gradient(90deg, #d5cde6 0 5px, transparent 5px 9px); }
   .guide-arrow span { position:absolute; left:0; top:50%; width:8px; height:8px; margin-top:-4px; border-radius:50%; background:var(--primary-berry); opacity:0; animation:guideDot 7.5s linear infinite; animation-delay:calc(var(--step) * 2.5s); }

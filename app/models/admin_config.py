@@ -135,6 +135,8 @@ class SystemSettings(Base):
     session_reminder_hours = Column(Integer, nullable=True, default=24)
     # Which messages are set aside without an answer, as the admin changed it by talking (services/reply_rules.py); JSON.
     reply_rules = Column(Text, nullable=True)
+    # What Yasmine changed in the system when asked (services/system_actions.py), with what it was before; JSON.
+    assistant_changes = Column(Text, nullable=True)
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

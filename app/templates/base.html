@@ -1062,6 +1062,14 @@
   .assistant-who { flex:1 1 0; min-width:0; line-height:1.25; }
   .assistant-who .small { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .assistant-tools { flex-basis:100%; display:flex; gap:8px; align-items:center; justify-content:flex-end; }
+  .assistant-me { color:#fff; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.14); }
+  .assistant-me:hover { background:#fff; color:var(--primary-berry); }
+  .assistant-can { list-style:none; padding:0; margin:8px 0 0; display:grid; gap:6px; }
+  .assistant-can li { display:flex; gap:8px; align-items:flex-start; font-size:.78rem; line-height:1.35; }
+  .assistant-can i { flex:none; width:24px; height:24px; border-radius:8px; display:grid; place-items:center; background:var(--berry-subtle, #fbf1f6); color:var(--primary-berry); }
+  .assistant-can b { color:var(--ink-text); }
+  .assistant-note { font-size:.68rem; color:#6b6180; margin:-2px 0 6px; display:flex; gap:5px; align-items:center; flex-wrap:wrap; }
+  .assistant-note i { color:#7c3aed; }
   .assistant-lang { border:1px solid rgba(255,255,255,.45); background:rgba(255,255,255,.14); color:#fff; border-radius:999px; font-size:.72rem; font-weight:700; padding:3px 8px; max-width:96px; cursor:pointer; }
   .assistant-lang option { color:#241a38; }
   .assistant-avatar { display:grid; place-items:center; width:36px; height:36px; border-radius:12px; background:rgba(255,255,255,.2); font-size:1.1rem; }
@@ -1101,12 +1109,20 @@
     <select class="assistant-lang" id="assistant-lang" data-no-i18n aria-label="Language of the answers" title="The language they guide you in. Automatic: the language of your question.">
       <option value="">Auto</option><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option><option value="tn">Tounsi</option>
     </select>
+    {% if is_admin %}<a class="assistant-me" href="/settings#character" title="Her settings: name, look, voice"><i class="bi bi-person-gear"></i></a>{% endif %}
     {% if whole_assistant %}<label class="assistant-auto" title="On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.">
       <input type="checkbox" id="assistant-auto" {{ 'checked' if assistant_auto_send }}> Send at once</label>{% endif %}
     </div>
   </header>
-  <div class="assistant-messages" id="assistant-messages">{% if whole_assistant %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me about your candidates, payments, classes, programs, level checks, the job market, what is trendy in any field, or what 9antra.tn says. Each question goes to the agent of its subject, and I show my sources.
-<span>You can also ask me to send:</span> <span data-no-i18n>“envoie un email à Fares pour lui dire que la séance de samedi est annulée”, “send a WhatsApp to Nour saying …”, “sms au 98 123 456 : …”</span>. <span>I reword it (add</span> <span data-no-i18n>“tel quel”</span> <span>to keep your words) and tell you, for each person, what went and why not.</span></div>{% elif current_user.is_professor %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me about your classes, your next sessions, who was absent, your candidates' level, what the course covers, or how to do something here.</div>{% else %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me how to do something here, or what a program teaches.</div>{% endif %}</div>
+  <span hidden id="aw-asked">I asked</span><span hidden id="aw-read">I read</span>
+  <div class="assistant-messages" id="assistant-messages">{% if whole_assistant %}<div class="assistant-msg bot assistant-hello" id="assistant-hello"><span>Hello! Ask me anything about your centre: each question goes to the agent of its subject (one per program too), I ask the others when I need to, and I show my sources.</span>
+<ul class="assistant-can">
+  <li><i class="bi bi-send"></i><span><b>Send</b> <span data-no-i18n>“envoie un email à Fares pour lui dire que la séance de samedi est annulée”</span></span></li>
+  <li><i class="bi bi-sliders2"></i><span><b>Change the system</b> <span>“set the confidence to 80%”, “turn off the session reminder”, then “undo”</span></span></li>
+  <li><i class="bi bi-megaphone"></i><span><b>Marketing</b> <span>“what should I post this week?”, “when should I post?”</span></span></li>
+  <li><i class="bi bi-chat-square-text"></i><span><b>Why an answer</b> <span>“why did you answer Amira that way?”, then “the right answer is …”</span></span></li>
+  <li><i class="bi bi-person-heart"></i><span><b>Change me</b> <span>“call yourself Salma”, “put on glasses”, “a man's voice”</span></span></li>
+</ul></div>{% elif current_user.is_professor %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me about your classes, your next sessions, who was absent, your candidates' level, what the course covers, or how to do something here.</div>{% else %}<div class="assistant-msg bot" id="assistant-hello">Hello! Ask me how to do something here, or what a program teaches.</div>{% endif %}</div>
   <form class="assistant-compose" id="assistant-form">
     <div class="input-group">
       <textarea class="form-control" id="assistant-input" placeholder="{{ 'Who has not paid? What is trendy in AI?' if whole_assistant else 'When is my next session?' if current_user.is_professor else 'How do I change my password?' }}"></textarea>
@@ -1675,7 +1691,7 @@ document.addEventListener("submit", event => {
     });
 
     const history = [];
-    const addMessage = (text, role, links, sources, resources, schema, agent, category) => {
+    const addMessage = (text, role, links, sources, resources, schema, agent, category, extra) => {
         const item = document.createElement("div");
         item.className = `assistant-msg ${role}`;
         item.textContent = schema && window.drawSchema ? "" : text;
@@ -1693,6 +1709,21 @@ document.addEventListener("submit", event => {
                 chip.appendChild(cat);
             }
             messages.appendChild(chip);      // apart from the answer, so the page's language reaches it
+        }
+        // The agents she asked, and the words she read put right ("inscripton" → "inscription").
+        if (extra && ((extra.consulted && extra.consulted.length) || (extra.understood && extra.understood.length))) {
+            const note = document.createElement("div");
+            note.className = "assistant-note";
+            const word = id => (document.getElementById(id) || {}).textContent || "";
+            if (extra.consulted && extra.consulted.length) {
+                const icon = document.createElement("i"); icon.className = "bi bi-people";
+                note.append(icon, document.createTextNode(word("aw-asked") + " " + extra.consulted.join(", ")));
+            }
+            if (extra.understood && extra.understood.length) {
+                const icon = document.createElement("i"); icon.className = "bi bi-spellcheck";
+                note.append(icon, document.createTextNode(word("aw-read") + " " + extra.understood.map(item => "“" + item.written + "” → “" + item.read + "”").join(", ")));
+            }
+            messages.appendChild(note);
         }
         // A how-to, or what is still missing: drawn as a diagram.
         if (schema && window.drawSchema) item.appendChild(window.drawSchema(schema));
@@ -1784,6 +1815,14 @@ document.addEventListener("submit", event => {
         if (question) { input.value = question; form.requestSubmit(); } else input.focus({ preventScroll: true });
     };
     window.closeAssistant = () => { panel.classList.remove("open"); document.dispatchEvent(new CustomEvent("assistant:close")); };
+    // "Ask Yasmine" on any page: the question is the button's hidden words (translated with the page), so she answers in its language.
+    document.addEventListener("click", event => {
+        const asking = event.target.closest("[data-ask-yasmine]");
+        if (!asking) return;
+        event.preventDefault();
+        const words = asking.querySelector("[data-q]");
+        window.openAssistant(((words && words.textContent) || asking.dataset.askYasmine || "").trim());
+    });
     window.toggleAssistant = () => panel.classList.contains("open") ? window.closeAssistant() : window.openAssistant();
     close?.addEventListener("click", () => window.closeAssistant());
     document.addEventListener("keydown", event => { if (event.key === "Escape" && panel.classList.contains("open")) window.closeAssistant(); });
@@ -1813,7 +1852,7 @@ document.addEventListener("submit", event => {
             const data = await response.json();
             if (!response.ok) throw new Error(data.detail || "Assistant request failed");
             working.remove();
-            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema, data.agent, data.category);
+            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema, data.agent, data.category, data);
             if (data.suggestions && data.suggestions.length) showSuggestions(data.suggestions);
             if (window.friendSpeak) window.friendSpeak(data.reply);       // Yasmine reads it aloud when her voice is on
         } catch (error) {

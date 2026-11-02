@@ -1922,5 +1922,893 @@
 "Send “{0}” to {1}, by {2}.": [
 "Envoyer « {0} » à {1}, par {2}.",
 "أرسل «{0}» إلى {1}، عبر {2}."
+],
+"{0}% of your people's messages, answers and registrations come then.": [
+"{0} % des messages, réponses et inscriptions de vos gens arrivent à ce moment-là.",
+"{0}% من رسائل جمهورك وإجاباتهم وتسجيلاتهم تأتي في هذا الوقت."
+],
+"Your posts at that time got {0}% engagement.": [
+"Vos publications à ce moment-là ont eu {0} % d'engagement.",
+"حققت منشوراتك في هذا الوقت تفاعلا بنسبة {0}%."
+],
+"Evenings and lunch are when most people look at their phones (a general starting point).": [
+"Le soir et le midi, c'est quand la plupart des gens regardent leur téléphone (un point de départ général).",
+"المساء ووقت الغداء هما الوقت الذي ينظر فيه معظم الناس إلى هواتفهم (نقطة انطلاق عامة)."
+],
+"It starts soon: a countdown brings late registrations.": [
+"Ça commence bientôt : un compte à rebours amène les inscriptions de dernière minute.",
+"سيبدأ قريبا: العد التنازلي يجلب تسجيلات اللحظة الأخيرة."
+],
+"Figures that count up, with music: what short videos do best.": [
+"Des chiffres qui défilent, avec de la musique : ce que les vidéos courtes font le mieux.",
+"أرقام تتصاعد مع الموسيقى: أفضل ما تقدمه الفيديوهات القصيرة."
+],
+"What a former candidate says convinces more than what you say.": [
+"Ce que dit un ancien candidat convainc plus que ce que vous dites.",
+"ما يقوله مترشح سابق يقنع أكثر مما تقوله أنت."
+],
+"“You said, we did” shows you listen.": [
+"« Vous avez dit, nous avons fait » montre que vous écoutez.",
+"«قلتم، فعلنا» يبيّن أنك تستمع."
+],
+"What the news talks about, and that you teach it.": [
+"Ce dont parle l'actualité, et que vous l'enseignez.",
+"ما تتحدث عنه الأخبار، وأنك تدرّسه."
+],
+"How to register, in one screen.": [
+"Comment s'inscrire, en un seul écran.",
+"كيف تسجّل، في شاشة واحدة."
+],
+"Counted from your posts' numbers.": [
+"Compté d'après les chiffres de vos publications.",
+"محسوب من أرقام منشوراتك."
+],
+"Post two to three times a week: the plan below is ready.": [
+"Publiez deux à trois fois par semaine : le plan ci-dessous est prêt.",
+"انشر مرتين إلى ثلاث مرات في الأسبوع: الخطة أدناه جاهزة."
+],
+"{0} post(s) written down in 30 days.": [
+"{0} publication(s) notée(s) en 30 jours.",
+"{0} منشور(ات) مسجّلة في 30 يوما."
+],
+"A countdown for {0}: a story at 7 days, 3 days and the day before.": [
+"Un compte à rebours pour {0} : une story à 7 jours, à 3 jours et la veille.",
+"عدّ تنازلي لـ {0}: قصة قبل 7 أيام، وقبل 3 أيام، وفي اليوم السابق."
+],
+"It starts in {0} days.": [
+"Ça commence dans {0} jours.",
+"يبدأ بعد {0} أيام."
+],
+"Make your first video: short videos are what the networks show most.": [
+"Faites votre première vidéo : les vidéos courtes sont ce que les réseaux montrent le plus.",
+"اصنع أول فيديو لك: الفيديوهات القصيرة هي ما تعرضه الشبكات أكثر."
+],
+"No video made yet.": [
+"Aucune vidéo faite pour l'instant.",
+"لم يُصنع أي فيديو بعد."
+],
+"Say what you changed after a feedback: “you said, we did” builds trust.": [
+"Dites ce que vous avez changé après un avis : « vous avez dit, nous avons fait » donne confiance.",
+"قل ما غيّرته بعد رأي ما: «قلتم، فعلنا» يبني الثقة."
+],
+"No answer published yet.": [
+"Aucune réponse publiée pour l'instant.",
+"لم يُنشر أي رد بعد."
+],
+"Counted from the journal's {0} articles.": [
+"Compté d'après les {0} articles du journal.",
+"محسوب من {0} مقالا في الجريدة."
+],
+"{0} marketing articles of the last weeks talk about it.": [
+"{0} articles de marketing des dernières semaines en parlent.",
+"{0} مقالا تسويقيا من الأسابيع الأخيرة تتحدث عنه."
+],
+"When you post a video on TikTok or Instagram, add the week's trending sound in the app.": [
+"Quand vous publiez une vidéo sur TikTok ou Instagram, ajoutez le son tendance de la semaine dans l'application.",
+"عندما تنشر فيديو على تيك توك أو إنستغرام، أضف الصوت الرائج لهذا الأسبوع داخل التطبيق."
+],
+"It is licensed there; a file cannot carry it.": [
+"Il y est sous licence ; un fichier ne peut pas le porter.",
+"هو مرخّص هناك؛ ولا يمكن لملف أن يحمله."
+],
+"Social media": [
+"Réseaux sociaux",
+"وسائل التواصل"
+],
+"The best moments to post:": [
+"Les meilleurs moments pour publier :",
+"أفضل الأوقات للنشر:"
+],
+"What the marketing articles of the last weeks talk about ({0} articles):": [
+"Ce dont parlent les articles de marketing des dernières semaines ({0} articles) :",
+"ما تتحدث عنه مقالات التسويق في الأسابيع الأخيرة ({0} مقالا):"
+],
+"What posts look like this year (general practice):": [
+"À quoi ressemblent les publications cette année (pratique générale) :",
+"كيف تبدو المنشورات هذا العام (ممارسة عامة):"
+],
+"On your own posts, “{0}” does best ({1}%).": [
+"Sur vos propres publications, « {0} » marche le mieux ({1} %).",
+"في منشوراتك، «{0}» هو الأفضل ({1}%)."
+],
+"No post has its numbers yet: add them on the Social media page (reactions, comments, shares, views).": [
+"Aucune publication n'a encore ses chiffres : ajoutez-les sur la page Réseaux sociaux (réactions, commentaires, partages, vues).",
+"لا يوجد منشور له أرقام بعد: أضفها في صفحة وسائل التواصل (التفاعلات، التعليقات، المشاركات، المشاهدات)."
+],
+"{0} post(s) with numbers, {1}% engagement on average.": [
+"{0} publication(s) avec leurs chiffres, {1} % d'engagement en moyenne.",
+"{0} منشور(ات) بأرقامها، وتفاعل بنسبة {1}% في المتوسط."
+],
+"The videos use this year's music styles: {0}, chosen for each kind of video. On TikTok and Instagram, you can add the week's trending sound in the app.": [
+"Les vidéos utilisent les styles de musique de cette année : {0}, choisis pour chaque sorte de vidéo. Sur TikTok et Instagram, vous pouvez ajouter le son tendance de la semaine dans l'application.",
+"تستخدم الفيديوهات أنماط موسيقى هذا العام: {0}، تُختار لكل نوع من الفيديو. وعلى تيك توك وإنستغرام يمكنك إضافة الصوت الرائج لهذا الأسبوع داخل التطبيق."
+],
+"Nothing to post yet: the ideas come from your programs, feedback and classes.": [
+"Rien à publier pour l'instant : les idées viennent de vos programmes, des avis et des classes.",
+"لا شيء للنشر بعد: الأفكار تأتي من برامجك والآراء والأقسام."
+],
+"This week's plan:": [
+"Le plan de la semaine :",
+"خطة الأسبوع:"
+],
+"A few things to do for your marketing:": [
+"Quelques actions pour votre marketing :",
+"بعض الخطوات لتسويقك:"
+],
+"on": [
+"activé",
+"مفعّل"
+],
+"off": [
+"désactivé",
+"موقوف"
+],
+"Say “on” or “off” for {0}.": [
+"Dites « activé » ou « désactivé » pour {0}.",
+"قل «شغّل» أو «أوقف» لـ {0}."
+],
+"Say which: {0}.": [
+"Dites lequel : {0}.",
+"قل أيّها: {0}."
+],
+"Give the number for {0}.": [
+"Donnez le nombre pour {0}.",
+"أعطِ الرقم لـ {0}."
+],
+"{0} must be between {1}% and {2}%.": [
+"{0} doit être entre {1} % et {2} %.",
+"يجب أن يكون {0} بين {1}% و{2}%."
+],
+"{0} can be: {1}.": [
+"{0} peut être : {1}.",
+"يمكن أن يكون {0}: {1}."
+],
+"{0} must be between {1} and {2}.": [
+"{0} doit être entre {1} et {2}.",
+"يجب أن يكون {0} بين {1} و{2}."
+],
+"Say the new {0}, after “to”: “{1} to …”.": [
+"Dites la nouvelle valeur ({0}) après « à » : « {1} à … ».",
+"قل القيمة الجديدة ({0}) بعد «إلى»: «{1} إلى …»."
+],
+"A link starts with http:// or https://.": [
+"Un lien commence par http:// ou https://.",
+"يبدأ الرابط بـ http:// أو https://."
+],
+"Say “on”, “off”, or its timing ({0}).": [
+"Dites « activé », « désactivé », ou son délai ({0}).",
+"قل «شغّل» أو «أوقف» أو توقيته ({0})."
+],
+"This setting cannot be changed from here.": [
+"Ce réglage ne peut pas être changé d'ici.",
+"لا يمكن تغيير هذا الإعداد من هنا."
+],
+"Settings": [
+"Paramètres",
+"الإعدادات"
+],
+"Changing the system needs the right to change the settings: ask the admin.": [
+"Changer le système demande le droit de changer les paramètres : demandez à l'administrateur.",
+"تغيير النظام يتطلب حق تغيير الإعدادات: اطلب ذلك من المسؤول."
+],
+"I can change, when you ask: {0}. Say for example “set the confidence to 80%” or “turn off the session reminder”; “undo” puts the last change back.": [
+"Je peux changer, quand vous le demandez : {0}. Dites par exemple « mets le seuil de confiance à 80 % » ou « désactive le rappel avant chaque séance » ; « annuler » remet le dernier changement.",
+"يمكنني أن أغيّر عندما تطلب: {0}. قل مثلا «اجعل الثقة 80%» أو «أوقف التذكير قبل كل حصة»؛ و«تراجع» يعيد آخر تغيير."
+],
+"Undone: {0} is back to {1}.": [
+"Annulé : {0} est revenu à {1}.",
+"تم التراجع: عاد {0} إلى {1}."
+],
+"Which setting? Say “what can you change?” for the list.": [
+"Quel réglage ? Dites « que peux-tu changer ? » pour la liste.",
+"أي إعداد؟ قل «ماذا يمكنك أن تغير؟» لترى القائمة."
+],
+"{0}: {1}.": [
+"{0} : {1}.",
+"{0} هو {1}."
+],
+"{0} is already {1}.": [
+"{0} est déjà {1}.",
+"{0} هو {1} أصلا."
+],
+"Done: {0} is now {1} (it was {2}). Say “undo” to put it back.": [
+"C'est fait : {0} est maintenant {1} (avant : {2}). Dites « annuler » pour revenir en arrière.",
+"تم: {0} أصبح الآن {1} (كان {2}). قل «تراجع» لإعادته كما كان."
+],
+"AI in marketing": [
+"L'IA dans le marketing",
+"الذكاء الاصطناعي في التسويق"
+],
+"Everyone talks about AI: show what your candidates build with it, and the programs that teach it.": [
+"Tout le monde parle d'IA : montrez ce que vos candidats construisent avec, et les programmes qui l'enseignent.",
+"الجميع يتحدث عن الذكاء الاصطناعي: اعرض ما يبنيه مترشحوك به، والبرامج التي تدرّسه."
+],
+"Being found in AI answers": [
+"Être trouvé dans les réponses des IA",
+"الظهور في إجابات الذكاء الاصطناعي"
+],
+"People now ask ChatGPT or Gemini where to train: keep 9antra.tn's program pages clear, with prices, dates and answers.": [
+"Les gens demandent maintenant à ChatGPT ou Gemini où se former : gardez les pages des programmes de 9antra.tn claires, avec les prix, les dates et les réponses.",
+"صار الناس يسألون ChatGPT أو Gemini أين يتكوّنون: اجعل صفحات برامج 9antra.tn واضحة، بالأسعار والتواريخ والإجابات."
+],
+"Search": [
+"Recherche",
+"البحث"
+],
+"Search still brings people: each program's page on 9antra.tn says what it teaches in plain words.": [
+"La recherche amène toujours du monde : la page de chaque programme sur 9antra.tn dit ce qu'il enseigne en mots simples.",
+"البحث ما زال يجلب الناس: صفحة كل برنامج على 9antra.tn تقول ما يدرّسه بكلمات بسيطة."
+],
+"Short videos": [
+"Vidéos courtes",
+"الفيديوهات القصيرة"
+],
+"Short vertical videos keep growing: one video a week, 9:16, with the words on screen.": [
+"Les vidéos verticales courtes progressent encore : une vidéo par semaine, en 9:16, avec les mots à l'écran.",
+"الفيديوهات العمودية القصيرة تواصل نموها: فيديو كل أسبوع، بمقاس 9:16، والكلمات على الشاشة."
+],
+"LinkedIn": [
+"LinkedIn",
+"لينكدإن"
+],
+"LinkedIn reaches people looking for work: post the success figures and the skills each program gives.": [
+"LinkedIn touche les gens qui cherchent du travail : publiez-y les chiffres de réussite et les compétences de chaque programme.",
+"لينكدإن يصل إلى الباحثين عن عمل: انشر هناك أرقام النجاح والمهارات التي يمنحها كل برنامج."
+],
+"Instagram": [
+"Instagram",
+"إنستغرام"
+],
+"Instagram lives on stories: post the program that starts soon as a story.": [
+"Instagram vit de stories : publiez en story le programme qui commence bientôt.",
+"إنستغرام يعيش على القصص: انشر البرنامج الذي يبدأ قريبا كقصة."
+],
+"TikTok": [
+"TikTok",
+"تيك توك"
+],
+"TikTok rewards short, real videos: a candidate's result in 15 seconds.": [
+"TikTok récompense les vidéos courtes et vraies : le résultat d'un candidat en 15 secondes.",
+"تيك توك يكافئ الفيديوهات القصيرة والحقيقية: نتيجة مترشح في 15 ثانية."
+],
+"Threads": [
+"Threads",
+"ثريدز"
+],
+"Threads is a place for short news: one line when a session starts.": [
+"Threads est un lieu pour les nouvelles courtes : une ligne quand une session commence.",
+"ثريدز مكان للأخبار القصيرة: سطر واحد عند بدء دورة."
+],
+"Email and newsletters": [
+"Email et newsletters",
+"البريد والنشرات"
+],
+"Email still works: one letter a month to former candidates with the next sessions.": [
+"L'email marche toujours : une lettre par mois aux anciens candidats avec les prochaines sessions.",
+"البريد ما زال فعّالا: رسالة كل شهر للمترشحين السابقين مع الدورات القادمة."
+],
+"Community and creators": [
+"Communauté et créateurs",
+"المجتمع وصنّاع المحتوى"
+],
+"Real people convince: ask two former candidates for a short video saying what they do now.": [
+"Les vraies personnes convainquent : demandez à deux anciens candidats une courte vidéo sur ce qu'ils font maintenant.",
+"الناس الحقيقيون يقنعون: اطلب من مترشحين سابقين فيديو قصيرا عما يفعلونه الآن."
+],
+"Automation": [
+"Automatisation",
+"الأتمتة"
+],
+"Marketing runs by itself more and more: your reminders and posts can be planned.": [
+"Le marketing tourne de plus en plus tout seul : vos rappels et publications peuvent être planifiés.",
+"التسويق يعمل وحده أكثر فأكثر: يمكن جدولة تذكيراتك ومنشوراتك."
+],
+"Big, bold type": [
+"Typographie grande et forte",
+"خط كبير وجريء"
+],
+"Few words, very large, in strong contrast: read in one second while scrolling. The “Bold” look does it.": [
+"Peu de mots, très grands, en fort contraste : lus en une seconde pendant le défilement. Le style « Bold » le fait.",
+"كلمات قليلة، كبيرة جدا، بتباين قوي: تُقرأ في ثانية أثناء التمرير. مظهر «Bold» يفعل ذلك."
+],
+"Vertical first": [
+"Le vertical d'abord",
+"العمودي أولا"
+],
+"Stories and reels fill the screen (9:16); the square post comes second.": [
+"Les stories et les reels remplissent l'écran (9:16) ; la publication carrée vient ensuite.",
+"القصص والريلز تملأ الشاشة (9:16)؛ والمنشور المربع يأتي بعدها."
+],
+"The result in the first two seconds": [
+"Le résultat dans les deux premières secondes",
+"النتيجة في أول ثانيتين"
+],
+"A video's first scene says the result (“93% happy”), not the logo.": [
+"La première scène d'une vidéo dit le résultat (« 93 % satisfaits »), pas le logo.",
+"المشهد الأول من الفيديو يقول النتيجة («93% راضون»)، لا الشعار."
+],
+"Words on screen": [
+"Les mots à l'écran",
+"الكلمات على الشاشة"
+],
+"Most people watch without sound: every video made here has its words on screen.": [
+"La plupart des gens regardent sans le son : chaque vidéo faite ici a ses mots à l'écran.",
+"معظم الناس يشاهدون دون صوت: كل فيديو يُصنع هنا كلماته على الشاشة."
+],
+"Real faces, real results": [
+"De vrais visages, de vrais résultats",
+"وجوه حقيقية ونتائج حقيقية"
+],
+"Testimonials and “you said, we did” beat stock pictures.": [
+"Les témoignages et « vous avez dit, nous avons fait » battent les photos de banque d'images.",
+"الشهادات و«قلتم، فعلنا» أفضل من الصور الجاهزة."
+],
+"The sound of the moment": [
+"Le son du moment",
+"صوت اللحظة"
+],
+"The videos here use this year's styles (dance-pop, lo-fi, cinematic). On TikTok and Instagram you can also add the week's trending sound in the app when you post: it is licensed there, not in a file.": [
+"Les vidéos d'ici utilisent les styles de cette année (dance-pop, lo-fi, cinématique). Sur TikTok et Instagram, vous pouvez aussi ajouter le son tendance de la semaine dans l'application au moment de publier : il y est sous licence, pas dans un fichier.",
+"الفيديوهات هنا تستخدم أنماط هذا العام (دانس بوب، لو-فاي، سينمائي). وعلى تيك توك وإنستغرام يمكنك أيضا إضافة الصوت الرائج لهذا الأسبوع داخل التطبيق عند النشر: هو مرخّص هناك، لا في ملف."
+],
+"Reel or video (9:16)": [
+"Reel ou vidéo (9:16)",
+"ريل أو فيديو (9:16)"
+],
+"Story (9:16)": [
+"Story (9:16)",
+"قصة (9:16)"
+],
+"Post (1:1)": [
+"Publication (1:1)",
+"منشور (1:1)"
+],
+"Their success": [
+"Leur réussite",
+"نجاحهم"
+],
+"What they say": [
+"Ce qu'ils disent",
+"ما يقولونه"
+],
+"We listen": [
+"Nous écoutons",
+"نحن نستمع"
+],
+"A program starts": [
+"Un programme commence",
+"برنامج يبدأ"
+],
+"What is new": [
+"Ce qui est nouveau",
+"ما الجديد"
+],
+"Join us": [
+"Rejoignez-nous",
+"انضم إلينا"
+],
+"Dance-pop": [
+"Dance-pop",
+"دانس بوب"
+],
+"Lo-fi": [
+"Lo-fi",
+"لو-فاي"
+],
+"Cinematic": [
+"Cinématique",
+"سينمائي"
+],
+"Inspiring": [
+"Inspirante",
+"ملهمة"
+],
+"Upbeat": [
+"Entraînante",
+"حيوية"
+],
+"Calm": [
+"Calme",
+"هادئة"
+],
+"How the assistant answers emails": [
+"La façon dont l'assistant répond aux emails",
+"طريقة رد المساعد على الرسائل"
+],
+"answers alone when sure": [
+"répond seul quand il est sûr",
+"يرد وحده عندما يكون متأكدا"
+],
+"prepares, you send": [
+"prépare, vous envoyez",
+"يحضّر، وأنت ترسل"
+],
+"How the assistant answers on WhatsApp": [
+"La façon dont l'assistant répond sur WhatsApp",
+"طريقة رد المساعد على واتساب"
+],
+"The confidence needed to answer alone": [
+"La confiance nécessaire pour répondre seul",
+"الثقة اللازمة للرد وحده"
+],
+"Reword and send at once": [
+"Reformuler et envoyer tout de suite",
+"إعادة الصياغة والإرسال فورا"
+],
+"Answers to people not registered yet": [
+"Les réponses aux personnes pas encore inscrites",
+"الردود على غير المسجلين بعد"
+],
+"The assistant answers the team": [
+"L'assistant répond à l'équipe",
+"المساعد يرد على الفريق"
+],
+"The way messages go first": [
+"Le moyen d'envoi en premier",
+"وسيلة الإرسال الأولى"
+],
+"the system chooses": [
+"le système choisit",
+"النظام يختار"
+],
+"WhatsApp": [
+"WhatsApp",
+"واتساب"
+],
+"SMS": [
+"SMS",
+"رسالة قصيرة"
+],
+"Try the next way when one fails": [
+"Essayer le moyen suivant quand l'un échoue",
+"تجربة الوسيلة التالية عند فشل إحداها"
+],
+"Seats in a new class": [
+"Les places d'une nouvelle classe",
+"مقاعد القسم الجديد"
+],
+"Candidates needed to start a class": [
+"Les candidats nécessaires pour démarrer une classe",
+"المترشحون اللازمون لبدء قسم"
+],
+"Days of notice before a class starts": [
+"Les jours de préavis avant le début d'une classe",
+"أيام الإشعار قبل بدء القسم"
+],
+"Weeks of a new program": [
+"Les semaines d'un nouveau programme",
+"أسابيع البرنامج الجديد"
+],
+"The online price": [
+"Le prix en ligne",
+"السعر عن بعد"
+],
+"The on-site price": [
+"Le prix en présentiel",
+"السعر الحضوري"
+],
+"Days before the class for the level check": [
+"Les jours avant la classe pour le test de niveau",
+"الأيام قبل القسم لاختبار المستوى"
+],
+"Weekly questions every (weeks)": [
+"Questions de la semaine toutes les (semaines)",
+"أسئلة الأسبوع كل (أسابيع)"
+],
+"Questions after each session": [
+"Les questions après chaque séance",
+"الأسئلة بعد كل حصة"
+],
+"The report by email": [
+"Le rapport par email",
+"التقرير بالبريد"
+],
+"The look of the pages": [
+"L'apparence des pages",
+"مظهر الصفحات"
+],
+"soft": [
+"douce",
+"ناعم"
+],
+"colours": [
+"couleurs",
+"ألوان"
+],
+"night": [
+"nuit",
+"ليلي"
+],
+"night blue": [
+"bleu nuit",
+"أزرق ليلي"
+],
+"The side of the menu": [
+"Le côté du menu",
+"جهة القائمة"
+],
+"left": [
+"gauche",
+"يسار"
+],
+"right": [
+"droite",
+"يمين"
+],
+"The background": [
+"Le fond",
+"الخلفية"
+],
+"animated": [
+"animé",
+"متحركة"
+],
+"still": [
+"fixe",
+"ثابتة"
+],
+"The name of the application": [
+"Le nom de l'application",
+"اسم التطبيق"
+],
+"The centre's phone": [
+"Le téléphone du centre",
+"هاتف المركز"
+],
+"The centre's address": [
+"L'adresse du centre",
+"عنوان المركز"
+],
+"The registration form's link": [
+"Le lien du formulaire d'inscription",
+"رابط استمارة التسجيل"
+],
+"The payment reminder": [
+"Le rappel de paiement",
+"تذكير الدفع"
+],
+"hours": [
+"heures",
+"ساعات"
+],
+"The reminder before each session": [
+"Le rappel avant chaque séance",
+"التذكير قبل كل حصة"
+],
+"The countdown before the first session": [
+"Le compte à rebours avant la première séance",
+"العد التنازلي قبل الحصة الأولى"
+],
+"days": [
+"jours",
+"أيام"
+],
+"The session link": [
+"Le lien de la séance",
+"رابط الحصة"
+],
+"The level check reminder": [
+"Le rappel du test de niveau",
+"تذكير اختبار المستوى"
+],
+"The week's resources reminder": [
+"Le rappel des ressources de la semaine",
+"تذكير موارد الأسبوع"
+],
+"Kind": [
+"Sorte",
+"النوع"
+],
+"Subject": [
+"Sujet",
+"الموضوع"
+],
+"Network": [
+"Réseau",
+"الشبكة"
+],
+"Post": [
+"Publication",
+"منشور"
+],
+"Story": [
+"Story",
+"قصة"
+],
+"Video or reel": [
+"Vidéo ou reel",
+"فيديو أو ريل"
+],
+"Bold": [
+"Bold",
+"جريء"
+],
+"Bright": [
+"Vif",
+"مشرق"
+],
+"Berry": [
+"Framboise",
+"توتي"
+],
+"Light": [
+"Clair",
+"فاتح"
+],
+"Night": [
+"Nuit",
+"ليلي"
+],
+"The question it read: “{0}”.": [
+"La question qu'il a lue : « {0} ».",
+"السؤال الذي قرأه: «{0}»."
+],
+"It answered {0}.": [
+"Il a répondu {0}.",
+"أجاب {0}."
+],
+"The answer you taught for “{0}”{1}.": [
+"La réponse que vous avez enseignée pour « {0} »{1}.",
+"الإجابة التي علّمتها لـ «{0}»{1}."
+],
+", written afresh for this candidate": [
+", réécrite pour ce candidat",
+"، مكتوبة من جديد لهذا المترشح"
+],
+"What it used: {0}.": [
+"Ce qu'il a utilisé : {0}.",
+"ما استخدمه: {0}."
+],
+"It was {0}% sure; you asked for {1}% to answer alone, so it went by itself.": [
+"Il était sûr à {0} % ; vous demandez {1} % pour répondre seul, donc il est parti tout seul.",
+"كان متأكدا بنسبة {0}%؛ وأنت تطلب {1}% للرد وحده، لذلك أُرسل وحده."
+],
+"It was {0}% sure.": [
+"Il était sûr à {0} %.",
+"كان متأكدا بنسبة {0}%."
+],
+"Not found in what it knows: {0}.": [
+"Pas trouvé dans ce qu'il sait : {0}.",
+"غير موجود فيما يعرفه: {0}."
+],
+"This answer has no record of how it was found (it may have been written before this was kept).": [
+"Cette réponse n'a pas de trace de la façon dont elle a été trouvée (elle date peut-être d'avant que ce soit gardé).",
+"لا يوجد أثر لكيفية إيجاد هذه الإجابة (ربما كُتبت قبل أن يُحفظ ذلك)."
+],
+"If it was wrong, write “the right answer is …”: it is kept for next time, and “send it” sends it.": [
+"Si elle était fausse, écrivez « la bonne réponse est … » : elle est gardée pour la prochaine fois, et « envoyer » l'envoie.",
+"إن كانت خاطئة، اكتب «الإجابة الصحيحة هي …»: تُحفظ للمرة القادمة، و«أرسل» يرسلها."
+],
+"the candidate": [
+"le candidat",
+"المترشح"
+],
+"The question this answer was for could not be found.": [
+"La question à laquelle répondait cette réponse est introuvable.",
+"لم يُعثر على السؤال الذي كانت هذه الإجابة له."
+],
+"Kept: from now on this question gets your answer, by every assistant. Say “send it” to send it to {0} now.": [
+"Gardé : désormais cette question reçoit votre réponse, par chaque assistant. Dites « envoyer » pour l'envoyer à {0} maintenant.",
+"حُفظ: من الآن يحصل هذا السؤال على إجابتك، من كل مساعد. قل «أرسل» لإرسالها إلى {0} الآن."
+],
+"Write the right answer first: “the right answer is …”.": [
+"Écrivez d'abord la bonne réponse : « la bonne réponse est … ».",
+"اكتب أولا الإجابة الصحيحة: «الإجابة الصحيحة هي …»."
+],
+"It could not be sent: {0}": [
+"Elle n'a pas pu être envoyée : {0}",
+"لم يمكن إرسالها: {0}"
+],
+"Sent to {0}.": [
+"Envoyée à {0}.",
+"أُرسلت إلى {0}."
+],
+"Noted: this answer is right, and counts in the assistant's results.": [
+"Noté : cette réponse est juste, et compte dans les résultats de l'assistant.",
+"تم التسجيل: هذه الإجابة صحيحة، وتُحسب في نتائج المساعد."
+],
+"Noted as wrong. Tell me the right answer: “the right answer is …”; it is kept for next time.": [
+"Noté comme fausse. Donnez-moi la bonne réponse : « la bonne réponse est … » ; elle est gardée pour la prochaine fois.",
+"سُجّلت كخاطئة. أعطني الإجابة الصحيحة: «الإجابة الصحيحة هي …»؛ تُحفظ للمرة القادمة."
+],
+"Ask “why?”, say “it was right”, or write “the right answer is …” (then “send it”).": [
+"Demandez « pourquoi ? », dites « c'était juste », ou écrivez « la bonne réponse est … » (puis « envoyer »).",
+"اسأل «لماذا؟»، أو قل «كان صحيحا»، أو اكتب «الإجابة الصحيحة هي …» (ثم «أرسل»)."
+],
+"The assistant has not answered anyone by itself yet.": [
+"L'assistant n'a encore répondu seul à personne.",
+"لم يرد المساعد وحده على أي أحد بعد."
+],
+"About its answer to {0}:": [
+"À propos de sa réponse à {0} :",
+"بخصوص رده على {0}:"
+],
+"{0} agent": [
+"Agent {0}",
+"وكيل {0}"
+],
+"A program's agent": [
+"L'agent d'un programme",
+"وكيل برنامج"
+],
+"Everything about one program.": [
+"Tout sur un programme.",
+"كل شيء عن برنامج."
+],
+"Everything about {0}: what it teaches week by week, its price, hours, next session and professors, and what was learnt about it.": [
+"Tout sur {0} : ce qu'il enseigne semaine par semaine, son prix, ses horaires, sa prochaine session et ses professeurs, et ce qui a été appris à son sujet.",
+"كل شيء عن {0}: ما يدرّسه أسبوعا بأسبوع، وسعره، ومواعيده، ودورته القادمة وأساتذته، وما تُعلّم عنه."
+],
+"Its weekly plan ({0} weeks)": [
+"Son plan de la semaine ({0} semaines)",
+"خطته الأسبوعية ({0} أسابيع)"
+],
+"Its files ({0})": [
+"Ses fichiers ({0})",
+"ملفاته ({0})"
+],
+"What was learnt about it ({0})": [
+"Ce qui a été appris à son sujet ({0})",
+"ما تُعلّم عنه ({0})"
+],
+"{0}: {1} DT online, {2} DT on site.": [
+"{0} : {1} DT en ligne, {2} DT en présentiel.",
+"{0}: {1} د.ت عن بعد، {2} د.ت حضوريا."
+],
+"Its next session starts on {0}.": [
+"Sa prochaine session commence le {0}.",
+"تبدأ دورته القادمة يوم {0}."
+],
+"No session of {0} is planned yet: the registration form keeps your place.": [
+"Aucune session de {0} n'est encore prévue : le formulaire d'inscription garde votre place.",
+"لا توجد دورة مبرمجة لـ {0} بعد: استمارة التسجيل تحفظ مكانك."
+],
+"Its professors: {0}.": [
+"Ses professeurs : {0}.",
+"أساتذته: {0}."
+],
+"{0} lasts {1} weeks.": [
+"{0} dure {1} semaines.",
+"يدوم {0} {1} أسابيع."
+],
+"Which name? Say “call yourself Salma”.": [
+"Quel nom ? Dites « appelle-toi Salma ».",
+"أي اسم؟ قل «سمّي روحك سلمى»."
+],
+"from the candidate's own records (payments, class, sessions)": [
+"d'après les données du candidat lui-même (paiements, classe, séances)",
+"من بيانات المترشح نفسه (المدفوعات، القسم، الحصص)"
+],
+"from an answer you taught": [
+"d'après une réponse que vous avez enseignée",
+"من إجابة علّمتها"
+],
+"from a program's file": [
+"d'après un fichier d'un programme",
+"من ملف أحد البرامج"
+],
+"from the facts every assistant knows": [
+"d'après les faits que chaque assistant connaît",
+"من الحقائق التي يعرفها كل مساعد"
+],
+"from the registration form and its link": [
+"d'après le formulaire d'inscription et son lien",
+"من استمارة التسجيل ورابطها"
+],
+"from the course files of their class": [
+"d'après les fichiers de cours de sa classe",
+"من ملفات دروس قسمه"
+],
+"from what the assistant knows about the programs and the centre": [
+"d'après ce que l'assistant sait des programmes et du centre",
+"مما يعرفه المساعد عن البرامج والمركز"
+],
+"My name": [
+"Mon nom",
+"اسمي"
+],
+"My voice": [
+"Ma voix",
+"صوتي"
+],
+"As the character": [
+"Comme le personnage",
+"مثل الشخصية"
+],
+"A woman's voice": [
+"Une voix de femme",
+"صوت امرأة"
+],
+"A man's voice": [
+"Une voix d'homme",
+"صوت رجل"
+],
+"My glasses": [
+"Mes lunettes",
+"نظاراتي"
+],
+"Me as a man or a woman": [
+"Moi en homme ou en femme",
+"أنا رجلا أو امرأة"
+],
+"Woman": [
+"Femme",
+"امرأة"
+],
+"Man": [
+"Homme",
+"رجل"
+],
+"My hair": [
+"Mes cheveux",
+"شعري"
+],
+"Bun": [
+"Chignon",
+"كعكة"
+],
+"Long": [
+"Longs",
+"طويل"
+],
+"Short": [
+"Courts",
+"قصير"
+],
+"Curly": [
+"Bouclés",
+"مجعّد"
+],
+"Headscarf": [
+"Voile",
+"حجاب"
+],
+"Shaved": [
+"Rasés",
+"محلوق"
+],
+"My outfit": [
+"Ma tenue",
+"ملابسي"
+],
+"Blouse": [
+"Chemisier",
+"بلوزة"
+],
+"Blazer": [
+"Blazer",
+"بليزر"
+],
+"Hoodie": [
+"Sweat à capuche",
+"هودي"
+],
+"Shirt and tie": [
+"Chemise et cravate",
+"قميص وربطة عنق"
+],
+"T-shirt": [
+"T-shirt",
+"تي شيرت"
 ]
 }

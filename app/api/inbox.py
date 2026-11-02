@@ -565,6 +565,17 @@ def talk_about_it(message_id: str, payload: TalkAboutIt, request: Request, db: S
     return JSONResponse(reply_rules.talk(db, payload.text, message=message, by=getattr(auth.current(request), "email", None)))
 
 
+@router.post("/message/{message_id}/review")
+def review_answer(message_id: str, payload: TalkAboutIt, request: Request, db: Session = Depends(get_db)):
+    """The admin talks with the email assistant about an answer it sent: why, it was right, the right answer, send it."""
+    reply = db.get(CandidateEmail, message_id)
+    if reply is None or reply.direction != "outbound" or reply.author != "system":
+        raise HTTPException(status_code=404, detail="Answer not found")
+    from app.services import answer_review, auth
+
+    return JSONResponse(answer_review.talk(db, reply, payload.text, by=getattr(auth.current(request), "email", None)))
+
+
 @router.post("/rules/undo")
 def undo_rule(thread: str = Form(""), db: Session = Depends(get_db)):
     last = reply_rules.undo(db)

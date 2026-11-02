@@ -70,6 +70,21 @@
   @media (max-width: 1199px) { .ag-flow { grid-template-columns:minmax(0, 1fr); gap:10px; } .ag-arrow { width:2px; height:26px; margin:0 auto; background:repeating-linear-gradient(180deg, var(--primary-berry) 0 7px, transparent 7px 13px); }
     .ag-arrow::after { right:-5px; top:auto; bottom:-4px; border:6px solid transparent; border-top:8px solid var(--primary-berry); } }
   @media (max-width: 991px) { .ag-two { grid-template-columns:minmax(0, 1fr); } }
+  /* One agent per program: a dark band, each program's agent a card that comes in after the other. */
+  .ag-programs { margin:22px 0; padding:18px; border-radius:24px; background:linear-gradient(150deg, #2a0f24, #1f0a1a); color:#fff; }
+  .ag-programs-h h3 { font-size:1.1rem; font-weight:900; margin:0 0 4px; display:flex; gap:8px; align-items:center; } .ag-programs-h h3 i { color:#f9b555; }
+  .ag-programs-h p { color:#e9dcf0; font-size:.84rem; margin:0 0 8px; max-width:760px; }
+  .ag-learnt { display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap; font-size:.8rem; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.12); }
+  .ag-learnt i { color:#f9b555; } .ag-learnt b { color:#f9b555; }
+  .ag-program-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:10px; margin-top:14px; }
+  .ag-program { display:flex; gap:10px; align-items:center; padding:12px; border-radius:16px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.14);
+                color:#fff; text-decoration:none; animation:agRise .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 60ms); transition:background .15s ease, transform .15s ease; }
+  .ag-program:hover { background:rgba(255,255,255,.16); transform:translateY(-2px); color:#fff; }
+  .ag-program-ico { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:#7c3aed; flex:none; }
+  .ag-program-body { display:flex; flex-direction:column; min-width:0; } .ag-program-body b { font-size:.86rem; } .ag-program-body small { font-size:.7rem; color:#e9dcf0; }
+  .ag-program-n { margin-inline-start:auto; font-weight:900; color:#f9b555; }
+  @keyframes agRise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce) { .ag-program { animation:none; } }
 </style>
 {% endblock %}
 
@@ -127,6 +142,26 @@
   </article>
   {% endfor %}
 </div>
+
+<section class="ag-programs" id="program-agents">
+  <div class="ag-programs-h">
+    <h3><i class="bi bi-journal-code"></i>One agent per program</h3>
+    <p>Each program has its own agent, born with the program: it knows what it teaches week by week, its price, hours, next session and professors, and what was learnt about it. A new program gets its agent at once.</p>
+    <span class="ag-learnt"><i class="bi bi-mortarboard"></i><b>{{ view.learnt.answers }}</b> <span>answers</span> · <b>{{ view.learnt.facts }}</b> <span>facts learnt in 30 days, shared by every agent (from you, the professors and your corrections)</span></span>
+  </div>
+  <div class="ag-program-grid">
+    {% for agent in view.programs %}
+    <a class="ag-program" href="/programs/{{ agent.program.id }}" style="--i:{{ loop.index0 }};">
+      <span class="ag-program-ico"><i class="bi bi-journal-code"></i></span>
+      <span class="ag-program-body"><b data-no-i18n>{{ agent.name }}</b>
+        <small>{% for item in agent.reads %}{{ item }}{{ " · " if not loop.last }}{% endfor %}</small></span>
+      <span class="ag-program-n" title="Requests in the period">{{ agent.total }}</span>
+    </a>
+    {% else %}
+    <p class="text-muted small">No program yet: each program you add gets its agent.</p>
+    {% endfor %}
+  </div>
+</section>
 
 <div class="ag-two">
   <section class="ui-card">

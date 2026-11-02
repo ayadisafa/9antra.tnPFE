@@ -210,7 +210,7 @@ def apply(db: Session, change: dict | None, *, said: str = "", message_id: str |
     if after == before:
         return None
     found[key] = after
-    found["changes"] = ([{"at": datetime.utcnow().isoformat(timespec="seconds"), "key": key, "before": before, "after": after,
+    found["changes"] = ([{"at": datetime.utcnow().isoformat(timespec="microseconds"), "key": key, "before": before, "after": after,
                           "change": change, "said": (said or "")[:300], "message_id": message_id, "by": by}] + found["changes"])[:KEEP_CHANGES]
     _save(db, found)
     return {**change, "text": describe(change)}

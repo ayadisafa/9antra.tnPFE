@@ -1,6 +1,11 @@
 """Background music for the videos, composed here (numpy, no file from anywhere, so nothing to license): a chord
-progression played by a soft pad, a piano-like arpeggio, a bass and light drums, in three moods, as long as the video,
-with a fade at each end. The admin can give their own track instead (they must have the right to use it).
+progression played by a soft pad, a piano-like arpeggio, a bass and drums, as long as the video, with a fade at each
+end. The admin can give their own track instead (they must have the right to use it).
+
+The first three moods follow what short videos use now (`TRENDING`): a dance-pop groove (four kicks a bar, off-beat
+hats, a plucked arpeggio), a lo-fi beat (seventh chords, swung hats, a vinyl crackle) and a cinematic build that grows
+bar after bar. A video always has music unless the admin chooses none. The platforms' own trending sounds cannot be
+put in a file here (they are licensed only inside TikTok and Instagram): the Social media page says to add them there.
 """
 from __future__ import annotations
 
@@ -11,6 +16,12 @@ import numpy as np
 
 RATE = 44100
 MOODS = {
+    "pop": {"name": "Dance-pop", "bpm": 120, "chords": [(57, "min"), (53, "maj"), (60, "maj"), (55, "maj")], "drums": "four",
+            "arp": [0, 2, 3, 2, 1, 2, 3, 2, 0, 2, 3, 2, 1, 2, 3, 2], "step": 0.25, "pluck": True},
+    "lofi": {"name": "Lo-fi", "bpm": 82, "chords": [(53, "maj7"), (52, "min7"), (50, "min7"), (48, "maj7")], "drums": "lofi",
+             "arp": [1, 2, 3, 2], "step": 1.0, "swing": 0.62, "crackle": True, "dark": True},
+    "cinematic": {"name": "Cinematic", "bpm": 96, "chords": [(57, "min"), (53, "maj"), (48, "maj"), (55, "maj")], "drums": "build",
+                  "arp": [0, 1, 2, 3, 2, 1, 2, 3], "step": 0.5, "build": True},
     "inspiring": {"name": "Inspiring", "bpm": 92, "chords": [(60, "maj"), (55, "maj"), (57, "min"), (53, "maj")], "drums": "soft",
                   "arp": [0, 1, 2, 3, 2, 1, 2, 3], "step": 0.5},
     "upbeat": {"name": "Upbeat", "bpm": 116, "chords": [(57, "min"), (53, "maj"), (60, "maj"), (55, "maj")], "drums": "full",
@@ -18,7 +29,10 @@ MOODS = {
     "calm": {"name": "Calm", "bpm": 72, "chords": [(53, "maj"), (60, "maj"), (62, "min"), (58, "maj")], "drums": None,
              "arp": [0, 1, 2, 1], "step": 1.0},
 }
-_QUALITY = {"maj": [0, 4, 7, 12], "min": [0, 3, 7, 12]}
+_QUALITY = {"maj": [0, 4, 7, 12], "min": [0, 3, 7, 12], "maj7": [0, 4, 7, 11], "min7": [0, 3, 7, 10]}
+TRENDING = ("pop", "lofi", "cinematic")      # what short videos use now; the first is the default
+# Which trending mood fits each kind of video (the admin can choose another).
+FOR_VIDEO = {"success": "pop", "listen": "lofi", "both": "cinematic", "program": "pop"}
 
 
 def _hz(midi: float) -> float:
@@ -60,11 +74,18 @@ def _add(track: np.ndarray, start: float, sound: np.ndarray, gain: float = 1.0) 
     track[begin:end] += gain * sound[: end - begin]
 
 
-def _piano(midi: float, length: float) -> np.ndarray:
+def _piano(midi: float, length: float, decay: float = 2.4) -> np.ndarray:
+    """A piano-like note; with a fast decay, a pluck."""
     t = np.arange(int(length * RATE)) / RATE
     base = _hz(midi)
     tone = np.sin(2 * np.pi * base * t) + 0.45 * np.sin(4 * np.pi * base * t) * np.exp(-t * 3) + 0.2 * np.sin(6 * np.pi * base * t) * np.exp(-t * 5)
-    return tone * np.exp(-t * 2.4) * _envelope(len(t), 0.004, 0.08)
+    return tone * np.exp(-t * decay) * _envelope(len(t), 0.004, 0.08)
+
+
+def _crackle(length: int, noise: np.random.Generator) -> np.ndarray:
+    """A record's crackle: rare small clicks over a soft hiss."""
+    clicks = (noise.random(length) < 0.0009) * noise.standard_normal(length) * 0.9
+    return _bandpass(clicks + 0.03 * noise.standard_normal(length), 900, 6000)
 
 
 def _pad(notes: list[float], length: float) -> np.ndarray:
@@ -127,26 +148,57 @@ def compose(seconds: float, mood: str = "inspiring", seed: int = 7) -> np.ndarra
     noise = np.random.default_rng(seed)
     kick, hat = _kick(), _hat(noise)
     bars = int(seconds / bar) + 2
+    style = spec["drums"]
+    swing = spec.get("swing", 0.5)              # where the off-beat falls: 0.5 straight, about 0.62 swung
     for index in range(bars):
         root, quality = spec["chords"][index % len(spec["chords"])]
         notes = [root + step for step in _QUALITY[quality]]
         start = index * bar
-        _add(pad, start, _pad([note - 12 for note in notes[:3]], bar + 0.6), 0.5)
+        # A cinematic build grows bar after bar; the others keep their level.
+        level = min(1.0, 0.35 + 0.65 * index / max(1, bars - 2)) if spec.get("build") else 1.0
+        _add(pad, start, _pad([note - 12 for note in notes[:3]], bar + 0.6), 0.5 * (0.5 + 0.5 * level))
         for position, which in enumerate(spec["arp"]):
             when = start + position * spec["step"] * beat
+            if spec["step"] < 1 and position % 2 == 1:
+                when += (swing - 0.5) * 2 * spec["step"] * beat
             if when >= start + bar:
                 break
-            _add(keys, when, _piano(notes[which] + 12, 1.2), 0.32)
-        for hit in (0, 2) if spec["drums"] != "full" else (0, 1, 2, 3):
-            _add(bass, start + hit * beat, _bass(root - 24, beat * (2 if spec["drums"] != "full" else 1)), 0.45)
-        if spec["drums"] and index >= (1 if spec["drums"] == "full" else 2):
-            for hit in range(4):
-                if spec["drums"] == "full" or hit in (0, 2):
+            _add(keys, when, _piano(notes[which] + 12, 1.2, decay=7.0 if spec.get("pluck") else 2.4), 0.32 * (0.4 + 0.6 * level))
+        bass_hits = (0, 1, 2, 3) if style in ("full", "four") else (0, 2.5) if style == "lofi" else (0, 2)
+        for hit in bass_hits:
+            _add(bass, start + hit * beat, _bass(root - 24, beat * (1 if style in ("full", "four") else 1.5)), 0.45 * (0.4 + 0.6 * level))
+        if not style or index < (1 if style in ("full", "four") else 2 if style != "build" else 0):
+            continue
+        for hit in range(4):
+            if style == "four":                                   # dance-pop: a kick on every beat, hats between
+                _add(drums, start + hit * beat, kick, 0.85)
+                _add(drums, start + hit * beat + beat / 2, hat, 0.24)
+                if hit in (1, 3):
+                    _add(drums, start + hit * beat, _clap(noise), 0.4)
+            elif style == "lofi":                                 # boom-bap: kick on 1 and the "and" of 3, swung hats
+                if hit == 0:
+                    _add(drums, start, kick, 0.7)
+                if hit == 2:
+                    _add(drums, start + 2.5 * beat, kick, 0.55)
+                if hit in (1, 3):
+                    _add(drums, start + hit * beat, _lowpass(_clap(noise), 2400), 0.3)
+                _add(drums, start + hit * beat, hat, 0.12)
+                _add(drums, start + hit * beat + swing * beat, hat, 0.09)
+            elif style == "build":                                # cinematic: big kicks, closer together as it grows
+                if hit in (0, 2) or (level > 0.7 and hit in (1, 3)):
+                    _add(drums, start + hit * beat, kick, 0.95 * level)
+                if level > 0.5 and hit == 3:
+                    _add(drums, start + hit * beat + beat / 2, _clap(noise), 0.3 * level)
+            else:
+                if style == "full" or hit in (0, 2):
                     _add(drums, start + hit * beat, kick, 0.8)
                 if hit in (1, 3):
-                    _add(drums, start + hit * beat, _clap(noise), 0.35 if spec["drums"] == "full" else 0.22)
-                if spec["drums"] == "full":
+                    _add(drums, start + hit * beat, _clap(noise), 0.35 if style == "full" else 0.22)
+                if style == "full":
                     _add(drums, start + hit * beat + beat / 2, hat, 0.18)
+    if spec.get("dark"):                                          # lo-fi: rounder keys, and the record's crackle
+        keys = _lowpass(keys, 1800)
+        drums = drums + 0.5 * _crackle(len(drums), noise)
     wet = _reverb(pad + keys)
     left = 0.8 * pad + 0.95 * keys + 0.9 * bass + drums + 0.35 * wet
     right = 0.8 * np.roll(pad, int(0.011 * RATE)) + 0.85 * np.roll(keys, int(0.007 * RATE)) + 0.9 * bass + drums + 0.35 * np.roll(wet, int(0.013 * RATE))

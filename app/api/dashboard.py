@@ -145,6 +145,7 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "journal": __import__("app.services.journal", fromlist=["for_dashboard"]).for_dashboard(db),
             "voices": __import__("app.services.feedback_hub", fromlist=["overview"]).overview(db),
             "ideas": __import__("app.services.engagement_ideas", fromlist=["overview"]).overview(db),
+            "marketing": __import__("app.services.marketing", fromlist=["for_dashboard"]).for_dashboard(db),
             "smart": {"ideas": reminders.suggestions(db)[:3],
                       "planned": [{"reminder": item, "when": utc_to_local(item.send_at)} for item in reminders.upcoming(db)[:3]]},
             "dashboard_programs": db.query(Program).order_by(Program.name.asc()).all(),
@@ -202,7 +203,7 @@ def guide_page(request: Request):
     user = auth_service.current(request)
     return templates.TemplateResponse(
         request=request, name="guide.html",
-        context={"active_page": "guide", "journey": guides.JOURNEY, "for_admin": user is None or user.is_admin},
+        context={"active_page": "guide", "journey": guides.JOURNEY, "for_admin": user is None or user.is_admin, "everything": guides.everything(user)},
     )
 
 

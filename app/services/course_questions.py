@@ -8,7 +8,9 @@ registration must be paid first. Questions about prices, dates or what a program
 answers them for everyone, as before.
 
 A professor who has not answered after a day is reminded once (application, email, WhatsApp); after two days the
-admin is told.
+admin is told. The professor may write a few words: they are reworded into a full answer when asked (the figures and
+links are checked), and every answer is learnt, so the same question is answered next time by itself. A professor who
+answers by email (replying to the question) answers the same way, when only one question waits for them.
 """
 from __future__ import annotations
 
@@ -147,8 +149,9 @@ def waiting_for(db: Session, professor_key: str) -> list:
             .order_by(TeamMessage.created_at.asc()).all())
 
 
-def answer(db: Session, question_row, text: str, *, professor_name: str):
-    """The professor's answer, sent to the candidate in their own discussion (email, WhatsApp or SMS)."""
+def answer(db: Session, question_row, text: str, *, professor_name: str, reword: bool = False):
+    """The professor's answer, sent to the candidate in their own discussion (email, WhatsApp or SMS), reworded into a
+    full answer when asked, and learnt for the next time this question comes."""
     from app.models import Candidate
     from app.models.candidate_email import CandidateEmail
     from app.models.email_thread import EmailThread
@@ -161,7 +164,17 @@ def answer(db: Session, question_row, text: str, *, professor_name: str):
         raise ValueError("This question is not linked to a candidate any more.")
     thread = db.get(EmailThread, asked.thread_id)
     language = "en" if (asked.language or "") == "en" else "fr"
-    signed = f"{text.strip()}\n\n— {professor_name}"
+    said = text.strip()
+    if reword:
+        from app.services import reply_writer
+
+        try:
+            written = reply_writer.reformulate(said, first_name=(candidate.full_name or "").split(" ")[0], question=asked.body or "", language=language)
+        except Exception:                      # the local model may be away: the professor's own words go
+            written = None
+        if written and written.get("reply") and not written.get("warning"):
+            said = written["reply"].strip()
+    signed = f"{said}\n\n— {professor_name}"
     plain, html_body = email_assistant.compose_reply(db, candidate, signed, language=language, quote=asked.body)
     sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}" if thread else "Votre question", plain, html_body,
                                  kind="reply", author=f"professor:{professor_name}", thread=thread, language=language,
@@ -170,12 +183,47 @@ def answer(db: Session, question_row, text: str, *, professor_name: str):
         raise ValueError("The answer could not be delivered to the candidate. The centre was told.")
     question_row.answered_at = datetime.utcnow()
     asked.status, asked.requires_admin, asked.replied_at = "replied", False, datetime.utcnow()
+    # Learnt: the next time this question comes, every assistant answers it with the professor's answer.
+    from app.services import email_threads as threads, knowledge_service
+
+    question = (asked.question or threads.snippet(asked.body, 240) or "").strip()
+    if question:
+        try:
+            knowledge_service.save_entry(db, title=question, content=email_assistant.clean_answer(said) or said, origin="learned",
+                                         source_email_id=asked.id)
+        except ValueError:
+            pass
     if thread is not None:
         thread.needs_admin = False
     create_notification(db, title=f"{professor_name} answered {candidate.full_name or candidate.email}", message=text[:300],
                         category="EMAIL_ANSWERED", action_url=f"/inbox?thread={asked.thread_id}", candidate_id=candidate.id)
     db.commit()
     return sent
+
+
+_QUOTED = re.compile(r"^(>|On .{4,80} wrote:|Le .{4,80} a écrit\s?:|-----Original Message|De\s?:|From:)", re.I | re.M)
+
+
+def answer_by_email(db: Session, professor_key: str, text: str, professor_name: str):
+    """A professor's email that replies to the question the centre sent them (the question is quoted below), when only
+    one question waits for them: it is their answer (reworded, sent, learnt). Any other email (a word to the centre,
+    "I'll look tomorrow") stays in their conversation with the centre. Returns the delivered answer, or None."""
+    if not professor_key.startswith("professor:"):
+        return None
+    waiting = waiting_for(db, professor_key)
+    if len(waiting) != 1:
+        return None
+    found = _QUOTED.search(text or "")
+    if found is None or not re.search(r"Question (?:de|from)\b", text[found.start():], re.I):
+        return None
+    own = text[: found.start()].strip()
+    if len(own) < 3:
+        return None
+    try:
+        return answer(db, waiting[0], own, professor_name=professor_name, reword=True)
+    except ValueError:
+        db.rollback()
+        return None
 
 
 def remind_due(db: Session, now: datetime | None = None) -> int:

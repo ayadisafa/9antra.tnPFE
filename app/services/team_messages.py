@@ -402,7 +402,13 @@ def from_email(db: Session, *, sender: str, subject: str | None, body: str, mess
     subject = re.sub(r"^((re|tr|fw|fwd)\s*:\s*)+", "", (subject or "").strip(), flags=re.I)
     if subject and not subject.lower().startswith("message"):       # "Message — 9antra" is the centre's own subject
         text = f"{subject}\n{text}" if text else subject
-    return receive(db, found["key"], text, "email", message_id=message_id, when=received_at)
+    kept = receive(db, found["key"], text, "email", message_id=message_id, when=received_at)
+    # A professor answering by email the one question waiting for them: it goes to the candidate, reworded and learnt.
+    if kept is not None and found["key"].startswith("professor:"):
+        from app.services import course_questions
+
+        course_questions.answer_by_email(db, found["key"], (body or "").strip(), found.get("name") or "")
+    return kept
 
 
 def from_whatsapp(db: Session, *, phone: str, text: str, wa_id: str, name: str = "") -> TeamMessage | None:

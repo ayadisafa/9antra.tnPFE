@@ -128,6 +128,21 @@
 
 {# The top of a page: what it is for, in a picture and three steps.
    guide = {"key", "art", "title", "text", "steps": [(icon, title, text)]} #}
+{# A schema: its steps one after the other, with a moving dot between them; a step with a link opens where it is done. #}
+{% macro steps(guide, extra="") -%}
+<ol class="guide-steps {{ 'four' if guide.steps | length > 3 }} {{ extra }}">
+  {% for step in guide.steps %}
+  <li class="guide-step {{ 'has-link' if step | length > 3 }}" style="--step:{{ loop.index0 }};">
+    {% if step | length > 3 %}<a class="guide-step-go" href="{{ step[3] }}">{% endif %}
+    <span class="guide-step-ico"><i class="bi {{ step[0] }}"></i></span>
+    <span><b>{{ step[1] }}</b><small>{{ step[2] }}</small></span>
+    {% if step | length > 3 %}<i class="bi bi-arrow-up-right guide-step-out" aria-hidden="true"></i></a>{% endif %}
+  </li>
+  {% if not loop.last %}<li class="guide-arrow" style="--step:{{ loop.index0 }};" aria-hidden="true"><span></span></li>{% endif %}
+  {% endfor %}
+</ol>
+{%- endmacro %}
+
 {% macro intro(guide) -%}
 <section class="guide" id="pageGuide" data-guide="{{ guide.key }}" aria-label="How this page works" hidden>
   <div class="guide-art">{{ scene(guide.art) }}</div>
@@ -135,15 +150,8 @@
     <div class="guide-kicker"><i class="bi bi-signpost-2"></i>How this page works</div>
     <h3 class="guide-title">{{ guide.title }}</h3>
     <p class="guide-text">{{ guide.text }}</p>
-    <ol class="guide-steps">
-      {% for icon, title, text in guide.steps %}
-      <li class="guide-step" style="--step:{{ loop.index0 }};">
-        <span class="guide-step-ico"><i class="bi {{ icon }}"></i></span>
-        <span><b>{{ title }}</b><small>{{ text }}</small></span>
-      </li>
-      {% if not loop.last %}<li class="guide-arrow" style="--step:{{ loop.index0 }};" aria-hidden="true"><span></span></li>{% endif %}
-      {% endfor %}
-    </ol>
+    {{ steps(guide) }}
+    <a class="guide-all" href="/guide#every"><i class="bi bi-diagram-3"></i>Every functionality, with its schema</a>
   </div>
   <button type="button" class="guide-close" data-guide-hide title="Hide this explanation. The signpost button at the top of the page brings it back." aria-label="Hide this explanation"><i class="bi bi-x-lg"></i></button>
 </section>

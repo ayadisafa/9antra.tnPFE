@@ -43,8 +43,14 @@ AGENTS = {
     "trends": {"name": "Trends agent", "icon": "bi-graph-up-arrow", "colour": "#0d9488",
                "does": "What is new in every field, what the job offers ask, services to add, and what a name says.",
                "reads": ["The journal", "The job offers", "The programs"]},
+    "system": {"name": "System agent", "icon": "bi-sliders2", "colour": "#0f766e",
+               "does": "Changes the system when you ask (assistant, reminders, classes, prices, look…), says what it was, and undoes it.",
+               "reads": ["The settings", "The automatic reminders", "What it changed"]},
+    "marketing": {"name": "Marketing agent", "icon": "bi-megaphone", "colour": "#ea580c",
+                  "does": "What is trendy in posts, when to post, this week's plan, how your posts did, and advice.",
+                  "reads": ["The journal's marketing articles", "Your posts' numbers", "When your people are active"]},
     "inbox": {"name": "Inbox rules agent", "icon": "bi-sliders", "colour": "#7c3aed",
-              "does": "Why a message was set aside without an answer; bringing it back and changing the rule when you say so (and undoing it).",
+              "does": "Why a message was set aside, or answered as it was; bringing it back, correcting and teaching when you say so (and undoing it).",
               "reads": ["The set-aside messages", "The rules you changed"]},
     "records": {"name": "Figures agent", "icon": "bi-clipboard-data", "colour": "#475569",
                 "does": "Your figures: who paid, who is absent, lists, money, what to do today.",
@@ -69,7 +75,15 @@ OUTCOMES = {"answered": "Answered", "sent": "Answered alone", "draft": "A draft 
 KEEP_DAYS = 120
 
 
-def agent_of(key: str | None) -> dict:
+def agent_of(key: str | None, db: Session | None = None) -> dict:
+    """An agent's name, icon and colour; a program's agent ("program:<id>") is named after its program."""
+    if key and key.startswith("program:"):
+        from app.services import program_agents
+
+        program = program_agents.program_of(db, key) if db is not None else None
+        name = _t("{0} agent", program.name) if program is not None else _t("A program's agent")
+        return {"key": key, "name": name, "icon": "bi-journal-code", "colour": "#7c3aed",
+                "does": _t("Everything about one program."), "reads": []}
     found = AGENTS.get(key or "general") or AGENTS["general"]
     return {"key": key if key in AGENTS else "general", **found}
 
@@ -127,6 +141,10 @@ def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, 
     from app.services import chatbot
 
     started = time.monotonic()
+    # Words written with mistakes are read as meant ("inscripton" → "inscription") before anything else.
+    from app.services import spelling
+
+    message, fixes = spelling.correct(message)
     routed = route(message, user)
     agent = routed["agent"]["key"]
     found = None
@@ -135,18 +153,40 @@ def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, 
 
         found = professor_assistant.answer(db, message, history, user=user, lang=lang)
     elif _role(user) in ("admin", "staff"):
-        from app.services import reply_rules, trends_agent
+        from app.services import marketing, reply_rules, system_actions, trends_agent
 
-        if reply_rules.wants(message):            # the messages set aside without an answer, and their rules
+        from app.services import answer_review
+
+        if system_actions.wants(db, message):     # change a setting, a reminder, the look… (or undo it)
+            agent = "system"
+            found = system_actions.answer(db, message, user=user, lang=lang)
+        elif answer_review.wants(message):        # why the email assistant answered someone that way; putting it right
+            agent = "inbox"
+            found = answer_review.for_chat(db, message, user=user, lang=lang)
+        elif reply_rules.wants(message):          # the messages set aside without an answer, and their rules
             agent = "inbox"
             if _role(user) == "admin" or access.allows(access.clean(getattr(user, "permissions", None)), "/inbox/message/x/talk", "POST"):
                 found = reply_rules.for_chat(db, message, user=user, lang=lang)
             else:
                 found = {"reply": _t("Changing what the inbox sets aside needs the right to answer emails: ask the admin."), "links": [],
                          "source": "system", "sources": [], "resources": []}
+        elif marketing.wants(message):            # posts: what is trendy, when, this week's plan, how they did
+            agent = "marketing"
+            found = marketing.answer(db, message, lang=lang)
         elif trends_agent.wants(message):           # what is new, services to add, what a name says
             agent = "trends"
             found = trends_agent.answer(db, message, lang=lang)
+    consulted = []
+    program = None
+    if found is None and agent in ("programs", "general", "planning", "payment"):
+        # A question about one program goes to that program's agent.
+        from app.services import program_agents
+
+        program = program_agents.find(db, message)
+        if program is not None:
+            found = program_agents.answer(db, program, message, lang=lang)
+            if found is not None:
+                agent = program_agents.key_of(program)
     if found is None:
         found = chatbot.answer(db, message, history, user=user, lang=lang)
         source = found.get("source")
@@ -155,12 +195,24 @@ def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, 
         elif source in ("taught", "knowledge", "website") and agent == "general":
             agent = "knowledge"
     if found.get("source") == "none" and agent != "professor":
-        from app.services import rag
+        # The first agent does not know: Yasmine asks the others, the program's agent first, then the knowledge agent.
+        from app.services import program_agents, rag
 
-        cited = rag.answer(db, message, lang=lang, for_admin=_role(user) in ("admin", "staff"))
-        if cited is not None:
-            found, agent = cited, "knowledge"
-    found["agent"] = agent_of(agent)
+        program = program if program is not None else program_agents.find(db, message)
+        asked = program_agents.answer(db, program, message, lang=lang) if program is not None else None
+        if asked is not None:
+            consulted.append(agent_of(program_agents.key_of(program), db)["name"])
+            found, agent = asked, program_agents.key_of(program)
+        else:
+            cited = rag.answer(db, message, lang=lang, for_admin=_role(user) in ("admin", "staff"))
+            if cited is not None:
+                consulted.append(_t(AGENTS["knowledge"]["name"]))
+                found, agent = cited, "knowledge"
+    found["agent"] = agent_of(agent, db)
+    if consulted:
+        found["consulted"] = consulted
+    if fixes:
+        found["understood"] = [{"written": wrong, "read": right} for wrong, right in fixes]
     if agent == "trends" and routed["category"]["key"] == "general":
         routed["category"] = {**message_categories.label_of("trends"), "why": [], "by": "agent"}
     found["category"] = {key: routed["category"][key] for key in ("key", "label", "icon", "colour", "why", "by")}
@@ -208,11 +260,34 @@ def overview(db: Session, days: int = 7) -> dict:
         "channels": [{"key": key, "label": CHANNELS[key][0], "icon": CHANNELS[key][1], "count": by_channel.get(key, 0)} for key in CHANNELS],
         "categories": [{**message_categories.label_of(key), "count": count}
                        for key, count in sorted(by_category.items(), key=lambda pair: -pair[1])],
-        "latest": [{"at": run.at, "agent": agent_of(run.agent), "category": message_categories.label_of(run.category),
+        "programs": _program_agents(db, by_agent),
+        "learnt": _learnt(db),
+        "latest": [{"at": run.at, "agent": agent_of(run.agent, db), "category": message_categories.label_of(run.category),
                     "channel": CHANNELS.get(run.channel or "chat", CHANNELS["chat"]), "outcome": OUTCOMES.get(run.outcome or "answered", run.outcome),
                     "outcome_key": run.outcome or "answered", "asked": run.asked or "", "ref": run.ref,
                     "why": _why(run.why), "took_ms": run.took_ms} for run in latest],
     }
+
+
+def _program_agents(db: Session, by_agent: dict) -> list[dict]:
+    """Every program's agent, with the requests it had."""
+    from app.services import program_agents
+
+    found = []
+    for agent in program_agents.agents(db):
+        row = by_agent.get(agent["key"], {"total": 0, "outcomes": {}})
+        found.append({**agent, "total": row["total"]})
+    return found
+
+
+def _learnt(db: Session, days: int = 30) -> dict:
+    """What the agents learnt lately, all of them together: answers taught by you, given by professors, corrected."""
+    from app.models.knowledge import KnowledgeEntry
+
+    since = datetime.utcnow() - timedelta(days=days)
+    rows = db.query(KnowledgeEntry.origin, KnowledgeEntry.kind).filter(KnowledgeEntry.origin.in_(("admin", "learned")),
+                                                                      KnowledgeEntry.created_at >= since).all()
+    return {"days": days, "answers": sum(1 for origin, kind in rows if kind != "fact"), "facts": sum(1 for origin, kind in rows if kind == "fact")}
 
 
 def _why(value: str | None) -> list[str]:

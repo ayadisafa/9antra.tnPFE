@@ -1,6 +1,9 @@
 """Pictures for social media, drawn here (Pillow) from an idea of social_content: a post (1080 × 1080) or a story
-(1080 × 1920), in the colours of the logo (berry, gold, blue), in three looks. Arabic is shaped and written right to
-left. A picture is made of pieces (the background, then each block), so the videos (social_video) can bring the pieces
+(1080 × 1920), in the colours of the logo (berry, gold, blue). Arabic is shaped and written right to left.
+
+The looks: "bold" and "bright" follow what posts look like this year (oversized type, strong contrast, flat colour
+blocks and crisp shapes instead of soft blurs; `TREND_LOOKS`), "bold" by default; "berry", "light" and "night" are the
+first, softer ones. A picture is made of pieces (the background, then each block), so the videos (social_video) can bring the pieces
 in one after the other.
 """
 from __future__ import annotations
@@ -15,7 +18,9 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 SIZES = {"post": (1080, 1080), "story": (1080, 1920)}
-LOOKS = {"berry": "Berry", "light": "Light", "night": "Night"}
+LOOKS = {"bold": "Bold", "bright": "Bright", "berry": "Berry", "light": "Light", "night": "Night"}
+TREND_LOOKS = ("bold", "bright")
+DEFAULT_LOOK = "bold"
 BERRY, PLUM, GOLD, BLUE, INK, CREAM = "#b0306a", "#5a1440", "#f9b555", "#1aa3dc", "#241a38", "#fbf7f2"
 _FONTS = Path(os.environ.get("WINDIR", "C:/Windows")) / "Fonts"
 _ARABIC = re.compile(r"[؀-ۿ]")
@@ -100,6 +105,12 @@ class Picture:
 
 def palette(look: str, accent: str | None = None) -> dict:
     berry = accent or BERRY
+    if look == "bold":
+        return {"top": "#1c0b19", "bottom": "#1c0b19", "text": "#ffffff", "soft": "#f3c9dc", "accent": GOLD, "gold": GOLD, "blue": "#ff4f8b",
+                "card": (255, 255, 255, 20), "card_line": (249, 181, 85, 150), "chip_text": INK, "chip": GOLD, "band": berry, "scale": 1.18}
+    if look == "bright":
+        return {"top": berry, "bottom": "#ff7a3d", "text": "#ffffff", "soft": "#fff1e6", "accent": "#ffe066", "gold": "#ffe066", "blue": "#ffffff",
+                "card": (255, 255, 255, 40), "card_line": (255, 255, 255, 120), "chip_text": berry, "chip": "#ffffff", "scale": 1.1}
     if look == "light":
         return {"top": CREAM, "bottom": "#f3e7f1", "text": INK, "soft": "#5b5670", "accent": berry, "gold": "#e39a1f", "blue": BLUE,
                 "card": (255, 255, 255, 235), "card_line": (176, 48, 106, 60), "chip_text": "#ffffff", "chip": berry}
@@ -115,9 +126,43 @@ def _rgb(colour: str) -> tuple[int, int, int]:
     return tuple(int(colour[index:index + 2], 16) for index in (0, 2, 4))
 
 
+def _trend_background(size: tuple[int, int], look: str, colours: dict) -> Image.Image:
+    """Bold: a flat deep colour, a berry band across the top right and a gold edge, sharp. Bright: a diagonal berry to
+    orange gradient with two crisp circles. Nothing blurred; no shape under the text's place on the left."""
+    width, height = size
+    if look == "bold":
+        canvas = Image.new("RGBA", size, _rgb(colours["top"]) + (255,))
+        draw = ImageDraw.Draw(canvas)
+        reach = int(height * (0.15 if height > width else 0.26))      # above the headline, even right to left
+        draw.polygon([(int(width * 0.6), 0), (width, 0), (width, reach)], fill=_rgb(colours["band"]) + (255,))
+        draw.line([(int(width * 0.52), 0), (width, int(reach * 1.12))], fill=_rgb(colours["gold"]) + (255,), width=10)
+        draw.rectangle((0, height - 14, width, height), fill=_rgb(colours["gold"]) + (255,))
+        for row in range(3):                  # squares, top right on the band, where no text goes
+            for column in range(4):
+                x, y = width - 230 + column * 44, 46 + row * 44
+                draw.rectangle((x, y, x + 12, y + 12), fill=(255, 255, 255, 70))
+        return canvas
+    top, bottom = _rgb(colours["top"]), _rgb(colours["bottom"])
+    gradient = Image.new("RGBA", (64, 64))
+    for x in range(64):
+        for y in range(64):
+            share = (x + y) / 126
+            gradient.putpixel((x, y), tuple(int(top[c] + (bottom[c] - top[c]) * share) for c in range(3)) + (255,))
+    canvas = gradient.resize(size, Image.BILINEAR)
+    shapes = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(shapes)
+    draw.ellipse((width - 360, -240, width + 240, 360), fill=(255, 255, 255, 34))
+    draw.ellipse((width - 220, height - 300, width + 180, height + 100), outline=(255, 255, 255, 90), width=12)
+    canvas.alpha_composite(shapes)
+    return canvas
+
+
 def background(size: tuple[int, int], look: str, accent: str | None = None, seed: int = 0) -> Image.Image:
-    """A soft gradient, two blurred lights in the logo's gold and blue, a dotted corner and a thin ring."""
+    """A soft gradient, two blurred lights in the logo's gold and blue, a dotted corner and a thin ring (the trend looks
+    draw their own)."""
     colours = palette(look, accent)
+    if look in TREND_LOOKS:
+        return _trend_background(size, look, colours)
     width, height = size
     top, bottom = _rgb(colours["top"]), _rgb(colours["bottom"])
     gradient = Image.new("RGBA", (1, 256))
@@ -357,10 +402,10 @@ def _fit(parts: list[tuple], width: int, room: int, centre: bool) -> tuple[list[
     return fitted, offset_x, offset_y, scale
 
 
-def picture(idea: dict, fmt: str = "post", look: str = "berry", accent: str | None = None) -> Picture:
+def picture(idea: dict, fmt: str = "post", look: str = DEFAULT_LOOK, accent: str | None = None) -> Picture:
     """The picture of an idea, in pieces (see Piece)."""
     fmt = fmt if fmt in SIZES else "post"
-    look = look if look in LOOKS else "berry"
+    look = look if look in LOOKS else DEFAULT_LOOK
     size = SIZES[fmt]
     story = fmt == "story"
     colours = palette(look, accent)
@@ -378,6 +423,7 @@ def picture(idea: dict, fmt: str = "post", look: str = "berry", accent: str | No
         y += 260 if story else 80                    # the opening scene: its title alone, lower and bigger
     if idea.get("headline"):
         font_size = 110 if topic_is_intro and story else 88 if topic_is_intro else 84 if story else (66 if len(idea["headline"]) < 26 else 56)
+        font_size = int(font_size * colours.get("scale", 1.0))     # the trend looks: bigger, bolder type
         font = _font(font_size, "black", idea["headline"])
         headline = _text_block(idea["headline"], font, inner, colours["text"], spacing=1.12, most=3 if story else 2)
         shot.pieces.append(Piece(headline, margin, y, step=1))
@@ -402,7 +448,7 @@ def picture(idea: dict, fmt: str = "post", look: str = "berry", accent: str | No
     return shot
 
 
-def render_png(idea: dict, fmt: str = "post", look: str = "berry", accent: str | None = None) -> bytes:
+def render_png(idea: dict, fmt: str = "post", look: str = DEFAULT_LOOK, accent: str | None = None) -> bytes:
     buffer = io.BytesIO()
     picture(idea, fmt, look, accent).flat().save(buffer, "PNG", optimize=True)
     return buffer.getvalue()

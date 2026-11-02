@@ -45,8 +45,10 @@
       {% set question_id = questions.get(item.batch) or questions.get(item.id) %}
       {% if question_id %}
       <form class="mm-answer" method="post" action="/account/messages/question/{{ question_id }}/answer">
-        <textarea name="body" required placeholder="Your answer to the candidate…" aria-label="Your answer to the candidate"></textarea>
+        <textarea name="body" required placeholder="Your answer to the candidate… (a few words are enough)" aria-label="Your answer to the candidate"></textarea>
+        <label class="mm-reword"><input type="checkbox" name="reword" value="1" checked> Turn my words into a full answer (figures and links are kept)</label>
         <button class="ui-btn primary sm"><i class="bi bi-reply-fill"></i>Answer the candidate</button>
+        <span class="mm-learnt"><i class="bi bi-mortarboard"></i>Your answer is learnt: the same question will be answered by itself next time.</span>
       </form>
       {% endif %}
     </div>

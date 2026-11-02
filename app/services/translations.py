@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 LANGUAGES = {"en": "English", "fr": "Français", "ar": "العربية"}
 TARGETS = {"fr": "French", "ar": "Arabic"}
-BATCH = 10                      # texts translated for one language in one pass of the job
+BATCH = 25                      # texts translated for one language in one pass of the job
 TEMPLATES = Path("app/templates")
 # Pages written for candidates, already in French, and the emails: not part of the interface.
 _NOT_INTERFACE = ("level_check", "join", "opinion", "learn", "setup", "email", "quiz_take", "public")
@@ -72,9 +72,28 @@ def digest(source: str) -> str:
     return hashlib.sha1(source.encode("utf-8")).hexdigest()
 
 
+# Pieces of code a page holds that look like words: lists of HTML elements ("input, textarea"), CSS rules and class
+# names ("text-muted small", "prefers-reduced-motion: reduce"), sizes ("0px 0px -6% 0px"), script fragments.
+_ELEMENTS = {"a", "button", "input", "select", "textarea", "div", "span", "li", "ul", "form", "label", "img", "svg", "p", "details", "summary", "option"}
+_FUNCTION_WORDS = {"a", "an", "the", "of", "to", "and", "for", "in", "is", "your", "with", "on", "at", "by", "it", "or", "no", "not", "this", "be"}
+
+
+def _is_code(text: str) -> bool:
+    words = [word.strip(",:;") for word in text.split()]
+    if words and all(word.lower() in _ELEMENTS for word in words if word):
+        return True
+    if re.search(r"\+'|'\+|\bthis\.|=>|\(\)|\bpx\b|\d+px|^\s*[\d\s%.-]+(?:px|em|rem|%)", text):
+        return True
+    lower = all(word == word.lower() for word in words)
+    if lower and len(words) <= 4 and any("-" in word.strip("-") for word in words) and not any(word in _FUNCTION_WORDS for word in words):
+        return True
+    return bool(re.match(r"^[a-z-]+:\s*[a-z-]+$", text))
+
+
 def _worth(text: str) -> bool:
     return (2 <= len(text) <= 600 and _LETTERS.search(text) is not None and "@" not in text and "://" not in text
-            and not _ARABIC.search(text) and not text.startswith(("/", "#", "bi-", "bi ", "data-")) and "_" not in text.split(" ")[0])
+            and not _ARABIC.search(text) and not text.startswith(("/", "#", "bi-", "bi ", "data-")) and "_" not in text.split(" ")[0]
+            and not _is_code(text))
 
 
 def _pieces(markup: str) -> list[str]:

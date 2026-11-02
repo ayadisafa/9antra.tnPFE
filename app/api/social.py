@@ -27,7 +27,8 @@ def _back(anchor: str = "", notice: str | None = None, error: str | None = None,
 def social_page(request: Request, db: Session = Depends(get_db)):
     params = request.query_params
     lang = params.get("lang") if params.get("lang") in social_content.LANGUAGES else "fr"
-    look = params.get("look") if params.get("look") in social_images.LOOKS else "berry"
+    look = params.get("look") if params.get("look") in social_images.LOOKS else social_images.DEFAULT_LOOK
+    from app.services import marketing
     videos = db.query(SocialAsset).filter(SocialAsset.kind == "video").order_by(SocialAsset.created_at.desc()).limit(12).all()
     music = sorted((path.name for path in social_video.folder().glob("music-*")), reverse=True)[:6]
     return templates.TemplateResponse(request=request, name="social.html", context={
@@ -39,12 +40,15 @@ def social_page(request: Request, db: Session = Depends(get_db)):
         "answers": db.query(FeedbackAnswer).filter(FeedbackAnswer.active.is_(True)).order_by(FeedbackAnswer.updated_at.desc()).all(),
         "proposals": social_content.listen_proposals(db), "engagement": social_engagement.overview(db),
         "platforms": social_engagement.PLATFORMS, "post_kinds": social_engagement.KINDS,
+        "plan": marketing.week_plan(db, lang), "tips": marketing.tips(db), "trends": marketing.trends(db), "times": marketing.best_times(db),
+        "trending_moods": social_music.TRENDING, "trend_looks": social_images.TREND_LOOKS,
+        "chosen_kind": params.get("kind") if params.get("kind") in social_video.KINDS else "both",
         "notice": params.get("notice"), "error": params.get("error"),
     })
 
 
 @router.get("/image")
-def image(idea: str, fmt: str = "post", look: str = "berry", lang: str = "fr", download: str = "", db: Session = Depends(get_db)):
+def image(idea: str, fmt: str = "post", look: str = social_images.DEFAULT_LOOK, lang: str = "fr", download: str = "", db: Session = Depends(get_db)):
     """The picture of an idea, drawn now (a post 1:1 or a story 9:16)."""
     found = social_content.idea(db, idea, lang)
     if found is None:
@@ -58,7 +62,7 @@ def image(idea: str, fmt: str = "post", look: str = "berry", lang: str = "fr", d
 
 @router.post("/video")
 async def make_video(request: Request, db: Session = Depends(get_db), kind: str = Form("both"), fmt: str = Form("story"),
-                     lang: str = Form("fr"), look: str = Form("berry"), mood: str = Form("inspiring"), music_file: str = Form(""),
+                     lang: str = Form("fr"), look: str = Form(social_images.DEFAULT_LOOK), mood: str = Form("trend"), music_file: str = Form(""),
                      music: UploadFile | None = File(None)):
     """A video, made in the background (about a minute); the page shows it when it is ready."""
     if not social_video.available():
@@ -73,7 +77,7 @@ async def make_video(request: Request, db: Session = Depends(get_db), kind: str 
         chosen = music_file if (social_video.folder() / music_file).exists() and music_file.startswith("music-") else None
         if chosen is None:
             return _back("#videos", error="Choose your music file again.")
-    asset = social_video.make(db, kind=kind, fmt=fmt, lang=lang, look=look, mood="inspiring" if mood == "own" else mood, music_file=chosen)
+    asset = social_video.make(db, kind=kind, fmt=fmt, lang=lang, look=look, mood="trend" if mood == "own" else mood, music_file=chosen)
     background.run_in_background(social_video.render_task, asset.id)
     return _back("#videos", notice="The video is being made: about a minute. It appears here by itself when it is ready.")
 

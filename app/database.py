@@ -341,6 +341,7 @@ def ensure_sqlite_compatibility():
             "friend_look": "TEXT",
             "session_reminder_hours": "INTEGER DEFAULT 24",
             "reply_rules": "TEXT",
+            "assistant_changes": "TEXT",
         },
 
         "class_materials": {

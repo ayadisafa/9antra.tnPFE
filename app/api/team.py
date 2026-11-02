@@ -147,7 +147,7 @@ def my_messages_write(request: Request, body: str = Form(""), db: Session = Depe
 
 
 @router.post("/account/messages/question/{row_id}/answer")
-def answer_candidate(row_id: str, request: Request, body: str = Form(""), db: Session = Depends(get_db)):
+def answer_candidate(row_id: str, request: Request, body: str = Form(""), reword: str = Form(""), db: Session = Depends(get_db)):
     """A professor answers a candidate's question the centre sent them: the answer goes to the candidate."""
     from app.models.team_message import TeamMessage
     from app.services import course_questions
@@ -161,7 +161,7 @@ def answer_candidate(row_id: str, request: Request, body: str = Form(""), db: Se
     if not body.strip():
         return _back("/account/messages", error="Write your answer first.")
     try:
-        course_questions.answer(db, row, body, professor_name=me.name)
+        course_questions.answer(db, row, body, professor_name=me.name, reword=reword == "1")
     except ValueError as error:
         db.rollback()
         return _back("/account/messages", error=str(error))
