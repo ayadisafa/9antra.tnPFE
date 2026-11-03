@@ -13,6 +13,31 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-02d", "day": date(2026, 11, 2), "title": "Posts in Tunisian",
+        "items": [
+            {"icon": "bi-chat-quote", "title": "Posts, stories and videos in Tunisian",
+             "text": "Written the way Tunisians write on social media (“Sajjel tawa”, “9oultou, 3malna”, “Nja7kom howa fakhrna”), first; French, English and "
+                     "Arabic stay one click away.", "url": "/social#create"},
+            {"icon": "bi-eraser", "title": "No more following the posts' numbers",
+             "text": "“How your posts do” and every button to follow a post's numbers are gone: the networks show them in their own statistics. "
+                     "The page keeps what is trending, when to post and this week's plan.", "url": "/social#plan"},
+        ],
+    },
+    {
+        "key": "2026-11-02c", "day": date(2026, 11, 2), "title": "The system corrects itself",
+        "items": [
+            {"icon": "bi-question-diamond", "title": "A question is not an opinion",
+             "text": "A reply to the “what did you think?” email that asks something is read as a question, not kept as a review; with both, the opinion is "
+                     "kept and the question answered.", "url": "/inbox?filter=aside"},
+            {"icon": "bi-arrow-counterclockwise", "title": "Your correction corrects every analysis",
+             "text": "“It's a question, not an opinion”: the review it was taken for leaves the stars, the mood, the themes and the dashboard, the message comes "
+                     "back with an answer prepared, and replies like it are read as questions from then on. “Undo” puts it back.", "url": "/inbox?filter=aside"},
+            {"icon": "bi-arrow-repeat", "title": "It reads its own decisions again",
+             "text": "Every 30 minutes, and when you ask, the system reads what it set aside and the reviews it kept with what it learnt since: what asks "
+                     "something comes back to you, and an opinion that was a question leaves the reviews. Nothing is sent alone.", "url": "/inbox?filter=aside"},
+        ],
+    },
+    {
         "key": "2026-11-02b", "day": date(2026, 11, 2), "title": "Yasmine and her agents: one per program, and an assistant you can question",
         "items": [
             {"icon": "bi-journal-code", "title": "One agent per program",
@@ -84,7 +109,7 @@ RELEASES = [
             {"icon": "bi-ear", "title": "We listen: you said, we did",
              "text": "What people asked to improve, and what you did about it, shown in posts and videos.", "url": "/social#listen"},
             {"icon": "bi-graph-up", "title": "The engagement of your posts",
-             "text": "Each post's numbers and engagement, compared by kind, subject, network, day and hour, with advice.", "url": "/social#engagement"},
+             "text": "Each post's numbers and engagement, compared by kind, subject, network, day and hour, with advice.", "url": "/social"},
             {"icon": "bi-chat-heart", "title": "Every feedback in one place on the dashboard",
              "text": "9antra.tn, the reviews in the application and the weekly check-ins together, with filters and what to improve.", "url": "/"},
         ],

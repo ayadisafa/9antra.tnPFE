@@ -660,6 +660,11 @@ def knowledge_tick():
         message_categories.backfill(db)
         orchestrator.forget_old(db)
         whats_new.announce(db)
+        # The inbox reads its own decisions again with what it learnt (the admin's corrections, a better reading of
+        # replies to the opinion email) and corrects itself: nothing is sent alone, the admin reads what comes back.
+        from app.services import reply_rules
+
+        reply_rules.read_again(db)
     except Exception:
         db.rollback()
         logger.exception("Sorting the messages failed.")

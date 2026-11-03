@@ -232,7 +232,8 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
             aside = None
             if message.direction == "inbound" and message.status == "no_reply":
                 proposed = reply_rules.proposal(message, rules_now)
-                aside = {"why": reply_rules.explain(message), "change": reply_rules.describe(proposed) if proposed else None}
+                aside = {"why": reply_rules.explain(message), "change": reply_rules.describe(proposed) if proposed else None,
+                         "rule": reply_rules.reason_of(message)["rule"]}
             conversation.append({
                 "message": message,
                 "aside": aside,
@@ -574,6 +575,16 @@ def review_answer(message_id: str, payload: TalkAboutIt, request: Request, db: S
     from app.services import answer_review, auth
 
     return JSONResponse(answer_review.talk(db, reply, payload.text, by=getattr(auth.current(request), "email", None)))
+
+
+@router.post("/rules/read-again")
+def read_again(db: Session = Depends(get_db)):
+    """The system reads its past decisions again with what it learnt, and corrects itself."""
+    result = reply_rules.read_again(db)
+    if not result["messages"] and not result["opinions"]:
+        return _redirect("/inbox", notice=_t("Read again: every decision still holds."), filter="aside")
+    return _redirect("/inbox", notice=_t("Read again with what it learnt: {0} message(s) it had set aside need an answer, {1} opinion(s) were questions.",
+                                         len(result["messages"]), result["opinions"]), filter="todo")
 
 
 @router.post("/rules/undo")

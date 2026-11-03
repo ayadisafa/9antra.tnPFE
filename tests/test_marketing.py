@@ -202,7 +202,7 @@ for lang in ("fr", "ar"):
     admin.cookies.set("lang", lang)
     check(f"pages in {lang}", all(admin.get(path).status_code == 200 for path in ("/", "/social", "/guide", "/reminders")))
 admin.cookies.set("lang", "en")
-check("what's new: this batch is told", any(release["key"] == "2026-11-02" for release in whats_new.RELEASES[:3]))
+check("what's new: this batch is told", any(release["key"] == "2026-11-02" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

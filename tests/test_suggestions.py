@@ -279,7 +279,7 @@ check("Yasmine stays under an open window, and steps aside while a menu is open"
       and "body:has(.dropdown-menu.show:not(.fr *)) .fr" in friend_css)
 social = open(os.path.join(testenv.PROJECT, "app", "templates", "social.html"), encoding="utf-8").read()
 check("social page: a chosen chip's words are white on red, not grey", ".so-chip > span {" in social and ".so-chip span {" not in social)
-check("what's new: this batch is told", any(release["key"] == "2026-11-01b" for release in whats_new.RELEASES[:3]))
+check("what's new: this batch is told", any(release["key"] == "2026-11-01b" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

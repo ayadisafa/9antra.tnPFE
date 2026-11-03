@@ -1,7 +1,8 @@
 """What the centre can post, made from its own records (no model writes it): the success in figures, what former
 candidates said in public, “you said, we did”, a program that starts soon, a trend the centre already teaches, and how to
 join. Each idea has its lines for a picture (social_images), its scenes for a video (social_video) and a caption with
-hashtags in French, English or Arabic.
+hashtags in Tunisian (Latin letters, the way Tunisians write on social media: "Sajjel tawa", "9oultou, 3malna"), the
+first language, or in French, English or Arabic.
 
 Testimonials: only words already public (9antra.tn, Facebook) or a review whose author agreed to its publication, and
 the first name only.
@@ -13,7 +14,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-LANGUAGES = ("fr", "en", "ar")
+LANGUAGES = ("tn", "fr", "en", "ar")
+DEFAULT_LANGUAGE = "tn"
 TOPICS = {
     "success": ("Their success", "bi-trophy"),
     "testimonial": ("What they say", "bi-chat-quote"),
@@ -80,6 +82,13 @@ _CAPTIONS = {
         "ar": "✨ مهارتك القادمة تبدأ هنا.\n{programs}\n\n📝 التسجيل: {link}\n📞 {phone}",
     },
 }
+
+# Tunisian: the posts' own words, kept apart so the interface's translation never touches them.
+from app.services import social_tn  # noqa: E402
+
+_W["tn"] = social_tn.WORDS
+for _topic, _text in social_tn.CAPTIONS.items():
+    _CAPTIONS[_topic]["tn"] = _text
 
 
 def words(lang: str) -> dict:
@@ -190,7 +199,8 @@ def next_sessions(db: Session, most: int = 4) -> list[dict]:
 
 
 def _date(moment: datetime, lang: str) -> str:
-    months = {"fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+    months = {"tn": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
+              "fr": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"],
               "en": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
               "ar": ["جانفي", "فيفري", "مارس", "أفريل", "ماي", "جوان", "جويلية", "أوت", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]}[lang]
     return f"{moment.day} {months[moment.month - 1]} {moment.year}" if lang != "en" else f"{months[moment.month - 1]} {moment.day}, {moment.year}"
@@ -211,10 +221,10 @@ def _figure_text(figure: dict, w: dict) -> str:
     return f"{shown} {w[figure['key']]}"
 
 
-def ideas(db: Session, lang: str = "fr") -> list[dict]:
+def ideas(db: Session, lang: str = DEFAULT_LANGUAGE) -> list[dict]:
     """Every post the records allow today: [{"key", "topic", "title", "kicker", "headline", "figures", "quote", "said", "did",
     "facts", "caption", "hashtags"}]."""
-    lang = lang if lang in LANGUAGES else "fr"
+    lang = lang if lang in LANGUAGES else DEFAULT_LANGUAGE
     w = words(lang)
     info = contact(db)
     found = []
@@ -323,5 +333,5 @@ def save_answer(db: Session, *, you_said: str, we_did: str = "", theme: str | No
     return row
 
 
-def idea(db: Session, key: str, lang: str = "fr") -> dict | None:
+def idea(db: Session, key: str, lang: str = DEFAULT_LANGUAGE) -> dict | None:
     return next((item for item in ideas(db, lang) if item["key"] == key), None)

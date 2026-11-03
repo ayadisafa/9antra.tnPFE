@@ -30,7 +30,10 @@ from app.services.ui_words import t as _t
 
 DEFAULT_WORDS = ["merci", "thanks", "thank you", "ok", "d'accord", "bien reçu", "bien recu", "parfait", "super", "top", "nickel",
                  "c'est noté", "c est noté", "noté", "شكرا", "يعطيك الصحة", "3aychek", "aychek"]
-DEFAULTS = {"thanks_words": DEFAULT_WORDS, "only_thanks": False, "max_length": 200, "always_answer": [], "read_automatic": []}
+DEFAULTS = {"thanks_words": DEFAULT_WORDS, "only_thanks": False, "max_length": 200, "always_answer": [], "read_automatic": [],
+            "not_opinions": []}          # replies to the opinion email the admin said were questions: examples to read like them
+KEEP_EXAMPLES = 30
+READ_AGAIN_DAYS = 60                     # how far back the system reads its own decisions again
 RULES = ("thanks", "automatic", "professor", "opinion", "payment", "admin")
 KEEP_CHANGES = 30
 # Words that may stand around a thank-you without making it more than one ("merci beaucoup pour votre retour !").
@@ -63,6 +66,7 @@ def rules(db: Session) -> dict:
     found["only_thanks"] = bool(found["only_thanks"])
     for key in ("always_answer", "read_automatic"):
         found[key] = sorted({str(item).strip().lower() for item in found[key] or [] if str(item).strip()})
+    found["not_opinions"] = [str(item).strip()[:300] for item in found["not_opinions"] or [] if str(item).strip()][-KEEP_EXAMPLES:]
     found["changes"] = [item for item in saved.get("changes") or [] if isinstance(item, dict)][:KEEP_CHANGES]
     return found
 
@@ -171,6 +175,10 @@ def proposal(message, found: dict) -> dict | None:
             return {"key": "always_answer", "add": who}
     elif rule == "automatic" and who and who not in found["read_automatic"]:
         return {"key": "read_automatic", "add": who}
+    elif rule == "opinion" and (message.body or "").strip():
+        example = (message.body or "").strip()[:300].lower()
+        if example not in found["not_opinions"]:
+            return {"key": "not_opinions", "add": example}
     return None
 
 
@@ -191,6 +199,9 @@ def describe(change: dict) -> str:
                 else _t("From now on, a short message that only says “{0}” is set aside.", change.get("add", "")))
     if key == "max_length":
         return _t("From now on, only messages shorter than {0} characters can be set aside.", change.get("value"))
+    if key == "not_opinions":
+        return (_t("From now on, a reply to the opinion email like this one is read as a question, not as an opinion.") if "add" in change
+                else _t("A reply like this one to the opinion email may be read as an opinion again."))
     return ""
 
 
@@ -202,7 +213,8 @@ def apply(db: Session, change: dict | None, *, said: str = "", message_id: str |
     key = change["key"]
     before = found[key]
     if "add" in change:
-        after = sorted(set(before) | {str(change["add"]).strip().lower()}) if key != "thanks_words" else before + [str(change["add"]).strip().lower()]
+        after = (before + [str(change["add"]).strip().lower()] if key in ("thanks_words", "not_opinions")
+                 else sorted(set(before) | {str(change["add"]).strip().lower()}))
     elif "remove" in change:
         after = [item for item in before if item != str(change["remove"]).strip().lower()]
     else:
@@ -251,12 +263,17 @@ def needs_answer(db: Session, message, *, said: str = "", by: str | None = None,
     from app.models.email_thread import EmailThread
     from app.services import email_assistant
 
+    from app.services import program_feedback
+
     found = rules(db)
     change = apply(db, proposal(message, found), said=said, message_id=message.id, by=by) if learn else None
     why = reason_of(message)
-    message.set_aside = json.dumps({**why, "reopened": True}, ensure_ascii=False)
+    message.set_aside = json.dumps({**why, "reopened": True, **({"by": "system"} if by == "system" else {})}, ensure_ascii=False)
     thread = db.get(EmailThread, message.thread_id)
-    if why["rule"] in ("thanks", "automatic") and thread is not None:
+    if why["rule"] == "opinion":
+        # It was not an opinion: taken back from the reviews (stars, mood, themes, the dashboard), and read as a question.
+        program_feedback.withdraw(db, message)
+    if why["rule"] in ("thanks", "automatic", "opinion") and thread is not None:
         # Read again by the assistant: this time it prepares an answer, and the admin reads it before it goes.
         message.status, message.requires_admin, message.suggested_reply, message.escalation_reason = "processing", False, None, None
         thread.status, thread.needs_admin = "processing", False
@@ -267,6 +284,44 @@ def needs_answer(db: Session, message, *, said: str = "", by: str | None = None,
         email_assistant._ask_admin(db, thread, message, message.candidate, "You said this message needs an answer.", None)
     db.commit()
     return {"change": change, "how": "you"}
+
+
+def read_again(db: Session, days: int = READ_AGAIN_DAYS) -> dict:
+    """The system reads its own past decisions again with what it knows now (the rules as changed, the examples the
+    admin gave, a better reading of replies to the opinion email) and corrects itself: a message it set aside that asks
+    something comes back to the admin with an answer prepared (never sent alone), and an opinion that was a question is
+    taken back from the reviews. Returns {"messages": [...], "opinions": n}."""
+    from app.models.feedback import CandidateFeedback
+    from app.services import email_assistant, program_feedback
+    from app.services.notification_service import create_notification
+
+    found = rules(db)
+    brought: list = []
+    for message in set_aside_messages(db, days=days, limit=400):
+        why = reason_of(message)
+        if why.get("reopened") or why["rule"] not in ("opinion", "thanks"):
+            continue
+        if why["rule"] == "opinion":
+            wrong = program_feedback.reading_of(db, message.body) == "question"
+        else:
+            analysis = email_assistant.analyse(message.subject or "", message.body or "", found)
+            wrong = analysis["needs_reply"] or always_answered(found, message)
+        if wrong:
+            needs_answer(db, message, said="Read again by the system", by="system", learn=False)
+            brought.append(message)
+    taken_back = 0
+    for row in db.query(CandidateFeedback).filter(CandidateFeedback.source == program_feedback.SOURCE, CandidateFeedback.status == "received").all():
+        data = program_feedback._payload(row)
+        if data.get("channel") == "email" and row.comment and program_feedback.reading_of(db, row.comment) == "question":
+            program_feedback.withdraw(db, row=row)          # an opinion that was a question, whatever became of its message
+            taken_back += 1
+    if brought or taken_back:
+        create_notification(db, title=_t("The system corrected itself"),
+                            message=_t("Reading its past decisions again: {0} message(s) it had set aside need an answer, {1} opinion(s) were questions.",
+                                       len(brought), taken_back),
+                            category="CANDIDATE_EMAIL", action_url="/inbox?filter=todo")
+    db.commit()
+    return {"messages": brought, "opinions": taken_back}
 
 
 def set_aside_messages(db: Session, days: int = 60, limit: int = 40) -> list:
@@ -283,6 +338,10 @@ def set_aside_messages(db: Session, days: int = 60, limit: int = 40) -> list:
 # Talking about it
 # ------------------------------------------------------------------
 
+_NOT_OPINION = re.compile(r"(?:not|pas|isn'?t|n'est pas)\W+(?:\w+\W+){0,2}(?:an? |un |une )?(?:opinion|avis|review|feedback)|"
+                          r"(?:it'?s|c'est|c est) (?:une |a )?question|ماشي رأي|ليس رأيا|سؤال", re.I)
+_AGAIN = re.compile(r"\b(read|re-?read|relis|relire|reli[st]|revois|revoir|check)\b.{0,40}\b(again|à nouveau|de nouveau|set aside|mis(?:es)? de c[ôo]t[ée]|"
+                    r"d[ée]cisions?|messages|avis|opinions?)\b|corrige[- ]toi|correct yourself", re.I)
 _UNDO = re.compile(r"\b(undo|annuler?|annulez|annule|reviens|revenir|remets?|cancel)\b|تراجع|ألغ|الغ|\bbatel\b|\brajja3\b", re.I)
 _SHOW = re.compile(r"\b(rules?|r[eè]gles?|param[eè]tres?|settings?|parameters?)\b|القواعد|الإعدادات|القوانين", re.I)
 _WHY = re.compile(r"\b(why|pourquoi|pq|pk|reason|raison|explain|explique[rz]?)\b|علاش|لماذا|لاش|\b3l[ae]?ch\b|\b3leh\b", re.I)
@@ -300,7 +359,8 @@ _ABOUT = re.compile(r"set aside|mis(es)? de c[ôo]t[ée]|sans r[ée]ponse|no ans
                     r"n'a pas besoin de r[ée]ponse|pas besoin de r[ée]pon|"
                     r"(message|email|mail|e-mail)s? (de|from|of|d') ?[\w'’ -]{2,40}? (needs?|needed|requires?|n[ée]cessite|demande|m[ée]rite|doit avoir|devait avoir) (an? |une )?(answer|reply|response|r[ée]ponse)|"
                     r"(why|pourquoi|علاش|3lech)\b.{0,40}\b(not|pas|didn'?t|n'as|n'a|ma|mech)\b.{0,25}(answer|repl|r[ée]pon|jaweb)|"
-                    r"بدون رد|ما يحتاجش رد|ما تحتاجش رد", re.I)
+                    r"بدون رد|ما يحتاجش رد|ما تحتاجش رد|"
+                    r"(?:not|pas|n'est pas)\W+(?:\w+\W+){0,2}(?:an? |un |une )?(?:opinion|avis|review)|relis les messages|read (?:them|the set-aside messages) again|corrige[- ]toi|correct yourself", re.I)
 
 
 def wants(text: str) -> bool:
@@ -334,6 +394,17 @@ def talk(db: Session, text: str, *, message=None, by: str | None = None) -> dict
         db.commit()
         return {"reply": reply, "changed": changed["text"] if changed else None, "reload": reload}
 
+    if _AGAIN.search(said) and message is None:
+        result = read_again(db)
+        return done(_t("Read again with what I learnt: {0} message(s) I had set aside need an answer (they wait for you, with an answer prepared), and {1} opinion(s) were questions (taken back from the reviews).",
+                       len(result["messages"]), result["opinions"]),
+                    {"text": _t("The system corrected itself.")} if result["messages"] or result["opinions"] else None, bool(result["messages"]))
+    if message is not None and _NOT_OPINION.search(said) and reason_of(message)["rule"] == "opinion" and message.status == "no_reply":
+        result = needs_answer(db, message, said=said, by=by)
+        reply = _t("Done: {0}'s message is read as a question; the opinion it was taken for is taken back from the reviews, and it comes back to you with an answer prepared.", who)
+        if result["change"]:
+            reply += " " + result["change"]["text"] + " " + _t("Say “undo” to put it back.")
+        return done(reply, result["change"] or {"text": _t("Taken back from the reviews.")}, True)
     if _UNDO.search(said):
         last = undo(db)
         if last is None:

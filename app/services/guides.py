@@ -128,7 +128,7 @@ _PAGES.update({
         ("bi-calendar-week", "The plan", "what to post, and when", "/social#plan"),
         ("bi-fire", "What is trending", "counted from the articles", "/social#trends"),
         ("bi-camera-reels", "Make it", "posts, stories, videos with music", "/social#create"),
-        ("bi-graph-up", "How it did", "each post's engagement", "/social#engagement"),
+        ("bi-clock-history", "When to post", "when most of your people are there", "/social#timing"),
     ),
     "/inbox/team": _guide(
         "team_chat", "team", "Talking with your team",

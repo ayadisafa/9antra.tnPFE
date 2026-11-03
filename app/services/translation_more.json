@@ -1103,6 +1103,14 @@
 "Une question comme les gens la posent, et la réponse à donner.",
 "سؤال كما يطرحه الناس، والإجابة الواجب تقديمها."
 ],
+"A question is not an opinion": [
+"Une question n'est pas un avis",
+"السؤال ليس رأيا"
+],
+"A question, read as an opinion": [
+"Une question, lue comme un avis",
+"سؤال قُرئ كرأي"
+],
 "A reading by fixed criteria: length, how it is said, what it means, how it stands out, what it fits": [
 "Une lecture selon des critères fixes : longueur, prononciation, sens, originalité, adéquation",
 "قراءة حسب معايير ثابتة: الطول، النطق، المعنى، التميّز، الملاءمة"
@@ -1126,6 +1134,14 @@
 "A reminder you plan shows here until it goes.": [
 "Un rappel que vous programmez s'affiche ici jusqu'à son départ.",
 "التذكير الذي تبرمجه يظهر هنا حتى يُرسل."
+],
+"A reply like this one to the opinion email may be read as an opinion again.": [
+"Une réponse comme celle-ci à l'email d'avis peut de nouveau être lue comme un avis.",
+"يمكن من جديد أن يُقرأ رد مماثل لهذا على رسالة طلب الرأي كرأي."
+],
+"A reply to the “what did you think?” email that asks something is read as a question, not kept as a review; with both, the opinion is kept and the question answered.": [
+"Une réponse à l'email « qu'en avez-vous pensé ? » qui demande quelque chose est lue comme une question, pas gardée comme un avis ; avec les deux, l'avis est gardé et la question reçoit une réponse.",
+"الرد على رسالة «ما رأيك؟» الذي يطلب شيئا يُقرأ كسؤال، ولا يُحفظ كرأي؛ وإن جمع الاثنين يُحفظ الرأي ويُجاب عن السؤال."
 ],
 "A request comes": [
 "Une demande arrive",
@@ -2654,6 +2670,10 @@
 "At the end of each program": [
 "À la fin de chaque formation",
 "في نهاية كل برنامج"
+],
+"At the moments your people are most there.": [
+"Aux moments où vos gens sont le plus là.",
+"في الأوقات التي يكون فيها جمهورك حاضرا أكثر."
 ],
 "At the top, “Messages go by”: Let the system choose, Email, WhatsApp or SMS.": [
 "En haut, « Les messages passent par » : Laisser le système choisir, Email, WhatsApp ou SMS.",
@@ -5403,6 +5423,10 @@
 "Chaque idée de vos données en image (1:1 ou 9:16) et en texte avec hashtags, en français, anglais ou arabe.",
 "كل فكرة من سجلاتك كصورة (1:1 أو 9:16) ونص مع وسوم، بالفرنسية أو الإنجليزية أو العربية."
 ],
+"Each idea from your records as a picture (1:1 or 9:16) and a text with hashtags, in Tunisian first, or in French, English or Arabic.": [
+"Chaque idée de vos données en image (1:1 ou 9:16) avec un texte et ses hashtags, en tunisien d'abord, ou en français, en anglais ou en arabe.",
+"كل فكرة من بياناتك في صورة (1:1 أو 9:16) مع نص ووسوم، بالتونسي أولا، أو بالفرنسية أو الإنجليزية أو العربية."
+],
 "Each line shows its numbers and sources; “Read again now” refreshes them.": [
 "Chaque ligne montre ses chiffres et ses sources ; « Relire maintenant » les actualise.",
 "كل سطر يُظهر أرقامه ومصادره؛ «أعد القراءة الآن» يحدّثها."
@@ -5922,6 +5946,10 @@
 "Every 24 hours": [
 "Toutes les 24 heures",
 "كل 24 ساعة"
+],
+"Every 30 minutes, and when you ask, the system reads what it set aside and the reviews it kept with what it learnt since: what asks something comes back to you, and an opinion that was a question leaves the reviews. Nothing is sent alone.": [
+"Toutes les 30 minutes, et quand vous le demandez, le système relit ce qu'il a mis de côté et les avis qu'il a gardés avec ce qu'il a appris depuis : ce qui demande quelque chose vous revient, et un avis qui était une question quitte les avis. Rien n'est envoyé tout seul.",
+"كل 30 دقيقة، وعندما تطلب، يعيد النظام قراءة ما وضعه جانبا والآراء التي حفظها بما تعلّمه منذ ذلك: ما يطلب شيئا يعود إليك، والرأي الذي كان سؤالا يخرج من الآراء. لا يُرسل شيء وحده."
 ],
 "Every 4 weeks": [
 "Toutes les 4 semaines",
@@ -6998,6 +7026,10 @@
 "From each message they sent (email, WhatsApp, SMS), read with word lists in French, English, Tunisian and Arabic.": [
 "À partir de chaque message qu'il a envoyé (email, WhatsApp, SMS), lu avec des listes de mots en français, anglais, tunisien et arabe.",
 "من كل رسالة أرسلها (بريد، WhatsApp، SMS)، مقروءة بقوائم كلمات بالفرنسية والإنجليزية والتونسية والعربية."
+],
+"From now on, a reply to the opinion email like this one is read as a question, not as an opinion.": [
+"Désormais, une réponse à l'email d'avis comme celle-ci est lue comme une question, pas comme un avis.",
+"من الآن، يُقرأ الرد على رسالة طلب الرأي المماثل لهذا كسؤال، لا كرأي."
 ],
 "From now on, a short message that starts with a word of thanks and asks nothing is set aside again.": [
 "Désormais, un message court qui commence par un remerciement et ne demande rien est de nouveau mis de côté.",
@@ -8207,6 +8239,10 @@
 "Elle ne peut pas encore démarrer",
 "لا يمكنه البدء بعد"
 ],
+"It corrects itself: what asks something comes back to you, and an opinion that was a question leaves the reviews. It also does it by itself every 30 minutes.": [
+"Il se corrige : ce qui demande quelque chose vous revient, et un avis qui était une question quitte les avis. Il le fait aussi tout seul toutes les 30 minutes.",
+"يصحّح نفسه: ما يطلب شيئا يعود إليك، والرأي الذي كان سؤالا يخرج من الآراء. ويفعل ذلك أيضا وحده كل 30 دقيقة."
+],
 "It could not be read last time.": [
 "Il n'a pas pu être lu la dernière fois.",
 "تعذّرت قراءته في المرة الأخيرة."
@@ -8307,6 +8343,10 @@
 "Cela ouvre les messages de votre téléphone, déjà écrits : cela part de votre numéro",
 "يفتح رسائل هاتفك والنص مكتوب: تُرسل من رقمك"
 ],
+"It reads its own decisions again": [
+"Il relit ses propres décisions",
+"يعيد قراءة قراراته"
+],
 "It reminds by itself": [
 "Elle rappelle toute seule",
 "يذكّر وحده"
@@ -8366,6 +8406,10 @@
 "It would be a new program.": [
 "Ce serait une nouvelle formation.",
 "سيكون برنامجا جديدا."
+],
+"It's a question, not an opinion": [
+"C'est une question, pas un avis",
+"إنه سؤال، وليس رأيا"
 ],
 "Item #": [
 "Élément n°",
@@ -9150,6 +9194,10 @@
 "Made by the assistant": [
 "Faites par l'assistant",
 "من المساعد"
+],
+"Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text and post it on your networks.": [
+"Faites à partir de vos données : les chiffres, ce que d'anciens candidats ont dit en public, ce que vous avez fait des avis, les prochaines sessions. Téléchargez l'image, copiez le texte et publiez-la sur vos réseaux.",
+"مصنوعة من بياناتك: الأرقام، وما قاله المترشحون السابقون علنًا، وما فعلته بالآراء، والدورات القادمة. نزّل الصورة، وانسخ النص، وانشرها على شبكاتك."
 ],
 "Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text, post it, then tell the page so its numbers can be followed.": [
 "Faites à partir de vos données : les chiffres, ce que d'anciens candidats ont dit en public, ce que vous avez fait de leurs avis, les prochaines sessions. Téléchargez l'image, copiez le texte, publiez, puis dites-le à la page pour suivre ses chiffres.",
@@ -10302,6 +10350,10 @@
 "No message yet. Write to the centre below: a question, an absence, anything.": [
 "Pas encore de message. Écrivez au centre ci-dessous : une question, une absence, n'importe quoi.",
 "لا توجد رسالة بعد. اكتب للمركز أدناه: سؤال، غياب، أي شيء."
+],
+"No more following the posts' numbers": [
+"Plus de suivi des chiffres des publications",
+"لا متابعة لأرقام المنشورات بعد الآن"
 ],
 "No music": [
 "Sans musique",
@@ -12767,6 +12819,10 @@
 "Publications et stories, prêtes à partager",
 "منشورات وقصص جاهزة للمشاركة"
 ],
+"Posts in Tunisian": [
+"Les publications en tunisien",
+"المنشورات بالتونسي"
+],
 "Posts redesigned": [
 "Publications redessinées",
 "منشورات بتصميم جديد"
@@ -12774,6 +12830,18 @@
 "Posts, stories and videos from your own figures and feedback, what you did about feedback, and how each post did.": [
 "Publications, stories et vidéos à partir de vos chiffres et des avis, ce que vous avez fait des avis, et comment chaque publication a marché.",
 "منشورات وقصص وفيديوهات من أرقامك والآراء، ما فعلته بالآراء، وكيف نجح كل منشور."
+],
+"Posts, stories and videos in Tunisian": [
+"Publications, stories et vidéos en tunisien",
+"منشورات وقصص وفيديوهات بالتونسي"
+],
+"Posts, stories and videos in Tunisian from your own figures and feedback, what you did about feedback, what is trending and when to post.": [
+"Publications, stories et vidéos en tunisien à partir de vos chiffres et de vos avis, ce que vous avez fait des avis, ce qui est tendance et quand publier.",
+"منشورات وقصص وفيديوهات بالتونسي من أرقامك وآرائك، وما فعلته بالآراء، وما الرائج ومتى تنشر."
+],
+"Posts, stories and videos in Tunisian, made from your own figures and what people said, ready to share; what you did about their feedback; what is trending and when to post.": [
+"Publications, stories et vidéos en tunisien, faites à partir de vos propres chiffres et de ce que les gens ont dit, prêtes à partager ; ce que vous avez fait de leurs avis ; ce qui est tendance et quand publier.",
+"منشورات وقصص وفيديوهات بالتونسي، مصنوعة من أرقامك وما قاله الناس، جاهزة للمشاركة؛ وما فعلته بآرائهم؛ وما الرائج ومتى تنشر."
 ],
 "Posts, stories and videos made from your own figures and what people said, ready to share; what you did about their feedback; and how each post did.": [
 "Publications, stories et vidéos faites à partir de vos propres chiffres et de ce que les gens ont dit, prêtes à partager ; ce que vous avez fait de leurs avis ; et comment chaque publication a marché.",
@@ -13499,6 +13567,10 @@
 "Lire un chèque, un virement ou un reçu",
 "قراءة شيك أو تحويل أو وصل"
 ],
+"Read again by the system": [
+"Relu par le système",
+"أعاد النظام قراءته"
+],
 "Read again now": [
 "Relire maintenant",
 "أعد القراءة الآن"
@@ -13506,6 +13578,10 @@
 "Read again.": [
 "Relu.",
 "أُعيدت القراءة."
+],
+"Read again: every decision still holds.": [
+"Relu : chaque décision tient toujours.",
+"أُعيدت القراءة: كل قرار ما زال قائما."
 ],
 "Read and answer": [
 "Lire et répondre",
@@ -13598,6 +13674,10 @@
 "Read them": [
 "Les lire",
 "قراءتها"
+],
+"Read them again with what the system learnt": [
+"Les relire avec ce que le système a appris",
+"أعد قراءتها بما تعلّمه النظام"
 ],
 "Read them all": [
 "Tous les lire",
@@ -16255,6 +16335,10 @@
 "Prendre l'icône de Facebook maintenant",
 "خذ الأيقونة من Facebook الآن"
 ],
+"Taken back from the reviews.": [
+"Retiré des avis.",
+"سُحب من الآراء."
+],
 "Takes part": [
 "Participe",
 "يشارك"
@@ -17791,6 +17875,10 @@
 "Le numéro du chèque n'a pas pu être lu.",
 "تعذّرت قراءة رقم الشيك."
 ],
+"The numbers of your posts are not followed here any more: Facebook, Instagram and TikTok show them in their own statistics. Here: what is trending, when to post, and this week's plan.": [
+"Les chiffres de vos publications ne sont plus suivis ici : Facebook, Instagram et TikTok les montrent dans leurs propres statistiques. Ici : ce qui est tendance, quand publier, et le plan de la semaine.",
+"لم تعد أرقام منشوراتك تُتابع هنا: فيسبوك وإنستغرام وتيك توك تعرضها في إحصائياتها الخاصة. هنا: ما الرائج، ومتى تنشر، وخطة الأسبوع."
+],
 "The offer was removed.": [
 "L'offre a été retirée.",
 "أُزيل العرض."
@@ -18394,6 +18482,18 @@
 "The system cannot": [
 "Le système ne peut pas",
 "النظام لا يستطيع"
+],
+"The system corrected itself": [
+"Le système s'est corrigé",
+"صحّح النظام نفسه"
+],
+"The system corrected itself.": [
+"Le système s'est corrigé.",
+"صحّح النظام نفسه."
+],
+"The system corrects itself": [
+"Le système se corrige tout seul",
+"النظام يصحّح نفسه"
 ],
 "The system is reading the course and writing questions. On this computer it takes a few minutes per file; the questions appear here by themselves.": [
 "Le système lit le cours et écrit des questions. Sur cet ordinateur cela prend quelques minutes par fichier ; les questions apparaissent ici d'elles-mêmes.",
@@ -20823,6 +20923,10 @@
 "Qu'est-ce qui est tendance ?",
 "ما الرائج؟"
 ],
+"What is trendy in posts, when to post, this week's plan, and advice.": [
+"Ce qui est tendance dans les publications, quand publier, le plan de la semaine, et des conseils.",
+"الرائج في المنشورات، ومتى تنشر، وخطة الأسبوع، ونصائح."
+],
 "What is trendy in posts, when to post, this week's plan, how your posts did, and advice.": [
 "Ce qui est tendance dans les publications, quand publier, le plan de la semaine, comment vos publications ont marché, et des conseils.",
 "الرائج في المنشورات، ومتى تنشر، وخطة الأسبوع، وكيف نجحت منشوراتك، ونصائح."
@@ -22327,6 +22431,10 @@
 "Écrite ou corrigée par vous.",
 "كتبته أو صحّحته أنت."
 ],
+"Written the way Tunisians write on social media (“Sajjel tawa”, “9oultou, 3malna”, “Nja7kom howa fakhrna”), first; French, English and Arabic stay one click away.": [
+"Écrites comme les Tunisiens écrivent sur les réseaux sociaux (« Sajjel tawa », « 9oultou, 3malna », « Nja7kom howa fakhrna »), en premier ; le français, l'anglais et l'arabe restent à un clic.",
+"مكتوبة كما يكتب التونسيون في وسائل التواصل («Sajjel tawa»، «9oultou, 3malna»، «Nja7kom howa fakhrna»)، أولا؛ وتبقى الفرنسية والإنجليزية والعربية على بعد نقرة."
+],
 "Wrong": [
 "Fausse",
 "خاطئة"
@@ -22650,6 +22758,10 @@
 "Your conversation with the centre, and candidates' questions about your course.": [
 "Votre conversation avec le centre, et les questions des candidats sur votre cours.",
 "محادثتك مع المركز، وأسئلة المترشحين عن درسك."
+],
+"Your correction corrects every analysis": [
+"Votre correction corrige chaque analyse",
+"تصحيحك يصحّح كل تحليل"
 ],
 "Your current password is not right.": [
 "Votre mot de passe actuel n'est pas bon.",
@@ -26395,6 +26507,10 @@
 "puis par le moyen suivant quand l'un ne marche pas.",
 "ثم بالوسيلة التالية عندما لا تنجح إحداها."
 ],
+"then what posts look like this year.": [
+"puis à quoi ressemblent les publications cette année.",
+"ثم كيف تبدو المنشورات هذا العام."
+],
 "then “Generate token”.": [
 "puis « Generate token ».",
 "ثم «Generate token»."
@@ -26823,6 +26939,10 @@
 "quand un premier candidat paie",
 "عندما يدفع أول مترشح"
 ],
+"when most of your people are there": [
+"quand la plupart de vos gens sont là",
+"عندما يكون معظم جمهورك حاضرا"
+],
 "where a feeling showed.": [
 "où un sentiment s'est montré.",
 "ظهر فيها شعور."
@@ -27131,6 +27251,10 @@
 "« Comment marche cette page », affichée et cachée à nouveau",
 "«كيف تعمل هذه الصفحة»، تُظهَر وتُخفى من جديد"
 ],
+"“How your posts do” and every button to follow a post's numbers are gone: the networks show them in their own statistics. The page keeps what is trending, when to post and this week's plan.": [
+"« Comment marchent vos publications » et chaque bouton pour suivre les chiffres d'une publication ont disparu : les réseaux les montrent dans leurs propres statistiques. La page garde ce qui est tendance, quand publier et le plan de la semaine.",
+"اختفى «كيف تنجح منشوراتك» وكل زر لمتابعة أرقام منشور: الشبكات تعرضها في إحصائياتها الخاصة. وتحتفظ الصفحة بما هو رائج، ومتى تنشر، وخطة الأسبوع."
+],
 "“Hub”: where people meet, a community.": [
 "« Hub » : là où les gens se rencontrent, une communauté.",
 "«Hub»: حيث يلتقي الناس، مجتمع."
@@ -27142,6 +27266,10 @@
 "“It needs an answer”, “why?”, “always answer them”, “undo”…": [
 "« Il faut répondre », « pourquoi ? », « toujours lui répondre », « annuler »…",
 "«يحتاج ردا»، «لماذا؟»، «أجب عليه دائما»، «تراجع»…"
+],
+"“It's a question, not an opinion”: the review it was taken for leaves the stars, the mood, the themes and the dashboard, the message comes back with an answer prepared, and replies like it are read as questions from then on. “Undo” puts it back.": [
+"« C'est une question, pas un avis » : l'avis pour lequel il avait été pris quitte les étoiles, l'humeur, les thèmes et le tableau de bord, le message revient avec une réponse préparée, et les réponses semblables sont lues comme des questions ensuite. « Annuler » remet comme avant.",
+"«إنه سؤال، وليس رأيا»: الرأي الذي اعتُبر عليه يخرج من النجوم والمزاج والمواضيع ولوحة القيادة، وتعود الرسالة مع رد جاهز، وتُقرأ الردود المماثلة كأسئلة بعد ذلك. «تراجع» يعيد الأمر كما كان."
 ],
 "“Labs”: places to try and build, practical.": [
 "« Labs » : des lieux pour essayer et construire, concrets.",

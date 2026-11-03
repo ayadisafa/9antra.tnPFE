@@ -223,12 +223,72 @@ def answer(db: Session, row: CandidateFeedback, *, stars: int | None, words: str
     return row
 
 
-def from_reply(db: Session, registration_id: str | None, body: str) -> CandidateFeedback | None:
-    """A candidate answered the request by email: their reply is their opinion."""
+def from_reply(db: Session, registration_id: str | None, body: str, message_id: str | None = None) -> CandidateFeedback | None:
+    """A candidate answered the request by email: their reply is their opinion (the message it came from is kept, so a
+    reading the admin corrects can be taken back)."""
     row = of_registration(db, registration_id) if registration_id else None
     if row is None or row.status == "received" or not (body or "").strip():
         return None
-    return answer(db, row, stars=stars_in(body), words=body, channel="email")
+    kept = answer(db, row, stars=stars_in(body), words=body, channel="email")
+    if message_id:
+        _keep(kept, from_message=message_id)
+    return kept
+
+
+# A reply to "what did you think?" may be an opinion, a question, or both. Read with words (never the model):
+# what it asks (a question mark, question words, a subject the assistant answers) against what it says of the program
+# (stars, praise or complaint words, what it talks about). The admin's corrections are examples the reading learns from.
+_ASKING = re.compile(r"\?|؟|\b(comment|quand|combien|o[uù]|pourquoi|quel(?:le)?s?|est-ce|puis-je|pouvez|pourriez|peux|how|when|where|what|which|why|can i|could you|"
+                     r"is there|do you|kifech|kifach|win|9adech|wa9tech|chnowa|chnoua)\b|كيف|متى|أين|كم|ماذا|هل", re.I)
+_SAYING = re.compile(r"\b(j'ai (?:bien |beaucoup |vraiment )?(?:aim|ador|appr[ée]ci)\w*|merci (?:pour|de) (?:la|cette|votre) formation|satisfait\w*|recommande\w*|"
+                     r"(?:super|bonne|excellente|tr[eè]s bonne|belle) (?:formation|exp[ée]rience|ambiance)|d[ée]çu\w*|great (?:course|training)|"
+                     r"i (?:liked|loved|enjoyed)|highly recommend|ma (?:fhemt|7abbit)|7abbit|3jebni)\b", re.I)
+_ASKED_SUBJECTS = ("registration", "pricing", "schedule", "payment", "certificate", "location", "course_content", "refund", "cancellation")
+
+
+def reading_of(db: Session | None, text: str) -> str:
+    """"opinion", "question" (it asks something and says nothing of the program), or "both"."""
+    from app.services import email_assistant
+
+    text = (text or "").strip()
+    if not text:
+        return "opinion"
+    analysis = email_assistant.analyse("", text)
+    tone = feedback.analyse(text, stars=stars_in(text))
+    says = bool(stars_in(text) or _SAYING.search(text) or tone["positive"] or tone["negative"] or tone["themes"])
+    # Asking: a question mark or a question word; a subject the assistant answers ("une attestation") only when nothing
+    # in it is an opinion ("les séances trop longues" speaks of the sessions without asking about them).
+    asks = bool(_ASKING.search(text)) or (analysis["intent"] in _ASKED_SUBJECTS and not says)
+    if db is not None and asks:
+        from app.services import reply_rules
+
+        # A reply like one the admin said was a question, not an opinion: a question.
+        words = set(re.findall(r"[^\W\d_]{3,}", text.lower()))
+        for example in reply_rules.rules(db)["not_opinions"]:
+            known = set(re.findall(r"[^\W\d_]{3,}", example.lower()))
+            if words and known and len(words & known) / max(1, len(words | known)) >= 0.5:
+                return "question"
+    if asks and not says:
+        return "question"
+    return "both" if asks else "opinion"
+
+
+def withdraw(db: Session, message=None, row: CandidateFeedback | None = None) -> CandidateFeedback | None:
+    """An opinion that was not one (a question, read as an opinion): taken back. The request goes back to waiting for
+    their real opinion, and nothing of it is counted any more (stars, mood, themes, the dashboard)."""
+    if row is None and message is not None:
+        rows = db.query(CandidateFeedback).filter(CandidateFeedback.source == SOURCE, CandidateFeedback.status == "received",
+                                                  CandidateFeedback.candidate_id == message.candidate_id).all()
+        body = (message.body or "").strip()
+        row = next((item for item in rows if _payload(item).get("from_message") == message.id), None) \
+            or next((item for item in rows if (item.comment or "").strip() == body[:WORDS_LIMIT].strip()), None)
+    if row is None or row.status != "received":
+        return None
+    _keep(row, withdrawn={"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "words": row.comment, "stars": row.rating,
+                          "why": "A question, read as an opinion"}, themes=[], positive=[], negative=[], from_message=None)
+    row.status, row.rating, row.comment, row.sentiment, row.sentiment_score = "asked", None, None, None, None
+    db.flush()
+    return row
 
 
 # ------------------------------------------------------------------

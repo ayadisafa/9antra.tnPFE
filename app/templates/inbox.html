@@ -96,6 +96,8 @@
   .ix-aside-hints button { border:1px solid #e3dcef; background:#fff; border-radius:999px; padding:3px 10px; font-size:.72rem; font-weight:700; color:#5b5670; }
   .ix-aside-hints button:hover { border-color:var(--primary-berry); color:var(--primary-berry); }
   .ix-review-open { display:inline-flex; gap:5px; align-items:center; margin:6px 0 2px; }
+  .ix-read-again { display:flex; flex-direction:column; gap:4px; padding:0 14px 10px; }
+  .ix-read-again span { font-size:.72rem; color:var(--muted); line-height:1.4; }
   .ix-review-chat { margin-left:auto; }
   .ix-sources { font-size: .74rem; color: #5b5470; margin-top: 6px; }
   .ix-sources summary { cursor: pointer; font-weight: 700; color: var(--muted); }
@@ -278,6 +280,12 @@
       <a class="ix-filter {% if key == current_filter %}active{% endif %}" href="/inbox?filter={{ key }}{{ keep }}">{{ label }}{% if counts[key] is defined %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
       {% endfor %}
     </div>
+    {% if current_filter == "aside" %}
+    <form method="post" action="/inbox/rules/read-again" class="ix-read-again">
+      <button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Read them again with what the system learnt</button>
+      <span>It corrects itself: what asks something comes back to you, and an opinion that was a question leaves the reviews. It also does it by itself every 30 minutes.</span>
+    </form>
+    {% endif %}
     {% if categories %}
     <div class="ix-cats" aria-label="What the messages are about">
       <a class="ix-cat {{ 'is-on' if not current_category }}" href="/inbox?filter={{ current_filter }}{{ ('&q=' ~ (search | urlencode)) if search }}"><i class="bi bi-grid"></i>All subjects</a>
@@ -409,7 +417,7 @@
         <div class="ix-msg-foot">
           {% if message.status == "processing" %}<span><i class="bi bi-hourglass-split"></i> The assistant is reading this email</span>
           {% elif message.status == "no_reply" %}<span class="ix-aside-why"><i class="bi bi-moon-stars"></i><b>Set aside</b> {{ item.aside.why if item.aside else "" }}</span>
-            <form method="post" action="/inbox/message/{{ message.id }}/needs-answer" class="m-0"><button class="ix-linkbtn"><i class="bi bi-reply"></i> It needs an answer</button></form>
+            <form method="post" action="/inbox/message/{{ message.id }}/needs-answer" class="m-0"><button class="ix-linkbtn"><i class="bi bi-reply"></i> {% if item.aside and item.aside.rule == "opinion" %}It's a question, not an opinion{% else %}It needs an answer{% endif %}</button></form>
             <button type="button" class="ix-linkbtn" data-aside-talk="{{ message.id }}" data-chat-open="aside-{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-dots"></i> Talk about it</button>
           {% elif message.status == "needs_admin" %}<span class="text-warning-emphasis fw-semibold">Waiting for your answer</span>
           {% elif message.status == "replied" %}<span>Answered {{ message.replied_at | localdt if message.replied_at else "" }}</span>{% endif %}
@@ -428,7 +436,7 @@
             <button class="ui-btn primary" type="submit"><i class="bi bi-send"></i><span class="d-none d-sm-inline">Send</span></button>
           </form>
           <div class="ix-aside-hints">
-            <button type="button" data-chat-say>It needs an answer</button>
+            {% if item.aside and item.aside.rule == "opinion" %}<button type="button" data-chat-say>It's a question, not an opinion</button>{% else %}<button type="button" data-chat-say>It needs an answer</button>{% endif %}
             <button type="button" data-chat-say>Why?</button>
             <button type="button" data-chat-say>Always answer this person</button>
             <button type="button" data-chat-say>Show the rules</button>

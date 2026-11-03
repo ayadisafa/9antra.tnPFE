@@ -24,9 +24,9 @@ from app.database import SessionLocal
 from app.models import Candidate, ClassGroup, ClassStatus, Program, Quiz, Registration, User, UserSession
 from app.models.feedback import CandidateFeedback
 from app.models.registration import PaymentStatus, RegistrationStatus
-from app.models.social import FeedbackAnswer, SocialAsset, SocialPost
+from app.models.social import FeedbackAnswer, SocialAsset
 from app.models.website import WebsiteItem
-from app.services import (access, auth, feedback_hub, program_feedback, social_content, social_engagement, social_images,
+from app.services import (access, auth, feedback_hub, program_feedback, social_content, social_images,
                           social_music, social_video, whats_new)
 
 db = SessionLocal()
@@ -206,36 +206,29 @@ check("video: removed with its file", db.query(SocialAsset).filter(SocialAsset.i
       and not (social_video.folder() / (made.file or "x")).exists())
 
 # ======================================================================
-# G. Engagement
+# G. The posts' numbers are not followed any more; the posts are in Tunisian
 # ======================================================================
-rows = [("facebook", "video", "success", "2026-10-27T18:30", 120, 14, 9, "2.4k"), ("facebook", "video", "listen", "2026-10-28T19:00", 90, 20, 6, "1800"),
-        ("instagram", "post", "testimonial", "2026-10-29T12:00", 45, 2, 0, "1500"), ("facebook", "post", "program", "2026-10-30T12:30", 30, 1, 2, "2000")]
-for platform, kind, topic, when, reactions, comments, shares, views in rows:
-    admin.post("/social/posts", data={"platform": platform, "kind": kind, "topic": topic, "published_at": when, "reactions": reactions,
-                                      "comments": comments, "shares": shares, "views": views})
-posts = db.query(SocialPost).all()
-check("engagement: posts kept with their numbers (“2.4k” read as 2400)", len(posts) == 4 and any(post.views == 2400 for post in posts))
-first = next(post for post in posts if post.views == 2400)
-check("engagement: its rate", social_engagement.rate(first) == round(100 * (120 + 14 + 9) / 2400, 2))
-view = social_engagement.overview(db)
-check("engagement: compared by kind, the best first", view["by_kind"][0]["key"] == "video" and view["by_kind"][0]["average"] > view["by_kind"][-1]["average"])
-check("engagement: advice counted from the numbers", any("engagement of" in item["text"] for item in view["advice"]), [item["text"] for item in view["advice"]])
-check("engagement: a wrong number is refused", "not a number" in where(admin.post("/social/posts", data={"reactions": "lots"})))
-check("engagement: a wrong link is refused", "http" in where(admin.post("/social/posts", data={"link": "javascript:alert(1)"})))
-try:
-    social_engagement.facebook_import(db)
-    refused = False
-except ValueError:
-    refused = True
-check("engagement: Facebook's numbers need the page connected", refused)
-admin.post(f"/social/posts/{first.id}/delete")
-check("engagement: a post removed", db.query(SocialPost).count() == 3)
+page = admin.get("/social").text
+check("no more “How your posts do”, nor any button to follow a post's numbers", 'id="engagement"' not in page and "/social/posts" not in page and "numbers can be followed" not in page
+      and "Follow its numbers" not in page and "I posted it" not in page)
+check("…nor the routes that took them", admin.post("/social/posts", data={"reactions": "1"}).status_code in (404, 405)
+      and admin.post("/social/posts/facebook").status_code in (404, 405))
+tunisian = social_content.ideas(db)
+check("posts are in Tunisian first", tunisian and all(item["lang"] == "tn" for item in tunisian) and social_content.DEFAULT_LANGUAGE == "tn")
+check("…the way Tunisians write them", any("Ija m3ana" in item["caption"] or "Sajjel" in item["caption"] or "sajjel" in item["caption"] for item in tunisian)
+      and social_content.words("tn")["cta"] == "Sajjel tawa")
+check("the page opens in Tunisian, the other languages one click away", 'value="tn" checked' in page and "Tounsi" in page and "Français" in page)
+video = social_video.make(db, kind="listen", fmt="post")
+check("videos in Tunisian too", json.loads(video.spec)["lang"] == "tn" and social_video._INTRO["listen"]["tn"][0] == "TEHKIW, NESM3OU")
+from app.services import translations
+
+check("the Tunisian words are never translated with the page", not ({"Sajjel tawa", "Nja7kom howa fakhrna", "YENJ7OU M3ANA"} & set(translations.sources(refresh=True))))
 
 # ======================================================================
 # H. The page, who may open it, What's new
 # ======================================================================
 page = admin.get("/social")
-check("page: opens with its four parts", page.status_code == 200 and all(f'id="{part}"' in page.text for part in ("create", "videos", "listen", "engagement")))
+check("page: opens with its parts", page.status_code == 200 and all(f'id="{part}"' in page.text for part in ("plan", "trends", "timing", "create", "videos", "listen")))
 check("page: in the menu", 'href="/social"' in admin.get("/").text)
 check("page: in Arabic and in the light look", admin.get("/social?lang=ar&look=light").status_code == 200)
 auth.create_user(db, email="sam.social@example.com", name="Sam", password="sam-social-12", role=auth.STAFF)
@@ -249,7 +242,8 @@ sam.permissions = access.dump({"social": "view"})
 db.commit()
 check("access: given to look, opened, nothing changed", staff.get("/social").status_code == 200
       and staff.post("/social/listen", data={"you_said": "Un essai de l'équipe"}).status_code in (303, 403) and db.query(FeedbackAnswer).count() == 0)
-check("what's new: this release is told", any(release["title"].startswith("Social media") for release in whats_new.RELEASES[:8]))
+check("what's new: this release is told", any(release["title"].startswith("Social media") for release in whats_new.RELEASES))
+check("what's new: the posts in Tunisian come first", whats_new.latest()["key"] == "2026-11-02d")
 
 db.close()
 check.done()

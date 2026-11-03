@@ -1309,12 +1309,19 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         .order_by(CandidateEmail.received_at.desc())
         .first()
     )
-    if asked_opinion is not None:
-        # They answer the "what did you think?" email: this is their opinion, not a question.
+    if asked_opinion is not None and not reopened:
+        # They answer the "what did you think?" email: read first whether it is their opinion, a question, or both
+        # (a question is never kept as an opinion; with both, the opinion is kept and the question answered below).
         from app.services import program_feedback
 
-        opinion = program_feedback.from_reply(db, asked_opinion.registration_id, message.body)
-        if opinion is not None:
+        reading = program_feedback.reading_of(db, message.body)
+        opinion = (program_feedback.from_reply(db, asked_opinion.registration_id, message.body, message_id=message.id)
+                   if reading != "question" else None)
+        if opinion is not None and reading == "both":
+            message.analysis = "Their opinion was kept with the class; the question in it is answered."
+        elif reading == "question":
+            message.analysis = "A reply to the opinion email that asks something: read as a question, not as an opinion."
+        if opinion is not None and reading == "opinion":
             message.status = "no_reply"
             message.requires_admin = False
             message.intent = "other"
@@ -1500,8 +1507,13 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
     reason = found["blocker"]
     if reopened:
         # The admin brought it back: it always comes to them, with what the assistant could prepare.
-        reason = (("You said this message needs an answer. " + reason) if reason
-                  else "You said this message needs an answer: here is the one prepared, to read before it goes.")
+        if reply_rules.reason_of(message).get("by") == "system":
+            # The system read its own decision again (what it learnt since) and found it asks something.
+            reason = (("Read again by the system: it asks something, so it needs an answer. " + reason) if reason
+                      else "Read again by the system: it asks something. Here is the answer prepared, to read before it goes.")
+        else:
+            reason = (("You said this message needs an answer. " + reason) if reason
+                      else "You said this message needs an answer: here is the one prepared, to read before it goes.")
     if reason is None and feelings["main"] == "frustrated":
         reason = ("The candidate seems frustrated (" + ", ".join(feelings["emotions"][0]["words"][:3])
                   + "): a person should answer. The draft is ready.")

@@ -2810,5 +2810,53 @@
 "T-shirt": [
 "T-shirt",
 "تي شيرت"
+],
+"Read again: every decision still holds.": [
+"Relu : chaque décision tient toujours.",
+"أُعيدت القراءة: كل قرار ما زال قائما."
+],
+"Read again with what it learnt: {0} message(s) it had set aside need an answer, {1} opinion(s) were questions.": [
+"Relu avec ce qu'il a appris : {0} message(s) qu'il avait mis de côté demandent une réponse, {1} avis étaient des questions.",
+"أُعيدت القراءة بما تعلّمه: {0} رسالة(رسائل) وضعها جانبا تحتاج ردا، و{1} رأي(آراء) كانت أسئلة."
+],
+"From now on, a reply to the opinion email like this one is read as a question, not as an opinion.": [
+"Désormais, une réponse à l'email d'avis comme celle-ci est lue comme une question, pas comme un avis.",
+"من الآن، يُقرأ الرد على رسالة طلب الرأي المماثل لهذا كسؤال، لا كرأي."
+],
+"A reply like this one to the opinion email may be read as an opinion again.": [
+"Une réponse comme celle-ci à l'email d'avis peut de nouveau être lue comme un avis.",
+"يمكن من جديد أن يُقرأ رد مماثل لهذا على رسالة طلب الرأي كرأي."
+],
+"The system corrected itself": [
+"Le système s'est corrigé",
+"صحّح النظام نفسه"
+],
+"Reading its past decisions again: {0} message(s) it had set aside need an answer, {1} opinion(s) were questions.": [
+"En relisant ses décisions passées : {0} message(s) qu'il avait mis de côté demandent une réponse, {1} avis étaient des questions.",
+"عند إعادة قراءة قراراته السابقة: {0} رسالة(رسائل) وضعها جانبا تحتاج ردا، و{1} رأي(آراء) كانت أسئلة."
+],
+"Read again with what I learnt: {0} message(s) I had set aside need an answer (they wait for you, with an answer prepared), and {1} opinion(s) were questions (taken back from the reviews).": [
+"Relu avec ce que j'ai appris : {0} message(s) que j'avais mis de côté demandent une réponse (ils vous attendent, avec une réponse préparée), et {1} avis étaient des questions (retirés des avis).",
+"أعدت القراءة بما تعلّمته: {0} رسالة(رسائل) وضعتها جانبا تحتاج ردا (تنتظرك، مع رد جاهز)، و{1} رأي(آراء) كانت أسئلة (سُحبت من الآراء)."
+],
+"The system corrected itself.": [
+"Le système s'est corrigé.",
+"صحّح النظام نفسه."
+],
+"Done: {0}'s message is read as a question; the opinion it was taken for is taken back from the reviews, and it comes back to you with an answer prepared.": [
+"C'est fait : le message de {0} est lu comme une question ; l'avis pour lequel il avait été pris est retiré des avis, et il vous revient avec une réponse préparée.",
+"تم: رسالة {0} تُقرأ كسؤال؛ والرأي الذي اعتُبرت عليه سُحب من الآراء، وتعود إليك مع رد جاهز."
+],
+"Taken back from the reviews.": [
+"Retiré des avis.",
+"سُحب من الآراء."
+],
+"At the moments your people are most there.": [
+"Aux moments où vos gens sont le plus là.",
+"في الأوقات التي يكون فيها جمهورك حاضرا أكثر."
+],
+"The numbers of your posts are not followed here any more: Facebook, Instagram and TikTok show them in their own statistics. Here: what is trending, when to post, and this week's plan.": [
+"Les chiffres de vos publications ne sont plus suivis ici : Facebook, Instagram et TikTok les montrent dans leurs propres statistiques. Ici : ce qui est tendance, quand publier, et le plan de la semaine.",
+"لم تعد أرقام منشوراتك تُتابع هنا: فيسبوك وإنستغرام وتيك توك تعرضها في إحصائياتها الخاصة. هنا: ما الرائج، ومتى تنشر، وخطة الأسبوع."
 ]
 }

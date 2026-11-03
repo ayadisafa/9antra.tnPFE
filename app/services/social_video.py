@@ -21,7 +21,7 @@ from PIL import Image, ImageDraw
 from sqlalchemy.orm import Session
 
 from app.models.social import SocialAsset
-from app.services import social_content, social_images, social_music
+from app.services import social_content, social_images, social_music, social_tn
 
 logger = logging.getLogger(__name__)
 FOLDER = Path(os.getenv("SOCIAL_DIR") or "data/social")
@@ -43,6 +43,8 @@ _INTRO = {
              "ar": ("معا نذهب أبعد", "نجاحكم وصوتكم")},
     "program": {"fr": ("BIENTÔT", "Les prochaines sessions"), "en": ("COMING SOON", "The next sessions"), "ar": ("قريبا", "الدورات القادمة")},
 }
+for _kind, _titles in social_tn.INTRO.items():          # Tunisian: kept apart, never translated
+    _INTRO[_kind]["tn"] = _titles
 
 
 def folder() -> Path:
@@ -142,14 +144,14 @@ def frames(pictures: list, durations: list[float]):
             yield canvas.convert("RGB").tobytes()
 
 
-def make(db: Session, *, kind: str = "both", fmt: str = "story", lang: str = "fr", look: str = social_images.DEFAULT_LOOK, mood: str = "trend",
+def make(db: Session, *, kind: str = "both", fmt: str = "story", lang: str = social_content.DEFAULT_LANGUAGE, look: str = social_images.DEFAULT_LOOK, mood: str = "trend",
          music_file: str | None = None, title: str | None = None) -> SocialAsset:
     """Writes the video down as waiting (its file comes from render()). The music is the trending one that fits the
     kind of video unless another is chosen ("none" for none)."""
     kind = kind if kind in KINDS else "both"
     if mood not in social_music.MOODS and mood != "none":
         mood = social_music.FOR_VIDEO.get(kind, social_music.TRENDING[0])
-    spec = {"kind": kind, "fmt": fmt if fmt in FORMATS else "story", "lang": lang if lang in social_content.LANGUAGES else "fr",
+    spec = {"kind": kind, "fmt": fmt if fmt in FORMATS else "story", "lang": lang if lang in social_content.LANGUAGES else social_content.DEFAULT_LANGUAGE,
             "look": look if look in social_images.LOOKS else social_images.DEFAULT_LOOK, "mood": mood, "music_file": music_file}
     asset = SocialAsset(kind="video", title=title or KINDS[spec["kind"]][0], status="working", spec=json.dumps(spec))
     db.add(asset)

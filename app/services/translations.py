@@ -40,7 +40,7 @@ _SILENT = ("answer_sync", "background", "brand", "catalogue_reader", "chatbot", 
            "firebase_service", "google_forms", "jobs", "knowledge_service", "level_bank", "mailbox_service", "page_pdf_links",
            "program_assistant", "program_documents", "program_names", "program_pdf", "realtime", "reply_writer", "report_pdf",
            "translation_seed", "translation_more", "translations", "tunisian_banks", "website_sync", "weekly_questions", "welcome",
-           "emotions", "finder", "derja", "howto_tn", "howto_examples", "meaning", "prospects", "course_requests", "dynamic_words", "program_match", "program_reader", "program_files", "password_reset")       # (the last ones: lists of words to recognise, not words to show)
+           "emotions", "finder", "derja", "howto_tn", "howto_examples", "meaning", "prospects", "course_requests", "dynamic_words", "program_match", "program_reader", "program_files", "password_reset", "social_tn")       # (the last ones: lists of words to recognise, not words to show)
 # What the routes say back on the page (“Saved.”, “The class is full.”): the words given as these.
 _SAID = {"notice", "error", "detail", "message", "label", "title", "reply"}
 RETRY_TRIES = 4                 # a text the model could not translate is tried again, with an example, up to this

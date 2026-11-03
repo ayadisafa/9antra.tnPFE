@@ -160,7 +160,7 @@
 <div class="ui-head">
   <div>
     <h2>Social media</h2>
-    <p>Posts, stories and videos made from your own figures and what people said, ready to share; what you did about their feedback; and how each post did.</p>
+    <p>Posts, stories and videos in Tunisian, made from your own figures and what people said, ready to share; what you did about their feedback; what is trending and when to post.</p>
   </div>
 </div>
 
@@ -171,7 +171,6 @@
   <a class="so-tab" href="#create"><i class="bi bi-magic"></i>Posts and stories</a>
   <a class="so-tab" href="#videos"><i class="bi bi-camera-reels"></i>Videos</a>
   <a class="so-tab" href="#listen"><i class="bi bi-ear"></i>We listen</a>
-  <a class="so-tab" href="#engagement"><i class="bi bi-graph-up"></i>Engagement</a>
 </nav>
 
 <!-- ============ This week: what to post, and when ============ -->
@@ -205,7 +204,7 @@
 <section class="so-section mk" id="trends">
   <div class="so-h">
     <div><h3><i class="bi bi-fire"></i>What is trending in posts</h3>
-      <p>Counted from the marketing articles the journal read in the last 45 days (<span data-no-i18n>{{ trends.articles }}</span>) and from your own posts; then what posts look like this year.</p></div>
+      <p>Counted from the marketing articles the journal read in the last 45 days (<span data-no-i18n>{{ trends.articles }}</span>); then what posts look like this year.</p></div>
   </div>
   <div class="mk-two">
     <div class="so-box">
@@ -219,10 +218,6 @@
       {% else %}
       <p class="so-empty">The journal has no marketing article of the last weeks yet.</p>
       {% endfor %}
-      {% if trends.own %}
-      <div class="so-label mt-3">On your own posts</div>
-      {% for item in trends.own %}<p class="mk-own"><b>{{ item.what }}</b> · “{{ item.best }}” <span data-no-i18n>{{ item.average }}%</span> · “{{ item.other }}” <span data-no-i18n>{{ item.other_average }}%</span></p>{% endfor %}
-      {% endif %}
     </div>
     <div class="so-box">
       <div class="so-label">What posts look like this year <span class="ui-chip muted">General practice, not counted</span></div>
@@ -237,7 +232,7 @@
 <section class="so-section mk" id="timing">
   <div class="so-h">
     <div><h3><i class="bi bi-clock-history"></i>When most of your people can interact</h3>
-      <p>Each square is a day and a time of day: the deeper the colour, the better the moment. Counted from the moments your people wrote, answered their questions or registered in the last six months (<span data-no-i18n>{{ times.counted }}</span>) and from your posts with numbers (<span data-no-i18n>{{ times.posts }}</span>), with a general starting point (evening, then lunch) while those are few.</p></div>
+      <p>Each square is a day and a time of day: the deeper the colour, the better the moment. Counted from the moments your people wrote, answered their questions or registered in the last six months (<span data-no-i18n>{{ times.counted }}</span>), with a general starting point (evening, then lunch) while those are few.</p></div>
   </div>
   <div class="mk-best">
     {% for slot in times.best %}
@@ -257,7 +252,7 @@
 <section class="so-section" id="create">
   <div class="so-h">
     <div><h3><i class="bi bi-magic"></i>Posts and stories, ready to share</h3>
-      <p>Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text, post it, then tell the page so its numbers can be followed.</p></div>
+      <p>Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text and post it on your networks.</p></div>
     <div class="so-pills" aria-label="Language and look">
       {% for key, name in languages.items() %}<a class="so-pill {{ 'is-on' if lang == key }}" href="/social?lang={{ key }}&look={{ look }}#create" data-no-i18n>{{ name }}</a>{% endfor %}
       <span style="width:8px;"></span>
@@ -279,16 +274,6 @@
           <a class="ui-btn sm" href="/social/image?idea={{ idea.key | urlencode }}&fmt=story&look={{ look }}&lang={{ lang }}&download=1"><i class="bi bi-phone"></i>Story 9:16</a>
           <button type="button" class="ui-btn sm" data-copy="{{ idea.caption }}&#10;&#10;{{ idea.hashtags }}"><i class="bi bi-clipboard"></i><span>Copy the text</span></button>
         </div>
-        <details class="so-published">
-          <summary><i class="bi bi-check2-circle"></i> I posted it</summary>
-          <form method="post" action="/social/posts" class="so-mini-form">
-            <input type="hidden" name="topic" value="{{ idea.topic }}"><input type="hidden" name="kind" value="post">
-            <input type="hidden" name="text" value="{{ idea.caption }}">
-            <select class="form-select" name="platform" aria-label="Where">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select>
-            <input class="form-control" name="link" placeholder="Its link (optional)" aria-label="Its link">
-            <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Follow its numbers</button>
-          </form>
-        </details>
       </div>
     </article>
     {% endfor %}
@@ -352,18 +337,6 @@
               {% if asset.status == 'ready' %}<a class="ui-btn sm" href="/social/video/{{ asset.id }}?download=1"><i class="bi bi-download"></i>Download</a>{% endif %}
               <form method="post" action="/social/video/{{ asset.id }}/delete" data-confirm="Remove this video?"><button class="ui-btn ghost sm icon danger" aria-label="Remove this video"><i class="bi bi-trash"></i></button></form>
             </div>
-            {% if asset.status == 'ready' %}
-            <details class="so-published">
-              <summary><i class="bi bi-check2-circle"></i> I posted it</summary>
-              <form method="post" action="/social/posts" class="so-mini-form">
-                <input type="hidden" name="kind" value="video"><input type="hidden" name="asset_id" value="{{ asset.id }}">
-                <input type="hidden" name="topic" value="{{ 'listen' if item.spec.kind == 'listen' else 'program' if item.spec.kind == 'program' else 'success' }}">
-                <select class="form-select" name="platform" aria-label="Where">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select>
-                <input class="form-control" name="link" placeholder="Its link (optional)" aria-label="Its link">
-                <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Follow its numbers</button>
-              </form>
-            </details>
-            {% endif %}
           </div>
         </article>
         {% endfor %}
@@ -419,90 +392,6 @@
       <div class="ui-empty"><i class="bi bi-ear"></i><strong>No answer yet</strong>Answer one of the requests on the left: it appears here and in the posts.</div>
       {% endfor %}
     </div>
-  </div>
-</section>
-
-<!-- ============ Engagement ============ -->
-{% set e = engagement %}
-<section class="so-section" id="engagement">
-  <div class="so-h">
-    <div><h3><i class="bi bi-graph-up"></i>How your posts do</h3>
-      <p>Engagement = reactions, comments, shares, saves and clicks for every 100 people reached (or 100 followers when the reach is not known). Compared by kind, subject, network, day and hour; the advice comes from those numbers.</p></div>
-    {% if e.facebook %}<form method="post" action="/social/posts/facebook"><button class="ui-btn sm"><i class="bi bi-facebook"></i>Read Facebook's numbers now</button></form>
-    {% else %}<span class="ui-chip muted" title="Settings › Identity: the page ID and its access token"><i class="bi bi-facebook"></i>Facebook not connected: type the numbers</span>{% endif %}
-  </div>
-  <div class="so-stats">
-    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-collection"></i></div><div><div class="ui-stat-num">{{ e.month }}</div><div class="ui-stat-label">posts in 30 days</div></div></div>
-    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-heart-pulse"></i></div><div><div class="ui-stat-num">{{ e.average if e.average is not none else '—' }}{% if e.average is not none %}%{% endif %}</div><div class="ui-stat-label">average engagement</div></div></div>
-    <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-trophy"></i></div><div><div class="ui-stat-num">{{ e.best_rate if e.best_rate is not none else '—' }}{% if e.best_rate is not none %}%{% endif %}</div><div class="ui-stat-label">best post</div></div></div>
-    {% for item in e.followers[:2] %}<div class="ui-stat"><div class="ui-stat-ico"><i class="bi {{ item.platform[1] }}"></i></div><div><div class="ui-stat-num">{{ item.count }}</div><div class="ui-stat-label">{{ item.platform[0] }} followers</div></div></div>{% endfor %}
-  </div>
-  <div class="so-two">
-    <div class="so-box">
-      <div class="so-label">What the numbers say</div>
-      <div class="so-advice">{% for item in e.advice %}<div><i class="bi {{ item.icon }}"></i><span data-no-i18n>{{ shown(item.text) }}</span></div>{% endfor %}</div>
-      {% for title, rows in [('By kind', e.by_kind), ('By subject', e.by_topic), ('By network', e.by_platform), ('By day', e.by_day), ('By time of day', e.by_hour)] %}
-      {% if rows %}
-      <div class="so-label">{{ title }}</div>
-      <div class="so-bars">{% for row in rows %}<div class="so-bar"><span>{{ row.label }}</span><div class="ui-bar"><span style="width:{{ row.pct }}%;"></span></div><em>{{ row.average }}% <small class="text-muted">· {{ row.count }}</small></em></div>{% endfor %}</div>
-      {% endif %}
-      {% endfor %}
-    </div>
-    <div class="so-box">
-      <div class="so-label">Add a post and its numbers</div>
-      <form method="post" action="/social/posts" class="so-form">
-        <label>Network<select class="form-select" name="platform">{% for key, value in platforms.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}</select></label>
-        <label>Kind<select class="form-select" name="kind"><option value="post">Post</option><option value="story">Story</option><option value="video">Video or reel</option></select></label>
-        <label>Subject<select class="form-select" name="topic"><option value="">—</option>{% for key, value in topics.items() %}<option value="{{ key }}">{{ value[0] }}</option>{% endfor %}<option value="other">Other</option></select></label>
-        <label>Published<input class="form-control" type="datetime-local" name="published_at"></label>
-        <label>Reactions<input class="form-control" name="reactions" inputmode="numeric" placeholder="0"></label>
-        <label>Comments<input class="form-control" name="comments" inputmode="numeric" placeholder="0"></label>
-        <label>Shares<input class="form-control" name="shares" inputmode="numeric" placeholder="0"></label>
-        <label>Saves<input class="form-control" name="saves" inputmode="numeric" placeholder="0"></label>
-        <label>Clicks<input class="form-control" name="clicks" inputmode="numeric" placeholder="0"></label>
-        <label>Views or reach<input class="form-control" name="views" inputmode="numeric" placeholder="1.2k"></label>
-        <label>Followers<input class="form-control" name="followers" inputmode="numeric"></label>
-        <label class="wide">Link<input class="form-control" name="link" placeholder="https://…"></label>
-        <label class="wide">Its text<textarea class="form-control" name="text" rows="2"></textarea></label>
-        <div class="wide"><button class="ui-btn primary sm"><i class="bi bi-plus-lg"></i>Add it</button></div>
-      </form>
-    </div>
-  </div>
-  <div class="so-box mt-3 so-scroll">
-    {% if e.posts %}
-    <table class="so-table">
-      <thead><tr><th>Published</th><th>Where</th><th>Post</th><th class="text-end">Reactions</th><th class="text-end">Comments</th><th class="text-end">Shares</th><th class="text-end">Views</th><th>Engagement</th><th></th></tr></thead>
-      <tbody>
-        {% set best = e.best_rate or 1 %}
-        {% for row in e.posts %}{% set post = row.post %}
-        <tr>
-          <td class="num">{{ post.published_at.strftime('%d/%m/%Y') if post.published_at else '—' }}</td>
-          <td style="white-space:nowrap;"><i class="bi {{ row.platform[1] }}" style="color:{{ row.platform[2] }};"></i> {% if post.kind == 'story' %}<span>Story</span>{% elif post.kind == 'video' %}<span>Video or reel</span>{% else %}<span>Post</span>{% endif %}</td>
-          <td>{% if row.topic[0] %}<span class="ui-chip brand">{{ row.topic[0] }}</span>{% endif %}<div class="so-text" data-no-i18n>{% if post.link %}<a href="{{ post.link }}" target="_blank" rel="noopener">{{ post.text or post.link }}</a>{% else %}{{ post.text or '' }}{% endif %}</div></td>
-          <td class="num">{{ post.reactions if post.reactions is not none else '—' }}</td>
-          <td class="num">{{ post.comments if post.comments is not none else '—' }}</td>
-          <td class="num">{{ post.shares if post.shares is not none else '—' }}</td>
-          <td class="num">{{ post.views if post.views is not none else '—' }}</td>
-          <td>{% if row.rate is not none %}<div class="so-rate"><div class="ui-bar"><span style="width:{{ [100, (row.rate / best * 100) | round] | min }}%; display:block; height:100%; background:var(--primary-berry); border-radius:99px;"></span></div><b>{{ row.rate }}%</b></div>{% else %}<span class="text-muted" style="font-size:.74rem;">add its numbers</span>{% endif %}</td>
-          <td style="white-space:nowrap;">
-            <details style="display:inline-block;"><summary class="ui-btn ghost sm icon" aria-label="Its numbers"><i class="bi bi-pencil"></i></summary>
-              <form method="post" action="/social/posts" class="so-form" style="min-width:260px;">
-                <input type="hidden" name="post_id" value="{{ post.id }}">
-                {% for name in ('reactions', 'comments', 'shares', 'saves', 'clicks', 'views', 'followers') %}
-                <label>{{ name | capitalize }}<input class="form-control" name="{{ name }}" value="{{ post[name] if post[name] is not none else '' }}" inputmode="numeric"></label>
-                {% endfor %}
-                <div class="wide"><button class="ui-btn sm primary"><i class="bi bi-check2"></i>Save</button></div>
-              </form>
-            </details>
-            <form method="post" action="/social/posts/{{ post.id }}/delete" data-confirm="Remove this post from the list?" style="display:inline;"><button class="ui-btn ghost sm icon danger" aria-label="Remove"><i class="bi bi-trash"></i></button></form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <div class="ui-empty" style="border:0;"><i class="bi bi-graph-up"></i><strong>No post followed yet</strong>Add your last posts and their numbers, or press “I posted it” under an idea or a video.</div>
-    {% endif %}
   </div>
 </section>
 

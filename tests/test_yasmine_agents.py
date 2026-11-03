@@ -196,7 +196,7 @@ french = translations.dictionary(db, "fr")["t"]
 check("translations: this batch's words are in French", french.get("Ask why, or correct it in a few words") and french.get("One agent per program"))
 motion = open(os.path.join(testenv.PROJECT, "app", "templates", "_motion.html"), encoding="utf-8").read()
 check("alive: what needs you breathes, figures count up, the main button catches the light", "moNeed" in motion and "data-count" in motion and "moShine" in motion)
-check("what's new: this batch first", whats_new.latest()["key"] == "2026-11-02b")
+check("what's new: this batch is told", any(release["key"] == "2026-11-02b" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

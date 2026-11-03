@@ -1,8 +1,8 @@
 """Marketing: what is trendy in posts, the best times to post, this week's plan, and advice.
 
-Counted, never guessed: the subjects the journal's marketing articles talk about (the last 45 days), what works on the
-centre's own posts (services/social_engagement.py), and when its people are active (the hours they write, answer their
-questions and register). What designers and the networks do this year is said as general practice (`DESIGN`), never
+Counted, never guessed: the subjects the journal's marketing articles talk about (the last 45 days), and when its
+people are active (the hours they write, answer their questions and register). The numbers of the posts themselves are
+not followed here (the networks show them). What designers and the networks do this year is said as general practice (`DESIGN`), never
 as a count. Yasmine's marketing agent answers from here (`answer`); nothing is posted by itself.
 """
 from __future__ import annotations
@@ -72,24 +72,10 @@ def subjects(db: Session, now: datetime | None = None) -> dict:
     return {"articles": len(rows), "subjects": found}
 
 
-def own_best(db: Session) -> list[dict]:
-    """What works best on the centre's own posts (only once there are posts enough to compare)."""
-    from app.services import social_engagement
-
-    view = social_engagement.overview(db)
-    found = []
-    for key, label in (("by_kind", "Kind"), ("by_topic", "Subject"), ("by_platform", "Network")):
-        rows = [row for row in view[key] if row["count"] >= social_engagement.ENOUGH]
-        if len(rows) >= 2:
-            found.append({"what": _t(label), "best": _t(rows[0]["label"]), "average": rows[0]["average"], "other": _t(rows[-1]["label"]),
-                          "other_average": rows[-1]["average"]})
-    return found
-
-
 def trends(db: Session) -> dict:
     """Everything the “What's trending” part shows."""
     counted = subjects(db)
-    return {**counted, "own": own_best(db), "design": [{"icon": icon, "title": _t(title), "text": _t(text), "href": href}
+    return {**counted, "own": [], "design": [{"icon": icon, "title": _t(title), "text": _t(text), "href": href}
                                                       for icon, title, text, href in DESIGN]}
 
 
@@ -99,13 +85,10 @@ def trends(db: Session) -> dict:
 
 def best_times(db: Session, now: datetime | None = None) -> dict:
     """A week of 3-hour bands, each scored 0–100 from when the centre's people are active (the hours they write, answer
-    their weekly questions and register, last 180 days), how its own posts did at that time, and a general starting
-    point; the three best moments, with why."""
+    their weekly questions and register, last 180 days) and a general starting point; the three best moments, with why."""
     from app.models.candidate_email import CandidateEmail
     from app.models.quiz import Quiz
     from app.models.registration import Registration
-    from app.models.social import SocialPost
-    from app.services import social_engagement
 
     now = now or datetime.utcnow()
     since = now - timedelta(days=180)
@@ -126,14 +109,7 @@ def best_times(db: Session, now: datetime | None = None) -> dict:
         if band is not None and (person, local.date(), band) not in seen:
             seen.add((person, local.date(), band))
             active[(local.weekday(), band)] += 1
-    rated: dict[tuple, list[float]] = {}
-    for post in db.query(SocialPost).filter(SocialPost.published_at.isnot(None)).all():
-        rate = social_engagement.rate(post)
-        band = band_of(post.published_at.hour)
-        if rate is not None and band is not None and not (post.published_at.hour == 0 and post.published_at.minute == 0):
-            rated.setdefault((post.published_at.weekday(), band), []).append(rate)
     most_active = max(active.values(), default=0)
-    best_rate = max((sum(values) / len(values) for values in rated.values()), default=0)
     total_active = sum(active.values())
     grid = []
     for day in range(7):
@@ -141,16 +117,8 @@ def best_times(db: Session, now: datetime | None = None) -> dict:
         for band in BANDS:
             base = _BASE[band] + (0.1 if day >= 5 and band[0] >= 9 else 0)
             act = active.get((day, band), 0) / most_active if most_active else None
-            rates = rated.get((day, band))
-            eng = (sum(rates) / len(rates)) / best_rate if rates and best_rate else None
-            if act is not None and eng is not None:
-                score = 0.55 * act + 0.3 * eng + 0.15 * base
-            elif act is not None:
-                score = 0.75 * act + 0.25 * base
-            else:
-                score = base
-            cells.append({"band": band, "score": round(100 * min(score, 1)), "active": active.get((day, band), 0),
-                          "rate": round(sum(rates) / len(rates), 2) if rates else None})
+            score = 0.75 * act + 0.25 * base if act is not None else base
+            cells.append({"band": band, "score": round(100 * min(score, 1)), "active": active.get((day, band), 0)})
         grid.append({"day": _t(DAYS[day]), "cells": cells})
     order = sorted(((cell["score"], day, cell) for day, row in enumerate(grid) for cell in row["cells"]), key=lambda item: -item[0])
     best, days_taken = [], set()
@@ -161,15 +129,12 @@ def best_times(db: Session, now: datetime | None = None) -> dict:
         why = []
         if cell["active"] and total_active:
             why.append(_t("{0}% of your people's messages, answers and registrations come then.", round(100 * cell["active"] / total_active)))
-        if cell["rate"] is not None:
-            why.append(_t("Your posts at that time got {0}% engagement.", cell["rate"]))
         if not why:
             why.append(_t("Evenings and lunch are when most people look at their phones (a general starting point)."))
         best.append({"day": _t(DAYS[day]), "weekday": day, "hour": cell["band"][0] + 1, "band": cell["band"], "score": score, "why": why})
         if len(best) == 3:
             break
-    return {"grid": grid, "bands": [f"{start}–{end} h" for start, end in BANDS], "best": best, "counted": total_active,
-            "posts": sum(len(values) for values in rated.values())}
+    return {"grid": grid, "bands": [f"{start}–{end} h" for start, end in BANDS], "best": best, "counted": total_active}
 
 
 # ------------------------------------------------------------------
@@ -179,7 +144,7 @@ def best_times(db: Session, now: datetime | None = None) -> dict:
 _FORMATS = {"video": ("Reel or video (9:16)", "bi-camera-reels"), "story": ("Story (9:16)", "bi-phone"), "post": ("Post (1:1)", "bi-image")}
 
 
-def week_plan(db: Session, lang: str = "fr", now: datetime | None = None) -> list[dict]:
+def week_plan(db: Session, lang: str = "tn", now: datetime | None = None) -> list[dict]:
     """Four posts for the next seven days, each at one of the best moments: what, which format, which look and music,
     why, and where to make it."""
     from app.services import social_content, social_images, social_music
@@ -227,17 +192,11 @@ def week_plan(db: Session, lang: str = "fr", now: datetime | None = None) -> lis
 
 def tips(db: Session) -> list[dict]:
     """Marketing advice counted from the records: {"icon", "text", "why", "href"}."""
-    from app.models.social import FeedbackAnswer, SocialAsset, SocialPost
-    from app.services import engagement_ideas, social_content, social_engagement
+    from app.models.social import FeedbackAnswer, SocialAsset
+    from app.services import engagement_ideas, social_content
 
-    found = []
-    view = social_engagement.overview(db)
-    for item in view["advice"][:2]:
-        found.append({"icon": item["icon"], "text": item["text"], "why": _t("Counted from your posts' numbers."), "href": "/social#engagement", "shown": True})
-    month = db.query(SocialPost).filter(SocialPost.published_at >= datetime.now() - timedelta(days=30)).count()
-    if not view["count"]:                                          # with posts, the engagement advice says it
-        found.append({"icon": "bi-calendar-week", "text": _t("Post two to three times a week: the plan below is ready."),
-                      "why": _t("{0} post(s) written down in 30 days.", month), "href": "/social#plan"})
+    found = [{"icon": "bi-calendar-week", "text": _t("Post two to three times a week: the plan below is ready."),
+              "why": _t("At the moments your people are most there."), "href": "/social#plan"}]
     for session in social_content.next_sessions(db, most=1):
         days = (session["starts"].date() - datetime.utcnow().date()).days
         if 0 < days <= 21:
@@ -320,15 +279,8 @@ def _answer(db: Session, text: str) -> tuple[str, list[dict]]:
             lines.append(_t("On your own posts, “{0}” does best ({1}%).", item["best"], item["average"]))
         return "\n".join(lines), [{"label": "What's trending", "url": "/social#trends"}]
     if _HOW.search(text):
-        from app.services import social_engagement
-
-        view = social_engagement.overview(db)
-        if not view["rated"]:
-            return _t("No post has its numbers yet: add them on the Social media page (reactions, comments, shares, views)."), [
-                {"label": "Engagement", "url": "/social#engagement"}]
-        lines = [_t("{0} post(s) with numbers, {1}% engagement on average.", view["rated"], view["average"])]
-        lines += [f"• {item['text']}" for item in view["advice"][:3]]
-        return "\n".join(lines), [{"label": "Engagement", "url": "/social#engagement"}]
+        return (_t("The numbers of your posts are not followed here any more: Facebook, Instagram and TikTok show them in their own statistics. Here: what is trending, when to post, and this week's plan."),
+                [{"label": "This week", "url": "/social#plan"}])
     if _MUSIC.search(text):
         from app.services import social_music
 
