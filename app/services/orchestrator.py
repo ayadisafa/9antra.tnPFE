@@ -8,12 +8,19 @@ The agents share the application's tools (chatbot.py for the figures and the act
 knowledge_service for what was taught); each one only reads what its subject needs, and a professor's agent never sees
 payments or other classes. The local model never chooses the agent and never decides: the category is read with word
 lists, the multilingual model only breaks a tie, and every answer says where it comes from.
+
+A question in the assistant's window travels through a LangGraph graph (graph()): each agent is a step, and the way from
+one step to the next is chosen by the rules above, never by a model. The agents page draws the same graph (drawing()).
 """
 from __future__ import annotations
 
 import json
+import operator
+import threading
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta
+from typing import Annotated, Any, TypedDict
 
 from sqlalchemy.orm import Session
 
@@ -64,8 +71,11 @@ AGENTS = {
     "knowledge": {"name": "Knowledge agent", "icon": "bi-book-half", "colour": "#0891b2",
                   "does": "When no other agent knows: the closest passages of everything the application knows, quoted with their numbers.",
                   "reads": ["What the assistant knows", "The program files", "9antra.tn", "The journal"]},
+    "talk": {"name": "Conversation", "icon": "bi-chat-heart", "colour": "#ec4899",
+             "does": "How are you, a greeting, thanks, who she is, how you feel, a goodbye: answered like a person, in your language.",
+             "reads": ["What waits for you today", "Her name and look"]},
     "general": {"name": "General agent", "icon": "bi-chat-dots", "colour": "#6b7280",
-                "does": "Thanks, greetings and everything else.",
+                "does": "Everything else.",
                 "reads": ["What you taught the assistants"]},
 }
 # The way requests come in, as the agents page shows them.
@@ -135,89 +145,315 @@ def _outcome_of(found: dict) -> str:
     return "none" if found.get("source") == "none" else "answered"
 
 
-def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, *, user=None, lang: str | None = None) -> dict:
-    """The answer to a question asked in the assistant's window (by the admin, a team member or a professor), with the
-    agent that gave it."""
-    from app.services import chatbot
+@dataclass
+class _Asker:
+    """Who asks, and with what: given to every step, never kept in the graph's state."""
+    db: Session
+    user: Any = None
+    lang: str | None = None
+    history: list[dict] | None = None
+    limited: bool = False                     # the guide window: a professor's agent or the guide, nothing more
 
-    started = time.monotonic()
-    # Words written with mistakes are read as meant ("inscripton" → "inscription") before anything else.
-    from app.services import spelling
 
-    message, fixes = spelling.correct(message)
-    routed = route(message, user)
-    agent = routed["agent"]["key"]
-    found = None
+class _Request(TypedDict, total=False):
+    """What travels from step to step."""
+    message: str
+    fixes: list
+    routed: dict
+    to: str                                   # the step the rules chose after reading
+    limited: bool
+    agent: str
+    social: dict                              # the small talk in the message (small_talk.read)
+    found: dict | None
+    program: Any
+    consulted: list
+    path: Annotated[list, operator.add]       # every step taken, in order
+
+
+# The subjects a program's agent may answer before the subject's own agent.
+_PROGRAM_SUBJECTS = ("programs", "general", "planning", "payment")
+# The steps the agents page draws: icon, name, what it does.
+STEPS = {
+    "read": ("bi-eye", "Read the request", "Small talk told apart from a question, words written with mistakes put right, then its subject from word lists."),
+    "talk": ("bi-chat-heart", "Conversation", "How are you, hello, thanks, who she is, a goodbye: answered like a person, with what waits today."),
+    "professor": ("bi-mortarboard", "Professors' agent", "Their classes, their candidates and the course, nothing else."),
+    "guide": ("bi-signpost-split", "Guide agent", "For a team member without the whole assistant: how to do things here, for what they may do."),
+    "system": ("bi-sliders2", "System agent", "Changes a setting when you ask, and undoes it."),
+    "review": ("bi-question-circle", "Why it answered", "Why the email assistant answered someone that way, and putting it right."),
+    "set_aside": ("bi-sliders", "Set-aside messages", "Why a message was set aside, and bringing it back."),
+    "marketing": ("bi-megaphone", "Marketing agent", "What is trendy in posts, when to post, this week's plan."),
+    "trends": ("bi-graph-up-arrow", "Trends agent", "What is new in every field and what the job offers ask."),
+    "program": ("bi-journal-code", "The program's agent", "A question naming a program goes to its own agent."),
+    "tools": ("bi-tools", "The subject's agent", "The figures, the guide and what was taught, for the subject read."),
+    "consult": ("bi-people", "Ask the others", "When the first one does not know: the program's agent, then the knowledge agent."),
+    "finish": ("bi-check2-circle", "Answer", "Says who answered, whom it asked and the words it read, then writes it down."),
+}
+
+
+def first_step(db: Session, message: str, user, agent: str, *, limited: bool = False) -> str:
+    """The step that takes a request once read: rules only, in this order (nothing is answered here)."""
+    from app.services import small_talk
+
+    if small_talk.read(message)["only"]:
+        return "talk"                             # nothing but small talk: answered like a person
     if agent == "professor":
-        from app.services import professor_assistant
-
-        found = professor_assistant.answer(db, message, history, user=user, lang=lang)
-    elif _role(user) in ("admin", "staff"):
-        from app.services import marketing, reply_rules, system_actions, trends_agent
-
-        from app.services import answer_review
+        return "professor"
+    if limited:
+        return "guide"
+    if _role(user) in ("admin", "staff"):
+        from app.services import answer_review, marketing, reply_rules, system_actions, trends_agent
 
         if system_actions.wants(db, message):     # change a setting, a reminder, the look… (or undo it)
-            agent = "system"
-            found = system_actions.answer(db, message, user=user, lang=lang)
-        elif answer_review.wants(message):        # why the email assistant answered someone that way; putting it right
-            agent = "inbox"
-            found = answer_review.for_chat(db, message, user=user, lang=lang)
-        elif reply_rules.wants(message):          # the messages set aside without an answer, and their rules
-            agent = "inbox"
-            if _role(user) == "admin" or access.allows(access.clean(getattr(user, "permissions", None)), "/inbox/message/x/talk", "POST"):
-                found = reply_rules.for_chat(db, message, user=user, lang=lang)
-            else:
-                found = {"reply": _t("Changing what the inbox sets aside needs the right to answer emails: ask the admin."), "links": [],
-                         "source": "system", "sources": [], "resources": []}
-        elif marketing.wants(message):            # posts: what is trendy, when, this week's plan, how they did
-            agent = "marketing"
-            found = marketing.answer(db, message, lang=lang)
-        elif trends_agent.wants(message):           # what is new, services to add, what a name says
-            agent = "trends"
-            found = trends_agent.answer(db, message, lang=lang)
-    consulted = []
-    program = None
-    if found is None and agent in ("programs", "general", "planning", "payment"):
-        # A question about one program goes to that program's agent.
-        from app.services import program_agents
+            return "system"
+        if answer_review.wants(message):          # why the email assistant answered someone that way; putting it right
+            return "review"
+        if reply_rules.wants(message):            # the messages set aside without an answer, and their rules
+            return "set_aside"
+        if marketing.wants(message):              # posts: what is trendy, when, this week's plan
+            return "marketing"
+        if trends_agent.wants(message):           # what is new, services to add, what a name says
+            return "trends"
+    return "program" if agent in _PROGRAM_SUBJECTS else "tools"
 
-        program = program_agents.find(db, message)
-        if program is not None:
-            found = program_agents.answer(db, program, message, lang=lang)
-            if found is not None:
-                agent = program_agents.key_of(program)
+
+def _read(state: _Request, runtime) -> dict:
+    """Words written with mistakes are read as meant ("inscripton" → "inscription"), then what the request is about, and
+    so which step takes it."""
+    from app.services import spelling
+
+    from app.services import friend, small_talk
+
+    asker = runtime.context
+    # Small talk first, told apart from a question: "ça va ?" is talk, "ça va les paiements ?" a question.
+    social = small_talk.read(state["message"], name=friend.look(asker.db).get("name"))
+    if asker.lang not in ("fr", "en", "ar", "tn"):
+        asker.lang = social["lang"]               # no language chosen: she answers in the one the message is written in
+    if social["only"]:
+        routed = {"category": {**message_categories.label_of("general"), "why": [], "by": "rules"}, "agent": agent_of("talk")}
+        return {"message": state["message"], "fixes": [], "routed": routed, "agent": "talk", "limited": asker.limited, "to": "talk",
+                "social": social, "found": None, "program": None, "consulted": [], "path": ["read"]}
+    # Only the question goes on (the greeting around it is answered in a word, at the end). Tunisian and Arabic are not
+    # "put right": their words are not misspelt French ("khallas" is not "khlas").
+    asked = social["question"] if social["kinds"] else state["message"]
+    message, fixes = (asked, []) if social["lang"] in ("tn", "ar") else spelling.correct(asked)
+    routed = route(message, asker.user)
+    agent = routed["agent"]["key"]
+    return {"message": message, "fixes": fixes, "routed": routed, "agent": agent, "limited": asker.limited,
+            "to": first_step(asker.db, message, asker.user, agent, limited=asker.limited), "social": social,
+            "found": None, "program": None, "consulted": [], "path": ["read"]}
+
+
+def _talk(state: _Request, runtime) -> dict:
+    """Nothing but small talk: she answers like a person, in the language it was written in."""
+    from app.services import small_talk
+
+    asker = runtime.context
+    return {"agent": "talk", "found": small_talk.answer(asker.db, state["social"], user=asker.user, lang=asker.lang), "path": ["talk"]}
+
+
+def _professor(state: _Request, runtime) -> dict:
+    from app.services import professor_assistant
+
+    asker = runtime.context
+    return {"found": professor_assistant.answer(asker.db, state["message"], asker.history, user=asker.user, lang=asker.lang),
+            "path": ["professor"]}
+
+
+def _guide(state: _Request, runtime) -> dict:
+    from app.services import howto
+
+    asker = runtime.context
+    return {"agent": "guide", "found": howto.answer(asker.db, state["message"], asker.user, lang=asker.lang), "path": ["guide"]}
+
+
+def _system(state: _Request, runtime) -> dict:
+    from app.services import system_actions
+
+    asker = runtime.context
+    return {"agent": "system", "found": system_actions.answer(asker.db, state["message"], user=asker.user, lang=asker.lang),
+            "path": ["system"]}
+
+
+def _review(state: _Request, runtime) -> dict:
+    from app.services import answer_review
+
+    asker = runtime.context
+    return {"agent": "inbox", "found": answer_review.for_chat(asker.db, state["message"], user=asker.user, lang=asker.lang),
+            "path": ["review"]}
+
+
+def _set_aside(state: _Request, runtime) -> dict:
+    from app.services import reply_rules
+
+    asker = runtime.context
+    if _role(asker.user) == "admin" or access.allows(access.clean(getattr(asker.user, "permissions", None)), "/inbox/message/x/talk", "POST"):
+        found = reply_rules.for_chat(asker.db, state["message"], user=asker.user, lang=asker.lang)
+    else:
+        found = {"reply": _t("Changing what the inbox sets aside needs the right to answer emails: ask the admin."), "links": [],
+                 "source": "system", "sources": [], "resources": []}
+    return {"agent": "inbox", "found": found, "path": ["set_aside"]}
+
+
+def _marketing(state: _Request, runtime) -> dict:
+    from app.services import marketing
+
+    asker = runtime.context
+    return {"agent": "marketing", "found": marketing.answer(asker.db, state["message"], lang=asker.lang), "path": ["marketing"]}
+
+
+def _trends(state: _Request, runtime) -> dict:
+    from app.services import trends_agent
+
+    asker = runtime.context
+    return {"agent": "trends", "found": trends_agent.answer(asker.db, state["message"], lang=asker.lang), "path": ["trends"]}
+
+
+def _program(state: _Request, runtime) -> dict:
+    """A question about one program goes to that program's agent."""
+    from app.services import program_agents
+
+    asker = runtime.context
+    program = program_agents.find(asker.db, state["message"])
+    found = program_agents.answer(asker.db, program, state["message"], lang=asker.lang) if program is not None else None
+    update = {"program": program, "path": ["program"]}
+    if found is not None:
+        update.update(found=found, agent=program_agents.key_of(program))
+    return update
+
+
+def _tools(state: _Request, runtime) -> dict:
+    """The subject's agent, with the application's tools: the figures, the guide, what was taught."""
+    from app.services import chatbot
+
+    asker = runtime.context
+    found = chatbot.answer(asker.db, state["message"], asker.history, user=asker.user, lang=asker.lang)
+    agent = state["agent"]
+    if found.get("source") == "guide":
+        agent = "guide"            # the guide's steps answered, whatever the subject read
+    elif found.get("source") in ("taught", "knowledge", "website") and agent == "general":
+        agent = "knowledge"
+    return {"found": found, "agent": agent, "path": ["tools"]}
+
+
+def _consult(state: _Request, runtime) -> dict:
+    """The first agent does not know: Yasmine asks the others, the program's agent first, then the knowledge agent."""
+    from app.services import program_agents, rag
+
+    asker = runtime.context
+    program = state.get("program") if state.get("program") is not None else program_agents.find(asker.db, state["message"])
+    asked = program_agents.answer(asker.db, program, state["message"], lang=asker.lang) if program is not None else None
+    if asked is not None:
+        return {"found": asked, "agent": program_agents.key_of(program), "path": ["consult"],
+                "consulted": [agent_of(program_agents.key_of(program), asker.db)["name"]]}
+    cited = rag.answer(asker.db, state["message"], lang=asker.lang, for_admin=_role(asker.user) in ("admin", "staff"))
+    if cited is not None:
+        return {"found": cited, "agent": "knowledge", "consulted": [_t(AGENTS["knowledge"]["name"])], "path": ["consult"]}
+    return {"path": ["consult"]}
+
+
+def _finish(state: _Request, runtime) -> dict:
+    """The answer says who gave it, whom Yasmine asked and the words she read as meant."""
+    agent, routed = state["agent"], state["routed"]
+    found = {**state["found"], "agent": agent_of(agent, runtime.context.db)}
+    social = state.get("social") or {}
+    if social.get("kinds") and not social.get("only") and found.get("reply"):
+        # A greeting, "how are you" or thanks with a question: a word back first, then the answer.
+        from app.services import small_talk
+
+        said = small_talk.prefix(runtime.context.db, social, user=runtime.context.user, lang=runtime.context.lang)
+        if said:
+            found["reply"] = f"{said}\n\n{found['reply']}"
+            found["social"] = social["kinds"]
+    if state.get("consulted"):
+        found["consulted"] = state["consulted"]
+    if state.get("fixes"):
+        found["understood"] = [{"written": wrong, "read": right} for wrong, right in state["fixes"]]
+    category = routed["category"]
+    if agent == "trends" and category["key"] == "general":
+        category = {**message_categories.label_of("trends"), "why": [], "by": "agent"}
+    found["category"] = {key: category[key] for key in ("key", "label", "icon", "colour", "why", "by")}
+    return {"found": found, "routed": {**routed, "category": category}, "path": ["finish"]}
+
+
+def _after(state: _Request) -> str:
+    """After an agent: nobody answered yet → the program's agent (once), then the tools; nobody knew → ask the others.
+    The guide window goes no further than its agent."""
+    found = state.get("found")
+    if state.get("limited"):
+        return "finish"
     if found is None:
-        found = chatbot.answer(db, message, history, user=user, lang=lang)
-        source = found.get("source")
-        if source == "guide":
-            agent = "guide"            # the guide's steps answered, whatever the subject read
-        elif source in ("taught", "knowledge", "website") and agent == "general":
-            agent = "knowledge"
-    if found.get("source") == "none" and agent != "professor":
-        # The first agent does not know: Yasmine asks the others, the program's agent first, then the knowledge agent.
-        from app.services import program_agents, rag
+        return "program" if state["agent"] in _PROGRAM_SUBJECTS and "program" not in state["path"] else "tools"
+    return "consult" if found.get("source") == "none" and state["agent"] != "professor" else "finish"
 
-        program = program if program is not None else program_agents.find(db, message)
-        asked = program_agents.answer(db, program, message, lang=lang) if program is not None else None
-        if asked is not None:
-            consulted.append(agent_of(program_agents.key_of(program), db)["name"])
-            found, agent = asked, program_agents.key_of(program)
-        else:
-            cited = rag.answer(db, message, lang=lang, for_admin=_role(user) in ("admin", "staff"))
-            if cited is not None:
-                consulted.append(_t(AGENTS["knowledge"]["name"]))
-                found, agent = cited, "knowledge"
-    found["agent"] = agent_of(agent, db)
-    if consulted:
-        found["consulted"] = consulted
-    if fixes:
-        found["understood"] = [{"written": wrong, "read": right} for wrong, right in fixes]
-    if agent == "trends" and routed["category"]["key"] == "general":
-        routed["category"] = {**message_categories.label_of("trends"), "why": [], "by": "agent"}
-    found["category"] = {key: routed["category"][key] for key in ("key", "label", "icon", "colour", "why", "by")}
-    note(db, agent=agent, category=routed["category"], channel="professor" if agent == "professor" else "chat",
-         outcome=_outcome_of(found), asked=message, user_id=getattr(user, "id", None), took_ms=int((time.monotonic() - started) * 1000))
+
+_GRAPH = None
+_GRAPH_LOCK = threading.Lock()
+
+
+def graph():
+    """The graph every question of the assistant's window travels through (LangGraph), built once."""
+    global _GRAPH
+    with _GRAPH_LOCK:
+        if _GRAPH is None:
+            from langgraph.graph import END, START, StateGraph
+
+            builder = StateGraph(_Request, context_schema=_Asker)
+            for name, step in (("read", _read), ("talk", _talk), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
+                               ("set_aside", _set_aside), ("marketing", _marketing), ("trends", _trends),
+                               ("program", _program), ("tools", _tools), ("consult", _consult), ("finish", _finish)):
+                builder.add_node(name, step)
+            builder.add_edge(START, "read")
+            builder.add_conditional_edges("read", lambda state: state["to"],
+                                          ["talk", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
+            for name in ("professor", "system", "review", "set_aside", "marketing", "trends"):
+                builder.add_conditional_edges(name, _after, ["program", "tools", "consult", "finish"])
+            builder.add_conditional_edges("program", _after, ["tools", "consult", "finish"])
+            builder.add_conditional_edges("tools", _after, ["consult", "finish"])
+            builder.add_edge("guide", "finish")
+            builder.add_edge("talk", "finish")
+            builder.add_edge("consult", "finish")
+            builder.add_edge("finish", END)
+            _GRAPH = builder.compile()
+    return _GRAPH
+
+
+def drawing() -> list[dict]:
+    """The graph's steps in rows (a step sits one row below the furthest step that leads to it), with the steps each can
+    lead to, said once for a row whose steps all lead to the same ones: read from the graph itself, so the drawing is
+    always the graph that runs."""
+    drawn = graph().get_graph()
+    edges = [(edge.source, edge.target, bool(edge.conditional)) for edge in drawn.edges if edge.source in STEPS and edge.target in STEPS]
+    row = {key: 0 for key in drawn.nodes if key in STEPS}
+    for _ in row:                                     # longest way from "read"; the graph has no loop
+        for source, target, _chosen in edges:
+            row[target] = max(row[target], row[source] + 1)
+    order = list(STEPS)
+    after: dict[str, list[dict]] = {}
+    for source, target, chosen in sorted(edges, key=lambda edge: order.index(edge[1])):
+        after.setdefault(source, []).append({"key": target, "name": _t(STEPS[target][1]), "icon": STEPS[target][0], "chosen": chosen})
+    rows: list[dict] = [{"steps": [], "next": []} for _ in range(max(row.values()) + 1)]
+    for key in sorted(row, key=order.index):
+        rows[row[key]]["steps"].append({"key": key, "icon": STEPS[key][0], "name": _t(STEPS[key][1]), "does": _t(STEPS[key][2]),
+                                        "next": after.get(key, [])})
+    for line in rows:
+        if len(line["steps"]) > 1 and all(step["next"] == line["steps"][0]["next"] for step in line["steps"]):
+            line["next"] = line["steps"][0]["next"]
+            for step in line["steps"]:
+                step["next"] = []
+    return rows
+
+
+def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, *, user=None, lang: str | None = None,
+                  limited: bool = False) -> dict:
+    """The answer to a question asked in the assistant's window (by the admin or a team member), or in the guide window
+    (limited: a professor, or a team member without the whole assistant), with the agent that gave it and the steps it
+    went through."""
+    started = time.monotonic()
+    done = graph().invoke({"message": message}, context=_Asker(db=db, user=user, lang=lang, history=history, limited=limited))
+    found = {**done["found"], "path": done["path"]}
+    note(db, agent=done["agent"], category=done["routed"]["category"], channel="professor" if done["agent"] == "professor" else "chat",
+         outcome=_outcome_of(found), asked=done["message"], user_id=getattr(user, "id", None),
+         took_ms=int((time.monotonic() - started) * 1000))
     try:
         db.commit()
     except Exception:

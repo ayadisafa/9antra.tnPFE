@@ -25,6 +25,26 @@
   .tm-rights-title { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); margin-top:12px; }
   .tm-details { display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
   .tm-details input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 9px; min-width:150px; }
+  .cn-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:16px 18px; margin-bottom:18px; scroll-margin-top:110px; }
+  .cn-head { display:flex; gap:14px; align-items:flex-start; flex-wrap:wrap; margin-bottom:10px; }
+  .cn-art { width:46px; height:46px; border-radius:16px; display:grid; place-items:center; background:#ecfdf5; color:#15803d; font-size:1.3rem; flex:none; }
+  .cn-title { flex:1 1 360px; min-width:0; } .cn-title h3 { font-size:1.02rem; font-weight:800; margin:0; display:flex; gap:8px; align-items:center; }
+  .cn-title p { font-size:.8rem; color:var(--muted); margin:3px 0 0; }
+  .cn-count { min-width:24px; height:24px; border-radius:999px; background:#22c55e; color:#fff; font-size:.74rem; display:inline-grid; place-items:center; padding:0 7px; }
+  .cn-list { display:grid; gap:8px; }
+  .cn-row { display:grid; grid-template-columns:auto minmax(0, 1.2fr) minmax(0, 1fr) auto; gap:12px; align-items:center; padding:10px 12px; border-radius:16px; border:1px solid var(--border-color); background:#fcfbfd; }
+  .cn-row.is-away { opacity:.7; }
+  @media (prefers-reduced-motion: no-preference) { .cn-row { animation:cnIn .35s ease both; animation-delay:calc(var(--i) * 50ms); } }
+  @keyframes cnIn { from { opacity:0; transform:translateY(6px); } }
+  .cn-avatar { position:relative; width:40px; height:40px; border-radius:50%; display:grid; place-items:center; font-weight:800; color:#fff; background:linear-gradient(135deg, var(--primary-berry), #e07aa8); }
+  .cn-state { position:absolute; right:-1px; bottom:-1px; width:12px; height:12px; border-radius:50%; border:2px solid #fff; background:#cbd5e1; }
+  .is-online .cn-state { background:#22c55e; } .is-idle .cn-state { background:#f59e0b; }
+  .cn-who b { font-size:.88rem; color:var(--ink-text); } .cn-who small, .cn-where small { display:block; font-size:.74rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cn-badge { font-size:.68rem; font-weight:800; border-radius:999px; padding:2px 9px; background:#f1f5f9; color:#475569; }
+  .cn-badge.online { background:#dcfce7; color:#15803d; } .cn-badge.idle { background:#fef3c7; color:#92400e; }
+  .cn-do { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; } .cn-do form { margin:0; }
+  .cn-empty { text-align:center; color:var(--muted); padding:14px; font-size:.84rem; } .cn-empty i { margin-inline-end:6px; }
+  @media (max-width: 767px) { .cn-row { grid-template-columns:auto minmax(0, 1fr); } .cn-where, .cn-do { grid-column:2; justify-content:flex-start; } }
 </style>
 {% endblock %}
 
@@ -38,6 +58,68 @@
   </div>
   <div class="ui-actions"><a class="ui-btn primary" href="#add"><i class="bi bi-person-plus"></i>Add a person</a></div>
 </div>
+
+<!-- Who is using the application now: live, and signing out -->
+<section class="cn-card" id="connected">
+  <div class="cn-head">
+    <span class="cn-art"><i class="bi bi-broadcast"></i></span>
+    <div class="cn-title">
+      <h3>Connected now <span class="cn-count">{{ connected_summary.people }}</span></h3>
+      <p>Who has the application open, live: online (seen in the last 2 minutes), idle (open, not looked at) or away (signed in, not seen for a while). Sign out one browser, one person everywhere, or everyone else: their page goes to the sign-in page at once.</p>
+    </div>
+    {% if me.is_admin and connected | rejectattr('is_me') | list %}
+    <form method="post" action="/settings/team/sign-out" data-confirm="Sign out everyone else, on every browser? They will need to sign in again.">
+      <input type="hidden" name="everyone" value="true"><button class="ui-btn danger sm" type="submit"><i class="bi bi-box-arrow-right"></i>Sign out everyone else</button>
+    </form>
+    {% endif %}
+  </div>
+  <div class="cn-list">
+    {% for row in connected %}
+    <div class="cn-row is-{{ row.state }}" style="--i:{{ loop.index0 }};">
+      <span class="cn-avatar" data-no-i18n>{{ (row.name or '?')[:1] | upper }}<i class="cn-state" aria-hidden="true"></i></span>
+      <div class="cn-who">
+        <b data-no-i18n>{{ row.name }}</b>{% if row.is_me %} <span class="ui-chip brand">You, here</span>{% endif %}
+        <small>{{ {'admin': 'Admin', 'staff': 'Team', 'professor': 'Professor'}.get(row.role, row.role) }} · <span data-no-i18n>{{ row.device }}</span>{% if row.ip %} · <span data-no-i18n>{{ row.ip }}</span>{% endif %}</small>
+      </div>
+      <div class="cn-where">
+        <span class="cn-badge {{ row.state }}">{{ {'online': 'Online', 'idle': 'Idle', 'away': 'Away'}[row.state] }}</span>
+        <small>{% if row.page %}<span>{{ row.page }}</span> · {% endif %}<span>seen</span> <span data-no-i18n>{{ row.seen_local.strftime('%d/%m %H:%M') if row.seen_local else '' }}</span> · <span>since</span> <span data-no-i18n>{{ row.since_local.strftime('%d/%m %H:%M') if row.since_local else '' }}</span></small>
+      </div>
+      <div class="cn-do">
+        {% if not row.is_me and (me.is_admin or row.role != 'admin') %}
+        <form method="post" action="/settings/team/sign-out" data-confirm="Sign out this browser?"><input type="hidden" name="key" value="{{ row.key }}"><button class="ui-btn sm" type="submit"><i class="bi bi-box-arrow-right"></i>This browser</button></form>
+        <form method="post" action="/settings/team/sign-out" data-confirm="Sign this person out everywhere?"><input type="hidden" name="user_id" value="{{ row.user_id }}"><button class="ui-btn ghost sm" type="submit"><i class="bi bi-person-x"></i>Everywhere</button></form>
+        {% endif %}
+      </div>
+    </div>
+    {% else %}
+    <div class="cn-empty"><i class="bi bi-moon-stars"></i>Nobody is signed in right now.</div>
+    {% endfor %}
+  </div>
+</section>
+<script>
+  // The list follows who comes and goes: every 30 seconds it asks who is here, and redraws only when that changed.
+  (() => {
+    const signature = rows => rows.map(row => `${row.key}:${row.state}:${row.page}`).join("|");
+    let known = null;
+    const look = () => fetch("/settings/team/connected").then(answer => answer.ok ? answer.json() : null).then(data => {
+      if (!data) return;
+      const now = signature(data.rows);
+      if (known !== null && now !== known) {
+        fetch("/settings/team").then(answer => answer.text()).then(html => {
+          const fresh = new DOMParser().parseFromString(html, "text/html").getElementById("connected");
+          const here = document.getElementById("connected");
+          if (fresh && here) here.querySelector(".cn-list").replaceWith(fresh.querySelector(".cn-list"));
+          const count = fresh && fresh.querySelector(".cn-count");
+          if (count && here) here.querySelector(".cn-count").textContent = count.textContent;
+        }).catch(() => {});
+      }
+      known = now;
+    }).catch(() => {});
+    look();
+    setInterval(look, 30000);
+  })();
+</script>
 
 <!-- Who can do what: everyone at a glance; a click on a team member's cell changes it at once -->
 <section class="mx-card" id="matrix">

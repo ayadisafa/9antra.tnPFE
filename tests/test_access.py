@@ -242,7 +242,7 @@ board = advisor.for_dashboard(db)
 flag = next((item for item in board if "missed the last 2 sessions of A-DEVOPS-1" in item.title), None)
 check("presence: the admin is advised to call who stopped coming", flag is not None and "Malek Access" in flag.title and flag.action["url"] == f"/classes/{mine_id}/attendance", [i.title for i in board if "missed" in i.title or "stopped" in i.title])
 response = admin.get(f"/classes/{mine_id}/attendance?session={week1.id}")
-check("presence: the admin sees the same sheet, already marked", response.status_code == 200 and "Already marked" in response.text and "absent 2 times in a row" in response.text and "A-DEVOPS-1" in response.text)
+check("presence: the admin sees the same sheet, already marked", response.status_code == 200 and "Confirmed." in response.text and "absent 2 times in a row" in response.text and "A-DEVOPS-1" in response.text)
 check("presence: it shows on the class page and on the candidate's file", "Absent twice in a row" in admin.get(f"/classes/{mine_id}").text and "Malek Access" in admin.get(f"/classes/{mine_id}").text
       and "2 absences in 2 sessions" in admin.get(f"/candidate/{malek.id}").text)
 bare = ClassGroup(name="A-BARE-1", program_id=python.id, status=ClassStatus.ONGOING, professor_id=rami_id, professor_name="Rami J.", total_weeks=4, current_week=1, start_mode="min_enrollment")

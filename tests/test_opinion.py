@@ -143,6 +143,10 @@ check("it also goes on WhatsApp once a business number is there", "feedback_requ
 # ======================================================================
 # E. Dashboard, history, notifications
 # ======================================================================
+# Opening the class page earlier closed its notification (it was seen): a fresh one, for the bell's links.
+db.add(Notification(recipient_role="admin", category="FEEDBACK", title="Amal gave 5 stars", message="Formation excellente",
+                    action_url=f"/classes/{group.id}#opinions"))
+db.commit()
 page = client.get("/")
 check("dashboard: four pictures, three things to do, the week's figures", page.status_code == 200 and page.text.count('class="db-tile ') == 4 and "What needs you today" in page.text and page.text.count('class="db-part ') == 6 and "New on 9antra.tn this week" in page.text, page.status_code)
 check("dashboard: the long lists are folded away, in two folds", page.text.count('<details class="db-fold') == 2 and "Lately" not in page.text)

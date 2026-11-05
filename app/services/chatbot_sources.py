@@ -152,7 +152,7 @@ def program_content(db: Session, text: str, program, fr: bool) -> dict | None:
     if program is not None and not hits:
         reply = (f"Les semaines de « {program.name} » ne parlent pas de « {asked} »." if fr
                  else f"None of the weeks of “{program.name}” mention “{asked}”.")
-        return {"reply": reply, "links": [{"label": program.name, "url": f"/programs/{program.id}"}], "source": "knowledge",
+        return {"reply": reply, "links": [{"label": program.name, "url": f"/programs/{program.id}"}], "source": "knowledge", "nothing": True,
                 "sources": [link(f"The program in the application: {program.name} (every week read)", f"/programs/{program.id}")]}
     if not hits:
         return None

@@ -56,6 +56,12 @@ def notification_context(request: Request) -> dict:
             "page_pdf": page_pdf_links.link_for(request.url.path, user),
             "page_pdf_more": page_pdf_links.more_for(request.url.path, user),
             "notifications": [],
+            # What this page listens for when its session is signed out (services/presence.py).
+            "session_tag": __import__("app.services.presence", fromlist=["tag_of"]).tag_of(auth._fingerprint(request.cookies.get(auth.COOKIE)))
+                           if request.cookies.get(auth.COOKIE) else "",
+            "online_now": None,
+            "ringing": 0,                          # the notifications that need the admin (the bell's count)
+            "not_reached_count": 0,
             "inbox_pending": 0,
             "video_embed": videos.embed_url,      # a video link -> its player, opened inside the page (_video_player.html)
             "video_kind": videos.kind_of,
@@ -76,18 +82,32 @@ def notification_context(request: Request) -> dict:
                 context["member_unread"] = team_messages.member_unread(db, user)
             return context
 
-        context["notifications"] = (
+        from app.services import notification_rules, reach
+
+        # Opening a page reads what leads there; what was handled elsewhere, or only told something, closes by itself.
+        notification_rules.seen_at(db, request.url.path, dict(request.query_params))
+        notification_rules.tidy(db)
+        shown = (
             db.query(Notification)
             .filter(
                 Notification.recipient_role == "admin",
                 Notification.is_read.is_(False),
             )
             .order_by(Notification.created_at.desc())
-            .limit(10)
+            .limit(30)
             .all()
         )
-        for item in context["notifications"]:      # what each one lets the admin do at once
+        for item in shown:      # what each one lets the admin do at once, and whether it needs them
             item.fix = notification_fixes.fix_for(db, item)
+            item.needs_you = notification_rules.needs_you(db, item)
+        # What needs the admin first (it rings); what only tells something after, quietly.
+        context["notifications"] = [item for item in shown if item.needs_you][:12] + [item for item in shown if not item.needs_you][:6]
+        context["ringing"] = sum(1 for item in shown if item.needs_you)
+        context["not_reached_count"] = len(reach.not_reached(db))
+        from app.services import presence
+
+        context["online_now"] = presence.summary(presence.connected(db, auth._fingerprint(request.cookies.get(auth.COOKIE))
+                                                                     if request.cookies.get(auth.COOKIE) else None))
         from app.services import dynamic_words
 
         # In the page's language, and where each one leads.

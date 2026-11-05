@@ -578,6 +578,27 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         ),
     ),
     AutoEmail(
+        key="weekly_letter", group="Quiz",
+        name="The weekly letter",
+        when="Every Monday morning, to each candidate of a running class: their sessions of the week and the questions still "
+             "waiting for their answer, in one message. A candidate gets at most 4 automatic messages in seven days: past "
+             "that, the week's questions, the questions after a session and the review request wait for this letter.",
+        subject="{first_name}, votre semaine — {program_name}",
+        title="Votre semaine en un message",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Voici tout ce qui vous concerne cette semaine, réuni en un seul message.\n\n"
+            "{week_sessions}\n\n"
+            "{waiting}"
+        ),
+        closing="Une question ? Répondez simplement à cet email.",
+        extra=(
+            ("week_sessions", "The candidate's sessions of the week", "**Vos séances cette semaine**\n- lundi 3 novembre, 18:00 – 21:00 : Docker"),
+            ("waiting", "The questions still waiting for their answer, and what was kept for the letter",
+             "**Ce qui attend votre réponse**\n- Les questions de la semaine 2 : https://9antra.tn/learn"),
+        ),
+    ),
+    AutoEmail(
         key="session_check", group="Quiz",
         name="After each session: what was learnt",
         when="Sent to each candidate of a class some hours after each session (24 by default: Settings, Classes), with a few "
@@ -1018,6 +1039,11 @@ def send(db: Session, key: str, *, registration: Registration | None = None,
     )
     if rendered is None:
         return None
+    from app.services import letters
+
+    if letters.should_hold(db, key, candidate, manual):
+        # Enough automatic messages this week: what can wait goes into the weekly letter.
+        return letters.hold(db, candidate, registration, key, rendered, values)
     from app.services import channels, whatsapp, whatsapp_inbox     # here: WhatsApp is not needed to write an email
 
     channel = template.channel
@@ -1057,7 +1083,8 @@ def whatsapp_text(rendered: dict) -> str:
 
 
 def delivered(message: CandidateEmail | None) -> bool:
-    return bool(message is not None and message.status == "sent")
+    """Sent, or kept for the weekly letter (it goes with it)."""
+    return bool(message is not None and message.status in ("sent", "in_letter"))
 
 
 def send_test(to_email: str, rendered: dict) -> str | None:

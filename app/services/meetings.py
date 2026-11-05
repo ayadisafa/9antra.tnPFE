@@ -200,6 +200,66 @@ def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
     return sent
 
 
+SHEET_TEXT = (
+    "Bonjour {professor},\n\n"
+    "La séance « {topic} » de {class_name} est terminée. {seen}\n"
+    "Vérifiez la feuille de présence et confirmez-la en un geste (et notez qui a participé) :\n{link}\n\nMerci !"
+)
+
+
+def confirmed(marks: dict) -> bool:
+    """Whether a person (the professor, the admin) marked the sheet, not only the candidates' own links."""
+    return any((row.marked_by or "") not in ("", "their link") for row in marks.values())
+
+
+def after_sessions(db: Session, base_url: str, now: datetime | None = None) -> dict:
+    """Once a session is over (its door closed): with the links sent, whoever never came in is marked absent (by
+    "their link", the professor can still change it); and its professor is asked, once, to confirm the sheet in one
+    tap. Returns {"absent": marked, "asked": professors asked}."""
+    from app.models.professor import Professor
+    from app.services import team_messages
+
+    now = now or local_now()
+    done = {"absent": 0, "asked": 0}
+    sessions = (db.query(ClassSession).filter(ClassSession.session_date >= now.date() - timedelta(days=1),
+                                              ClassSession.session_date <= now.date()).all())
+    for session in sessions:
+        class_group = db.get(ClassGroup, session.class_group_id)
+        if class_group is None or class_group.status not in (ClassStatus.IN_PROGRESS, ClassStatus.COMPLETED):
+            continue
+        if not (session.start_time or class_group.start_time) or door(session, class_group, now) != "closed":
+            continue
+        members = attendance.members(db, class_group.id)
+        marks = attendance.marks_of(db, session.id)
+        joins = {row.registration_id: row for row in db.query(SessionJoin).filter(SessionJoin.session_id == session.id).all()}
+        if session.meeting_url and any(row.sent_at for row in joins.values()):
+            for registration in members:
+                if registration.id not in marks and registration.id in joins and joins[registration.id].first_joined_at is None:
+                    db.add(Attendance(class_group_id=class_group.id, session_id=session.id, registration_id=registration.id,
+                                      candidate_id=registration.candidate_id, status="absent", marked_by="their link"))
+                    done["absent"] += 1
+            db.commit()
+            marks = attendance.marks_of(db, session.id)
+        if session.sheet_asked_at is not None or confirmed(marks) or not members or not class_group.professor_id:
+            continue
+        professor = db.get(Professor, class_group.professor_id)
+        if professor is None:
+            continue
+        came = [row for row in joins.values() if row.first_joined_at is not None]
+        late = sum(1 for row in came if (row.minutes_late or 0) > LATE_AFTER)
+        seen = (f"Par leur lien : {len(came)} entré(s){f', dont {late} en retard' if late else ''}, "
+                f"{len(members) - len(came)} pas venu(s)." if joins and any(row.sent_at for row in joins.values())
+                else f"{len(members)} candidat(s) dans la classe.")
+        text = SHEET_TEXT.format(professor=(professor.name or "").split()[0] if professor.name else "", topic=session.topic or "Séance",
+                                 class_name=class_group.name, seen=seen,
+                                 link=f"{base_url.rstrip('/')}/classes/{class_group.id}/attendance?session={session.id}")
+        session.sheet_asked_at = datetime.utcnow()
+        db.commit()            # kept first: the professor is never asked twice, whatever happens next
+        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant")
+        done["asked"] += 1
+    return done
+
+
 _MONTHS = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
 _DAYS = ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"]
 

@@ -13,6 +13,85 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-04b", "day": date(2026, 11, 4), "title": "Who is connected, and a livelier application",
+        "items": [
+            {"icon": "bi-broadcast", "title": "Who is using the application",
+             "text": "Live: who is online, idle or away, on which page, from which browser and address. Sign out one browser, one person "
+                     "everywhere, or everyone else: their page goes to the sign-in page at once. Ask Yasmine “who is connected?” too.",
+             "url": "/settings/team#connected"},
+            {"icon": "bi-chat-heart", "title": "Yasmine's window, livelier",
+             "text": "A welcome with four things to ask in one tap, messages that come in with her initial and the time, a typing bubble while "
+                     "she thinks, and the quick questions in a dock above the box.", "url": "/"},
+            {"icon": "bi-window-stack", "title": "One part at a time, with moving pictures",
+             "text": "The dashboard keeps what needs you on top, the rest in four tabs (Today, People, Classes, Growth). Settings, each class "
+                     "and the website have tabs too, and every page opens with its own moving picture.", "url": "/"},
+        ],
+    },
+    {
+        "key": "2026-11-04","day": date(2026, 11, 4), "title": "Yasmine talks like a person",
+        "items": [
+            {"icon": "bi-chat-heart", "title": "How are you? Fine, and you?",
+             "text": "Yasmine answers a greeting, “how are you”, thanks, “who are you”, how you feel and a goodbye like a person, in the "
+                     "language you wrote in (French, English, Arabic or Tunisian), with your first name, and tells you what waits today.",
+             "url": "/assistant/agents#graph"},
+            {"icon": "bi-signpost-split", "title": "Small talk or a question",
+             "text": "“Ça va ?” is small talk; “ça va les paiements ?” is a question about payments. “Salut ! qui a payé ?” gets a hello, "
+                     "then the answer. “Who has paid?” is no longer read as “who has not paid?”.", "url": "/assistant/agents#try"},
+        ],
+    },
+    {
+        "key": "2026-11-03c","day": date(2026, 11, 3), "title": "The assistant reads every request; who takes part",
+        "items": [
+            {"icon": "bi-list-check", "title": "Nothing missed in an email",
+             "text": "Each thing a candidate asks is read on its own. An answer that leaves one out is not sent: it waits for you, saying "
+                     "which request is missing.", "url": "/inbox"},
+            {"icon": "bi-journal-code", "title": "The agent of their program answers",
+             "text": "The email assistant asks the agent of the program the candidate follows: its weeks, its professors and what you "
+                     "told about it. The Agents page counts what each program's agent answered.", "url": "/assistant/agents"},
+            {"icon": "bi-people", "title": "Who takes part, and the professor",
+             "text": "On each class page: who takes part most (what the professor noted and the questions asked), who arrives late, and "
+                     "how the professor follows the class (sheets confirmed in time, questions answered and how fast, their stars).",
+             "url": "/classes/"},
+            {"icon": "bi-window-stack", "title": "Social media, one part at a time",
+             "text": "Tabs, each with its picture and three steps. When and what to post is now a light help in its own tab, and soft on the "
+                     "dashboard.", "url": "/social"},
+        ],
+    },
+    {
+        "key": "2026-11-03b","day": date(2026, 11, 3), "title": "Follow-up: nothing lost, less noise",
+        "items": [
+            {"icon": "bi-send-x", "title": "What didn't reach them",
+             "text": "Emails that failed and WhatsApp messages waiting for your phone, in one list with why and what to do: send again, "
+                     "open WhatsApp, call, or not needed any more. A failed email is tried again once by itself.", "url": "/inbox/not-reached"},
+            {"icon": "bi-person-check", "title": "Presence in one tap",
+             "text": "After an online session, who never came in through their link is marked absent, and the professor is asked once to "
+                     "confirm the sheet, already filled in from the links, in one tap.", "url": "/classes/"},
+            {"icon": "bi-envelope-paper", "title": "One letter a week, and a limit",
+             "text": "Each Monday, one message with the week's sessions and the questions still waiting. A candidate gets at most 4 "
+                     "automatic messages in seven days; past that, what can wait goes into the letter.", "url": "/inbox/templates"},
+            {"icon": "bi-alarm", "title": "Reminders that catch up",
+             "text": "A class formed after the moment of its first reminder: the closest one goes at once, saying the days really left.",
+             "url": "/classes/"},
+            {"icon": "bi-bell", "title": "Notifications that close themselves",
+             "text": "The bell rings only for what needs you, and each one closes once it is done, wherever you did it. What only tells "
+                     "you something closes by itself after three days, and the same one is never shown twice.", "url": "/"},
+        ],
+    },
+    {
+        "key": "2026-11-03","day": date(2026, 11, 3), "title": "The agents work as a LangGraph graph",
+        "items": [
+            {"icon": "bi-diagram-3", "title": "Every question travels through one graph",
+             "text": "The assistant's window and the guide window now run on LangGraph: each agent is a step, and the rules choose the next "
+                     "step, never a model. The answers stay the same.", "url": "/assistant/agents#graph"},
+            {"icon": "bi-signpost-2", "title": "See the way a question goes",
+             "text": "The Agents page draws the graph from the graph itself. Try a sentence: the step it goes to lights up.",
+             "url": "/assistant/agents#try"},
+            {"icon": "bi-spellcheck", "title": "Yasmine says whom she asked",
+             "text": "Under an answer, her window now shows the agents she asked and the words she read put right; they were left out before.",
+             "url": "/assistant/agents"},
+        ],
+    },
+    {
         "key": "2026-11-02d", "day": date(2026, 11, 2), "title": "Posts in Tunisian",
         "items": [
             {"icon": "bi-chat-quote", "title": "Posts, stories and videos in Tunisian",

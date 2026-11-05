@@ -142,6 +142,46 @@ def _unpaid(db: Session, fr: bool) -> dict:
     return {"reply": reply, "links": [_link("Payments", "/payments")], "source": "system"}
 
 
+def _paid(db: Session, fr: bool) -> dict:
+    """Who has paid in full, how many paid a part, and what was received."""
+    rows = [row for row in db.query(Registration).all() if row.status != RegistrationStatus.CANCELLED]
+    full = [row for row in rows if row.payment_status == PaymentStatus.PAID]
+    part = [row for row in rows if row.payment_status == PaymentStatus.PARTIAL]
+    received = sum(row.paid_amount or 0 for row in rows)
+    people = sorted({_who(row.candidate) for row in full})
+    if not full:
+        reply = "Personne n'a encore tout payé." if fr else "Nobody has paid in full yet."
+    elif fr:
+        reply = (f"{len(people)} candidat(s) ont tout payé ({len(full)} inscription(s) sur {len(rows)}) : {_names(people)}."
+                 + (f" {len(part)} inscription(s) payée(s) en partie." if part else ""))
+    else:
+        reply = (f"{len(people)} candidate{'s have' if len(people) != 1 else ' has'} paid in full ({len(full)} of {len(rows)} registrations): "
+                 f"{_names(people)}." + (f" {len(part)} registration{'s' if len(part) != 1 else ''} paid in part." if part else ""))
+    reply += (f" Reçu en tout : {_money(received)}." if fr else f" Received in all: {_money(received)}.")
+    return {"reply": reply, "links": [_link("Payments", "/payments")], "source": "system"}
+
+
+def _connected(db: Session, fr: bool, user=None) -> dict:
+    """Who has the application open now (the admin, or someone who manages the team)."""
+    from app.services import access, presence
+
+    if user is not None and not access.can_manage_team(user):
+        return {"reply": ("Seul l'admin voit qui est connecté." if fr else "Only the admin sees who is connected."), "links": [], "source": "system"}
+    rows = presence.connected(db)
+    online = [row for row in rows if row["state"] == "online"]
+    idle = [row for row in rows if row["state"] == "idle"]
+    names = lambda items: ", ".join(dict.fromkeys(f"{row['name']}" + (f" ({row['page']})" if row["page"] else "") for row in items))
+    if not online and not idle:
+        reply = "Personne n'utilise l'application en ce moment." if fr else "Nobody is using the application right now."
+    elif fr:
+        reply = (f"En ligne maintenant : {names(online) or 'personne'}." + (f" Ouvert mais inactif : {names(idle)}." if idle else "")
+                 + " Vous pouvez déconnecter un navigateur, une personne ou tout le monde depuis la page Équipe.")
+    else:
+        reply = (f"Online now: {names(online) or 'nobody'}." + (f" Open but idle: {names(idle)}." if idle else "")
+                 + " You can sign out one browser, one person or everyone from the Team page.")
+    return {"reply": reply, "links": [_link("Connected now", "/settings/team#connected")], "source": "system"}
+
+
 def _classes(db: Session, fr: bool, only_waiting: bool = False) -> dict:
     from app.services.class_views import class_summary
     from app.services.schedule_utils import local_now
@@ -715,6 +755,13 @@ def _answer(db: Session, message: str, history: list[dict] | None = None, user=N
         return _safety(db, fr)
     if _has(text, "reminders? (planned|scheduled|to come|waiting)|(planned|scheduled|which|what) reminders?|rappels? (prevus|programmes|planifies)|quels rappels"):
         return data.planned_reminders(db)
+    if _has(text, "who is (connected|online|using)|who s (connected|online)|qui est (connecte|en ligne)|qui sont (connectes|en ligne)|"
+                  "connectes? (maintenant|en ce moment)|chkoun (connecte|connecti|m9ayed)|users? online|utilisateurs? connectes"):
+        return _connected(db, fr, user)
+    # Who has paid: a question about the records, before the guide ("chkoun khallas" is not how to record a payment).
+    if _has(text, "(qui|combien( de (candidats|personnes|inscrits|gens))?) (a|ont|a deja|ont deja) paye|deja paye|"
+                  "who (has |have )?(already )?paid|how many (have |has |people |candidates )*paid|(chkoun|chkun|qui) khalla?s\\w*|9addech (wa7ed )?khals?ou|kamlou el khlas"):
+        return _paid(db, fr)
     found = chatbot_sources.about(db, message, fr)      # who 9antra is, where, how to reach it
     if found:
         return found
@@ -733,7 +780,7 @@ def _answer(db: Session, message: str, history: list[dict] | None = None, user=N
         return _market(db, fr, program)
     if _has(text, "everything work\\w*|is it working|status|tout (marche|fonctionne)|connected|connecte|problem\\w*|en panne"):
         return _status(db, fr)
-    if _has(text, "unpaid|not paid|haven t paid|hasn t paid|owe\\w*|impaye\\w*|pas (encore )?paye|n ont pas paye|reste a payer|who (has|have) (not )?paid|payments? (waiting|pending|late)"):
+    if _has(text, "unpaid|not paid|haven t paid|hasn t paid|owe\\w*|impaye\\w*|pas (encore )?paye|n ont pas paye|reste a payer|who (has|have) not paid|payments? (waiting|pending|late)"):
         return _unpaid(db, fr)
     if _has(text, "on hold|cannot start|can t start|not start\\w*|waiting class\\w*|en attente|ne (demarre|commence)\\w*|bloque\\w*"):
         return _classes(db, fr, only_waiting=True)

@@ -117,8 +117,15 @@
   {% endfor %}
 </div>
 
+{% import "_tabs.html" as tab %}
+{{ tab.tabs("website", [("formations", "bi-mortarboard", "Formations"), ("life", "bi-calendar-event", "Events, offers and news"), ("media", "bi-camera-video", "Videos and reviews"), ("posts", "bi-megaphone", "Posts"), ("changes", "bi-arrow-left-right", "What changed")]) }}
+{{ tab.intro("website", "formations", "programs", "Formations", "Each formation of 9antra.tn and the program it follows here.") }}
+{{ tab.intro("website", "life", "news", "Events, offers and news", "What the site announces: events, internship offers and news.") }}
+{{ tab.intro("website", "media", "website", "Videos and reviews", "The site's videos, and the reviews published as pictures, read and understood.") }}
+{{ tab.intro("website", "posts", "posts", "Posts", "LinkedIn and Facebook posts, read once their keys are given.") }}
+{{ tab.intro("website", "changes", "data", "What changed", "What the last readings changed, and what the site removed but is kept here.") }}
 {% if view.checks %}
-<section class="ui-card mt-4" id="ws-changes" data-live-region>
+<section class="ui-card mt-4" id="ws-changes" data-live-region data-tab-of="website" data-tab-panel="changes">
   <div class="ui-card-head">
     <div>
       <div class="ui-card-title"><i class="bi bi-clock-history"></i>What changed</div>
@@ -138,7 +145,7 @@
 {% endif %}
 
 {# ---------------- Formations and the programs that follow them ---------------- #}
-<section class="ws-section" id="formation">
+<section class="ws-section" id="formation" data-tab-of="website" data-tab-panel="formations">
   <h3><i class="bi bi-mortarboard-fill"></i>Formations and your programs</h3>
   <p>Each formation of the website fills the program that follows it. What you wrote yourself is never replaced: where it differs, you choose.</p>
   <div class="ws-grid">
@@ -240,7 +247,7 @@
 </section>
 
 {# ---------------- Events ---------------- #}
-<section class="ws-section" id="event" data-live-region>
+<section class="ws-section" id="event" data-live-region data-tab-of="website" data-tab-panel="life">
   <h3><i class="bi bi-calendar-event-fill"></i>Events</h3>
   <p>The workshops announced on the website. The email assistant knows them and can answer candidates who ask.</p>
   <div class="ws-grid">
@@ -267,7 +274,7 @@
 
 {# ---------------- Internship offers ---------------- #}
 {% if view.offers %}
-<section class="ws-section" id="offer" data-live-region>
+<section class="ws-section" id="offer" data-live-region data-tab-of="website" data-tab-panel="life">
   <h3><i class="bi bi-briefcase-fill"></i>Internship offers</h3>
   <p>The internships and end-of-studies projects the website offers.</p>
   <div class="ws-grid">
@@ -291,7 +298,7 @@
 
 {# ---------------- News and Facebook posts ---------------- #}
 {% if view.news or view.posts or view.linkedin_posts %}
-<section class="ws-section" id="news" data-live-region>
+<section class="ws-section" id="news" data-live-region data-tab-of="website" data-tab-panel="life">
   <h3><i class="bi bi-newspaper"></i>News</h3>
   <p>What was published lately. It is part of what the email assistant knows.</p>
   <div class="ws-grid">
@@ -321,7 +328,7 @@
 
 {# ---------------- Videos ---------------- #}
 {% if view.videos %}
-<section class="ws-section" id="video">
+<section class="ws-section" id="video" data-tab-of="website" data-tab-panel="media">
   <h3><i class="bi bi-play-btn-fill"></i>Videos</h3>
   <p>The videos published on the website{{ ' and on the Facebook page' if view.facebook }}. They stay where they are hosted and play here, in the application. The videos of each course week are on the program's page and on the <a href="/programs/videos">Videos</a> page.</p>
   <div class="ws-media">
@@ -339,7 +346,7 @@
 
 {# ---------------- Feedback ---------------- #}
 {% if said.total %}
-<section class="ws-section" id="feedback" data-live-region>
+<section class="ws-section" id="feedback" data-live-region data-tab-of="website" data-tab-panel="media">
   <h3><i class="bi bi-chat-heart-fill"></i>Feedback</h3>
   <p>What learners said, as published on the website{{ ' and on the Facebook page' if view.facebook }}. Each picture is kept on this computer, its words are read, and their tone is worked out with the same word rules as the weekly check-in.</p>
 
@@ -437,7 +444,7 @@
 </section>
 {% endif %}
 
-<section class="ws-section" id="kept">
+<section class="ws-section" id="kept" data-tab-of="website" data-tab-panel="changes">
   <h3><i class="bi bi-archive-fill"></i>Kept from the website</h3>
   <p>Nothing taken from 9antra.tn is ever deleted by the application. What the website no longer shows stays recorded here, with everything that was read; only you can remove it.</p>
   {% if kept %}
@@ -458,7 +465,7 @@
   {% endif %}
 </section>
 
-<section class="ws-section" id="linkedin">
+<section class="ws-section" id="linkedin" data-tab-of="website" data-tab-panel="posts">
   <h3><i class="bi bi-linkedin"></i>The LinkedIn page</h3>
   {% if view.linkedin %}
   <p>Connected: its posts are read with the website, analysed, and learnt by the assistant ({{ view.linkedin_posts | length }} so far).</p>
@@ -480,7 +487,7 @@
 </section>
 <style>.ws-read { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0 6px; }</style>
 
-<section class="ws-section" id="post">
+<section class="ws-section" id="post" data-tab-of="website" data-tab-panel="posts">
   <h3><i class="bi bi-facebook"></i>The Facebook page</h3>
   {% if view.facebook %}
   <p>Connected: its posts, videos and reviews are read with the website, {{ view.posts | length }} post{{ 's' if view.posts | length != 1 }} so far.</p>

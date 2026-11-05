@@ -469,6 +469,8 @@
             <span class="ix-chip wa"><i class="bi {{ 'bi-chat-dots' if message.channel == 'sms' else 'bi-whatsapp' }}"></i>{{ 'SMS · ' if message.channel == 'sms' }}Waiting for you to send it</span>
           {% elif message.status == "cancelled" %}
             <span class="ix-chip quiet">Removed, not sent</span>
+          {% elif message.status == "in_letter" %}
+            <span class="ix-chip quiet"><i class="bi bi-envelope-paper"></i>Kept for Monday's letter</span>
           {% else %}
             <span class="ix-chip {{ 'wa' if message.channel in ('whatsapp', 'sms') else 'ok' }}"><i class="bi {{ 'bi-whatsapp' if message.channel == 'whatsapp' else 'bi-chat-dots' if message.channel == 'sms' else 'bi-check2' }}"></i>Sent{{ ' on WhatsApp' if message.channel == 'whatsapp' else ' by SMS' if message.channel == 'sms' }}</span>
           {% endif %}

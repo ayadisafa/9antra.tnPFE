@@ -19,7 +19,8 @@ def agents_page(request: Request, db: Session = Depends(get_db)):
     days = int(days) if days in ("1", "7", "30", "90") else 7
     return templates.TemplateResponse(request=request, name="agents.html", context={
         "active_page": "agents", "view": orchestrator.overview(db, days), "categories": message_categories.CATEGORIES,
-        "examples": ["Le lien de la séance ne marche pas", "Combien coûte la formation DevOps ?", "Je serai absent samedi",
+        "graph_rows": orchestrator.drawing(),
+        "examples":["Le lien de la séance ne marche pas", "Combien coûte la formation DevOps ?", "Je serai absent samedi",
                      "What is trendy in AI?", "Quels services pourrions-nous ajouter ?", "C'est inadmissible, personne ne répond"],
     })
 
@@ -29,10 +30,13 @@ class Sentence(BaseModel):
 
 
 @router.post("/assistant/agents/route")
-def try_route(payload: Sentence, request: Request):
-    """Which category and which agent a sentence would go to, and the words that decided (nothing is answered)."""
-    routed = orchestrator.route(payload.message, auth.current(request))
-    return {"category": routed["category"], "agent": routed["agent"]}
+def try_route(payload: Sentence, request: Request, db: Session = Depends(get_db)):
+    """Which category, which agent and which step of the graph a sentence would go to, and the words that decided
+    (nothing is answered)."""
+    user = auth.current(request)
+    routed = orchestrator.route(payload.message, user)
+    return {"category": routed["category"], "agent": routed["agent"],
+            "step": orchestrator.first_step(db, payload.message, user, routed["agent"]["key"])}
 
 
 @router.get("/whats-new", response_class=HTMLResponse)

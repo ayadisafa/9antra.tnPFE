@@ -271,6 +271,8 @@ def ensure_sqlite_compatibility():
         "user_sessions": {
             "device": "VARCHAR",
             "last_seen_at": "DATETIME",
+            "ip": "VARCHAR",
+            "last_path": "VARCHAR",
         },
 
         "candidate_reminders": {
@@ -386,6 +388,7 @@ def ensure_sqlite_compatibility():
             "admin_score": "INTEGER",
             "category": "VARCHAR",
             "set_aside": "TEXT",
+            "reach": "TEXT",
         },
 
         # Automatic emails are stored next to the admin's own templates.
@@ -415,7 +418,7 @@ def ensure_sqlite_compatibility():
         },
 
         # Weekly questions are quizzes of a class week, opened with a private link.
-        "class_sessions": {"meeting_url": "VARCHAR"},
+        "class_sessions": {"meeting_url": "VARCHAR", "sheet_asked_at": "DATETIME"},
         "attendance": {"participation": "INTEGER", "questions": "INTEGER"},
         "quizzes": {
             "kind": "VARCHAR DEFAULT 'level'",

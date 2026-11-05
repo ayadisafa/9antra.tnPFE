@@ -43,6 +43,8 @@ class UserSession(Base):
     expires_at = Column(DateTime, nullable=False)
     device = Column(String, nullable=True)           # "Chrome on Windows", from the browser
     last_seen_at = Column(DateTime, nullable=True)
+    ip = Column(String, nullable=True)               # the address the browser comes from (services/presence.py)
+    last_path = Column(String, nullable=True)        # the page it has open
 
 
 class Attendance(Base):

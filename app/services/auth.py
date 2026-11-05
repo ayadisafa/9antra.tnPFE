@@ -272,7 +272,7 @@ def sign_in(db: Session, email: str, password: str, client: str = "", device: st
     now = datetime.utcnow()
     db.add(UserSession(
         token_hash=_fingerprint(token), user_id=user.id, expires_at=now + timedelta(days=SESSION_DAYS),
-        device=device_of(device)[:80], last_seen_at=now,
+        device=device_of(device)[:80], last_seen_at=now, ip=(client or "")[:64] or None,
     ))
     user.last_login_at = now
     db.query(UserSession).filter(UserSession.expires_at < now).delete(synchronize_session=False)

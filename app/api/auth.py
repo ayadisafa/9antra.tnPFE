@@ -3,8 +3,9 @@ import logging
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -133,7 +134,8 @@ def login_page(request: Request, db: Session = Depends(get_db)):
     user = auth.user_for(db, request.cookies.get(auth.COOKIE))
     if user is not None:
         return RedirectResponse(user.home, status_code=303)
-    return _sign_in_page(request, db, "login", extra={"changed": request.query_params.get("changed") == "1"})
+    return _sign_in_page(request, db, "login", extra={"changed": request.query_params.get("changed") == "1",
+                                                      "signed_out": request.query_params.get("out") == "1"})
 
 
 # ------------------------------------------------------------------
@@ -206,6 +208,21 @@ def login(
     else:
         target = resume if resume and auth.professor_may_open(db, user, resume.split("?")[0]) else user.home
     return _signed_in(request, token, target)
+
+
+class Here(BaseModel):
+    path: str = Field(default="", max_length=300)
+
+
+@router.post("/account/here")
+def i_am_here(payload: Here, request: Request, db: Session = Depends(get_db)):
+    """An open page, looked at: keeps who is connected, and where, up to date. 401 once its session was signed out."""
+    from app.services import presence
+
+    token = request.cookies.get(auth.COOKIE)
+    if not token or not presence.beat(db, auth._fingerprint(token), payload.path, request.client.host if request.client else ""):
+        return JSONResponse({"signed_out": True}, status_code=401)
+    return {"ok": True}
 
 
 @router.post("/logout")

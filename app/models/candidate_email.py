@@ -48,6 +48,8 @@ class CandidateEmail(Base):
     category = Column(String, nullable=True, index=True)
     # Why the assistant set this message aside without an answer (services/reply_rules.py), as JSON: {"rule", ...}.
     set_aside = Column(Text, nullable=True)
+    # An outbound message that did not arrive: tried again, sent by hand, or not needed any more (services/reach.py), JSON.
+    reach = Column(Text, nullable=True)
 
     candidate = relationship("Candidate")
     registration = relationship("Registration")

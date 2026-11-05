@@ -243,7 +243,7 @@ db.commit()
 check("access: given to look, opened, nothing changed", staff.get("/social").status_code == 200
       and staff.post("/social/listen", data={"you_said": "Un essai de l'équipe"}).status_code in (303, 403) and db.query(FeedbackAnswer).count() == 0)
 check("what's new: this release is told", any(release["title"].startswith("Social media") for release in whats_new.RELEASES))
-check("what's new: the posts in Tunisian come first", whats_new.latest()["key"] == "2026-11-02d")
+check("what's new: the posts in Tunisian are told", any(release["key"] == "2026-11-02d" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

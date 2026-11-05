@@ -123,7 +123,7 @@ _PAGES.update({
         ("bi-pencil-square", "Your own", "once, weekly, at each absence", "/reminders#new"),
     ),
     "/social": _guide(
-        "social", "news", "Posts, videos, and when to post",
+        "social", "posts", "Posts, videos, and when to post",
         "This week's plan at the best moments, what is trending, posts and videos made from your records with this year's design and music, and how each post did.",
         ("bi-calendar-week", "The plan", "what to post, and when", "/social#plan"),
         ("bi-fire", "What is trending", "counted from the articles", "/social#trends"),

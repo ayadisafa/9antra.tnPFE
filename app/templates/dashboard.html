@@ -144,35 +144,36 @@
   .db-ideas .db-field { border:0 !important; }
   @keyframes dbRise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
   @keyframes dbGlow { 50% { box-shadow:0 0 0 7px rgba(255,255,255,.22); } }
-  @media (prefers-reduced-motion: reduce) { .db-ideas[open] .db-idea, .db-ideas[open] .db-field, .db-ideas .db-ideas-ico, .db-market-slot, .db-market-tip, .db-market-moment, .db-market-ico { animation:none !important; } }
-  /* Marketing this week: dark slots in their order, the best moments as badges, advice with where to do it. */
-  .db-market { background:linear-gradient(160deg, #fff 0%, #fff7f0 100%); border:2px solid #fbd5b5; }
-  .db-market-ico { color:#f97316; animation:dbShout 2.8s ease-in-out infinite; transform-origin:left center; }
-  .db-market-links { display:flex; gap:12px; flex-wrap:wrap; }
-  .db-market-best { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
-  .db-market-best-label { font-size:.72rem; font-weight:900; letter-spacing:.05em; text-transform:uppercase; color:#9a3412; display:inline-flex; gap:6px; align-items:center; }
-  .db-market-moment { display:inline-flex; gap:7px; align-items:center; padding:6px 12px; border-radius:999px; background:#1f0a1a; color:#fff; font-size:.8rem; font-weight:700;
-                      animation:dbRise .4s ease both; animation-delay:calc(var(--i) * 90ms); }
-  .db-market-moment b { width:20px; height:20px; border-radius:50%; display:grid; place-items:center; background:#f97316; font-size:.7rem; }
-  .db-market-plan { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:10px; }
-  .db-market-slot { display:flex; flex-direction:column; gap:6px; padding:14px; border-radius:18px; background:linear-gradient(150deg, #3b0f2f, #1f0a1a); color:#fff;
-                    animation:dbRise .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 100ms); }
-  .db-market-when { display:flex; gap:8px; align-items:baseline; } .db-market-when b { color:#f9b555; font-size:1rem; }
-  .db-market-when span { font-size:.76rem; font-weight:800; background:rgba(255,255,255,.14); border-radius:999px; padding:1px 8px; }
-  .db-market-what { font-weight:800; font-size:.9rem; display:flex; gap:7px; align-items:center; } .db-market-what i { color:#f9b555; }
-  .db-market-format { font-size:.74rem; color:#fde68a; font-weight:700; display:flex; gap:6px; align-items:center; }
-  .db-market-go { color:#fff; font-weight:800; font-size:.78rem; text-decoration:none; display:inline-flex; gap:5px; align-items:center; }
-  .db-market-go:hover { color:#f9b555; } .db-market-go i { transition:transform .15s ease; } .db-market-go:hover i { transform:translateX(3px); }
-  .db-market-tips { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:8px; margin-top:12px; }
-  .db-market-tip { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:14px; background:#fff; border:1px solid #f6dcc8;
-                   animation:dbRise .45s ease both; animation-delay:calc(var(--i) * 80ms + 200ms); }
-  .db-market-tip > i { width:32px; height:32px; flex:none; border-radius:10px; display:grid; place-items:center; background:#f97316; color:#fff; }
-  .db-market-tip span { display:flex; flex-direction:column; min-width:0; } .db-market-tip b { font-size:.82rem; color:var(--ink-text); } .db-market-tip small { font-size:.72rem; color:#6b6180; }
-  .db-market-open { margin-inline-start:auto; color:#9a3412; }
-  .db-market-ask { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
-  .db-ask { border:2px solid #1f0a1a; background:#fff; color:#1f0a1a; border-radius:999px; padding:6px 14px; font-size:.8rem; font-weight:800; display:inline-flex; gap:7px; align-items:center;
-            transition:background .15s ease, color .15s ease, transform .15s ease; }
-  .db-ask:hover { background:#1f0a1a; color:#fff; transform:translateY(-1px); }
+  @media (prefers-reduced-motion: reduce) { .db-ideas[open] .db-idea, .db-ideas[open] .db-field, .db-ideas .db-ideas-ico, .db-market-slot, .db-market-tip, .db-market-ico i, .db-market-body { animation:none !important; } }
+  /* Marketing this week: a soft fold. It is a help, not the heart of the centre: light colours, quiet motion. */
+  .db-market { background:linear-gradient(120deg, #fffdf9, #fdf8fb); border:1px solid #f3ebe6; padding:0; }
+  .db-market-sum { list-style:none; display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer; }
+  .db-market-sum::-webkit-details-marker { display:none; }
+  .db-market-ico { width:36px; height:36px; border-radius:12px; display:grid; place-items:center; background:#fff4e2; color:#c0892a; flex:none; }
+  .db-market-ico i { animation:dbSway 5s ease-in-out infinite; display:inline-block; }
+  .db-market-head { display:flex; flex-direction:column; min-width:0; } .db-market-head b { font-size:.9rem; color:#5b5670; } .db-market-head small { font-size:.74rem; color:#8a84a0; }
+  .db-market-chev { margin-inline-start:auto; color:#b4aec4; transition:transform .3s ease; } .db-market[open] .db-market-chev { transform:rotate(180deg); }
+  .db-market-body { padding:0 16px 16px; }
+  .db-market[open] .db-market-body { animation:dbRise .45s ease both; }
+  .db-market-plan { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:8px; }
+  .db-market-slot { display:flex; flex-direction:column; gap:4px; padding:11px 13px; border-radius:16px; background:#fff; border:1px solid #f1eaf3; color:var(--ink-text); text-decoration:none;
+                    transition:transform .25s ease, border-color .25s ease; }
+  .db-market[open] .db-market-slot { animation:dbRise .5s ease both; animation-delay:calc(var(--i) * 90ms); }
+  .db-market-slot:hover { transform:translateY(-2px); border-color:#ead7e4; color:var(--ink-text); }
+  .db-market-when { display:flex; gap:8px; align-items:baseline; } .db-market-when b { color:var(--primary-berry); font-size:.88rem; }
+  .db-market-when span { font-size:.72rem; font-weight:700; color:#8a84a0; }
+  .db-market-what { font-weight:700; font-size:.84rem; display:flex; gap:7px; align-items:center; } .db-market-what i { color:#d9a441; }
+  .db-market-format { font-size:.72rem; color:#8a84a0; display:flex; gap:6px; align-items:center; }
+  .db-market-tips { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:8px; margin-top:10px; }
+  .db-market-tip { display:flex; gap:10px; align-items:flex-start; padding:9px 12px; border-radius:14px; background:#fff; border:1px solid #f3ede4; text-decoration:none; color:inherit; }
+  .db-market-tip > i { width:28px; height:28px; flex:none; border-radius:9px; display:grid; place-items:center; background:#fff6e6; color:#c0892a; }
+  .db-market-tip span { display:flex; flex-direction:column; min-width:0; } .db-market-tip b { font-size:.8rem; color:var(--ink-text); font-weight:700; } .db-market-tip small { font-size:.72rem; color:#8a84a0; }
+  .db-market-ask { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; align-items:center; }
+  .db-ask { border:1px solid #ece6f1; background:#fff; color:#5b5670; border-radius:999px; padding:5px 12px; font-size:.76rem; font-weight:700; display:inline-flex; gap:7px; align-items:center;
+            transition:background .2s ease, color .2s ease, border-color .2s ease; }
+  .db-ask i { color:#d9a441; }
+  .db-ask:hover { background:#fdf6fa; border-color:#ead7e4; color:var(--primary-berry); }
+  @keyframes dbSway { 0%, 100% { transform:rotate(0); } 50% { transform:rotate(-8deg); } }
   @keyframes dbShout { 0%, 70%, 100% { transform:none; } 78% { transform:rotate(-12deg) scale(1.12); } 86% { transform:rotate(8deg) scale(1.12); } }
   .db-ideas > summary { list-style:none; display:flex; gap:12px; align-items:center; padding:12px 16px; cursor:pointer; }
   .db-ideas > summary::-webkit-details-marker { display:none; }
@@ -559,6 +560,25 @@
   .db-part.is-none .db-spark { color:#d8d2e4; }
   .db-time-unset { font-size:.68rem; font-weight:800; color:var(--gold-dark); background:var(--gold-subtle); border-radius:999px; padding:1px 8px; }
   @media (prefers-reduced-motion: reduce) { .db-hero::before, .db-hero::after, .db-spark i { animation:none; } }
+  /* One part at a time: the tab shown is a mark on the page, so the parts that refresh by themselves keep their place. */
+  body[data-dbtab="today"] [data-panel]:not([data-panel="today"]), body[data-dbtab="people"] [data-panel]:not([data-panel="people"]),
+  body[data-dbtab="classes"] [data-panel]:not([data-panel="classes"]), body[data-dbtab="growth"] [data-panel]:not([data-panel="growth"]) { display:none !important; }
+  .db-tabs { display:flex; gap:6px; flex-wrap:wrap; margin:6px 0 14px; padding:6px; border-radius:20px; background:#fff; border:1px solid var(--border-color);
+             position:sticky; top:calc(var(--stick-top, 86px) + 4px); z-index:6; width:fit-content; max-width:100%; box-shadow:0 10px 24px -22px rgba(60,20,50,.5); }
+  .db-tab { display:inline-flex; gap:8px; align-items:center; border:0; background:transparent; border-radius:14px; padding:9px 16px; font-size:.86rem; font-weight:800;
+            color:#5b5670; cursor:pointer; transition:background .25s ease, color .25s ease, transform .2s ease; }
+  .db-tab i { font-size:1rem; color:var(--primary-berry); transition:transform .3s ease; }
+  .db-tab:hover { background:#faf5fb; transform:translateY(-1px); }
+  .db-tab.is-on { background:linear-gradient(135deg, var(--primary-berry), #d0558f); color:#fff; box-shadow:0 10px 20px -12px var(--primary-berry); }
+  .db-tab.is-on i { color:#fff; transform:scale(1.12) rotate(-6deg); }
+  .db-intro { display:flex; gap:14px; align-items:center; padding:12px 16px; margin-bottom:14px; border-radius:22px;
+              background:linear-gradient(120deg, #fff 0%, #fbf3f8 60%, #f4f2ff 100%); border:1px solid #f1e6ef; }
+  .db-intro .art { width:96px; height:auto; flex:none; }
+  .db-intro b { display:block; font-size:1.05rem; color:var(--ink-text); }
+  .db-intro span { font-size:.84rem; color:#6b6180; }
+  @media (prefers-reduced-motion: no-preference) { body[data-dbtab] [data-panel] { animation:dbPanel .4s ease both; } }
+  @keyframes dbPanel { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @media (max-width: 575px) { .db-tab { padding:8px 11px; font-size:.8rem; } .db-intro .art { width:64px; } }
 </style>
 {% endblock %}
 
@@ -673,8 +693,21 @@
 </section>
 
 
+<!-- The rest, one part at a time: each tab opens with its moving picture -->
+<nav class="db-tabs" role="tablist" aria-label="Your centre">
+  <button type="button" class="db-tab" role="tab" data-tab="today"><i class="bi bi-sun"></i>Today</button>
+  <button type="button" class="db-tab" role="tab" data-tab="people"><i class="bi bi-people"></i>People</button>
+  <button type="button" class="db-tab" role="tab" data-tab="classes"><i class="bi bi-easel"></i>Classes</button>
+  <button type="button" class="db-tab" role="tab" data-tab="growth"><i class="bi bi-graph-up-arrow"></i>Growth</button>
+</nav>
+<div class="db-intro" data-panel="today">{{ art.scene("sessions") }}<div><b>Today</b><span>The sessions of the week, the reminders planned and worth writing, who teaches, and what is new on 9antra.tn.</span></div></div>
+<div class="db-intro" data-panel="people">{{ art.scene("feelings") }}<div><b>People</b><span>Who may drop out and why, what people say wherever they said it, and ideas to keep them engaged.</span></div></div>
+<div class="db-intro" data-panel="classes">{{ art.scene("classes") }}<div><b>Classes</b><span>Each class and its week, the newest registrations and the programs most chosen, and the last seven days.</span></div></div>
+<div class="db-intro" data-panel="growth">{{ art.scene("news") }}<div><b>Growth</b><span>Reports to download, what is new in every field, and this week's posts.</span></div></div>
+
+
 <!-- Who may drop out, and the journal -->
-<div class="db-two db-watch">
+<div class="db-two db-watch" data-panel="people">
   <section class="db-card" id="live-dashboard-risk" data-live-region>
     <div class="db-card-head db-head-art">
       <div class="db-head-pic dr-pic" aria-hidden="true"><i class="bi bi-person-walking"></i><span></span></div>
@@ -761,7 +794,7 @@
 </style>
 
 <!-- Reports to download: this week, the analysis, the candidates' progress -->
-<section class="db-reports" id="reports">
+<section class="db-reports" id="reports" data-panel="growth">
   <a class="db-report" href="/dashboard/pdf" target="_blank" rel="noopener" style="--i:0;">
     <span class="db-report-ico t-brand"><i class="bi bi-calendar-week-fill"></i></span>
     <span class="db-report-text"><b>This week, as a PDF</b><small>Day-by-day chart, money, classes and what needs you</small></span>
@@ -780,7 +813,7 @@
 </section>
 
 <!-- Reminders: the ones planned, and the ones worth writing -->
-<section class="db-card db-smart" id="live-dashboard-reminders">
+<section class="db-card db-smart" id="live-dashboard-reminders" data-panel="today">
   <div class="db-card-head">
     <div class="db-title"><i class="bi bi-alarm"></i>Reminders</div>
     <a class="ui-btn sm" href="/reminders#new"><i class="bi bi-plus-lg"></i>New reminder</a>
@@ -798,7 +831,7 @@
   </div>
 </section>
 
-<div class="db-two">
+<div class="db-two" data-panel="today">
   <!-- The sessions to come -->
   <section class="db-card" id="live-dashboard-sessions" data-live-region>
     <div class="db-card-head db-head-art">
@@ -871,11 +904,11 @@
 </div>
 
 <!-- The last seven days in a few figures -->
-<div class="db-card-head" style="margin:0 4px 12px;">
+<div class="db-card-head" style="margin:0 4px 12px;" data-panel="classes">
   <div class="db-title"><i class="bi bi-activity"></i>The last 7 days</div>
   <span class="db-sub">What happened, by part of the work. Each figure opens its page.</span>
 </div>
-<section class="db-parts" id="live-dashboard-activity" data-live-region>
+<section class="db-parts" id="live-dashboard-activity" data-live-region data-panel="classes">
   {% for part in parts %}
   <a class="db-part t-{{ part.tone }} {{ 'is-none' if not part.count }}" href="{{ part.url }}"{% if part.last %} title="Last one: {{ part.last.strftime('%A %d %B at %H:%M') }}"{% endif %}>
     <i class="bi {{ part.icon }}"></i>
@@ -949,7 +982,7 @@
 
 <!-- The classes and their week, in one place: each class once, at its hours. A class unfolds when clicked. -->
 {% set wb = board %}
-<details class="db-fold wb" id="live-dashboard-classes" data-live-region>
+<details class="db-fold wb" id="live-dashboard-classes" data-live-region data-panel="classes">
   <summary>
     <i class="bi bi-collection-play"></i>
     <div class="wb-sum-text">
@@ -1086,7 +1119,7 @@
 </details>
 
 <!-- The newest registrations and the most chosen programs, side by side in one fold -->
-<details class="db-fold pp mb-4" id="live-dashboard-registrations" data-live-region>
+<details class="db-fold pp mb-4" id="live-dashboard-registrations" data-live-region data-panel="classes">
   <summary>
     <i class="bi bi-people"></i>
     <div class="wb-sum-text">
@@ -1182,7 +1215,7 @@
 
 <!-- What people say: every feedback, wherever it was given (9antra.tn, the reviews in the application, the weekly check-ins) -->
 {% if voices.total %}
-<section class="db-card db-said" id="live-dashboard-feedback">
+<section class="db-card db-said" id="live-dashboard-feedback" data-panel="people">
   <div class="db-card-head">
     <div>
       <div class="db-title"><i class="bi bi-chat-heart-fill"></i>What people say</div>
@@ -1335,45 +1368,39 @@
 {% endif %}
 
 {% if marketing and (marketing.plan or marketing.tips) %}
-<section class="db-card db-market" id="dashboard-marketing">
-  <div class="db-card-head">
-    <div>
-      <div class="db-title"><i class="bi bi-megaphone-fill db-market-ico"></i>Marketing this week</div>
-      <div class="db-sub">What to post, when your people are most there, and what to do next. Each one is made in one click, or by Yasmine.</div>
+<details class="db-card db-market" id="dashboard-marketing" data-panel="growth">
+  <summary class="db-market-sum">
+    <span class="db-market-ico"><i class="bi bi-megaphone"></i></span>
+    <span class="db-market-head"><b>Marketing this week</b>
+      <small>{{ marketing.plan | length }} posts planned{% if marketing.best %} · best moment {{ marketing.best[0].day }} <span data-no-i18n>{{ marketing.best[0].band[0] }}–{{ marketing.best[0].band[1] }} h</span>{% endif %}</small></span>
+    <i class="bi bi-chevron-down db-market-chev"></i>
+  </summary>
+  <div class="db-market-body">
+    <div class="db-market-plan">
+      {% for item in marketing.plan %}
+      <a class="db-market-slot" href="{{ item.href }}" style="--i:{{ loop.index0 }};">
+        <span class="db-market-when"><b>{{ item.day }}</b><span data-no-i18n>{{ item.time }}</span></span>
+        <span class="db-market-what"><i class="bi {{ item.icon }}"></i>{{ item.title }}</span>
+        <span class="db-market-format"><i class="bi {{ item.format_icon }}"></i>{{ item.format_label }}</span>
+      </a>
+      {% endfor %}
     </div>
-    <span class="db-market-links"><a class="ui-link" href="/social#plan">The whole plan</a><a class="ui-link" href="/social#trends">What is trending</a></span>
-  </div>
-  {% if marketing.best %}
-  <div class="db-market-best">
-    <span class="db-market-best-label"><i class="bi bi-clock-history"></i>Best moments</span>
-    {% for slot in marketing.best %}<span class="db-market-moment" style="--i:{{ loop.index0 }};"><b>{{ loop.index }}</b>{{ slot.day }} · <span data-no-i18n>{{ slot.band[0] }}–{{ slot.band[1] }} h</span></span>{% endfor %}
-  </div>
-  {% endif %}
-  <div class="db-market-plan">
-    {% for item in marketing.plan %}
-    <div class="db-market-slot" style="--i:{{ loop.index0 }};">
-      <span class="db-market-when"><b>{{ item.day }}</b><span data-no-i18n>{{ item.time }}</span></span>
-      <span class="db-market-what"><i class="bi {{ item.icon }}"></i>{{ item.title }}</span>
-      <span class="db-market-format"><i class="bi {{ item.format_icon }}"></i>{{ item.format_label }}</span>
-      <span class="db-market-do"><a class="db-market-go" href="{{ item.href }}">Make it <i class="bi bi-arrow-right"></i></a></span>
+    <div class="db-market-tips">
+      {% for tip in marketing.tips[:2] %}
+      <a class="db-market-tip" href="{{ tip.href }}" style="--i:{{ loop.index0 }};">
+        <i class="bi {{ tip.icon }}"></i>
+        <span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span>
+      </a>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
-  <div class="db-market-tips">
-    {% for tip in marketing.tips %}
-    <div class="db-market-tip" style="--i:{{ loop.index0 }};">
-      <i class="bi {{ tip.icon }}"></i>
-      <span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span>
-      <a class="db-market-open" href="{{ tip.href }}" aria-label="Open where it is done"><i class="bi bi-box-arrow-up-right"></i></a>
+    <div class="db-market-ask">
+      <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-chat-heart"></i>Ask Yasmine for this week's plan<span hidden data-q>What should I post this week?</span></button>
+      <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-clock"></i>When should I post?<span hidden data-q>When should I post?</span></button>
+      <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-fire"></i>What is trending?<span hidden data-q>What is trending in posts?</span></button>
+      <a class="ui-link ms-auto" href="/social#ideas">Everything on Social media</a>
     </div>
-    {% endfor %}
   </div>
-  <div class="db-market-ask">
-    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-chat-heart"></i>Ask Yasmine for this week's plan<span hidden data-q>What should I post this week?</span></button>
-    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-clock"></i>When should I post?<span hidden data-q>When should I post?</span></button>
-    <button type="button" class="db-ask" data-ask-yasmine><i class="bi bi-fire"></i>What is trending?<span hidden data-q>What is trending in posts?</span></button>
-  </div>
-</section>
+</details>
 {% endif %}
 
 <!-- Create a class -->
@@ -1539,5 +1566,41 @@ document.querySelectorAll("details.db-fold").forEach(fold => {
   try { if (localStorage.getItem("dashboard:" + fold.id) === "open") fold.open = true; } catch (error) {}
   fold.addEventListener("toggle", () => { try { localStorage.setItem("dashboard:" + fold.id, fold.open ? "open" : "closed"); } catch (error) {} });
 });
+</script>
+<script>
+/* The dashboard's tabs: the one named by the address (#people, or anything inside a tab), else the one chosen last on
+   this browser, else Today. The choice is a mark on the page, so the parts that refresh themselves stay right. */
+(function () {
+  var tabs = ["today", "people", "classes", "growth"];
+  function partOf(hash) {
+    var id = (hash || "").replace("#", "");
+    if (tabs.indexOf(id) >= 0) return id;
+    var target = id && document.getElementById(id);
+    var panel = target && target.closest("[data-panel]");
+    return panel ? panel.getAttribute("data-panel") : null;
+  }
+  function show(part, scroll) {
+    document.body.setAttribute("data-dbtab", part);
+    Array.prototype.forEach.call(document.querySelectorAll(".db-tab"), function (tab) {
+      var on = tab.getAttribute("data-tab") === part;
+      tab.classList.toggle("is-on", on); tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    try { localStorage.setItem("dashboard-tab", part); } catch (error) {}
+    if (scroll) { var target = document.getElementById(scroll); if (target) target.scrollIntoView({ block: "start" }); }
+  }
+  var remembered = null;
+  try { remembered = localStorage.getItem("dashboard-tab"); } catch (error) {}
+  var asked = location.hash ? partOf(location.hash) : null;
+  show(asked || (tabs.indexOf(remembered) >= 0 ? remembered : "today"), asked && tabs.indexOf(location.hash.slice(1)) < 0 ? location.hash.slice(1) : null);
+  document.addEventListener("click", function (event) {
+    var tab = event.target.closest(".db-tab");
+    if (tab) { show(tab.getAttribute("data-tab")); return; }
+    var link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    var part = partOf(link.getAttribute("href"));
+    if (part) show(part);
+  });
+  window.addEventListener("hashchange", function () { var part = partOf(location.hash); if (part) show(part, location.hash.slice(1)); });
+})();
 </script>
 {% endblock %}

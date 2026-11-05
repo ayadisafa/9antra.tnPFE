@@ -10,4 +10,5 @@
 <nav class="ibx-switch" aria-label="Inboxes">
   <a href="/inbox" class="{{ 'is-on' if inbox_side == 'candidates' }}"><i class="bi bi-people-fill"></i>Candidates{% if inbox_pending %}<b>{{ inbox_pending }}</b>{% endif %}</a>
   <a href="/inbox/team" class="{{ 'is-on' if inbox_side == 'team' }}"><i class="bi bi-person-workspace"></i>Team{% if team_unread %}<b>{{ team_unread }}</b>{% endif %}</a>
+  {% if not_reached_count or inbox_side == 'reach' %}<a href="/inbox/not-reached" class="{{ 'is-on' if inbox_side == 'reach' }}"><i class="bi bi-send-x"></i>Didn't reach them{% if not_reached_count %}<b>{{ not_reached_count }}</b>{% endif %}</a>{% endif %}
 </nav>

@@ -79,10 +79,10 @@ asked.clear(); tr.work(db); db.expire_all()
 arabic = {row.source: row for row in db.query(UiTranslation).filter(UiTranslation.lang == "ar", UiTranslation.source.in_(["Zorblax widget board", "Quux the pictures"])).all()}
 check("in Arabic a good answer is kept and one that is not Arabic is refused", arabic["Zorblax widget board"].text == "لوحة زوربلاكس" and arabic["Quux the pictures"].text is None and arabic["Quux the pictures"].tries == 1)
 check("each text is asked one at a time, in the right language", all("Arabic" in system or "French" in system for system, _ in asked) and all("\n" not in prompt for _, prompt in asked))
-admin.cookies.set("lang", "ar")
+admin.post("/language", data={"lang": "ar", "next": "/"})   # as a browser does: the cookie the application set wins
 home = admin.get("/")
-check("Arabic turns the page to the right", '<html lang="ar" dir="rtl"' in home.text and 'var lang = "ar"' in home.text)
-admin.cookies.set("lang", "en")
+check("Arabic turns the page to the right", '<html lang="ar" dir="rtl"' in home.text and 'var lang = "ar"' in home.text, (home.status_code, home.headers.get("location"), home.text[:160]))
+admin.post("/language", data={"lang": "en", "next": "/"})
 
 # ---- correcting
 page = admin.get("/settings/translations?lang=fr&only=model")

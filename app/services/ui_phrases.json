@@ -2858,5 +2858,165 @@
 "The numbers of your posts are not followed here any more: Facebook, Instagram and TikTok show them in their own statistics. Here: what is trending, when to post, and this week's plan.": [
 "Les chiffres de vos publications ne sont plus suivis ici : Facebook, Instagram et TikTok les montrent dans leurs propres statistiques. Ici : ce qui est tendance, quand publier, et le plan de la semaine.",
 "لم تعد أرقام منشوراتك تُتابع هنا: فيسبوك وإنستغرام وتيك توك تعرضها في إحصائياتها الخاصة. هنا: ما الرائج، ومتى تنشر، وخطة الأسبوع."
+],
+"Delivered to {0}.": [
+"Remis à {0}.",
+"وصلت إلى {0}."
+],
+"Still not delivered: {0}": [
+"Toujours pas remis : {0}",
+"لم تصل بعد: {0}"
+],
+"Marked as sent from your phone.": [
+"Noté comme envoyé depuis votre téléphone.",
+"سُجّلت كمرسلة من هاتفك."
+],
+"Taken off the list: it stays in the discussion.": [
+"Retiré de la liste : il reste dans la discussion.",
+"حُذفت من القائمة: تبقى في المحادثة."
+],
+"{0} did not reach this candidate": [
+"Ce candidat n'a pas reçu : {0}",
+"لم يتلقّ هذا المترشح: {0}"
+],
+"The latest: “{0}” to {1}, {2}. {3}": [
+"Le dernier : « {0} » à {1}, {2}. {3}",
+"الأخيرة: «{0}» إلى {1}، {2}. {3}"
+],
+"{0} still worth sending": [
+"Encore utiles à envoyer : {0}",
+"ما زال مفيدا إرسالها: {0}"
+],
+"See what didn't reach them": [
+"Voir ce qui ne leur est pas parvenu",
+"عرض ما لم يصلهم"
+],
+"Confirm the presence of {0}": [
+"Confirmer la présence de {0}",
+"تأكيد الحضور في {0}"
+],
+"The oldest: {0}, {1}. Its professor was asked; the sheet is already filled in from their links, one tap confirms it.": [
+"La plus ancienne : {0}, {1}. Son professeur a été sollicité ; la feuille est déjà remplie à partir de leurs liens, un geste suffit pour la confirmer.",
+"الأقدم: {0}، {1}. طُلب ذلك من أستاذها؛ الورقة معبأة مسبقا من روابطهم، ونقرة واحدة تكفي لتأكيدها."
+],
+"Open the sheet": [
+"Ouvrir la feuille",
+"فتح الورقة"
+],
+"A professor": [
+"Un professeur",
+"أستاذ"
+],
+"{0} wrote to you": [
+"{0} vous a écrit",
+"{0} كتب لك"
+],
+"{0} people of the team wrote to you": [
+"{0} personnes de l'équipe vous ont écrit",
+"{0} أشخاص من الفريق كتبوا لك"
+],
+"{0} unread in the team chat, the first {1}.": [
+"{0} non lus dans la discussion d'équipe, le premier {1}.",
+"{0} غير مقروءة في محادثة الفريق، الأولى {1}."
+],
+"Read": [
+"Lire",
+"قراءة"
+],
+"Check {0}": [
+"Vérifier {0}",
+"تحقق من {0}"
+],
+"Read by the system; only you can confirm the payment or refuse it.": [
+"Lue par le système ; vous seul pouvez confirmer le paiement ou le refuser.",
+"قرأها النظام؛ أنت وحدك من يمكنه تأكيد الدفع أو رفضه."
+],
+"Check": [
+"Vérifier",
+"تحقق"
+],
+"It waits for you to send it from your phone (WhatsApp is not connected).": [
+"Il attend que vous l'envoyiez depuis votre téléphone (WhatsApp n'est pas connecté).",
+"تنتظر أن ترسلها من هاتفك (واتساب غير متصل)."
+],
+"The email account was not set up when it left.": [
+"Le compte e-mail n'était pas configuré quand il est parti.",
+"لم يكن حساب البريد مضبوطا عند إرسالها."
+],
+"The mail server refused it.": [
+"Le serveur de messagerie l'a refusé.",
+"رفضها خادم البريد."
+],
+"Sent by you from your phone.": [
+"Envoyé par vous depuis votre téléphone.",
+"أرسلتها أنت من هاتفك."
+],
+"The week's questions": [
+"Les questions de la semaine",
+"أسئلة الأسبوع"
+],
+"Payment reminder": [
+"Rappel de paiement",
+"تذكير بالدفع"
+],
+"Questions after the session": [
+"Questions après la séance",
+"أسئلة بعد الحصة"
+],
+"An answer": [
+"Une réponse",
+"جواب"
+],
+"Your message": [
+"Votre message",
+"رسالتك"
+],
+"Reminder before the class starts": [
+"Rappel avant le début de la classe",
+"تذكير قبل بداية القسم"
+],
+"Level check": [
+"Test de niveau",
+"اختبار المستوى"
+],
+"Class rescheduled": [
+"Classe reprogrammée",
+"تغيير موعد القسم"
+],
+"Review request": [
+"Demande d'avis",
+"طلب رأي"
+],
+"Registration confirmed": [
+"Inscription confirmée",
+"تأكيد التسجيل"
+],
+"Session reminder": [
+"Rappel de séance",
+"تذكير بالحصة"
+],
+"Class scheduled": [
+"Classe programmée",
+"برمجة القسم"
+],
+"Moved to another class": [
+"Déplacé dans une autre classe",
+"نقل إلى قسم آخر"
+],
+"Link to the session": [
+"Lien vers la séance",
+"رابط الحصة"
+],
+"Welcome message": [
+"Message de bienvenue",
+"رسالة ترحيب"
+],
+"A message": [
+"Un message",
+"رسالة"
+],
+"{0} taken off the list: they stay in their discussions.": [
+"{0} retiré(s) de la liste : ils restent dans leurs discussions.",
+"{0} حُذفت من القائمة: تبقى في محادثاتها."
 ]
 }

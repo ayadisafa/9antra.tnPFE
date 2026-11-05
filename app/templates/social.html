@@ -5,9 +5,28 @@
 
 {% block extra_head %}
 {% include "_ui.html" %}
+{% import "_ui_art.html" as art %}
 <style>
-  .so-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; position:sticky; top:calc(var(--stick-top, 86px) + 4px); z-index:5;
-             padding:6px; border-radius:999px; background:rgba(255,255,255,.86); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); width:fit-content; max-width:100%; }
+  .so-tabs { display:flex; gap:4px; flex-wrap:wrap; margin-bottom:18px; position:sticky; top:calc(var(--stick-top, 86px) + 4px); z-index:5;
+             padding:5px; border-radius:999px; background:rgba(255,255,255,.9); border:1px solid var(--border-color); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); width:fit-content; max-width:100%; }
+  .so-tabs .so-tab { border:0; box-shadow:none; background:transparent; transition:background .25s ease, color .25s ease; }
+  .so-tabs .so-tab.is-on { background:var(--berry-subtle); color:var(--primary-berry); }
+  .so-tabs .so-tab.is-soft i { color:#d9a441; }
+  [data-panel][hidden] { display:none !important; }
+  .so-section, .so-soft-intro { animation:soPanel .35s ease both; }
+  @keyframes soPanel { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+  .so-h .so-art, .so-soft-intro .so-art { width:104px; flex:none; }
+  .so-h .so-art .art { width:100%; height:auto; display:block; }
+  .so-h { align-items:center; justify-content:flex-start; }
+  .so-h > .so-pills { margin-inline-start:auto; }
+  .so-h > div:nth-child(2) { flex:1 1 360px; min-width:0; }
+  .so-flow { list-style:none; display:flex; flex-wrap:wrap; gap:6px; padding:0; margin:8px 0 0; counter-reset:flow; }
+  .so-flow li { display:inline-flex; gap:6px; align-items:center; font-size:.74rem; font-weight:700; color:#5b5670; background:#faf7fc; border:1px solid #efe9f4; border-radius:999px; padding:4px 11px 4px 6px; counter-increment:flow; }
+  .so-flow li::before { content:counter(flow); width:18px; height:18px; border-radius:50%; display:grid; place-items:center; background:#fff; color:var(--primary-berry); font-size:.66rem; font-weight:900; border:1px solid #efe9f4; }
+  .so-flow li i { color:var(--primary-berry); }
+  .so-soft-intro { display:flex; gap:14px; align-items:center; background:linear-gradient(120deg, #fffaf1, #fdf6fa); border:1px solid #f5ecdf; border-radius:22px; padding:12px 18px; margin-bottom:20px; scroll-margin-top:150px; }
+  .so-soft-intro p { margin:0; font-size:.84rem; color:#6b6180; max-width:720px; }
+  @media (max-width: 575px) { .so-h .so-art, .so-soft-intro .so-art { width:72px; } }
   .so-tab { display:inline-flex; gap:7px; align-items:center; border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:7px 14px; font-size:.82rem; font-weight:800; color:#5b5670; text-decoration:none; box-shadow:0 6px 16px -14px rgba(36,26,56,.6); transition:transform .15s ease, border-color .15s ease, color .15s ease; }
   .so-tab:hover { transform:translateY(-1px); border-color:var(--primary-berry); color:var(--primary-berry); } .so-tab i { color:var(--primary-berry); }
   .so-section { scroll-margin-top:150px; margin-bottom:34px; }
@@ -96,60 +115,63 @@
   .so-hot { color:#f97316; margin-inline-start:4px; font-size:.72rem; }
   .so-chip input:checked + span .so-hot, .so-pill.is-on .so-hot { color:#fde68a; }
   .so-idea:target { outline:4px solid var(--accent-gold, #f9b555); outline-offset:3px; }
-  .mk .so-h h3 { font-size:1.22rem; }
+  .mk .so-h h3 { font-size:1rem; color:#5b5670; } .mk .so-h h3 i { color:#d9a441; }
   .mk-plan { display:grid; grid-template-columns:repeat(auto-fill, minmax(230px, 1fr)); gap:12px; }
-  .mk-slot { position:relative; display:flex; flex-direction:column; gap:8px; padding:16px; border-radius:20px; text-decoration:none; color:#fff; overflow:hidden;
-             background:linear-gradient(150deg, #3b0f2f 0%, #1f0a1a 100%); box-shadow:0 18px 34px -24px rgba(31,10,26,.9);
-             animation:mkRise .5s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 90ms); transition:transform .18s ease; }
-  .mk-slot::after { content:""; position:absolute; right:-40px; top:-40px; width:120px; height:120px; border-radius:50%; background:var(--primary-berry); opacity:.55; }
-  .mk-slot:hover { transform:translateY(-3px); color:#fff; }
-  .mk-when { display:flex; align-items:baseline; gap:8px; position:relative; z-index:1; } .mk-when b { font-size:1.1rem; color:#f9b555; }
-  .mk-when span { font-size:.78rem; font-weight:800; background:rgba(255,255,255,.14); border-radius:999px; padding:2px 9px; }
-  .mk-what { display:flex; flex-direction:column; gap:2px; position:relative; z-index:1; } .mk-what i { color:#f9b555; font-size:1.2rem; }
-  .mk-what b { font-size:1rem; } .mk-what small { color:#f3c9dc; font-size:.78rem; }
-  .mk-format { font-size:.76rem; font-weight:700; color:#fde68a; } .mk-why { font-size:.78rem; color:#e9dcf0; }
-  .mk-go { margin-top:auto; font-weight:800; font-size:.8rem; color:#fff; display:inline-flex; gap:6px; align-items:center; }
+  .mk-slot { position:relative; display:flex; flex-direction:column; gap:7px; padding:14px; border-radius:20px; text-decoration:none; color:var(--ink-text); overflow:hidden;
+             background:#fff; border:1px solid #f1eaf3; box-shadow:0 10px 26px -22px rgba(91,86,112,.5);
+             animation:mkRise .6s ease both; animation-delay:calc(var(--i) * 110ms); transition:transform .25s ease, border-color .25s ease; }
+  .mk-slot::after { content:""; position:absolute; right:-34px; top:-34px; width:92px; height:92px; border-radius:50%; background:#fdeff5; }
+  .mk-slot:hover { transform:translateY(-2px); color:var(--ink-text); border-color:#ead7e4; }
+  .mk-when { display:flex; align-items:baseline; gap:8px; position:relative; z-index:1; } .mk-when b { font-size:.98rem; color:var(--primary-berry); }
+  .mk-when span { font-size:.74rem; font-weight:700; background:#faf7fc; color:#6b6180; border-radius:999px; padding:2px 9px; }
+  .mk-what { display:flex; flex-direction:column; gap:2px; position:relative; z-index:1; } .mk-what i { color:#d9a441; font-size:1.1rem; }
+  .mk-what b { font-size:.92rem; } .mk-what small { color:#8a84a0; font-size:.76rem; }
+  .mk-format { font-size:.74rem; font-weight:700; color:#8a6d2a; } .mk-why { font-size:.76rem; color:#6b6180; }
+  .mk-go { margin-top:auto; font-weight:800; font-size:.78rem; color:var(--primary-berry); display:inline-flex; gap:6px; align-items:center; }
   .mk-slot:hover .mk-go i { transform:translateX(4px); } .mk-go i { transition:transform .18s ease; }
   .mk-tips { margin-top:16px; display:grid; gap:8px; }
-  .mk-tip { display:flex; gap:12px; align-items:center; padding:11px 14px; border-radius:16px; background:#fff; border:2px solid #f1e3ee; text-decoration:none; color:inherit;
+  .mk-tip { display:flex; gap:12px; align-items:center; padding:10px 14px; border-radius:16px; background:#fff; border:1px solid #f1eaf3; text-decoration:none; color:inherit;
             animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 70ms); transition:border-color .15s ease, transform .15s ease; }
   .mk-tip:hover { border-color:var(--primary-berry); transform:translateX(3px); }
-  .mk-tip > i:first-child { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; background:var(--primary-berry); color:#fff; font-size:1.05rem; }
+  .mk-tip > i:first-child { width:34px; height:34px; flex:none; border-radius:12px; display:grid; place-items:center; background:#fff6e6; color:#c0892a; font-size:1rem; }
   .mk-tip span { display:flex; flex-direction:column; min-width:0; } .mk-tip b { font-size:.86rem; color:var(--ink-text); } .mk-tip small { font-size:.74rem; color:#6b6180; }
   .mk-tip-go { margin-inline-start:auto; color:var(--primary-berry); }
+  .mk-more summary { list-style:none; cursor:pointer; display:inline-flex; gap:6px; align-items:center; font-size:.76rem; font-weight:800; color:#8a84a0; padding:6px 2px; }
+  .mk-more summary::-webkit-details-marker { display:none; } .mk-more summary i { transition:transform .25s ease; } .mk-more[open] summary i { transform:rotate(180deg); }
+  .mk-more[open] > a { animation:mkRise .4s ease both; } .mk-tips .mk-more { display:grid; gap:8px; }
   .mk-two { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:14px; }
   .mk-bar { display:flex; flex-direction:column; gap:4px; padding:9px 0; border-top:1px solid #f1ecf6; text-decoration:none; color:inherit; }
   .mk-bar:first-of-type { border-top:0; }
   .mk-bar-top { display:flex; justify-content:space-between; gap:8px; } .mk-bar-top b { font-size:.86rem; color:var(--ink-text); }
   .mk-bar-top em { font-style:normal; font-size:.74rem; font-weight:800; color:var(--primary-berry); white-space:nowrap; }
-  .mk-bar-track { height:10px; border-radius:99px; background:#f3edf7; overflow:hidden; }
-  .mk-bar-track span { display:block; height:100%; width:var(--w); border-radius:inherit; background:linear-gradient(90deg, var(--primary-berry), #f97316);
-                       animation:mkGrow 1s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i) * 120ms + 150ms); }
+  .mk-bar-track { height:6px; border-radius:99px; background:#f6f2f8; overflow:hidden; }
+  .mk-bar-track span { display:block; height:100%; width:var(--w); border-radius:inherit; background:linear-gradient(90deg, #f3c7da, #f6d79d);
+                       animation:mkGrow 1.6s ease both; animation-delay:calc(var(--i) * 140ms + 200ms); }
   .mk-bar small { font-size:.74rem; color:#6b6180; }
   .mk-own { font-size:.8rem; margin:0 0 4px; }
   .mk-design { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px; }
-  .mk-design-card { display:flex; flex-direction:column; gap:4px; padding:12px; border-radius:16px; background:#1f0a1a; color:#fff; text-decoration:none;
-                    animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 80ms); transition:transform .15s ease; }
-  .mk-design-card:hover { transform:translateY(-2px); color:#fff; }
-  .mk-design-card i { font-size:1.3rem; color:#f9b555; } .mk-design-card b { font-size:.86rem; } .mk-design-card small { font-size:.74rem; color:#e9dcf0; }
+  .mk-design-card { display:flex; flex-direction:column; gap:4px; padding:12px; border-radius:16px; background:#fcfaf7; border:1px solid #f3ede4; color:var(--ink-text); text-decoration:none;
+                    animation:mkRise .6s ease both; animation-delay:calc(var(--i) * 100ms); transition:transform .25s ease; }
+  .mk-design-card:hover { transform:translateY(-2px); color:var(--ink-text); }
+  .mk-design-card i { font-size:1.1rem; color:#d9a441; } .mk-design-card b { font-size:.84rem; } .mk-design-card small { font-size:.74rem; color:#8a84a0; }
   .mk-best { display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:10px; margin-bottom:14px; }
-  .mk-best-card { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:18px; background:#fff; border:2px solid var(--primary-berry);
+  .mk-best-card { display:flex; gap:12px; align-items:flex-start; padding:12px 14px; border-radius:18px; background:#fff; border:1px solid #f1eaf3;
                   animation:mkRise .45s ease both; animation-delay:calc(var(--i) * 90ms); }
   .mk-best-card span { display:flex; flex-direction:column; gap:2px; } .mk-best-card b { font-size:.92rem; color:var(--ink-text); } .mk-best-card small { font-size:.74rem; color:#6b6180; }
-  .mk-rank { width:34px; height:34px; flex:none; border-radius:50%; display:grid !important; place-items:center; background:var(--primary-berry); color:#fff; font-weight:900; }
-  .mk-best-card:first-child .mk-rank { background:#f97316; animation:mkPulse 2.2s ease-in-out infinite; }
+  .mk-rank { width:30px; height:30px; flex:none; border-radius:50%; display:grid !important; place-items:center; background:#fdeff5; color:var(--primary-berry); font-weight:900; }
+  .mk-best-card:first-child .mk-rank { background:#fff1dc; color:#b7791f; animation:mkPulse 3.2s ease-in-out infinite; }
   .mk-heat { display:grid; gap:4px; overflow-x:auto; }
   .mk-heat-row { display:grid; grid-template-columns:96px repeat(6, minmax(44px, 1fr)); gap:4px; align-items:center; }
   .mk-heat-row.is-head span { font-size:.68rem; font-weight:800; color:#8a84a0; text-align:center; white-space:nowrap; }
   .mk-heat-row b { font-size:.78rem; color:var(--ink-text); }
-  .mk-cell { height:34px; border-radius:9px; display:grid; place-items:center; background:color-mix(in srgb, var(--primary-berry) calc(var(--s) * 1%), #f6f1f8);
+  .mk-cell { height:30px; border-radius:9px; display:grid; place-items:center; background:color-mix(in srgb, #e58db3 calc(var(--s) * .8%), #faf6fb);
              animation:mkPop .4s ease both; animation-delay:calc(var(--d) * 14ms); }
   .mk-cell em { font-style:normal; font-size:.66rem; font-weight:800; color:#fff; opacity:.9; }
-  .mk-cell:not(.is-top) em { color:#5b5670; } .mk-cell.is-top { box-shadow:inset 0 0 0 2px #f9b555; } .mk-cell.is-top em { color:#fff; }
+  .mk-cell em { color:#6b6180 !important; } .mk-cell.is-top { box-shadow:inset 0 0 0 2px #f6d79d; }
   @keyframes mkRise { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:none; } }
   @keyframes mkGrow { from { width:0; } }
   @keyframes mkPop { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
-  @keyframes mkPulse { 50% { box-shadow:0 0 0 8px rgba(249,115,22,.18); } }
+  @keyframes mkPulse { 50% { box-shadow:0 0 0 6px rgba(246,215,157,.35); } }
   @media (max-width: 991px) { .mk-two { grid-template-columns:minmax(0, 1fr); } }
   @media (prefers-reduced-motion: reduce) { .mk-slot, .mk-tip, .mk-design-card, .mk-best-card, .mk-cell, .mk-bar-track span, .mk-rank { animation:none !important; } }
 </style>
@@ -164,17 +186,20 @@
   </div>
 </div>
 
-<nav class="so-tabs" aria-label="Parts of the page">
-  <a class="so-tab" href="#plan"><i class="bi bi-calendar-week"></i>This week</a>
-  <a class="so-tab" href="#trends"><i class="bi bi-fire"></i>Trending</a>
-  <a class="so-tab" href="#timing"><i class="bi bi-clock-history"></i>Best times</a>
-  <a class="so-tab" href="#create"><i class="bi bi-magic"></i>Posts and stories</a>
-  <a class="so-tab" href="#videos"><i class="bi bi-camera-reels"></i>Videos</a>
-  <a class="so-tab" href="#listen"><i class="bi bi-ear"></i>We listen</a>
+<nav class="so-tabs" role="tablist" aria-label="Parts of the page">
+  <a class="so-tab" role="tab" href="#create" data-tab="create"><i class="bi bi-magic"></i>Posts and stories</a>
+  <a class="so-tab" role="tab" href="#videos" data-tab="videos"><i class="bi bi-camera-reels"></i>Videos</a>
+  <a class="so-tab" role="tab" href="#listen" data-tab="listen"><i class="bi bi-ear"></i>We listen</a>
+  <a class="so-tab is-soft" role="tab" href="#ideas" data-tab="ideas"><i class="bi bi-lightbulb"></i>When and what to post</a>
 </nav>
 
+<div class="so-soft-intro" id="ideas" data-panel="ideas">
+  <div class="so-art">{{ art.scene("ideas") }}</div>
+  <p>A little help for your posts, nothing more: when your people are there, a plan for the week, and what is talked about. Each idea opens the post ready to make.</p>
+</div>
+
 <!-- ============ This week: what to post, and when ============ -->
-<section class="so-section mk" id="plan">
+<section class="so-section mk" id="plan" data-panel="ideas">
   <div class="so-h">
     <div><h3><i class="bi bi-calendar-week"></i>This week: what to post, and when</h3>
       <p>Four posts at the moments your people are most active, each made from your own records. Click one to make it.</p></div>
@@ -194,14 +219,14 @@
   </div>
   <div class="mk-tips">
     <div class="so-label"><i class="bi bi-lightbulb"></i> Marketing advice, from your records</div>
-    {% for tip in tips %}
-    <a class="mk-tip" href="{{ tip.href }}" style="--i:{{ loop.index0 }};"><i class="bi {{ tip.icon }}"></i><span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span><i class="bi bi-arrow-right mk-tip-go"></i></a>
-    {% endfor %}
+    {% macro tip_row(tip, index) %}<a class="mk-tip" href="{{ tip.href }}" style="--i:{{ index }};"><i class="bi {{ tip.icon }}"></i><span><b>{% if tip.shown %}{{ shown(tip.text) }}{% else %}{{ tip.text }}{% endif %}</b><small>{{ tip.why }}</small></span><i class="bi bi-arrow-right mk-tip-go"></i></a>{% endmacro %}
+    {% for tip in tips[:3] %}{{ tip_row(tip, loop.index0) }}{% endfor %}
+    {% if tips | length > 3 %}<details class="mk-more"><summary><i class="bi bi-chevron-down"></i>{{ tips | length - 3 }} more</summary>{% for tip in tips[3:] %}{{ tip_row(tip, loop.index0) }}{% endfor %}</details>{% endif %}
   </div>
 </section>
 
 <!-- ============ What is trending in posts ============ -->
-<section class="so-section mk" id="trends">
+<section class="so-section mk" id="trends" data-panel="ideas">
   <div class="so-h">
     <div><h3><i class="bi bi-fire"></i>What is trending in posts</h3>
       <p>Counted from the marketing articles the journal read in the last 45 days (<span data-no-i18n>{{ trends.articles }}</span>); then what posts look like this year.</p></div>
@@ -209,15 +234,15 @@
   <div class="mk-two">
     <div class="so-box">
       <div class="so-label">What the marketing articles talk about</div>
-      {% for item in trends.subjects %}
-      <a class="mk-bar" href="{{ item.href }}" style="--w:{{ item.share }}%; --i:{{ loop.index0 }};">
+      {% macro subject(item, index) %}<a class="mk-bar" href="{{ item.href }}" style="--w:{{ item.share }}%; --i:{{ index }};">
         <span class="mk-bar-top"><b>{{ item.label }}</b><em><span data-no-i18n>{{ item.articles }}</span> <span>articles</span></em></span>
         <span class="mk-bar-track"><span></span></span>
         <small>{{ item.means }}</small>
-      </a>
-      {% else %}
+      </a>{% endmacro %}
+      {% for item in trends.subjects[:5] %}{{ subject(item, loop.index0) }}{% else %}
       <p class="so-empty">The journal has no marketing article of the last weeks yet.</p>
       {% endfor %}
+      {% if trends.subjects | length > 5 %}<details class="mk-more"><summary><i class="bi bi-chevron-down"></i>{{ trends.subjects | length - 5 }} more</summary>{% for item in trends.subjects[5:] %}{{ subject(item, loop.index0) }}{% endfor %}</details>{% endif %}
     </div>
     <div class="so-box">
       <div class="so-label">What posts look like this year <span class="ui-chip muted">General practice, not counted</span></div>
@@ -229,7 +254,7 @@
 </section>
 
 <!-- ============ When most of your people can interact ============ -->
-<section class="so-section mk" id="timing">
+<section class="so-section mk" id="timing" data-panel="ideas">
   <div class="so-h">
     <div><h3><i class="bi bi-clock-history"></i>When most of your people can interact</h3>
       <p>Each square is a day and a time of day: the deeper the colour, the better the moment. Counted from the moments your people wrote, answered their questions or registered in the last six months (<span data-no-i18n>{{ times.counted }}</span>), with a general starting point (evening, then lunch) while those are few.</p></div>
@@ -249,10 +274,11 @@
 </section>
 
 <!-- ============ Posts and stories ============ -->
-<section class="so-section" id="create">
+<section class="so-section" id="create" data-panel="create">
   <div class="so-h">
+    <div class="so-art">{{ art.scene("posts") }}</div>
     <div><h3><i class="bi bi-magic"></i>Posts and stories, ready to share</h3>
-      <p>Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text and post it on your networks.</p></div>
+      <p>Made from your records: the figures, what former candidates said in public, what you did about feedback, the next sessions. Download the picture, copy the text and post it on your networks.</p><ol class="so-flow"><li><i class="bi bi-hand-index-thumb"></i>Choose an idea</li><li><i class="bi bi-download"></i>Download the picture</li><li><i class="bi bi-send"></i>Copy the text and post it</li></ol></div>
     <div class="so-pills" aria-label="Language and look">
       {% for key, name in languages.items() %}<a class="so-pill {{ 'is-on' if lang == key }}" href="/social?lang={{ key }}&look={{ look }}#create" data-no-i18n>{{ name }}</a>{% endfor %}
       <span style="width:8px;"></span>
@@ -281,10 +307,11 @@
 </section>
 
 <!-- ============ Videos ============ -->
-<section class="so-section" id="videos">
+<section class="so-section" id="videos" data-panel="videos">
   <div class="so-h">
+    <div class="so-art">{{ art.scene("video") }}</div>
     <div><h3><i class="bi bi-camera-reels"></i>Motivating videos, with music</h3>
-      <p>Their success, what you did about their feedback, the next sessions: scenes that come in one after the other, figures that count up, and music. Made on this computer in about a minute, as MP4 for Facebook, Instagram, TikTok and LinkedIn.</p></div>
+      <p>Their success, what you did about their feedback, the next sessions: scenes that come in one after the other, figures that count up, and music. Made on this computer in about a minute, as MP4 for Facebook, Instagram, TikTok and LinkedIn.</p><ol class="so-flow"><li><i class="bi bi-list-check"></i>Choose what it tells</li><li><i class="bi bi-music-note-beamed"></i>Choose its music</li><li><i class="bi bi-film"></i>Watch it, then download it</li></ol></div>
   </div>
   <div class="so-make">
     <form class="so-box" method="post" action="/social/video" enctype="multipart/form-data" id="so-video-form">
@@ -349,10 +376,11 @@
 </section>
 
 <!-- ============ We listen ============ -->
-<section class="so-section" id="listen">
+<section class="so-section" id="listen" data-panel="listen">
   <div class="so-h">
+    <div class="so-art">{{ art.scene("listen") }}</div>
     <div><h3><i class="bi bi-ear"></i>We listen: you said, we did</h3>
-      <p>What people asked to improve, from the reviews and the feedback that is not fully happy. Write what you did about it: it becomes a post and a scene of the “we listen” videos, so everyone sees that their voice counts.</p></div>
+      <p>What people asked to improve, from the reviews and the feedback that is not fully happy. Write what you did about it: it becomes a post and a scene of the “we listen” videos, so everyone sees that their voice counts.</p><ol class="so-flow"><li><i class="bi bi-chat-quote"></i>Read what they asked</li><li><i class="bi bi-pencil"></i>Write what you did</li><li><i class="bi bi-megaphone"></i>It becomes a post and a scene</li></ol></div>
   </div>
   <div class="so-two">
     <div class="so-listen">
@@ -397,6 +425,35 @@
 
 <script>
 (function () {
+  // One part at a time: the tab named by the address (a part, or anything inside it), "Posts and stories" first.
+  var parts = { plan: "ideas", trends: "ideas", timing: "ideas", ideas: "ideas", create: "create", videos: "videos", listen: "listen" };
+  function partOf(hash) {
+    var id = (hash || "").replace("#", "");
+    if (parts[id]) return parts[id];
+    var target = id && document.getElementById(id);
+    var panel = target && target.closest("[data-panel]");
+    return panel ? panel.dataset.panel : "create";
+  }
+  function show(hash, scroll) {
+    var part = partOf(hash);
+    document.querySelectorAll("[data-panel]").forEach(function (block) { block.hidden = block.dataset.panel !== part; });
+    document.querySelectorAll("[data-tab]").forEach(function (tab) {
+      var on = tab.dataset.tab === part;
+      tab.classList.toggle("is-on", on); tab.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    var target = scroll && hash && document.getElementById(hash.replace("#", ""));
+    if (target && !parts[hash.replace("#", "")]) target.scrollIntoView({ block: "center" });
+  }
+  document.querySelectorAll("[data-tab]").forEach(function (tab) {
+    tab.addEventListener("click", function (event) {
+      event.preventDefault();
+      history.replaceState(null, "", "#" + tab.dataset.tab);
+      show("#" + tab.dataset.tab, false);
+    });
+  });
+  window.addEventListener("hashchange", function () { show(location.hash, true); });
+  show(location.hash, true);
+
   document.querySelectorAll("[data-copy]").forEach(function (button) {
     button.addEventListener("click", function () {
       var done = function () { var label = button.querySelector("span"); var was = label.textContent; label.textContent = "Copied"; setTimeout(function () { label.textContent = was; }, 1600); };

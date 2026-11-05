@@ -18,6 +18,8 @@ class ClassSession(Base):
     notes = Column(Text, nullable=True)
     # The online meeting of this session. Candidates never get it: each has a link of their own (see meetings).
     meeting_url = Column(String, nullable=True)
+    # When its professor was asked to confirm who came, once the session ended (meetings.after_sessions).
+    sheet_asked_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     class_group = relationship("ClassGroup", back_populates="sessions")

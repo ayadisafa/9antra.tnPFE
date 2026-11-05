@@ -150,6 +150,81 @@ _CONCEPT_NAMES = {
     "_curriculum": "course content", "_refund": "refunds", "_level": "levels or prerequisites",
 }
 
+# A sentence that asks for something: a question mark, a question word, a polite request.
+_ASKING_LINE = re.compile(
+    r"[?؟]|\b(pouvez|pourriez|peux|puis[- ]je|est[- ]ce|comment|quand|combien|quel|quelle|quels|quelles|o[uù]|pourquoi|"
+    r"je voudrais|j'aimerais|je souhaite|merci de m|envoyez|envoie|can you|could you|would you|please|how|when|what|where|which|why|"
+    r"i would like|i'd like|send me|kifech|9adech|wa9tech|chnowa|ena7eb|nheb|n7eb)\b", re.IGNORECASE)
+# What a subject looks like in an answer besides its own words: an amount in DT is a price, a date is a start…
+_SEEN_AS = {
+    "_price": re.compile(r"\d[\d\s.,]*\s?(dt|tnd|dinars?)\b|\bdt\b", re.IGNORECASE),
+    "_start": re.compile(r"\b\d{1,2}[/.-]\d{1,2}([/.-]\d{2,4})?\b|\b\d{1,2}(er)?\s+(janvier|f[ée]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[ée]cembre|january|february|march|april|may|june|july|august|september|october|november|december)\b", re.IGNORECASE),
+    "_schedule": re.compile(r"\b\d{1,2}\s?[:h]\s?\d{0,2}\b|\b(lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", re.IGNORECASE),
+    "_duration": re.compile(r"\b\d+\s+(semaines?|weeks?|mois|months?|heures?|hours?)\b", re.IGNORECASE),
+    "_trainer": re.compile(r"prof|formateur|formatrice|trainer|teacher", re.IGNORECASE),
+    "_payment": re.compile(r"pay|paie|pai[eé]|reste|solde|balance|\bdt\b|virement|ch[eè]que", re.IGNORECASE),
+    "_curriculum": re.compile(r"semaine\s*\d|week\s*\d|module|chapitre|programme|contenu|content", re.IGNORECASE),
+    "_location": re.compile(r"adresse|address|rue|lac|ariana|sousse|tunis|maps|centre|center", re.IGNORECASE),
+    "_online": re.compile(r"en ligne|online|distance|lien|link", re.IGNORECASE),
+    "_onsite": re.compile(r"pr[ée]sentiel|on[- ]site|sur place|au centre|at the centre", re.IGNORECASE),
+    "_certificate": re.compile(r"certifica|attestation|dipl[oô]me", re.IGNORECASE),
+    "_level": re.compile(r"niveau|level|d[ée]butant|beginner|pr[ée]requis|prerequisite", re.IGNORECASE),
+    "_refund": re.compile(r"rembours|refund|annul|cancel", re.IGNORECASE),
+}
+MAX_REQUESTS = 6
+
+
+def requests_of(text: str) -> list[str]:
+    """Each thing a message asks for, in the candidate's words (a question, a request), in order."""
+    opened = _OPENING.sub("", (text or "").strip(), count=1)
+    sentences = [part.strip() for part in re.split(r"(?<=[.!?؟])\s+|\n+", opened) if part.strip()]
+    asked = [sentence for sentence in sentences
+             if _ASKING_LINE.search(sentence) or any(token in _CONCEPT_NAMES for token in knowledge_service.tokenize(sentence))]
+    return [email_threads.snippet(sentence, 160) for sentence in asked][:MAX_REQUESTS]
+
+
+# Question words that also name a subject ("quand" a schedule, "combien" a price): they count only when they open the
+# request and nothing else is asked ("is there a parking when I come?" asks about parking, "combien de semaines?" a length).
+_WEAK = {"quand": "_schedule", "when": "_schedule", "wa9tech": "_schedule", "combien": "_price"}
+_LEAD_IN = {"et", "and", "aussi", "also", "so", "alors", "puis", "bonjour", "hello", "svp", "please"}
+
+
+def subjects_of(request: str) -> set[str]:
+    subjects = {token for token in knowledge_service.tokenize(request) if token in _CONCEPT_NAMES}
+    words = re.findall(r"[\w']+", (request or "").lower())
+    opening = [word for word in words if word not in _LEAD_IN][:3]
+    for weak, subject in _WEAK.items():
+        if subject not in subjects or weak not in words:
+            continue
+        said_otherwise = any(subject in knowledge_service.tokenize(word) for word in words if word not in _WEAK)
+        if not said_otherwise and (subjects - {subject} or weak not in opening):
+            subjects.discard(subject)
+    return subjects
+
+
+def covers(answer: str, subject: str) -> bool:
+    """Whether an answer says something of this subject (its words, or what it looks like: an amount, a date…)."""
+    return subject in knowledge_service.tokenize(answer or "") or bool(_SEEN_AS.get(subject) and _SEEN_AS[subject].search(answer or ""))
+
+
+# Subjects that answer one another: "when does it start?" is answered by a date as well as by an hour.
+_SAME_FAMILY = ({"_schedule", "_start"}, {"_online", "_onsite"}, {"_price", "_payment"})
+
+
+def _family(subject: str) -> set[str]:
+    return next((family for family in _SAME_FAMILY if subject in family), {subject})
+
+
+def missed_requests(requests: list[str], answer: str | None) -> list[dict]:
+    """The requests an answer leaves out: {"request", "subjects"} for each subject it never speaks of."""
+    missed = []
+    for request in requests or []:
+        left = sorted({_CONCEPT_NAMES[subject] for subject in subjects_of(request)
+                       if not any(covers(answer or "", near) for near in _family(subject))})
+        if left:
+            missed.append({"request": request, "subjects": left})
+    return missed
+
 
 # ------------------------------------------------------------------
 # Local model (Ollama)
@@ -327,6 +402,7 @@ def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
         "needs_reply": not thanks_only,
         "thanks_word": thanked.group(1).lower() if thanks_only else None,
         "question": question_sentence(stripped),
+        "requests": requests_of(stripped),             # each thing asked, so that none is missed
         "sentiment": sentiment,
         "summary": email_threads.snippet(stripped, 160),
         "tokens": tokens,
@@ -1098,6 +1174,26 @@ def find_answer(db: Session, candidate: Candidate, thread: EmailThread, message:
                                                  "The draft gives the facts: add the rest before sending.")
         return found
 
+    # The agent of the program the message names, else of the program the candidate follows: its weeks, its files,
+    # its professors and what the admin told about it.
+    from app.services import program_agents
+
+    program = program_agents.find(db, text_asked, candidate)
+    agent_said = program_agents.answer(db, program, analysis.get("question") or message.body or "",
+                                       lang=asked_language if asked_language in ("fr", "en") else "fr") if program is not None else None
+    if agent_said and agent_said.get("reply"):
+        reply = agent_said["reply"]
+        left = sorted(_CONCEPT_NAMES[token] for token in analysis["tokens"] if token in _CONCEPT_NAMES and not covers(reply, token))
+        found.update(method="program_agent", answer=reply, evidence=1.0, confidence=0.6 if left else RECORD_CONFIDENCE,
+                     programs=[program.id], agent=program_agents.key_of(program), agent_name=program.name)
+        if left:
+            found["blocker"] = (f"The {program.name} agent answered part of it; the message also asks about {', '.join(left)}. "
+                                "The draft has what the agent knows: add the rest before sending.")
+        elif agent_said.get("nothing"):
+            found.update(confidence=0.5, blocker=f"The {program.name} agent read every week and found nothing about it. "
+                                                 "Check before sending: it may be taught under another name.")
+        return found
+
     knowledge_service.ensure_fresh(db)
     _, coverage = candidate_facts(db, candidate)
     # The program the email is about: the one it names, else the one of the email it answers.
@@ -1212,7 +1308,7 @@ def process_inbound(db: Session, message: CandidateEmail) -> str:
     channel = getattr(thread, "channel", None) or message.channel or "email"
     from app.services import message_categories
 
-    orchestrator.note(db, agent=message.category or "general", category={**message_categories.label_of(message.category),
+    orchestrator.note(db, agent=getattr(message, "_agent", None) or message.category or "general", category={**message_categories.label_of(message.category),
                                                                          "by": getattr(message, "_category_by", None),
                                                                          "why": getattr(message, "_category_why", None)},
                       channel=channel if channel in ("email", "whatsapp", "sms") else "email",
@@ -1458,6 +1554,15 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         return "no_reply"
 
     found = find_answer(db, candidate, thread, message, analysis)
+    # Every request of the message must be answered: one left out, and the answer waits for the admin, saying which.
+    missed = [] if found.get("language") in ("ar", "tn") else missed_requests(analysis.get("requests") or [], found.get("answer"))
+    if found.get("answer") and missed and not found.get("blocker"):
+        said = "; ".join(f"“{item['request']}” ({', '.join(item['subjects'])})" for item in missed[:3])
+        found["blocker"] = (f"The message asks {len(analysis.get('requests') or [])} thing(s); the answer does not cover: {said}. "
+                            "Add it before sending, so nothing is missed.")
+        found["confidence"] = min(found["confidence"], 0.6)
+    if found.get("agent"):
+        message._agent = found["agent"]         # the orchestrator counts it for that program's agent
     written_in = found.get("language")
     if written_in in ("ar", "tn") and found["answer"]:
         from app.services import prospects
@@ -1496,6 +1601,10 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         "rewritten": bool(found.get("rewritten")),
         "programs": found.get("programs") or [],
         "files": found.get("files") or [],      # what the answer carries; the draft keeps them attached
+        # Each thing the candidate asked, and whether the answer covers it.
+        "requests": [{"text": request, "answered": not any(item["request"] == request for item in missed)}
+                     for request in analysis.get("requests") or []],
+        "agent": found.get("agent"),
         "hits": [
             {"title": hit["title"], "kind": hit["kind"], "origin": hit["origin"], "score": hit["quality"]}
             for hit in found["hits"]

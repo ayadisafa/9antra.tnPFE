@@ -48,6 +48,8 @@
   .at-part span { display:block; padding:5px 10px; font-size:.74rem; font-weight:700; color:#6b6680; background:#fff; }
   .at-part label + label span { border-left:1px solid var(--border-color); }
   .at-part input:checked + span { background:var(--berry-subtle); color:var(--primary-berry); }
+  @keyframes atNudge { 0%, 100% { box-shadow:0 0 0 0 rgba(164,44,103,.35); } 50% { box-shadow:0 0 0 6px rgba(164,44,103,0); } }
+  @media (prefers-reduced-motion: no-preference) { .at-confirm { animation:atNudge 2.4s ease-in-out infinite; } }
   .at-part input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:-2px; }
   .at-asked { display:inline-flex; align-items:center; gap:6px; margin:0; font-size:.76rem; }
   .at-asked input { width:58px; border:1px solid var(--border-color); border-radius:9px; padding:4px 6px; font:inherit; font-size:.78rem; }
@@ -109,13 +111,15 @@
         <div class="ui-card-title"><i class="bi bi-person-check"></i>{{ selected.session_date.strftime('%A %d %B') }} · {{ selected.topic }}</div>
         <div class="ui-card-sub">
           {% if selected_is_future %}This session has not taken place yet.
-          {% elif already_marked %}Already marked. Change what is wrong and save again.
-          {% else %}Everyone is marked present to start with: change only those who are late or absent.{% endif %}
+          {% elif confirmed %}Confirmed. Change what is wrong and save again.
+          {% elif from_links %}Filled in from their own links: who came in, who was late, who never came. Check it and confirm in one tap.
+          {% else %}Everyone is marked present to start with: change only those who are late or absent, then confirm.{% endif %}
         </div>
       </div>
       {% if not selected_is_future and sheet %}
       <div class="ui-actions">
         <button type="button" class="ui-btn sm" data-all="present"><i class="bi bi-check2-all"></i>All present</button>
+        {% if not confirmed %}<button type="submit" form="presenceForm" class="ui-btn primary sm at-confirm"><i class="bi bi-hand-index-thumb"></i>Confirm as shown</button>{% endif %}
       </div>
       {% endif %}
     </div>
@@ -159,7 +163,7 @@
            .at-checks.soft { background:#f6f3fb; color:#5b5670; } .at-checks i { font-size:1.05rem; }</style>
     <form method="post" action="/classes/{{ cls.id }}/attendance/{{ selected.id }}" id="presenceForm">
       {% for row in sheet %}
-      {% set current = row.status or 'present' %}
+      {% set current = row.guess %}
       <div class="at-person">
         <div class="d-flex align-items-center gap-3" style="min-width:0;">
           {{ ui.avatar(row.name, 40) }}
@@ -196,7 +200,7 @@
       {% endfor %}
       {% if not selected_is_future %}
       <div class="d-flex align-items-center gap-3 mt-3 flex-wrap">
-        <button class="ui-btn primary" type="submit"><i class="bi bi-check2"></i>Save the presence</button>
+        <button class="ui-btn primary" type="submit"><i class="bi bi-check2"></i>{{ 'Save the presence' if confirmed else 'Confirm the presence' }}</button>
         <span class="ui-card-sub" id="presenceCount"></span>
       </div>
       {% endif %}

@@ -159,6 +159,7 @@
       <h2>{{ t("Sign in") }}</h2>
       <p class="lead">{{ t("Admin and professors sign in here.") }}</p>
       {% if changed %}<div class="done" role="status"><i class="bi bi-check-circle"></i>{{ t("Your password was changed. Sign in with it.") }}</div>{% endif %}
+      {% if signed_out %}<div class="error" role="alert"><i class="bi bi-box-arrow-right"></i>{{ t("You were signed out by the admin. Sign in again to go on.") }}</div>{% endif %}
       {% if error %}<div class="error" role="alert"><i class="bi bi-exclamation-circle"></i>{{ t(error) }}</div>{% endif %}
       <input type="hidden" name="next" value="{{ next }}" style="display:none;">
       <label for="email">{{ t("Email address") }}</label>

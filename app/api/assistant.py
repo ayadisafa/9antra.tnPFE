@@ -109,7 +109,8 @@ def chat_with_assistant(payload: AssistantMessage, request: Request, db: Session
     return {"reply": found["reply"], "links": found.get("links") or [], "source": found.get("source"),
             "sources": found.get("sources") or [], "resources": found.get("resources") or [],
             "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations,
-            "schema": found.get("schema"), "agent": found.get("agent"), "category": found.get("category")}
+            "schema": found.get("schema"), "agent": found.get("agent"), "category": found.get("category"),
+            "consulted": found.get("consulted") or [], "understood": found.get("understood") or [], "path": found.get("path") or []}
 
 
 @router.post("/auto-send")

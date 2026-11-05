@@ -175,12 +175,57 @@ def team_page(request: Request, db: Session = Depends(get_db)):
     from app.models import Professor
 
     with_account = {person.professor_id for person in people if person.professor_id}
+    from app.services import presence
+
+    token = request.cookies.get(auth.COOKIE)
+    connected = presence.connected(db, auth._fingerprint(token) if token else None)
     return templates.TemplateResponse(request=request, name="team.html", context={
-        "active_page": "settings", "me": me, "levels": access.LEVELS, "sections": access.SECTIONS, "rights": access.RIGHTS,
+        "active_page": "settings", "me": me, "connected": connected, "connected_summary": presence.summary(connected), "levels": access.LEVELS, "sections": access.SECTIONS, "rights": access.RIGHTS,
         "free_professors": [professor for professor in db.query(Professor).order_by(Professor.name).all() if professor.id not in with_account],
         "people": [{"user": person, "permissions": access.clean(person.permissions) if person.role == auth.STAFF else None,
                     "devices": db.query(UserSession).filter(UserSession.user_id == person.id).count()} for person in people],
         "notice": request.query_params.get("notice"), "error": request.query_params.get("error")})
+
+
+@router.get("/settings/team/connected")
+def connected_now(request: Request, db: Session = Depends(get_db)):
+    """Who is connected, for the live list."""
+    from app.services import presence
+
+    _admin_only(request)
+    token = request.cookies.get(auth.COOKIE)
+    rows = presence.connected(db, auth._fingerprint(token) if token else None)
+    return {"rows": [{"key": row["key"], "user_id": row["user_id"], "state": row["state"], "page": row["page"], "is_me": row["is_me"]}
+                     for row in rows],
+            "summary": {key: value for key, value in presence.summary(rows).items() if key != "online"}}
+
+
+@router.post("/settings/team/sign-out")
+def sign_out_people(request: Request, key: str = Form(""), user_id: str = Form(""), everyone: bool = Form(False),
+                    db: Session = Depends(get_db)):
+    """Sign out one browser, one person (all their browsers), or everyone else. Never the admin's own browser; a team
+    member who manages the team cannot sign out an admin, nor everyone."""
+    from app.services import presence
+
+    me = _admin_only(request)
+    token = request.cookies.get(auth.COOKIE)
+    mine = auth._fingerprint(token) if token else None
+    target = None
+    if key:
+        row = next((row for row in presence.connected(db, mine) if row["key"] == key.strip()), None)
+        if row is None:
+            return RedirectResponse("/settings/team?error=" + quote("That browser is no longer signed in.") + "#connected", status_code=303)
+        target = db.get(User, row["user_id"])
+    elif user_id:
+        target = db.get(User, user_id)
+        if target is None:
+            raise HTTPException(status_code=404, detail="Person not found")
+    if not me.is_admin and (everyone or (target is not None and target.role == auth.ADMIN)):
+        raise HTTPException(status_code=403, detail="Only an admin signs out an admin, or everyone")
+    count = presence.disconnect(db, key=key.strip() or None, user_id=None if key else (user_id or None), everyone=everyone, keep=mine)
+    who = "everyone else" if everyone else (target.name if target is not None else "")
+    notice = f"Signed out: {who} ({count} browser{'s' if count != 1 else ''})." if count else "Nobody was signed in there."
+    return RedirectResponse("/settings/team?notice=" + quote(notice) + "#connected", status_code=303)
 
 
 @router.post("/settings/team/add")

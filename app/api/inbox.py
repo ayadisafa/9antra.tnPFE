@@ -707,6 +707,67 @@ def resend(message_id: str, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/not-reached", response_class=HTMLResponse)
+def not_reached_page(request: Request, db: Session = Depends(get_db)):
+    """Everything that did not reach the candidates, each with why and what to do."""
+    from app.services import reach
+
+    items = reach.not_reached(db)
+    return templates.TemplateResponse(request=request, name="inbox_reach.html", context={
+        "active_page": "inbox", "inbox_side": "reach", "items": items, "summary": reach.summary(items),
+    })
+
+
+def _reach_message(db: Session, message_id: str) -> CandidateEmail:
+    message = db.get(CandidateEmail, message_id)
+    if message is None or message.direction != "outbound":
+        raise HTTPException(status_code=404, detail="Message not found")
+    return message
+
+
+@router.post("/not-reached/dismiss-stale")
+def not_reached_dismiss_stale(request: Request, db: Session = Depends(get_db)):
+    """Everything on the list that is probably too late now leaves it at once (it stays in the discussions)."""
+    from app.services import auth, reach
+
+    by = getattr(auth.current(request), "name", None) or "you"
+    late = [item["message"] for item in reach.not_reached(db) if item["stale"]]
+    for message in late:
+        reach.dismiss(db, message, by=by)
+    db.commit()
+    return _redirect("/inbox/not-reached", notice=_t("{0} taken off the list: they stay in their discussions.", len(late)))
+
+
+@router.post("/not-reached/{message_id}/retry")
+def not_reached_retry(message_id: str, request: Request, db: Session = Depends(get_db)):
+    from app.services import auth, reach
+
+    message = _reach_message(db, message_id)
+    arrived = reach.retry(db, message, by=getattr(auth.current(request), "name", None) or "you")
+    db.commit()
+    if arrived:
+        return _redirect("/inbox/not-reached", notice=_t("Delivered to {0}.", message.recipient or ""))
+    return _redirect("/inbox/not-reached", error=_t("Still not delivered: {0}", reach.reason(message)))
+
+
+@router.post("/not-reached/{message_id}/sent")
+def not_reached_sent(message_id: str, db: Session = Depends(get_db)):
+    from app.services import reach
+
+    reach.mark_sent(db, _reach_message(db, message_id))
+    db.commit()
+    return _redirect("/inbox/not-reached", notice=_t("Marked as sent from your phone."))
+
+
+@router.post("/not-reached/{message_id}/dismiss")
+def not_reached_dismiss(message_id: str, request: Request, db: Session = Depends(get_db)):
+    from app.services import auth, reach
+
+    reach.dismiss(db, _reach_message(db, message_id), by=getattr(auth.current(request), "name", None) or "you")
+    db.commit()
+    return _redirect("/inbox/not-reached", notice=_t("Taken off the list: it stays in the discussion."))
+
+
 @router.get("/message/{message_id}/html", response_class=HTMLResponse)
 def message_html(message_id: str, request: Request, db: Session = Depends(get_db)):
     """The email exactly as the candidate received it."""

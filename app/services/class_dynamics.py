@@ -69,6 +69,12 @@ def of_class(db: Session, class_group: ClassGroup) -> dict:
                           "answer_rate": round(len(done) / len(mine) * 100) if mine else None,
                           "score": _mean([quiz.score or 0 for quiz in done])})
 
+    # ---- Arrivals through their own links (online sessions) ----
+    from app.models.session_join import SessionJoin
+    from app.services import meetings
+
+    joins = db.query(SessionJoin).filter(SessionJoin.session_id.in_(list(sessions) or [""]), SessionJoin.first_joined_at.isnot(None)).all()
+
     # ---- Each candidate ----
     people = []
     for registration in members:
@@ -85,7 +91,9 @@ def of_class(db: Session, class_group: ClassGroup) -> dict:
         if not answered:
             answered = [quiz for quiz in quizzes if quiz.candidate_id == registration.candidate_id and quiz.completed_at is not None]
         sent = [quiz for quiz in quizzes if quiz.candidate_id == registration.candidate_id]
+        came = [row for row in joins if row.registration_id == registration.id]
         people.append({
+            "joined_online": len(came), "late_arrivals": sum(1 for row in came if (row.minutes_late or 0) > meetings.LATE_AFTER),
             "registration": registration, "name": names[registration.id], "rate": _rate(**counts), **counts,
             "absent_in_a_row": streak, "participation": _mean(noted), "questions": sum(mark.questions or 0 for mark in mine),
             "score": _mean([quiz.score or 0 for quiz in answered]), "answered": len(answered), "sent": len(sent),
@@ -131,10 +139,60 @@ def of_class(db: Session, class_group: ClassGroup) -> dict:
             to_watch.append({"name": person["name"], "why": f"answered none of the {person['sent']} weekly questions sent", "tone": "warn"})
         if person["participation"] is not None and person["participation"] <= 35:
             to_watch.append({"name": person["name"], "why": "noted quiet in the sessions", "tone": "muted"})
+        if person["late_arrivals"] >= 2:
+            to_watch.append({"name": person["name"], "why": f"arrived late {person['late_arrivals']} times", "tone": "warn"})
+
+    # Who takes part, most first: what the professor noted, then the questions asked (the whole class, not only leaders).
+    talking = sorted((person for person in people if person["participation"] is not None or person["questions"]),
+                     key=lambda person: (-(person["participation"] or 0), -person["questions"], person["name"]))
 
     return {"figures": figures, "sessions": session_rows, "weeks": week_rows, "people": people, "leaders": leaders,
             "to_watch": to_watch, "advice": advice(figures, week_rows), "has_data": bool(session_rows or week_rows or opinions["answered"]),
-            "opinions": opinions}
+            "opinions": opinions, "talking": talking, "professor": professor_of(db, class_group, sessions, members, opinions)}
+
+
+SHEET_IN_TIME = 24          # hours after a session's end: a sheet confirmed later is "late"
+
+
+def professor_of(db: Session, class_group: ClassGroup, sessions: dict, members: list, opinions: dict) -> dict | None:
+    """How the professor follows this class, counted: presence confirmed (and within a day), candidates' questions
+    answered (and how fast), and the stars candidates gave them. None without a professor."""
+    from datetime import timedelta
+
+    from app.models.team_message import TeamMessage
+    from app.services import attendance, meetings
+    from app.services.schedule_utils import local_now, utc_to_local
+
+    if not class_group.professor_id:
+        return None
+    now = local_now()
+    ended = confirmed = in_time = 0
+    for session in sessions.values():
+        if meetings.door(session, class_group, now) != "closed":
+            continue
+        ended += 1
+        marks = attendance.marks_of(db, session.id)
+        by_person = [mark for mark in marks.values() if (mark.marked_by or "") not in ("", "their link")]
+        if by_person:
+            confirmed += 1
+            _, end = meetings.hours_of(session, class_group)
+            first = min(utc_to_local(mark.marked_at) for mark in by_person)
+            in_time += first <= end + timedelta(hours=SHEET_IN_TIME)
+    candidate_ids = {registration.candidate_id for registration in members}
+    asked = [row for row in db.query(TeamMessage).filter(TeamMessage.person == f"professor:{class_group.professor_id}",
+                                                         TeamMessage.question_candidate_id.isnot(None)).all()
+             if row.question_candidate_id in candidate_ids]
+    answered = [row for row in asked if row.answered_at is not None and row.created_at is not None]
+    hours = sorted((row.answered_at - row.created_at).total_seconds() / 3600 for row in answered)
+    stars = next((item for item in opinions.get("professors") or [] if item["name"] == class_group.professor_name), None)
+    return {
+        "name": class_group.professor_name, "id": class_group.professor_id,
+        "sessions_ended": ended, "sheets_confirmed": confirmed, "sheets_in_time": in_time,
+        "sheet_rate": round(confirmed / ended * 100) if ended else None,
+        "questions": len(asked), "answered": len(answered),
+        "answer_hours": round(hours[len(hours) // 2], 1) if hours else None,       # the median
+        "stars": stars["stars"] if stars else None, "rated_by": stars["count"] if stars else 0,
+    }
 
 
 def advice(figures: dict, weeks: list[dict]) -> list[dict]:

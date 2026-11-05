@@ -1,0 +1,19 @@
+{# Tabs for any page: one part at a time, each part able to open with its moving picture.
+   tabs(name, items): items = [(key, icon, label)]. The page's blocks carry data-tab-of="name" and data-tab-panel="key"
+   (several keys, separated by spaces, when a block belongs to more than one tab). The tab shown is a mark on <body>
+   (data-tab-<name>), so the blocks that refresh themselves keep their place. Without the script, everything shows.
+   The behaviour (choosing, remembering, following links to a part) is in base.html, once for every page. #}
+{% import "_ui_art.html" as art %}
+{% macro tabs(name, items) -%}
+<style>
+  {% for key, icon, label in items %}body[data-tab-{{ name }}="{{ key }}"] [data-tab-of="{{ name }}"]:not([data-tab-panel~="{{ key }}"]){{ "," if not loop.last }}
+  {% endfor %}{ display:none !important; }
+</style>
+<nav class="ui-tabs" role="tablist" data-tabs="{{ name }}" aria-label="Parts of the page">
+  {% for key, icon, label in items %}<button type="button" class="ui-tab" role="tab" data-tab="{{ key }}"><i class="bi {{ icon }}"></i><span>{{ label }}</span></button>{% endfor %}
+</nav>
+{%- endmacro %}
+
+{% macro intro(name, key, scene, title, text) -%}
+<div class="ui-tab-intro" data-tab-of="{{ name }}" data-tab-panel="{{ key }}">{{ art.scene(scene) }}<div><b>{{ title }}</b><span>{{ text }}</span></div></div>
+{%- endmacro %}

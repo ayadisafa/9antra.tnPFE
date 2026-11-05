@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.notification import Notification
-from app.services import dynamic_words, notification_fixes, translations
+from app.services import dynamic_words, notification_fixes, notification_rules, translations
 from app.services.notification_service import mark_all_as_read, mark_notification_as_read
 
 
@@ -48,10 +48,7 @@ def get_notifications(
     dynamic_words.localize(db, notifications, _lang(request))
     return {
         "notifications": [_serialize(item, db) for item in notifications],
-        "unread_count": db.query(Notification).filter(
-            Notification.recipient_role == "admin",
-            Notification.is_read.is_(False),
-        ).count(),
+        "unread_count": notification_rules.ringing(db),        # what needs the admin: the bell's count
         "has_more": offset + per_page < total_items,
     }
 

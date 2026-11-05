@@ -434,5 +434,43 @@ page = admin.get("/").text
 check("the bell's count is shown whole (the buttons' ripple does not clip it)", 'id="nav-notif-badge"' in page
       and ".btn:has(> .badge) { overflow:visible; }" in page and ':scope > .badge' in page)
 
+# ======================================================================
+# O. The orchestration runs on LangGraph; the rules choose every step
+# ======================================================================
+from app.services import orchestrator
+
+built = orchestrator.graph()
+check("graph: the orchestrator is a LangGraph graph, built once", type(built).__module__.startswith("langgraph") and orchestrator.graph() is built)
+said = admin.post("/assistant/chat", json={"message": "Quand publier cette semaine ?"}).json()
+check("graph: a marketing question goes read, marketing, answer", said.get("path") == ["read", "marketing", "finish"]
+      and said["agent"]["key"] == "marketing", said.get("path"))
+said = admin.post("/assistant/chat", json={"message": "Who has not paid?"}).json()
+check("graph: a question on the figures goes to the subject's agent with its tools", said.get("path", [])[:1] == ["read"]
+      and "tools" in said["path"] and said["path"][-1] == "finish", said.get("path"))
+said = admin.post("/assistant/chat", json={"message": f"Combien coûte la formation {devops.name} ?"}).json()
+check("graph: a question naming a program passes by the program's agent", "program" in said.get("path", []), said.get("path"))
+said = admin.post("/assistant/chat", json={"message": "zqxv wplk trnm bvcx"}).json()
+check("graph: when nobody knows, the others are asked before answering", said.get("path", [])[-2:] == ["consult", "finish"], said.get("path"))
+said = admin.post("/assistant/chat", json={"message": "comment faire une inscripton ?"}).json()
+check("Yasmine's window is told the words she read put right", any(item["written"] == "inscripton" for item in said.get("understood", [])), said.get("understood"))
+said = prof.post("/account/guide", json={"message": "who was absent?"}).json()
+check("graph: a professor's question goes read, professors' agent, answer, nothing more", said["agent"]["key"] == "professor"
+      and db.query(AgentRun).order_by(AgentRun.at.desc()).first().agent == "professor", said.get("agent"))
+check("graph: the guide window never reaches the whole assistant", orchestrator.first_step(db, "Who has not paid?", sam, "payment", limited=True) == "guide"
+      and orchestrator._after({"limited": True, "found": {"source": "none"}, "agent": "guide", "path": ["read", "guide"]}) == "finish")
+rows = orchestrator.drawing()
+keys = [step["key"] for line in rows for step in line["steps"]]
+check("graph: the agents page draws every step once, from the graph itself", sorted(keys) == sorted(orchestrator.STEPS)
+      and rows[0]["steps"][0]["key"] == "read" and rows[-1]["steps"][0]["key"] == "finish", keys)
+check("graph: each arrow leads to a drawn step", all(after["key"] in keys for line in rows for step in line["steps"] + [{"next": line["next"]}]
+                                                     for after in step["next"]))
+page = admin.get("/assistant/agents").text
+check("graph: the agents page shows how a question travels", 'id="graph"' in page and "LangGraph" in page and 'data-step="consult"' in page)
+tried = admin.post("/assistant/agents/route", json={"message": "Quand publier cette semaine ?"}).json()
+check("graph: trying a sentence says its first step, nothing answered", tried.get("step") == "marketing")
+from app.services import whats_new
+
+check("what's new: the graph is told", any(release["key"] == "2026-11-03" for release in whats_new.RELEASES))
+
 db.close()
 check.done()

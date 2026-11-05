@@ -53,6 +53,8 @@ START_FIXED_DATE = "fixed_date"
 START_MODES = (START_AFTER_DAYS, START_MIN_ENROLLMENT, START_FIXED_DATE)
 
 MAX_REMINDER_ATTEMPTS = 3
+CATCH_UP_GAP = timedelta(hours=24)          # another reminder this close: no catch-up needed
+CATCH_UP_MIN_AHEAD = timedelta(hours=6)     # a catch-up later than this before the start is no longer useful
 
 # Serializes "find or create a class" and status transitions across request,
 # scheduler and Firebase threads.
@@ -560,6 +562,30 @@ def plan_reminders(db: Session, registration: Registration, class_group: ClassGr
             reminder.strategy = strategy
         elif reminder.status != "sent" and reminder.strategy != strategy:
             reminder.strategy = strategy
+    if anchor is not None:
+        _catch_up(db, registration, anchor, now)
+
+
+def _catch_up(db: Session, registration: Registration, anchor: datetime, now: datetime) -> None:
+    """A class formed (or moved) so late that a reminder's moment had passed: the closest one goes now, once, so
+    nobody starts without having been told, unless one already went out or another comes within CATCH_UP_GAP."""
+    if anchor <= now + CATCH_UP_MIN_AHEAD:
+        return                                  # too close: the session's own reminder and link tell them
+    db.flush()
+    rows = db.query(CandidateReminder).filter(CandidateReminder.registration_id == registration.id,
+                                              CandidateReminder.reminder_type == "training").all()
+    if any(row.status == "sent" for row in rows):
+        return
+    if any(row.status == "planned" and row.planned_for <= now + CATCH_UP_GAP for row in rows):
+        return
+    missed = [row for row in rows if row.status == "skipped" and row.planned_for <= now]
+    if not missed:
+        return
+    closest = max(missed, key=lambda row: row.planned_for)          # the one nearest the first session
+    closest.status = "planned"
+    closest.planned_for = now
+    closest.strategy = (f"Catch-up: its moment had passed when the class was formed, so it goes now "
+                        f"({(anchor.date() - now.date()).days} day(s) before the first session).")
 
 
 def sync_members(db: Session, class_group: ClassGroup, now: datetime | None = None) -> None:

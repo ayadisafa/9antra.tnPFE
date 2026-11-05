@@ -109,7 +109,7 @@ def ask(db: Session, registration: Registration, *, manual: bool = False) -> Can
         values={"feedback_link": link, "facebook_link": facebook_reviews()}, manual=manual,
     )
     # By the way chosen above the inbox: an email sent, or a WhatsApp / SMS waiting for the admin's phone, both count.
-    if not (message is not None and message.status in ("sent", "to_send")):
+    if not (message is not None and message.status in ("sent", "to_send", "in_letter")):
         if message is None and not manual:
             row.status = "off"       # the email is switched off: nothing waits
         return None

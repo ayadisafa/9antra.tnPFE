@@ -137,6 +137,7 @@
   @media (max-width: 767px) { .st-centre-part { grid-template-columns:1fr; } }
 </style>
 
+{% import "_tabs.html" as tab %}
 {% include "_flash.html" %}
 
 <section class="st-map" id="map">
@@ -189,14 +190,15 @@
 </section>
 
 
+{{ tab.tabs("settings", [("classes", "bi-easel2", "Classes and candidates"), ("messages", "bi-chat-dots", "Emails and messages"), ("centre", "bi-building", "Your centre"), ("look", "bi-palette", "Look and language"), ("reports", "bi-plug", "Reports and connections"), ("access", "bi-shield-lock", "Access")]) }}
 <div class="st-stack" id="st-stack">
   <div class="st-stack-head">
     <span class="st-sub"><i class="bi bi-arrows-collapse-vertical me-1"></i>Open a part to change it; the parts you leave open stay open on this browser.</span>
     <span class="d-flex gap-2"><button type="button" class="st-mini" data-folds="open"><i class="bi bi-arrows-expand"></i>Open all</button>
       <button type="button" class="st-mini" data-folds="close"><i class="bi bi-arrows-collapse"></i>Close all</button></span>
   </div>
-  <div class="st-group"><i class="bi bi-easel2"></i>Classes and candidates</div>
-  <details class="st-card st-fold" id="classes" data-fold style="--i:0;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="classes"><i class="bi bi-easel2"></i>Classes and candidates</div>
+  <details class="st-card st-fold" id="classes" data-tab-of="settings" data-tab-panel="classes" data-fold style="--i:0;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("classes") }}</span>
       <span class="st-fold-text"><span class="st-title">Class parameters</span><span class="st-sub">How new classes are made, filled and started, and the reminders before the first session.</span></span>
@@ -311,7 +313,7 @@
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="receives" data-fold style="--i:1;">
+  <details class="st-card st-fold" id="receives" data-tab-of="settings" data-tab-panel="classes" data-fold style="--i:1;">
     <summary class="st-fold-head">
       <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-envelope-paper-heart"></i></span>
       <span class="st-fold-text"><span class="st-title">What the candidate receives</span><span class="st-sub">On payment, before the first session, on any change, when they write.</span></span>
@@ -328,8 +330,8 @@
       <a href="/inbox/compose" class="btn btn-sm btn-light fw-semibold mt-3">Write a personalized email</a>
     </div>
   </details>
-  <div class="st-group"><i class="bi bi-chat-dots"></i>Emails and messages</div>
-  <details class="st-card st-fold" id="email" data-fold style="--i:2;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="messages"><i class="bi bi-chat-dots"></i>Emails and messages</div>
+  <details class="st-card st-fold" id="email" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:2;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("inbox") }}</span>
       <span class="st-fold-text"><span class="st-title">Email delivery</span><span class="st-sub">The address emails come from, its password, a test, and reading candidates' emails.</span></span>
@@ -399,7 +401,7 @@ SMTP_PASSWORD=your-app-password</div>
       {% endif %}
     </div>
   </details>
-  <details class="st-card st-fold" id="assistant" data-fold style="--i:3;">
+  <details class="st-card st-fold" id="assistant" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:3;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("assistant") }}</span>
       <span class="st-fold-text"><span class="st-title">Email assistant</span><span class="st-sub">How the system answers candidates who write, and how every email looks.</span></span>
@@ -465,7 +467,7 @@ SMTP_PASSWORD=your-app-password</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="rules" data-fold style="--i:4;">
+  <details class="st-card st-fold" id="rules" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:4;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("assistant") }}</span>
       <span class="st-fold-text"><span class="st-title">What the assistant may and may not answer</span><span class="st-sub">Subjects that always come to you, and what it should know or say.</span></span>
@@ -488,7 +490,7 @@ SMTP_PASSWORD=your-app-password</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="character" data-fold style="--i:4;">
+  <details class="st-card st-fold" id="character" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:4;">
     <summary class="st-fold-head">
       <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-person-hearts"></i></span>
       <span class="st-fold-text"><span class="st-title">The assistant's character</span><span class="st-sub">Her name, woman or man, the hair, the clothes, the colours, the glasses and the voice.</span></span>
@@ -607,7 +609,7 @@ SMTP_PASSWORD=your-app-password</div>
       </script>
     </div>
   </details>
-  <details class="st-card st-fold" id="whatsapp" data-fold style="--i:5;">
+  <details class="st-card st-fold" id="whatsapp" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:5;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span>
       <span class="st-fold-text"><span class="st-title">WhatsApp Business</span><span class="st-sub">Messages and answers on WhatsApp, and what Meta gives.</span></span>
@@ -663,7 +665,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </details>
     </div>
   </details>
-  <details class="st-card st-fold" id="sms" data-fold style="--i:6;">
+  <details class="st-card st-fold" id="sms" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:6;">
     <summary class="st-fold-head">
       <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-phone"></i></span>
       <span class="st-fold-text"><span class="st-title">SMS from your Android phone</span><span class="st-sub">An Android phone sends and receives the SMS, from its own number.</span></span>
@@ -693,8 +695,8 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </details>
     </div>
   </details>
-  <div class="st-group"><i class="bi bi-building"></i>Your centre</div>
-  <details class="st-card st-fold" id="centre" data-fold style="--i:7;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="centre"><i class="bi bi-building"></i>Your centre</div>
+  <details class="st-card st-fold" id="centre" data-tab-of="settings" data-tab-panel="centre" data-fold style="--i:7;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("data") }}</span>
       <span class="st-fold-text"><span class="st-title">Your centre</span><span class="st-sub">Official name, the names a cheque is made out to, RIB, tax number, phone, address.</span></span>
@@ -736,7 +738,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="identity" data-fold style="--i:8;">
+  <details class="st-card st-fold" id="identity" data-tab-of="settings" data-tab-panel="centre" data-fold style="--i:8;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("identity") }}</span>
       <span class="st-fold-text"><span class="st-title">Name and icon</span><span class="st-sub">What the application is called, and its picture.</span></span>
@@ -765,7 +767,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="address" data-fold style="--i:9;">
+  <details class="st-card st-fold" id="address" data-tab-of="settings" data-tab-panel="centre" data-fold style="--i:9;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("link") }}</span>
       <span class="st-fold-text"><span class="st-title">Address for candidates</span><span class="st-sub">The link candidates open from their emails.</span></span>
@@ -789,8 +791,8 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </form>
     </div>
   </details>
-  <div class="st-group"><i class="bi bi-palette"></i>Look and language</div>
-  <details class="st-card st-fold" id="appearance" data-fold style="--i:10;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="look"><i class="bi bi-palette"></i>Look and language</div>
+  <details class="st-card st-fold" id="appearance" data-tab-of="settings" data-tab-panel="look" data-fold style="--i:10;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("look") }}</span>
       <span class="st-fold-text"><span class="st-title">Colour of the design</span><span class="st-sub">The main colour, where the menu sits, day or night.</span></span>
@@ -826,7 +828,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="language" data-fold style="--i:11;">
+  <details class="st-card st-fold" id="language" data-tab-of="settings" data-tab-panel="look" data-fold style="--i:11;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("language") }}</span>
       <span class="st-fold-text"><span class="st-title">Language of the pages</span><span class="st-sub">English, French or Arabic, and the translations.</span></span>
@@ -845,8 +847,8 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       <a class="btn btn-sm btn-outline-secondary mt-2" href="/settings/translations">Read and correct the translations</a>
     </div>
   </details>
-  <div class="st-group"><i class="bi bi-plug"></i>Reports and connections</div>
-  <details class="st-card st-fold" id="report" data-fold style="--i:12;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="reports"><i class="bi bi-plug"></i>Reports and connections</div>
+  <details class="st-card st-fold" id="report" data-tab-of="settings" data-tab-panel="reports" data-fold style="--i:12;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("data") }}</span>
       <span class="st-fold-text"><span class="st-title">Report by email</span><span class="st-sub">The analysis of the centre, sent to you on a rhythm you choose.</span></span>
@@ -888,7 +890,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       </form>
     </div>
   </details>
-  <details class="st-card st-fold" id="google" data-fold style="--i:13;">
+  <details class="st-card st-fold" id="google" data-tab-of="settings" data-tab-panel="reports" data-fold style="--i:13;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("quiz") }}</span>
       <span class="st-fold-text"><span class="st-title">Weekly answers: Google Form → Firebase → here</span><span class="st-sub">Each week's questions as a Google Form, the answers back here by themselves.</span></span>
@@ -923,8 +925,8 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       {% endif %}
     </div>
   </details>
-  <div class="st-group"><i class="bi bi-shield-lock"></i>Access</div>
-  <details class="st-card st-fold" id="access" data-fold style="--i:14;">
+  <div class="st-group" data-tab-of="settings" data-tab-panel="access"><i class="bi bi-shield-lock"></i>Access</div>
+  <details class="st-card st-fold" id="access" data-tab-of="settings" data-tab-panel="access" data-fold style="--i:14;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("team") }}</span>
       <span class="st-fold-text"><span class="st-title">Who can sign in</span><span class="st-sub">Your password, the team, the professors' access, all the data.</span></span>

@@ -156,6 +156,17 @@ def _back(class_id: str, session_id: str | None = None, notice: str | None = Non
     return RedirectResponse(f"/classes/{class_id}/attendance{'?' + query if query else ''}", status_code=303)
 
 
+def _guess(mark, join: dict | None) -> str:
+    """The presence a row starts with: as marked, else as their own link saw it (came, late, never came), else present."""
+    if mark is not None:
+        return mark.status
+    if join and join.get("joined"):
+        return "late" if join.get("late") else "present"
+    if join and join.get("sent"):
+        return "absent"
+    return "present"
+
+
 @router.get("/classes/{class_id}/attendance", response_class=HTMLResponse)
 def attendance_page(class_id: str, request: Request, db: Session = Depends(get_db)):
     class_group = _class_or_404(db, class_id)
@@ -206,6 +217,8 @@ def attendance_page(class_id: str, request: Request, db: Session = Depends(get_d
                     "name": (registration.candidate.full_name or registration.candidate.email) if registration.candidate else "Candidate",
                     "candidate": registration.candidate,
                     "status": marks[registration.id].status if registration.id in marks else None,
+                    # What the sheet shows before anyone confirms it: what their own link saw, else present.
+                    "guess": _guess(marks.get(registration.id), joins.get(registration.id)),
                     "note": marks[registration.id].note if registration.id in marks else "",
                     "participation": marks[registration.id].participation if registration.id in marks else None,
                     "questions": marks[registration.id].questions if registration.id in marks else None,
@@ -218,6 +231,9 @@ def attendance_page(class_id: str, request: Request, db: Session = Depends(get_d
                 for registration in people
             ],
             "already_marked": bool(marks),
+            # Marked by a person (not only by the candidates' links): the sheet is confirmed.
+            "confirmed": meetings.confirmed(marks),
+            "from_links": any(item["sent"] for item in joins.values()),
             "check_summary": session_check.session_summary(db, selected.id) if selected else None,
             "check_plan": check_plan,
             "summary": summary,
@@ -268,7 +284,7 @@ async def save_attendance(class_id: str, session_id: str, request: Request, db: 
     if not marks:
         return _back(class_id, session_id, error="Mark at least one candidate.")
     user = auth.current(request)
-    saved = attendance.save(db, class_group, session, marks, notes, marked_by=user.name if user else "", observations=observations)
+    saved = attendance.save(db, class_group, session, marks, notes, marked_by=(user.name if user else "") or "Admin", observations=observations)
     if not saved["marked"]:
         return _back(class_id, session_id, error="None of these candidates is in this class.")
     notice = f"Presence saved for {saved['marked']} candidate{'s' if saved['marked'] != 1 else ''}"

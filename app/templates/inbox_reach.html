@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Didn't reach them · 9antra{% endblock %}
+{% block page_title %}Inbox{% endblock %}
+{% block live_topics %}inbox{% endblock %}
+
+{% block content %}
+{% include "_ui.html" %}
+<style>
+  .rc-head { display:flex; gap:16px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:16px 20px; margin-bottom:16px; }
+  .rc-head > div { flex:1 1 320px; min-width:0; }
+  .rc-head form { margin:0; }
+  .rc-head h2 { font-size:1.08rem; font-weight:800; margin:0; }
+  .rc-head p { margin:2px 0 0; font-size:.82rem; color:var(--muted); }
+  .rc-art { width:54px; height:54px; border-radius:18px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.5rem; flex:none; }
+  .rc-list { display:grid; gap:10px; }
+  .rc-item { display:grid; grid-template-columns:auto minmax(0, 1fr) auto; gap:14px; align-items:center; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:13px 16px; }
+  .rc-item.is-stale { background:#fbfaf8; }
+  .rc-ico { width:40px; height:40px; border-radius:13px; display:grid; place-items:center; background:#fff1f2; color:#e11d48; font-size:1.1rem; }
+  .rc-item.is-phone .rc-ico { background:#ecfdf5; color:#15803d; }
+  .rc-item.is-stale .rc-ico { background:#f3f1ee; color:var(--muted); }
+  .rc-who { font-weight:800; font-size:.9rem; color:var(--ink-text); display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .rc-what { font-size:.8rem; color:#4a445e; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .rc-why { font-size:.76rem; color:var(--muted); margin-top:3px; }
+  .rc-chip { font-size:.66rem; font-weight:800; border-radius:999px; padding:2px 8px; background:#f3eff9; color:#5b5470; }
+  .rc-chip.late { background:#fef3c7; color:#92400e; }
+  .rc-do { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .rc-do form { margin:0; }
+  @media (max-width: 767px) { .rc-item { grid-template-columns:auto minmax(0, 1fr); } .rc-do { grid-column:1 / -1; justify-content:flex-start; } .rc-what { white-space:normal; } }
+  .rc-empty { text-align:center; padding:40px 20px; background:#fff; border:1px dashed var(--border-color); border-radius:22px; color:var(--muted); }
+  .rc-empty i { font-size:2rem; color:#15803d; display:block; margin-bottom:8px; }
+</style>
+
+{% set inbox_side = 'reach' %}
+{% include "_inbox_switch.html" %}
+{% include "_flash.html" %}
+
+<section class="rc-head">
+  <span class="rc-art"><i class="bi bi-send-x"></i></span>
+  <div>
+    <h2>What didn't reach them</h2>
+    <p>Emails that failed, and WhatsApp messages still waiting for your phone. A failed email is tried again once by itself; what is left needs you: send it again, send it from your phone, call, or take it off the list.</p>
+  </div>
+  {% set late = items | selectattr('stale') | list | length %}
+  {% if late %}
+  <form method="post" action="/inbox/not-reached/dismiss-stale" data-confirm="Take off the list what is probably too late now? It stays in the discussions.">
+    <button class="ui-btn sm" type="submit"><i class="bi bi-eraser"></i>Take off what is too late <b>{{ late }}</b></button>
+  </form>
+  {% endif %}
+</section>
+
+{% if items %}
+<div class="rc-list">
+  {% for item in items %}
+  <article class="rc-item {{ 'is-phone' if item.channel != 'email' }} {{ 'is-stale' if item.stale }}">
+    <span class="rc-ico"><i class="bi {{ 'bi-whatsapp' if item.channel == 'whatsapp' else 'bi-phone' if item.channel == 'sms' else 'bi-envelope-x' }}"></i></span>
+    <div style="min-width:0;">
+      <div class="rc-who" data-no-i18n>{{ item.name }} <span class="rc-chip">{{ item.kind }}</span>{% if item.stale %}<span class="rc-chip late">Probably too late now</span>{% endif %}</div>
+      <div class="rc-what" data-no-i18n>{{ item.subject }}</div>
+      <div class="rc-why">{{ item.why }} · {{ item.when.strftime('%d/%m %H:%M') if item.when else '' }}{% if item.retried %} · tried again once{% endif %}</div>
+    </div>
+    <div class="rc-do">
+      {% if item.channel == 'email' and not item.stale %}
+      <form method="post" action="/inbox/not-reached/{{ item.id }}/retry"><button class="ui-btn primary sm" type="submit"><i class="bi bi-arrow-repeat"></i>Send again</button></form>
+      {% endif %}
+      {% if item.whatsapp %}
+      <a class="ui-btn primary sm" href="{{ item.whatsapp }}" target="_blank" rel="noopener"><i class="bi bi-whatsapp"></i>Open WhatsApp</a>
+      <form method="post" action="/inbox/not-reached/{{ item.id }}/sent"><button class="ui-btn sm" type="submit"><i class="bi bi-check2"></i>Sent</button></form>
+      {% endif %}
+      {% if item.call %}<a class="ui-btn sm" href="{{ item.call }}"><i class="bi bi-telephone"></i>Call</a>{% endif %}
+      {% if item.thread_id %}<a class="ui-btn ghost sm" href="/inbox?filter=all&thread={{ item.thread_id }}"><i class="bi bi-chat-left-text"></i>Discussion</a>{% endif %}
+      <form method="post" action="/inbox/not-reached/{{ item.id }}/dismiss"><button class="ui-btn ghost sm" type="submit" title="It leaves this list; it stays in the discussion"><i class="bi bi-x-lg"></i>Not needed any more</button></form>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="rc-empty"><i class="bi bi-check2-circle"></i><strong>Everything reached them.</strong><br>No email failed and nothing waits for your phone.</div>
+{% endif %}
+{% endblock %}

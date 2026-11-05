@@ -160,6 +160,8 @@ async def lifespan(app: FastAPI):
     start()
     # The job offers are read once now, not by the first program page that needs them.
     threading.Thread(target=__import__("app.services.market", fromlist=["warm"]).warm, name="market-warm", daemon=True).start()
+    # The assistant's graph (LangGraph), built now rather than by the first question.
+    threading.Thread(target=__import__("app.services.orchestrator", fromlist=["graph"]).graph, name="graph-warm", daemon=True).start()
     # The meaning model and the guide's examples, ready before the first question.
     from app.services import howto as _howto, meaning as _meaning
 

@@ -268,21 +268,82 @@ def inbox_advice(db: Session, now_utc: datetime, candidate_id: str | None = None
             facts=[_t('{0} waiting', _plural(len(waiting), 'email'))], action=_go(_t('Open the inbox'), url), can_snooze=False,
         ))
 
-    failed_query = db.query(CandidateEmail).filter(
-        CandidateEmail.direction == "outbound", CandidateEmail.status == "failed",
-        CandidateEmail.received_at >= now_utc - timedelta(days=14),
-    )
-    if candidate_id:
-        failed_query = failed_query.filter(CandidateEmail.candidate_id == candidate_id)
-    failed = failed_query.order_by(CandidateEmail.received_at.desc()).all()
-    if failed:
-        newest = failed[0]
+    # What did not reach them (emails that failed, WhatsApp messages waiting for the phone): one line, one list.
+    from app.services import reach
+
+    missed = reach.not_reached(db, candidate_id=candidate_id, now=now_utc)
+    if missed:
+        newest, counted = missed[0], reach.summary(missed)
+        useful = counted["useful"]
         found.append(Advice(
-            key=f"failed:{candidate_id or 'all'}:{len(failed)}:{newest.id}",
-            priority=70, tone="important", icon="bi-send-x",
-            title=_t('{0} did not reach {1}', _plural(len(failed), 'email'), _t('this candidate') if candidate_id else _t('the candidates')),
-            why=_t('The latest is “{0}”, {1}. Open it and use “Send again” once the email settings are right.', newest.subject or _t('No subject'), _ago(_naive_utc(newest.received_at), now_utc)),
-            action=_go(_t('Open it'), f"/inbox?filter=all&thread={newest.thread_id}" if newest.thread_id else "/inbox?filter=all"),
+            key=f"reach:{candidate_id or 'all'}:{len(missed)}:{newest['id']}",
+            priority=74 if useful else 40, tone="important" if useful else "info", icon="bi-send-x",
+            title=(_t('{0} did not reach this candidate', _plural(len(missed), 'message')) if candidate_id
+                   else _t('{0} did not reach {1}', _plural(len(missed), 'message'), _plural(counted["people"], 'candidate'))),
+            why=_t('The latest: “{0}” to {1}, {2}. {3}', newest["kind"], newest["name"], _ago(_naive_utc(newest["when"]), now_utc), newest["why"]),
+            facts=[_t('{0} still worth sending', useful)] if useful != len(missed) else [],
+            action=_go(_t("See what didn't reach them"), "/inbox/not-reached"),
+        ))
+    return found
+
+
+def sheets_advice(db: Session, now_local: datetime) -> list[Advice]:
+    """Sessions of the last week whose presence nobody confirmed: without it, absences are not followed."""
+    from app.models.classsession import ClassSession
+    from app.services import attendance, meetings
+
+    waiting = []
+    for session in (db.query(ClassSession).filter(ClassSession.session_date >= now_local.date() - timedelta(days=7),
+                                                  ClassSession.session_date <= now_local.date())
+                    .order_by(ClassSession.session_date.asc()).all()):
+        class_group = db.get(ClassGroup, session.class_group_id)
+        if class_group is None or class_group.status not in (ClassStatus.IN_PROGRESS, ClassStatus.COMPLETED):
+            continue
+        if meetings.door(session, class_group, now_local) != "closed" or not attendance.members(db, class_group.id):
+            continue
+        if not meetings.confirmed(attendance.marks_of(db, session.id)):
+            waiting.append((session, class_group))
+    if not waiting:
+        return []
+    session, class_group = waiting[0]
+    old = (now_local.date() - session.session_date).days >= 2
+    return [Advice(
+        key=f"sheets:{len(waiting)}:{session.id}", priority=60 if old else 42, tone="important" if old else "info",
+        icon="bi-person-check",
+        title=_t('Confirm the presence of {0}', _plural(len(waiting), 'session')),
+        why=_t('The oldest: {0}, {1}. Its professor was asked; the sheet is already filled in from their links, one tap confirms it.',
+               class_group.name, session.session_date.strftime('%d/%m')),
+        action=_go(_t('Open the sheet'), f"/classes/{class_group.id}/attendance?session={session.id}"),
+    )]
+
+
+def team_advice(db: Session) -> list[Advice]:
+    """What professors and team members wrote, and payment proofs to check: they wait for the admin."""
+    from app.models.payment_proof import PaymentProof
+    from app.models.team_message import TeamMessage
+
+    found = []
+    unread = (db.query(TeamMessage).filter(TeamMessage.direction == "in", TeamMessage.read_at.is_(None))
+              .order_by(TeamMessage.created_at.asc()).all())
+    if unread:
+        people = list(dict.fromkeys(row.person for row in unread))
+        first = unread[0]
+        from app.services import team_messages
+
+        who = ((team_messages.person(db, first.person) or {}).get("name") or "").strip() or _t('A professor')
+        found.append(Advice(
+            key=f"team:{len(unread)}:{first.id}", priority=78, tone="important", icon="bi-chat-left-dots",
+            title=_t('{0} wrote to you', who) if len(people) == 1 else _t('{0} people of the team wrote to you', len(people)),
+            why=_t('{0} unread in the team chat, the first {1}.', _plural(len(unread), 'message'), _ago(_naive_utc(first.created_at), datetime.utcnow())),
+            action=_go(_t('Read'), f"/inbox/team?person={first.person}"), can_snooze=False,
+        ))
+    proofs = db.query(PaymentProof).filter(PaymentProof.status == "waiting").order_by(PaymentProof.created_at.asc()).all()
+    if proofs:
+        found.append(Advice(
+            key=f"proofs:{len(proofs)}:{proofs[0].id}", priority=80, tone="important", icon="bi-receipt",
+            title=_t('Check {0}', _plural(len(proofs), 'payment proof')),
+            why=_t('Read by the system; only you can confirm the payment or refuse it.'),
+            action=_go(_t('Check'), f"/payments?proof={proofs[0].id}#proofs"),
         ))
     return found
 
@@ -573,6 +634,8 @@ def for_dashboard(db: Session) -> list[Advice]:
     now_utc, now_local = datetime.utcnow(), local_now()
     items: list[Advice] = []
     items += inbox_advice(db, now_utc)
+    items += team_advice(db)
+    items += sheets_advice(db, now_local)
     items += placement_advice(db)
 
     candidates = (

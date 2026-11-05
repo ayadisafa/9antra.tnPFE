@@ -28,6 +28,19 @@
   .cd-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; padding: 22px; }
   /* How this class is doing */
   .cd-dyn { position:relative; overflow:hidden; }
+  .cd-dyn-two { display:grid; grid-template-columns:minmax(0, 1.3fr) minmax(0, 1fr); gap:14px; margin-top:14px; }
+  @media (max-width: 991px) { .cd-dyn-two { grid-template-columns:minmax(0, 1fr); } }
+  .cd-dyn-two > :only-child { grid-column:1 / -1; max-width:640px; }
+  .cd-dyn-who, .cd-dyn-prof { background:#faf8fd; border:1px solid var(--border-color); border-radius:18px; padding:12px 14px; }
+  .cd-who-row { display:grid; grid-template-columns:minmax(0, 1fr) minmax(80px, 1.2fr) auto; gap:10px; align-items:center; padding:5px 0; font-size:.8rem; }
+  .cd-who-row b { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--ink-text); }
+  .cd-who-row small { color:var(--muted); white-space:nowrap; }
+  .cd-who-bar { height:7px; border-radius:99px; background:#efe9f5; overflow:hidden; }
+  .cd-who-bar span { display:block; height:100%; width:var(--w); border-radius:inherit; background:linear-gradient(90deg, #c084fc, var(--primary-berry)); }
+  @media (prefers-reduced-motion: no-preference) { .cd-who-bar span { animation:cdWho 1.2s ease both; animation-delay:calc(var(--i) * 90ms); } }
+  @keyframes cdWho { from { width:0; } }
+  .cd-prof-line { display:flex; gap:10px; align-items:flex-start; font-size:.8rem; color:#4a445e; padding:5px 0; }
+  .cd-prof-line i { color:var(--primary-berry); margin-top:1px; }
   .cd-dyn::before { content:""; position:absolute; right:-60px; top:-60px; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle, var(--berry-subtle), transparent 70%); pointer-events:none; }
   .cd-dyn-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:12px; }
   .cd-dyn-tile { display:flex; gap:14px; align-items:center; padding:14px; border-radius:18px; background:#faf8fd; border:1px solid var(--border-color); --c:var(--primary-berry); }
@@ -252,9 +265,19 @@
 </div>
 
 
+{% import "_tabs.html" as tab %}
+{{ tab.tabs("class", [("life", "bi-activity", "How it is doing"), ("candidates", "bi-people", "Candidates"), ("course", "bi-journal-text", "Course and presence"), ("settings", "bi-sliders", "Parameters")]) }}
+{{ tab.intro("class", "life", "feelings", "How it is doing", "Presence, what they understood, who takes part, the professor, and what they thought.") }}
+{{ tab.intro("class", "candidates", "candidates", "Candidates", "Who is in this class, their payments and reminders, and their level.") }}
+{{ tab.intro("class", "course", "course", "Course and presence", "The week's course and files, who came, and the plan week by week.") }}
+{{ tab.intro("class", "settings", "settings", "Parameters", "Its hours, its professor, its seats and how it starts: everything about it can be changed here.") }}
+<style>
+  /* With tabs, each part takes the whole width. */
+  body[data-tab-class] .cd-cols > [data-tab-of="class"] { flex:0 0 100%; max-width:100%; }
+</style>
 <!-- ============ How this class is doing ============ -->
 {% set dyn = dynamics.figures %}
-<section class="cd-card cd-dyn mb-4" id="dynamics" data-live-region>
+<section class="cd-card cd-dyn mb-4" id="dynamics" data-live-region data-tab-of="class" data-tab-panel="life">
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
     <div>
       <div class="cd-card-title"><i class="bi bi-activity me-2" style="color:var(--primary-berry);"></i>How this class is doing</div>
@@ -323,6 +346,31 @@
     {% endfor %}
   </div>
   {% endif %}
+  {% if dynamics.talking or dynamics.professor %}
+  <div class="cd-dyn-two">
+    {% if dynamics.talking %}
+    <div class="cd-dyn-who">
+      <div class="cd-dyn-chart-title">Who takes part <span>from the presence sheets: what the professor noted, and the questions asked</span></div>
+      {% for person in dynamics.talking[:6] %}
+      <div class="cd-who-row" style="--i:{{ loop.index0 }};">
+        <b data-no-i18n>{{ person.name }}</b>
+        <span class="cd-who-bar"><span style="--w:{{ person.participation or 0 }}%;"></span></span>
+        <small>{% if person.questions %}{{ person.questions }} <span>question(s)</span>{% endif %}{% if person.late_arrivals %} · <span>late</span> {{ person.late_arrivals }}×{% endif %}</small>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% if dynamics.professor %}
+    {% set prof = dynamics.professor %}
+    <div class="cd-dyn-prof">
+      <div class="cd-dyn-chart-title">The professor <span data-no-i18n>{{ prof.name }}</span></div>
+      <div class="cd-prof-line"><i class="bi bi-person-check"></i><span>{% if prof.sessions_ended %}<b>{{ prof.sheets_confirmed }}/{{ prof.sessions_ended }}</b> <span>presence sheets confirmed</span>{% if prof.sheets_confirmed %}, <b>{{ prof.sheets_in_time }}</b> <span>within a day</span>{% endif %}{% else %}<span>No session ended yet</span>{% endif %}</span></div>
+      <div class="cd-prof-line"><i class="bi bi-chat-left-text"></i><span>{% if prof.questions %}<b>{{ prof.answered }}/{{ prof.questions }}</b> <span>candidates' questions answered</span>{% if prof.answer_hours is not none %}, <span>in</span> <b>{{ prof.answer_hours }} h</b> <span>(median)</span>{% endif %}{% else %}<span>No question from the candidates yet</span>{% endif %}</span></div>
+      <div class="cd-prof-line"><i class="bi bi-star"></i><span>{% if prof.stars is not none %}<b>{{ prof.stars }}/5</b> <span>from</span> {{ prof.rated_by }} <span>candidate(s)</span>{% else %}<span>Not rated yet: the end-of-program opinions say it</span>{% endif %}</span></div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
   {% if dynamics.leaders or dynamics.to_watch %}
   <div class="cd-dyn-people">
     {% for person in dynamics.leaders %}<span class="ui-chip ok" title="Very active, {{ person.questions }} question(s) asked"><i class="bi bi-star-fill"></i>{{ person.name }} leads</span>{% endfor %}
@@ -342,7 +390,7 @@
 <!-- ============ The candidate you came for ============ -->
 {% if focus %}
 {% set reg = focus.registration %}
-<section class="cd-card cd-focus mb-4" id="live-class-focus" data-live-region>
+<section class="cd-card cd-focus mb-4" id="live-class-focus" data-live-region data-tab-of="class" data-tab-panel="candidates">
   <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
     <div class="d-flex align-items-center gap-3">
       <span class="cd-avatar">{{ focus.name[:2] | upper }}</span>
@@ -431,11 +479,11 @@
 </section>
 {% endif %}
 
-<div class="row g-4">
+<div class="row g-4 cd-cols">
   <!-- ============ Candidates + weekly plan ============ -->
-  <div class="col-xl-8">
+  <div class="col-xl-8" data-tab-of="class" data-tab-panel="candidates course life">
 
-    <section class="cd-card mb-4" id="live-class-members" data-live-region>
+    <section class="cd-card mb-4" id="live-class-members" data-live-region data-tab-of="class" data-tab-panel="candidates">
       <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
           <div class="cd-card-title">Candidates</div>
@@ -497,7 +545,7 @@
     </section>
 
     {% if levels.total and (status != 'completed' or levels.answered) %}
-    <section class="cd-card mb-4" id="levels" data-live-region>
+    <section class="cd-card mb-4" id="levels" data-live-region data-tab-of="class" data-tab-panel="candidates">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="cd-card-title"><i class="bi bi-signpost-split-fill me-1" style="color:var(--primary-berry);"></i>Where the group starts from</div>
@@ -563,7 +611,7 @@
     </section>
     {% endif %}
 
-    <section class="cd-card mb-4" id="live-class-course" data-live-region>
+    <section class="cd-card mb-4" id="live-class-course" data-live-region data-tab-of="class" data-tab-panel="course">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="cd-card-title"><i class="bi bi-folder2-open me-1" style="color:var(--primary-berry);"></i>Course and weekly questions</div>
@@ -584,7 +632,7 @@
       </div>
     </section>
 
-    <section class="cd-card mb-4" id="live-class-presence" data-live-region>
+    <section class="cd-card mb-4" id="live-class-presence" data-live-region data-tab-of="class" data-tab-panel="course">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="cd-card-title"><i class="bi bi-person-check me-1" style="color:var(--primary-berry);"></i>Presence</div>
@@ -601,7 +649,7 @@
       </div>
     </section>
 
-    <section class="cd-card mb-4" id="opinions">
+    <section class="cd-card mb-4" id="opinions" data-tab-of="class" data-tab-panel="life">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>
           <div class="cd-card-title"><i class="bi bi-star-half me-1" style="color:#f5b301;"></i>What they thought of the program</div>
@@ -645,7 +693,7 @@
       {% endfor %}
     </section>
 
-    <section class="cd-card" id="plan">
+    <section class="cd-card" id="plan" data-tab-of="class" data-tab-panel="course">
       <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
           <div class="cd-card-title">Weekly plan</div>
@@ -686,7 +734,7 @@
   </div>
 
   <!-- ============ Parameters ============ -->
-  <div class="col-xl-4">
+  <div class="col-xl-4" data-tab-of="class" data-tab-panel="settings">
     <section class="cd-card" id="parameters">
       <div class="cd-card-title">Class parameters</div>
       <div class="cd-card-sub mb-3">Everything about this class can be changed here. New classes start from the defaults in <a href="/settings#classes">Settings</a>.</div>

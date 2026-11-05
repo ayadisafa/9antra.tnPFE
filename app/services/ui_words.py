@@ -29,6 +29,8 @@ _COUNTED = {
     "class": (("classe", "classes"), ("قسم", "أقسام")),
     "day": (("jour", "jours"), ("يوم", "أيام")),
     "week": (("semaine", "semaines"), ("أسبوع", "أسابيع")),
+    "message": (("message", "messages"), ("رسالة", "رسائل")),
+    "payment proof": (("preuve de paiement", "preuves de paiement"), ("إثبات دفع", "إثباتات دفع")),
 }
 
 

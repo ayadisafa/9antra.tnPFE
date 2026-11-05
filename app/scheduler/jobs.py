@@ -495,6 +495,42 @@ def reminders_tick():
         logger.exception("Sending the welcome messages failed.")
         system_status.problem("reminders", exc)
     try:
+        # A session over: who never came in through their link is absent, and its professor confirms in one tap.
+        from app.services import meetings
+
+        meetings.after_sessions(db, settings_service.public_base_url(db))
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Closing the presence of the sessions that ended failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # Monday's letter: the week's sessions and what waits for an answer, in one message (see letters).
+        from app.services import letters
+
+        letters.send_due(db, settings_service.public_base_url(db))
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Sending the weekly letters failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # An email that failed is tried again once, while it is still useful (see reach).
+        from app.services import reach
+
+        reach.retry_due(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Trying the failed emails again failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # Notifications close by themselves once what they asked for is done (see notification_rules).
+        from app.services import notification_rules
+
+        notification_rules.tidy(db, force=True)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Closing the handled notifications failed.")
+        system_status.problem("reminders", exc)
+    try:
         # The progress report by email, on the rhythm the admin chose (see report_email).
         from app.services import report_email
 
