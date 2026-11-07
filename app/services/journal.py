@@ -148,8 +148,27 @@ def parse(data: bytes) -> list[dict]:
                 if moment:
                     break
         if title and link.startswith(("http://", "https://")):
-            found.append({"title": title[:300], "url": link[:600], "summary": _brief(text), "published": moment})
+            found.append({"title": title[:300], "url": link[:600], "summary": _brief(text), "published": moment,
+                          "image": _image_of(node, text or "")})
     return found
+
+
+_IMG = re.compile(r"""<img[^>]+src=["'](https://[^"'\s>]+)["']""", re.IGNORECASE)
+
+
+def _image_of(node, text: str) -> str | None:
+    """The article's photo: its media:content or media:thumbnail, an image enclosure, or the first picture of its text.
+    Only https addresses (the pages load it as it is)."""
+    for child in node.iter():
+        tag = child.tag.rsplit("}", 1)[-1].lower()
+        url = (child.get("url") or child.get("href") or "").strip()
+        if tag in ("content", "thumbnail") and url.startswith("https://") and (child.get("medium") in (None, "image")
+                                                                                 and not (child.get("type") or "image").startswith(("video", "audio"))):
+            return url[:600]
+        if tag in ("enclosure", "link") and url.startswith("https://") and (child.get("type") or "").startswith("image/"):
+            return url[:600]
+    found = _IMG.search(html.unescape(text or ""))
+    return found.group(1)[:600] if found else None
 
 
 def vocabulary(domain: str) -> set[str]:
@@ -182,9 +201,14 @@ def fetch(url: str) -> bytes | None:
 
 def keep(db: Session, domain: str, source: str, item: dict) -> bool:
     """Keep an article once (by its link). True when it is new."""
-    if item.get("url") and db.query(NewsItem.id).filter(NewsItem.url == item["url"]).first() is not None:
-        return False
+    if item.get("url"):
+        known = db.query(NewsItem).filter(NewsItem.url == item["url"]).first()
+        if known is not None:
+            if item.get("image") and not known.image_url:
+                known.image_url = item["image"]          # read before photos were kept: it gets its photo now
+            return False
     db.add(NewsItem(domain=domain, source=source, title=item["title"], url=item.get("url"), summary=item.get("summary") or None,
+                    image_url=item.get("image") or None,
                     terms=json.dumps(terms_in(f"{item['title']} {item.get('summary') or ''}", domain)),
                     published_at=item.get("published") or datetime.utcnow(), fetched_at=datetime.utcnow()))
     return True
@@ -329,3 +353,77 @@ def for_dashboard(db: Session) -> dict:
         if len(items) >= 5:
             break
     return {"items": items, "suggestions": suggestions(db, most=3), "last": last_read(db), "domains": DOMAINS}
+
+
+# ------------------------------------------------------------------
+# The journal beside every page
+# ------------------------------------------------------------------
+
+PANEL_SIZE = 12
+
+
+def _mixed(rows: list[NewsItem], most: int) -> list[NewsItem]:
+    """The newest of each field in turn, so one busy feed does not fill it (the ones with a photo first in each round)."""
+    by_domain: dict[str, list[NewsItem]] = {}
+    for row in rows:
+        by_domain.setdefault(row.domain, []).append(row)
+    for items in by_domain.values():
+        items.sort(key=lambda row: (row.image_url is None, -(row.published_at or row.fetched_at or datetime.min).timestamp()))
+    found = []
+    while len(found) < most and any(by_domain.values()):
+        for domain in sorted(by_domain, key=lambda key: -max(((row.published_at or row.fetched_at or datetime.min).timestamp()
+                                                               for row in by_domain[key]), default=0)):
+            if by_domain[domain] and len(found) < most:
+                found.append(by_domain[domain].pop(0))
+    return found
+
+
+def professor_programs(db: Session, professor_id: str | None) -> list:
+    """The programs a professor teaches (their classes')."""
+    from app.models import ClassGroup
+
+    if not professor_id:
+        return []
+    seen, programs = set(), []
+    for class_group in db.query(ClassGroup).filter(ClassGroup.professor_id == professor_id).all():
+        if class_group.program is not None and class_group.program.id not in seen:
+            seen.add(class_group.program.id)
+            programs.append(class_group.program)
+    return programs
+
+
+def panel(db: Session, user=None) -> dict:
+    """What the journal beside every page shows: the latest articles with their photo, field after field; for a
+    professor, the fields they teach and what could make their courses better (the articles, and the job offers of the
+    field: recommender.recommend)."""
+    programs = professor_programs(db, getattr(user, "professor_id", None)) if getattr(user, "is_professor", False) else []
+    ids = {program.id for program in programs}
+    domains = {domain for domain, found in programs_by_domain(db).items() if any(program.id in ids for program in found)} if programs else set()
+    rows = latest(db, limit=120)
+    if domains:
+        rows = [row for row in rows if row.domain in domains] or rows
+    advice = []
+    if programs:
+        from app.services import recommender
+
+        for program in programs[:3]:
+            try:
+                items = recommender.recommend(db, program)["items"]
+            except Exception:
+                logger.exception("No recommendation for %s.", program.name)
+                items = []
+            for item in [item for item in items if item["kind"] in ("add", "change", "strengthen")][:2]:
+                advice.append({"program": program.name, "title": item["title"], "why": item["why"], "kind": item["kind"]})
+    said = suggestions(db, most=12)
+    if programs:
+        said = [item for item in said if item["program"].id in ids]
+    newest = max((row.fetched_at for row in rows if row.fetched_at), default=None)
+    return {"articles": _mixed(rows, PANEL_SIZE), "suggestions": said[:3], "advice": advice[:4], "programs": programs,
+            "last": last_read(db), "newest": newest, "domains": DOMAINS, "mine": bool(programs)}
+
+
+def new_since(db: Session, moment: datetime | None) -> int:
+    """How many articles arrived since this browser last opened the journal."""
+    if moment is None:
+        return min(PANEL_SIZE, db.query(NewsItem.id).count())
+    return db.query(NewsItem.id).filter(NewsItem.fetched_at > moment).count()

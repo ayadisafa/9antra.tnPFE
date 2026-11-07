@@ -3018,5 +3018,105 @@
 "{0} taken off the list: they stay in their discussions.": [
 "{0} retiré(s) de la liste : ils restent dans leurs discussions.",
 "{0} حُذفت من القائمة: تبقى في محادثاتها."
+],
+"Waiting for you": [
+"Vous attendent",
+"ينتظرونك"
+],
+"people wait for your answer. My draft is ready for each.": [
+"personnes attendent votre réponse. Mon brouillon est prêt pour chacune.",
+"أشخاص ينتظرون ردّك. مسودتي جاهزة لكل واحد."
+],
+"Answer them": [
+"Leur répondre",
+"الرد عليهم"
+],
+"To do today": [
+"À faire aujourd'hui",
+"للقيام به اليوم"
+],
+"The first one: {0}": [
+"La première : {0}",
+"الأولى: {0}"
+],
+"See them": [
+"Les voir",
+"عرضها"
+],
+"This week": [
+"Cette semaine",
+"هذا الأسبوع"
+],
+"new registrations in seven days.": [
+"nouvelles inscriptions en sept jours.",
+"تسجيلات جديدة في سبعة أيام."
+],
+"Meet them": [
+"Les découvrir",
+"تعرّف عليهم"
+],
+"Welcome": [
+"Bienvenue",
+"مرحبا"
+],
+"joined {0}.": [
+"a rejoint {0}.",
+"انضم إلى {0}."
+],
+"Open": [
+"Ouvrir",
+"فتح"
+],
+"What they think": [
+"Ce qu'ils en pensent",
+"رأيهم"
+],
+"from 1 candidate.": [
+"d'après 1 candidat.",
+"من 1 مترشح."
+],
+"from {0} candidates.": [
+"d'après {0} candidats.",
+"من {0} مترشحين."
+],
+"Read them": [
+"Les lire",
+"قراءتها"
+],
+"To call": [
+"À appeler",
+"للاتصال"
+],
+"not fully happy, waiting for a call from the team.": [
+"pas entièrement satisfaits, en attente d'un appel de l'équipe.",
+"غير راضين تماما، ينتظرون اتصالا من الفريق."
+],
+"Money in": [
+"Encaissé",
+"المداخيل"
+],
+"received in seven days, in {0} payments.": [
+"reçus en sept jours, en {0} paiements.",
+"وصلت في سبعة أيام، في {0} دفعات."
+],
+"See the payments": [
+"Voir les paiements",
+"عرض المدفوعات"
+],
+"Today": [
+"Aujourd'hui",
+"اليوم"
+],
+"Read it": [
+"Le lire",
+"اقرأه"
+],
+"A success": [
+"Une réussite",
+"نجاح"
+],
+"Tell it in a post": [
+"Le raconter dans une publication",
+"احكِه في منشور"
 ]
 }

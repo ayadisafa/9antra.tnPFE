@@ -13,6 +13,32 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-07", "day": date(2026, 11, 7), "title": "Reviews in ten seconds, a simpler inbox, the journal and the stories",
+        "items": [
+            {"icon": "bi-star-fill", "title": "Reviews in ten seconds",
+             "text": "The five stars are inside the email and the WhatsApp: one tap gives the rating, a few words and the trainer come after "
+                     "only if they want. Asked on the last session day, with a QR code to show in the room. Who gives 1 to 3 stars is "
+                     "thanked privately and you are asked to call them; who gives 4 or 5 is offered Google and Facebook, their words copied.",
+             "url": "/website#feedback"},
+            {"icon": "bi-trophy", "title": "Celebrate a success",
+             "text": "An internship, a PFE, a certification or a job: from the candidate's page, congratulate them and ask, at that happy "
+                     "moment, for a review on Google or Facebook. The success becomes a post idea on the Social media page.", "url": "/social#create"},
+            {"icon": "bi-inbox", "title": "A simpler inbox",
+             "text": "Three tabs: what needs you, what needs no reply, every conversation. One line says what waits; the rest (how messages "
+                     "go, the figures, the tools) is behind “⋯”. The assistant's answers are signed Yasmine.", "url": "/inbox"},
+            {"icon": "bi-chat-heart", "title": "Yasmine tells you what happened, and shows you around",
+             "text": "Back after a while, she says what came in and what went out meanwhile. Ask her “what happened today?”. "
+                     "“Show me around” takes you from page to page, the next one calling in the menu.", "url": "/"},
+            {"icon": "bi-newspaper", "title": "The journal, on every page",
+             "text": "The newspaper at the top opens the latest news of each field you teach, with moving photos, read again every six "
+                     "hours. Professors find their corner there: the news of what they teach and what could make their courses better.", "url": "/"},
+            {"icon": "bi-fire", "title": "Stories and days in a row",
+             "text": "The dashboard opens with stories to tap (new people, reviews, money in, sessions, news, successes), full screen, and "
+                     "the days in a row the team opened the application. Videos get a “Hook” style: a punch line first, fast cuts, a loop.",
+             "url": "/"},
+        ],
+    },
+    {
         "key": "2026-11-04b", "day": date(2026, 11, 4), "title": "Who is connected, and a livelier application",
         "items": [
             {"icon": "bi-broadcast", "title": "Who is using the application",

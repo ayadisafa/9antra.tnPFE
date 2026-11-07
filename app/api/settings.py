@@ -144,7 +144,7 @@ def _whatsapp_view(db: Session, settings, request) -> dict:
 def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None = Form(None), form: str | None = Form(None),
                  address: str | None = Form(None), whole: str = Form(""), legal_name: str | None = Form(None),
                  beneficiaries: str | None = Form(None), tax_id: str | None = Form(None), email: str | None = Form(None),
-                 website: str | None = Form(None), db: Session = Depends(get_db)):
+                 website: str | None = Form(None), google: str | None = Form(None), db: Session = Depends(get_db)):
     """Your centre: its own phone and WhatsApp numbers, written under every email, its RIB(s), where candidates pay, and
     who it is on payments (the names a cheque may be made out to)."""
     from app.services import tunisian_banks
@@ -172,6 +172,9 @@ def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None =
     site = (website or "").strip()
     if site and not site.startswith(("https://", "http://")):
         site = "https://" + site
+    review = (google or "").strip()
+    if review and not review.startswith(("https://", "http://")):
+        return _back(error="The Google review link must start with https://", anchor="#centre")
     settings = get_settings(db)
     settings.centre_phone, settings.centre_whatsapp = values["phone"], values["WhatsApp"]
     # The whole card was sent (“whole”): an empty box clears what was there (FastAPI turns an empty field into None).
@@ -179,6 +182,8 @@ def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None =
         settings.centre_ribs = "\n".join(kept_ribs) or None
     if form is not None or whole:
         settings.registration_form_url = link or None     # empty: back to the form 9antra uses today
+    if google is not None or whole:
+        settings.google_review_url = review[:500] or None
     if address is not None or whole:
         settings.centre_address = (address or "").strip()[:200] or None
     if whole:

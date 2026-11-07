@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% block title %}Reviews in the room · 9antra{% endblock %}
+{% block page_title %}Classes{% endblock %}
+{% block live_topics %}classes{% endblock %}
+
+{% block content %}
+{% include "_ui.html" %}
+<style>
+  .qr-wrap { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:18px; align-items:start; }
+  .qr-card { background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:24px; text-align:center; }
+  .qr-card h2 { font-size:1.2rem; font-weight:800; margin:0 0 4px; }
+  .qr-card p { color:var(--muted); font-size:.88rem; margin:0 auto; max-width:420px; }
+  .qr-box { width:min(340px, 100%); aspect-ratio:1; margin:18px auto 10px; border-radius:20px; background:#fff; border:1px solid var(--border-color); display:grid; place-items:center; padding:14px; }
+  .qr-box svg, .qr-box img { width:100%; height:auto; display:block; }
+  .qr-link { font-family:ui-monospace, Consolas, monospace; font-size:.76rem; color:#4a445e; word-break:break-all; background:#faf8fd; border-radius:12px; padding:8px 10px; }
+  .qr-do { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:12px; }
+  .qr-count { font-size:2.4rem; font-weight:800; color:var(--primary-berry); line-height:1; }
+  .qr-steps { text-align:left; display:grid; gap:10px; margin-top:14px; }
+  .qr-steps div { display:flex; gap:10px; align-items:flex-start; font-size:.88rem; }
+  .qr-steps b { width:26px; height:26px; border-radius:50%; background:var(--berry-subtle); color:var(--primary-berry); display:grid; place-items:center; flex:none; font-size:.8rem; }
+  .qr-warn { margin-top:12px; background:#fef3c7; color:#7c4a03; border-radius:14px; padding:10px 12px; font-size:.82rem; text-align:left; }
+  body.qr-full .qr-side { display:none; } body.qr-full .qr-wrap { grid-template-columns:1fr; } body.qr-full .qr-box { width:min(70vh, 92vw); }
+  @media (max-width: 860px) { .qr-wrap { grid-template-columns:1fr; } }
+</style>
+{% include "_flash.html" %}
+
+<div class="qr-wrap">
+  <section class="qr-card" id="qr-main">
+    <span class="ui-chip">{{ class_group.name }}</span>
+    <h2 class="mt-2">Show this in the room at the last session</h2>
+    <p>Each candidate scans it with their phone, writes the email or phone number they registered with, and gives their stars: ten seconds.</p>
+    <div class="qr-box" id="qr-box" data-link="{{ link }}" role="img" aria-label="QR code leading to the class's review page"></div>
+    <div class="qr-link" data-no-i18n>{{ link }}</div>
+    <div class="qr-do">
+      <button type="button" class="ui-btn" id="qr-full"><i class="bi bi-arrows-fullscreen"></i>Full screen</button>
+      <a class="ui-btn soft" href="/classes/{{ class_group.id }}#opinions"><i class="bi bi-arrow-left"></i>Back to the class</a>
+    </div>
+    {% if local %}<div class="qr-warn"><i class="bi bi-exclamation-triangle me-1"></i>This address only works on this computer: phones in the room cannot open it. Set the “Address for candidates” to a public https address first (Settings).</div>{% endif %}
+  </section>
+  <aside class="qr-card qr-side">
+    <div class="qr-count" data-no-i18n>{{ reviews.answered }}<span style="font-size:1.1rem; color:var(--muted);"> / {{ reviews.rows | length }}</span></div>
+    <p class="mt-1">reviews given in this class{% if reviews.stars %} · {{ reviews.stars }} ★ on average{% endif %}</p>
+    <div class="qr-steps">
+      <div><b>1</b><span>They scan the code with their phone's camera.</span></div>
+      <div><b>2</b><span>They write their email or phone number: only their own review opens, nobody sees who is in the class.</span></div>
+      <div><b>3</b><span>One tap on a star, and it is kept. A few words and their professor come after, only if they want.</span></div>
+    </div>
+    <p class="mt-3" style="font-size:.8rem;">Those who do not answer here still get their request by WhatsApp or email, once.</p>
+  </aside>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+<script>
+  (() => {
+    const box = document.getElementById("qr-box");
+    try {
+      const code = qrcode(0, "M");
+      code.addData(box.dataset.link);
+      code.make();
+      box.innerHTML = code.createSvgTag({ cellSize: 8, margin: 2, scalable: true });
+    } catch (error) {
+      box.textContent = box.dataset.link;
+    }
+    document.getElementById("qr-full").addEventListener("click", () => {
+      document.body.classList.toggle("qr-full");
+      const main = document.getElementById("qr-main");
+      if (!document.fullscreenElement && main.requestFullscreen) main.requestFullscreen().catch(() => {});
+      else if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
+    });
+  })();
+</script>
+{% endblock %}

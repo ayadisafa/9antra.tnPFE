@@ -1,0 +1,175 @@
+{# The first page's stories and the days in a row (services/stories.py). #}
+<section class="sx-strip" aria-label="What happened lately">
+  <div class="sx-streak" title="Days in a row the team opened the application · best: {{ streak.best }}">
+    <svg viewBox="0 0 44 44" aria-hidden="true"><circle cx="22" cy="22" r="19" class="sx-track"/><circle cx="22" cy="22" r="19" class="sx-done" style="--p:{{ streak.pct }};"/></svg>
+    <span class="sx-flame">🔥</span>
+    <b data-no-i18n>{{ streak.days }}</b>
+    <small>{{ 'day in a row' if streak.days == 1 else 'days in a row' }}</small>
+    <em>{{ streak.done }}/{{ streak.goal }} done today</em>
+  </div>
+  {% for story in stories %}
+  <button type="button" class="sx-bubble" data-story="{{ loop.index0 }}" data-sig="{{ story.key }}:{{ story.sig }}" style="--c:{{ story.colour }}; --i:{{ loop.index0 }};">
+    <span class="sx-ring"><span class="sx-face">{% if story.image %}<img src="{{ story.image }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}<i class="bi {{ story.icon }}"></i></span></span>
+    <b>{{ story.title }}</b>
+  </button>
+  {% endfor %}
+</section>
+<div class="sx-viewer" id="sx-viewer" hidden role="dialog" aria-modal="true" aria-label="Story">
+  <div class="sx-stage" id="sx-stage">
+    <div class="sx-bars" id="sx-bars"></div>
+    <button type="button" class="sx-x" id="sx-close" aria-label="Close"><i class="bi bi-x-lg"></i></button>
+    <div class="sx-slide" id="sx-slide"></div>
+    <button type="button" class="sx-tap is-prev" id="sx-prev" aria-label="Previous"></button>
+    <button type="button" class="sx-tap is-next" id="sx-next" aria-label="Next"></button>
+  </div>
+</div>
+<div class="sx-party" id="sx-party" hidden aria-live="polite"></div>
+<script type="application/json" id="sx-data">{{ stories | tojson }}</script>
+<style>
+  .sx-strip { display:flex; gap:14px; align-items:flex-start; overflow-x:auto; padding:6px 2px 12px; margin-bottom:6px; scrollbar-width:none; }
+  .sx-strip::-webkit-scrollbar { display:none; }
+  .sx-streak { flex:none; position:relative; width:88px; display:grid; justify-items:center; gap:0; text-align:center; }
+  .sx-streak svg { width:64px; height:64px; transform:rotate(-90deg); }
+  .sx-track { fill:none; stroke:#f1edf7; stroke-width:4; }
+  .sx-done { fill:none; stroke:#f59e0b; stroke-width:4; stroke-linecap:round; stroke-dasharray:119.4; stroke-dashoffset:calc(119.4 - 119.4 * var(--p) / 100);
+             animation:sxFill 1.4s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes sxFill { from { stroke-dashoffset:119.4; } }
+  .sx-flame { position:absolute; top:12px; font-size:1.3rem; animation:sxFlame 1.6s ease-in-out infinite; }
+  @keyframes sxFlame { 0%, 100% { transform:scale(1) rotate(-4deg); } 50% { transform:scale(1.15) rotate(4deg); } }
+  .sx-streak b { font-size:1rem; font-weight:800; margin-top:-4px; } .sx-streak small { font-size:.64rem; color:var(--muted); font-weight:700; line-height:1.1; }
+  .sx-streak em { font-style:normal; font-size:.6rem; color:#b45309; font-weight:800; margin-top:2px; }
+  .sx-bubble { flex:none; width:78px; border:0; background:none; padding:0; display:grid; justify-items:center; gap:6px; cursor:pointer; animation:sxPop .5s cubic-bezier(.2,.8,.2,1.3) both; animation-delay:calc(var(--i) * 70ms); }
+  @keyframes sxPop { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:none; } }
+  .sx-ring { width:68px; height:68px; border-radius:50%; padding:3px; display:block;
+             background:conic-gradient(from 0deg, var(--c), #f472b6, #f59e0b, var(--c)); animation:sxSpin 4s linear infinite; }
+  .sx-bubble.is-seen .sx-ring { background:#e5e0ee; animation:none; }
+  @keyframes sxSpin { to { filter:hue-rotate(40deg); } }
+  .sx-face { width:100%; height:100%; border-radius:50%; border:3px solid #fff; background:var(--c); display:grid; place-items:center; overflow:hidden; position:relative; color:#fff; font-size:1.4rem; }
+  .sx-face img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .sx-face img + i { display:none; }
+  .sx-bubble b { font-size:.72rem; font-weight:800; color:var(--ink-text); max-width:78px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .sx-bubble:hover .sx-ring { transform:scale(1.06); } .sx-ring { transition:transform .2s ease; }
+  .sx-viewer { position:fixed; inset:0; z-index:1080; background:rgba(16,10,28,.88); display:grid; place-items:center; animation:sxFade .2s ease both; }
+  @keyframes sxFade { from { opacity:0; } }
+  .sx-stage { position:relative; width:min(420px, 100vw); height:min(760px, 100vh); border-radius:24px; overflow:hidden; background:#241a38; box-shadow:0 30px 80px -30px #000; }
+  @media (max-width: 480px) { .sx-stage { border-radius:0; } }
+  .sx-bars { position:absolute; top:10px; left:12px; right:12px; display:flex; gap:4px; z-index:5; }
+  .sx-bars span { flex:1; height:3px; border-radius:3px; background:rgba(255,255,255,.3); overflow:hidden; }
+  .sx-bars span i { display:block; height:100%; width:0; background:#fff; }
+  .sx-bars span.is-done i { width:100%; } .sx-bars span.is-now i { animation:sxBar var(--d, 5s) linear forwards; }
+  @keyframes sxBar { to { width:100%; } }
+  .sx-viewer.is-paused .sx-bars span.is-now i { animation-play-state:paused; }
+  .sx-x { position:absolute; top:22px; right:12px; z-index:6; border:0; background:rgba(255,255,255,.16); color:#fff; width:36px; height:36px; border-radius:50%; }
+  .sx-tap { position:absolute; top:60px; bottom:120px; width:35%; border:0; background:none; z-index:3; cursor:pointer; }
+  .sx-tap.is-prev { left:0; } .sx-tap.is-next { right:0; width:65%; }
+  .sx-slide { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:30px 24px 34px; color:#fff;
+              background:radial-gradient(circle at 30% 20%, color-mix(in srgb, var(--c) 85%, #fff), var(--c) 45%, #1a1030); }
+  .sx-slide .sx-bg { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; animation:sxKen 6s ease-out both; }
+  .sx-slide .sx-shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(0,0,0,.05) 30%, rgba(20,10,35,.85)); }
+  @keyframes sxKen { from { transform:scale(1.18) translate(2%, 2%); } to { transform:scale(1.02); } }
+  .sx-blob { position:absolute; border-radius:50%; background:rgba(255,255,255,.12); animation:sxFloat 5s ease-in-out infinite; }
+  @keyframes sxFloat { 0%, 100% { transform:translateY(0) scale(1); } 50% { transform:translateY(-18px) scale(1.06); } }
+  .sx-in { position:relative; z-index:2; display:grid; gap:10px; }
+  .sx-in > * { animation:sxUp .5s cubic-bezier(.2,.8,.2,1) both; } .sx-in > *:nth-child(2) { animation-delay:.08s; } .sx-in > *:nth-child(3) { animation-delay:.16s; } .sx-in > *:nth-child(4) { animation-delay:.24s; }
+  @keyframes sxUp { from { opacity:0; transform:translateY(22px); } }
+  .sx-ico { width:58px; height:58px; border-radius:20px; background:rgba(255,255,255,.18); display:grid; place-items:center; font-size:1.7rem; animation:sxBounce 2.4s ease-in-out infinite !important; }
+  @keyframes sxBounce { 0%, 100% { transform:translateY(0) rotate(0); } 50% { transform:translateY(-6px) rotate(-6deg); } }
+  .sx-kicker { font-size:.78rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; opacity:.85; }
+  .sx-big { font-size:clamp(2.6rem, 12vw, 4.4rem); font-weight:900; line-height:1; letter-spacing:-.02em; word-break:break-word; }
+  .sx-big small { font-size:.4em; font-weight:800; opacity:.85; }
+  .sx-title { font-size:1.35rem; font-weight:800; line-height:1.25; }
+  .sx-quote { font-size:1.25rem; font-weight:700; line-height:1.35; font-style:italic; }
+  .sx-text { font-size:1rem; opacity:.92; }
+  .sx-cta { justify-self:start; margin-top:6px; display:inline-flex; gap:8px; align-items:center; background:#fff; color:#241a38; font-weight:800; border-radius:999px; padding:11px 18px; text-decoration:none; position:relative; z-index:4; }
+  .sx-cta:hover { color:var(--primary-berry); }
+  .sx-party { position:fixed; inset:0; pointer-events:none; z-index:1090; }
+  .sx-party i { position:absolute; top:-12px; width:9px; height:14px; border-radius:2px; animation:sxDrop 2.6s cubic-bezier(.3,.6,.4,1) forwards; }
+  @keyframes sxDrop { to { transform:translateY(105vh) rotate(720deg); opacity:.6; } }
+  .sx-party b { position:absolute; left:50%; top:22%; transform:translateX(-50%); background:#fff; color:#241a38; border-radius:999px; padding:12px 22px; font-weight:800;
+                box-shadow:0 20px 50px -20px rgba(0,0,0,.4); animation:sxUp .5s ease both; white-space:nowrap; }
+  @media (prefers-reduced-motion: reduce) { .sx-ring, .sx-flame, .sx-bubble, .sx-slide .sx-bg, .sx-blob, .sx-in > *, .sx-ico, .sx-done { animation:none !important; } .sx-party { display:none; } }
+</style>
+<script>
+(() => {
+  let stories = [];
+  try { stories = JSON.parse(document.getElementById("sx-data").textContent) || []; } catch (error) { return; }
+  const viewer = document.getElementById("sx-viewer"), slideBox = document.getElementById("sx-slide"), bars = document.getElementById("sx-bars");
+  const store = { get: key => { try { return localStorage.getItem(key); } catch (error) { return null; } },
+                  set: (key, value) => { try { localStorage.setItem(key, value); } catch (error) {} } };
+  const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]));
+  const SECONDS = 5;
+  let story = 0, slide = 0, timer = null;
+  // What was opened already, with this content: its ring goes grey until something new comes in.
+  document.querySelectorAll(".sx-bubble").forEach(button => { if (store.get("story-seen:" + button.dataset.sig.split(":")[0]) === button.dataset.sig) button.classList.add("is-seen"); });
+
+  function countUp(element, target) {
+    const value = Number(target);
+    if (!Number.isFinite(value) || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const decimals = String(target).includes(".") ? 1 : 0, start = performance.now();
+    const step = now => { const k = Math.min(1, (now - start) / 900); element.firstChild.nodeValue = (value * (1 - Math.pow(1 - k, 3))).toFixed(decimals); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function show() {
+    clearTimeout(timer);
+    const item = stories[story], part = item.slides[slide];
+    viewer.style.setProperty("--c", item.colour);
+    slideBox.style.setProperty("--c", item.colour);
+    bars.innerHTML = item.slides.map((_, k) => `<span class="${k < slide ? "is-done" : k === slide ? "is-now" : ""}" style="--d:${SECONDS}s"><i></i></span>`).join("");
+    const big = part.big !== undefined && part.big !== null ? `<div class="sx-big"><span>${esc(part.big)}</span>${part.suffix ? `<small>${esc(part.suffix)}</small>` : ""}</div>` : "";
+    slideBox.innerHTML = (part.image ? `<img class="sx-bg" src="${esc(part.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()"><span class="sx-shade"></span>`
+                                     : `<span class="sx-blob" style="width:220px;height:220px;right:-60px;top:80px"></span><span class="sx-blob" style="width:120px;height:120px;left:-30px;top:220px;animation-delay:1s"></span>`)
+      + `<div class="sx-in"><span class="sx-ico"><i class="bi ${esc(part.icon || item.icon)}"></i></span><div class="sx-kicker">${esc(part.kicker || item.title)}</div>`
+      + big + (part.title ? `<div class="sx-title">${esc(part.title)}</div>` : "") + (part.quote ? `<div class="sx-quote">“${esc(part.quote)}”</div>` : "")
+      + (part.text ? `<div class="sx-text">${esc(part.text)}</div>` : "")
+      + (part.url ? `<a class="sx-cta" href="${esc(part.url)}"${part.outside ? ' target="_blank" rel="noopener noreferrer"' : ""}>${esc(part.cta || "Open")} <i class="bi bi-arrow-right"></i></a>` : "") + `</div>`;
+    const number = slideBox.querySelector(".sx-big span");
+    if (number) countUp(number, part.big);
+    timer = setTimeout(next, SECONDS * 1000);
+  }
+  function open(index) {
+    story = index; slide = 0;
+    viewer.hidden = false; document.body.style.overflow = "hidden";
+    const button = document.querySelector(`.sx-bubble[data-story="${index}"]`);
+    if (button) { store.set("story-seen:" + stories[index].key, button.dataset.sig); button.classList.add("is-seen"); }
+    show();
+  }
+  function close() { clearTimeout(timer); viewer.hidden = true; document.body.style.overflow = ""; }
+  function next() {
+    if (slide < stories[story].slides.length - 1) { slide += 1; show(); return; }
+    if (story < stories.length - 1) { open(story + 1); return; }
+    close();
+  }
+  function previous() {
+    if (slide > 0) { slide -= 1; show(); return; }
+    if (story > 0) { open(story - 1); slide = stories[story].slides.length - 1; show(); }
+  }
+  document.querySelectorAll(".sx-bubble").forEach(button => button.addEventListener("click", () => open(Number(button.dataset.story))));
+  document.getElementById("sx-next").addEventListener("click", next);
+  document.getElementById("sx-prev").addEventListener("click", previous);
+  document.getElementById("sx-close").addEventListener("click", close);
+  viewer.addEventListener("click", event => { if (event.target === viewer) close(); });
+  // Holding a finger (or the mouse) on the story pauses it.
+  ["pointerdown", "pointerup", "pointerleave"].forEach(name => document.getElementById("sx-stage").addEventListener(name, event => {
+    if (event.target.closest(".sx-cta, .sx-x")) return;
+    if (name === "pointerdown") { viewer.classList.add("is-paused"); clearTimeout(timer); }
+    else if (viewer.classList.contains("is-paused")) { viewer.classList.remove("is-paused"); timer = setTimeout(next, 2200); }
+  }));
+  document.addEventListener("keydown", event => {
+    if (viewer.hidden) return;
+    if (event.key === "Escape") close(); else if (event.key === "ArrowRight") next(); else if (event.key === "ArrowLeft") previous();
+  });
+
+  // A new day in a row: a small celebration, once a day.
+  {% if streak.new_today and streak.days > 1 %}
+  if (store.get("streak-shown") !== "{{ streak.today }}") {
+    store.set("streak-shown", "{{ streak.today }}");
+    const party = document.getElementById("sx-party");
+    const colours = ["#a42c67", "#f59e0b", "#7c3aed", "#15803d", "#0ea5e9", "#f472b6"];
+    party.innerHTML = Array.from({ length: 70 }, (_, k) => `<i style="left:${Math.random() * 100}%; background:${colours[k % colours.length]}; animation-delay:${Math.random() * .6}s"></i>`).join("")
+      + `<b>🔥 {{ streak.days }} days in a row!</b>`;
+    party.hidden = false;
+    setTimeout(() => { party.hidden = true; party.innerHTML = ""; }, 3400);
+  }
+  {% endif %}
+})();
+</script>

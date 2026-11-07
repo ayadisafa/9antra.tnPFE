@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 COUNTRY = "216"                     # Tunisia
 LOCAL_DIGITS = 8                    # a Tunisian number without its country code
 # The emails that are reminders: these also go out on WhatsApp.
-REMINDERS = {"payment_reminder", "training_reminder", "weekly_questions", "quiz_invitation", "level_reminder", "session_link", "feedback_request",
+REMINDERS = {"payment_reminder", "training_reminder", "weekly_questions", "quiz_invitation", "level_reminder", "session_link", "feedback_request", "success_review",
              "session_reminder"}
 _API = "https://graph.facebook.com/v20.0"
 

@@ -654,14 +654,17 @@
         <div>
           <div class="cd-card-title"><i class="bi bi-star-half me-1" style="color:#f5b301;"></i>What they thought of the program</div>
           <div class="cd-card-sub">
-            When the class is completed, each candidate is asked once, by email (and on WhatsApp once a business number is connected): how many stars, and a few words.
-            Their words are read with the same rules as the published feedback.
+            On the last session day, each candidate is asked once (WhatsApp first once a Business number is connected, else email): the stars are in the message, one tap gives the rating, words and their professor come after if they want.
+            Show the QR code in the room at that session: they answer there, in ten seconds.
           </div>
         </div>
-        <form method="post" action="/classes/{{ cls.id }}/ask-opinions" class="m-0"
-              data-confirm="Send the “what did you think?” email to the candidates of {{ cls.name }} who have not answered yet?">
-          <button class="btn btn-sm btn-light border fw-semibold text-nowrap"><i class="bi bi-send me-1"></i>{{ 'Ask again' if opinions.asked else 'Ask them now' }}</button>
-        </form>
+        <div class="d-flex gap-2 flex-wrap">
+          <a class="btn btn-sm btn-light border fw-semibold text-nowrap" href="/classes/{{ cls.id }}/opinion-qr"><i class="bi bi-qr-code me-1"></i>QR code for the room</a>
+          <form method="post" action="/classes/{{ cls.id }}/ask-opinions" class="m-0"
+                data-confirm="Send the “what did you think?” email to the candidates of {{ cls.name }} who have not answered yet?">
+            <button class="btn btn-sm btn-light border fw-semibold text-nowrap"><i class="bi bi-send me-1"></i>{{ 'Ask again' if opinions.asked else 'Ask them now' }}</button>
+          </form>
+        </div>
       </div>
       {% if opinions.answered %}
       <div class="d-flex flex-wrap gap-4 mt-3 align-items-end">
@@ -673,7 +676,7 @@
       {% elif opinions.asked or opinions.waiting %}
       <div class="cd-card-sub mt-3"><i class="bi bi-hourglass-split me-1"></i>{{ opinions.asked }} asked{% if opinions.waiting %}, {{ opinions.waiting }} about to be asked{% endif %}. Nobody answered yet.</div>
       {% else %}
-      <div class="cd-card-sub mt-3"><i class="bi bi-info-circle me-1"></i>Nobody was asked yet. It happens by itself when the class is completed.</div>
+      <div class="cd-card-sub mt-3"><i class="bi bi-info-circle me-1"></i>Nobody was asked yet. It happens by itself on the last session day.</div>
       {% endif %}
       {% for item in opinions.rows if item.answered %}
       <div class="d-flex gap-3 align-items-start py-3" style="border-top:1px solid var(--border-color); {{ 'margin-top:14px;' if loop.first }}">

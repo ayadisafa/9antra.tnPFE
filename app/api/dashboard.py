@@ -146,6 +146,9 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
             "voices": __import__("app.services.feedback_hub", fromlist=["overview"]).overview(db),
             "ideas": __import__("app.services.engagement_ideas", fromlist=["overview"]).overview(db),
             "marketing": __import__("app.services.marketing", fromlist=["for_dashboard"]).for_dashboard(db),
+            # The stories that open the page, and the days in a row (services/stories.py).
+            "stories": __import__("app.services.stories", fromlist=["for_dashboard"]).for_dashboard(db),
+            "streak": __import__("app.services.stories", fromlist=["mark_today"]).mark_today(db),
             "smart": {"ideas": reminders.suggestions(db)[:3],
                       "planned": [{"reminder": item, "when": utc_to_local(item.send_at)} for item in reminders.upcoming(db)[:3]]},
             "dashboard_programs": db.query(Program).order_by(Program.name.asc()).all(),

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
 
@@ -180,6 +180,23 @@ def _connected(db: Session, fr: bool, user=None) -> dict:
         reply = (f"Online now: {names(online) or 'nobody'}." + (f" Open but idle: {names(idle)}." if idle else "")
                  + " You can sign out one browser, one person or everyone from the Team page.")
     return {"reply": reply, "links": [_link("Connected now", "/settings/team#connected")], "source": "system"}
+
+
+def _what_happened(db: Session, fr: bool, text: str) -> dict:
+    """What came in and what went out today (or since yesterday morning), counted from the records."""
+    from datetime import timedelta
+
+    from app.services import digest
+    from app.services.schedule_utils import _tz, local_now
+
+    start = local_now().replace(hour=0, minute=0, second=0, microsecond=0)
+    if _has(text, "since yesterday|depuis hier|yesterday|hier|lbere7"):
+        start -= timedelta(days=1)
+    since = start.replace(tzinfo=_tz()).astimezone(timezone.utc).replace(tzinfo=None)
+    lang = "fr" if fr else "en"
+    found = digest.lines(db, since, lang)
+    return {"reply": digest.sentence(db, since, lang, heading="today"),
+            "links": [_link(item["text"], item["url"]) for item in found[:4]], "source": "system"}
 
 
 def _classes(db: Session, fr: bool, only_waiting: bool = False) -> dict:
@@ -758,6 +775,11 @@ def _answer(db: Session, message: str, history: list[dict] | None = None, user=N
     if _has(text, "who is (connected|online|using)|who s (connected|online)|qui est (connecte|en ligne)|qui sont (connectes|en ligne)|"
                   "connectes? (maintenant|en ce moment)|chkoun (connecte|connecti|m9ayed)|users? online|utilisateurs? connectes"):
         return _connected(db, fr, user)
+    # What came in and went out: every input and output of the system, counted.
+    if _has(text, "what happened|what s new today|what came in|what went out|since yesterday|quoi de neuf|qu est ce qui s est passe|"
+                  "ce qui s est passe|que s est il passe|ce qui est (arrive|parti)|bilan (de )?(la )?journee|resume de (la )?journee|"
+                  "chnowa sar|chnoua sar|ach sar|chnowa jdid|ماذا حدث|شنوة صار"):
+        return _what_happened(db, fr, text)
     # Who has paid: a question about the records, before the guide ("chkoun khallas" is not how to record a payment).
     if _has(text, "(qui|combien( de (candidats|personnes|inscrits|gens))?) (a|ont|a deja|ont deja) paye|deja paye|"
                   "who (has |have )?(already )?paid|how many (have |has |people |candidates )*paid|(chkoun|chkun|qui) khalla?s\\w*|9addech (wa7ed )?khals?ou|kamlou el khlas"):

@@ -22,7 +22,7 @@ RETRY_UNTIL = timedelta(hours=48)
 KINDS = {
     "weekly_questions": "The week's questions", "payment_reminder": "Payment reminder", "session_check": "Questions after the session",
     "reply": "An answer", "personal": "Your message", "training_reminder": "Reminder before the class starts",
-    "quiz_invitation": "Level check", "class_rescheduled": "Class rescheduled", "feedback_request": "Review request",
+    "quiz_invitation": "Level check", "class_rescheduled": "Class rescheduled", "feedback_request": "Review request", "success_review": "Congratulations",
     "enrollment": "Registration confirmed", "session_reminder": "Session reminder", "class_scheduled": "Class scheduled",
     "class_moved": "Moved to another class", "session_link": "Link to the session", "welcome": "Welcome message",
 }

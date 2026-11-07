@@ -96,6 +96,8 @@ SETTINGS = [
              attr="centre_address", most=200),
     _setting("form_link", "The registration form's link", r"(lien|link).{0,25}(formulaire|form|inscription|registration)", "url", "/settings#identity",
              attr="registration_form_url", most=500),
+    _setting("google_review", "The Google review link", r"(lien|link).{0,25}(avis|review).{0,15}google|google.{0,15}(avis|review)", "url", "/settings#centre",
+             attr="google_review_url", most=500),
     # The automatic reminders (services/reminder_board.py): on or off, and their timing.
     _setting("payment_reminder", "The payment reminder", r"rappel (?:de |du )?paiement|payment reminder|تذكير (?:بال)?دفع", "reminder", "/reminders#auto", unit="hours"),
     _setting("session_reminder", "The reminder before each session", r"rappel (?:avant|de) (?:la |chaque )?s[ée]ance|session reminder|reminder before (?:each |the )?session",

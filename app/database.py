@@ -246,6 +246,7 @@ def ensure_sqlite_compatibility():
             "weekly_questions_count": "INTEGER DEFAULT 5",
             "symbol": "VARCHAR",
             "color": "VARCHAR",
+            "opinion_token": "VARCHAR",
         },
 
         # Professors can be reached, and can be given a login.
@@ -344,6 +345,8 @@ def ensure_sqlite_compatibility():
             "session_reminder_hours": "INTEGER DEFAULT 24",
             "reply_rules": "TEXT",
             "assistant_changes": "TEXT",
+            "google_review_url": "VARCHAR",
+            "active_days": "TEXT",
         },
 
         "class_materials": {
@@ -456,6 +459,8 @@ def ensure_sqlite_compatibility():
             "reading": "TEXT",
             "removed_at": "DATETIME",
         },
+        # The journal's articles: their photo, as their feed gives it.
+        "news_items": {"image_url": "VARCHAR"},
     }
 
     with engine.begin() as connection:

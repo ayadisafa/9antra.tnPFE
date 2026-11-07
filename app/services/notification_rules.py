@@ -25,7 +25,10 @@ INFO_DAYS = 3                    # a notification that only tells something clos
 EVERY = 60                       # seconds between two tidy-ups from the pages
 # What needs the admin until it is handled.
 NEEDS_YOU = {"EMAIL_QUESTION", "CANDIDATE_EMAIL", "NEW_REGISTRATION", "REGISTRATION_REQUEST", "ASSIGNMENT_PENDING",
-             "PROGRAM_PROPOSAL", "PROGRAM_APPROVAL", "TEAM_MESSAGE", "EMAIL_CONFIG", "EMAIL_FAILED", "PAYMENT_PROOF", "BIAS_ALERT"}
+             "PROGRAM_PROPOSAL", "PROGRAM_APPROVAL", "TEAM_MESSAGE", "EMAIL_CONFIG", "EMAIL_FAILED", "PAYMENT_PROOF", "BIAS_ALERT",
+             "REVIEW_LOW"}
+# What opening its page does not close: it waits for the thing to be done (someone not happy waits for a call).
+STAYS_OPEN = {"REVIEW_LOW"}
 # Words of a CANDIDATE_EMAIL notification that only reports what the system did by itself.
 _REPORTS = ("corrected itself",)
 
@@ -98,6 +101,11 @@ def settled(db: Session, notification: Notification) -> bool:
         since = _naive(notification.created_at)
         return db.query(CandidateEmail.id).filter(CandidateEmail.direction == "outbound", CandidateEmail.channel == "email",
                                                   CandidateEmail.status == "sent", CandidateEmail.received_at > since).first() is not None
+    if category == "REVIEW_LOW":
+        from app.services import program_feedback
+
+        row = program_feedback.of_registration(db, notification.registration_id) if notification.registration_id else None
+        return row is None or row.status != "received" or not program_feedback.is_low(row) or program_feedback.was_contacted(db, row)
     if category == "EMAIL_FAILED":
         from app.services import reach
 
@@ -161,6 +169,8 @@ def seen_at(db: Session, path: str, query: dict) -> int:
         return 0
     for notification in db.query(Notification).filter(Notification.recipient_role == "admin", Notification.is_read.is_(False),
                                                        Notification.action_url.like(f"{path}%")).all():
+        if notification.category in STAYS_OPEN:
+            continue
         target, wanted = _query(notification.action_url)
         if target == path and all(query.get(key) == value for key, value in wanted.items()):
             _close(notification, "seen", datetime.utcnow())

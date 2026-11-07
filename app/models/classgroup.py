@@ -108,6 +108,7 @@ class ClassGroup(Base):
     # Empty = chosen by the system from the class's name (see class_looks).
     symbol = Column(String, nullable=True)
     color = Column(String, nullable=True)
+    opinion_token = Column(String, nullable=True)      # the class's QR code at its last session: candidates find their review there
 
     created_at = Column(
         DateTime, 

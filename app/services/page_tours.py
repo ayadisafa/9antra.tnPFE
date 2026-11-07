@@ -30,6 +30,9 @@ FRAME = [
     _step("[data-guide-show]", "bi-signpost-2", "How this page works", "The short explanation at the top of the page: shown or hidden again with this button.",
           ["Show it", "Hide it"]),
     _step("[data-tour-show]", "bi-question-lg", "This tour", "On any page, it shows what you can do there.", ["Replay the tour"]),
+    _step("[data-journal-open]", "bi-newspaper", "The journal", "What is new in each field you teach, with moving photos, read again every six hours. "
+          "Professors find their corner there: the news of what they teach, and what could make their courses better.",
+          ["Read the latest articles", "See what they suggest for the programs"]),
     _step(".topbar-help:has(.bi-translate)", "bi-translate", "Language", "The pages in English, French or Arabic.", [],
           ["The language of the pages"]),
     _step("button:has(#nav-messages-badge)", "bi-envelope", "Messages", "The candidates' emails waiting for your answer.",

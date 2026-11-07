@@ -321,6 +321,12 @@
         <label class="so-choice"><input type="radio" name="kind" value="{{ key }}" {{ 'checked' if key == chosen_kind }}><span><b>{{ value[0] }}</b><small>{{ value[1] }}</small></span></label>
         {% endfor %}
       </div>
+      <div class="so-label">How it moves</div>
+      <div class="so-choices">
+        {% for key, value in video_styles.items() %}
+        <label class="so-choice"><input type="radio" name="style" value="{{ key }}" {{ 'checked' if key == 'hook' }}><span><b>{% if key == 'hook' %}<i class="bi bi-lightning-charge-fill" style="color:#f59e0b;"></i> {% endif %}{{ value[0] }}</b><small>{{ value[1] }}</small></span></label>
+        {% endfor %}
+      </div>
       <div class="so-label">Format</div>
       <div class="so-chips">{% for key, label in formats.items() %}<label class="so-chip"><input type="radio" name="fmt" value="{{ key }}" {{ 'checked' if key == 'story' }}><span><i class="bi {{ 'bi-phone' if key == 'story' else 'bi-square' }}"></i>{{ label }}</span></label>{% endfor %}</div>
       <div class="so-label">Language and look</div>
@@ -358,7 +364,7 @@
           <div class="so-working" style="background:#fdecef; color:#9f1239;"><div><i class="bi bi-exclamation-triangle fs-3"></i><br><span data-no-i18n>{{ asset.error }}</span></div></div>
           {% endif %}
           <div class="so-video-body">
-            <b>{{ video_kinds.get(item.spec.kind, ('Video', ''))[0] }}</b>
+            <b>{{ video_kinds.get(item.spec.kind, ('Video', ''))[0] }}{% if item.spec.style == 'hook' %} <span class="ui-chip warn" style="font-size:.62rem;"><i class="bi bi-lightning-charge-fill"></i>Hook</span>{% endif %}</b>
             <small>{{ asset.created_at.strftime('%d/%m %H:%M') }}{% if asset.seconds %} · {{ asset.seconds }} s{% endif %}{% if asset.size %} · {{ (asset.size / 1048576) | round(1) }} MB{% endif %} · <span data-no-i18n>{{ item.spec.lang | upper }}</span></small>
             <div class="so-actions">
               {% if asset.status == 'ready' %}<a class="ui-btn sm" href="/social/video/{{ asset.id }}?download=1"><i class="bi bi-download"></i>Download</a>{% endif %}

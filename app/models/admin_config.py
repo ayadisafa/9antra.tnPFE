@@ -137,6 +137,8 @@ class SystemSettings(Base):
     reply_rules = Column(Text, nullable=True)
     # What Yasmine changed in the system when asked (services/system_actions.py), with what it was before; JSON.
     assistant_changes = Column(Text, nullable=True)
+    google_review_url = Column(String, nullable=True)           # where a happy candidate leaves a review on Google
+    active_days = Column(Text, nullable=True)                   # JSON: the days the team used the application (the streak)
 
     # Audit
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))

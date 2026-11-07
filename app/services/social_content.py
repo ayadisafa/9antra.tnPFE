@@ -18,6 +18,7 @@ LANGUAGES = ("tn", "fr", "en", "ar")
 DEFAULT_LANGUAGE = "tn"
 TOPICS = {
     "success": ("Their success", "bi-trophy"),
+    "story": ("A success story", "bi-stars"),
     "testimonial": ("What they say", "bi-chat-quote"),
     "listen": ("We listen", "bi-ear"),
     "program": ("A program starts", "bi-journal-bookmark"),
@@ -56,6 +57,11 @@ _CAPTIONS = {
         "en": "{brand} 💪 {lines}\n\nThank you to every candidate who trusts us. Your success is our proudest achievement! 🎓\n\n👉 Join us: {link}",
         "ar": "{brand} 💪 {lines}\n\nشكرا لكل مترشح وثق بنا. نجاحكم هو أكبر فخر لنا! 🎓\n\n👉 انضموا إلينا: {link}",
     },
+    "story": {
+        "fr": "🎉 {headline} {success} après la formation {program} chez {brand}. 💪\n\nVotre réussite est notre plus belle fierté.\n\n👉 Votre tour : {link}",
+        "en": "🎉 {headline} {success} after the {program} program at {brand}. 💪\n\nYour success is our proudest achievement.\n\n👉 Your turn: {link}",
+        "ar": "🎉 {headline} {success} بعد برنامج {program} في {brand}. 💪\n\nنجاحكم هو أكبر فخر لنا.\n\n👉 جاء دورك: {link}",
+    },
     "testimonial": {
         "fr": "💬 « {quote} »\n— {name}\n\nMerci pour ces mots qui nous motivent chaque jour ! ❤️\n\n👉 Vous aussi, lancez-vous : {link}",
         "en": "💬 “{quote}”\n— {name}\n\nThank you for words that motivate us every day! ❤️\n\n👉 Your turn: {link}",
@@ -86,7 +92,16 @@ _CAPTIONS = {
 # Tunisian: the posts' own words, kept apart so the interface's translation never touches them.
 from app.services import social_tn  # noqa: E402
 
+_STORY = {
+    "fr": {"internship": "Un stage décroché", "pfe": "Un PFE réussi", "certification": "Une certification obtenue", "job": "Un emploi décroché",
+           "headline": "Bravo {name} !", "someone": "un de nos candidats", "kicker": "UNE NOUVELLE RÉUSSITE"},
+    "en": {"internship": "An internship landed", "pfe": "A PFE passed", "certification": "A certification earned", "job": "A job landed",
+           "headline": "Well done {name}!", "someone": "one of our candidates", "kicker": "A NEW SUCCESS"},
+    "ar": {"internship": "تربص جديد", "pfe": "مشروع ختم دروس ناجح", "certification": "شهادة جديدة", "job": "عمل جديد",
+           "headline": "مبروك {name}!", "someone": "أحد مترشحينا", "kicker": "نجاح جديد"},
+}
 _W["tn"] = social_tn.WORDS
+_STORY["tn"] = social_tn.STORY
 for _topic, _text in social_tn.CAPTIONS.items():
     _CAPTIONS[_topic]["tn"] = _text
 
@@ -234,6 +249,18 @@ def ideas(db: Session, lang: str = DEFAULT_LANGUAGE) -> list[dict]:
         found.append({"key": "success", "topic": "success", "kicker": w["success_kicker"], "headline": w["success_title"],
                       "figures": [{"value": item["value"], "suffix": item["suffix"], "label": w[item["key"]]} for item in figures],
                       "caption": _CAPTIONS["success"][lang].format(brand=info["brand"], lines=lines, link=info["link"]),
+                      "hashtags": hashtags(db, "success")})
+    from app.services import program_feedback
+
+    story = _STORY[lang]
+    for index, item in enumerate(program_feedback.successes(db, 3)):
+        # A success the admin celebrated: their first name only once they accepted publication.
+        headline = story["headline"].format(name=item["first_name"] if item["may_publish"] else story["someone"])
+        success = story.get(item["kind"]) or ""
+        found.append({"key": f"story:{index}", "topic": "story", "kicker": story["kicker"], "headline": headline,
+                      "facts": [("", success)] + ([("", item["words"])] if item["words"] else []) + ([("", item["program"])] if item["program"] else []),
+                      "caption": _CAPTIONS["story"][lang].format(headline=headline, success=success, program=item["program"] or "",
+                                                                 brand=info["brand"], link=info["link"]),
                       "hashtags": hashtags(db, "success")})
     for index, item in enumerate(testimonials(db, 3)):
         found.append({"key": f"testimonial:{index}", "topic": "testimonial", "kicker": w["testimonial_kicker"], "headline": "",

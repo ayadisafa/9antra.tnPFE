@@ -1,0 +1,103 @@
+{# The journal beside every page: what is new in each field the centre teaches, with moving photos. Opened from the
+   newspaper of the top bar; its content is read when it opens (/account/journal), so it is always the latest. #}
+<aside class="jr-panel" id="journal-panel" aria-label="Journal" hidden>
+  <div class="jr-head">
+    <span class="jr-head-ico"><i class="bi bi-newspaper"></i></span>
+    <div><b>Journal</b><span>{{ 'What is new in what you teach' if current_user.is_professor else 'What is new in the fields you teach' }}</span></div>
+    <button type="button" class="jr-close" id="journal-close" aria-label="Close the journal"><i class="bi bi-x-lg"></i></button>
+  </div>
+  <div class="jr-scroll" id="journal-body"><div class="jr-loading"><span></span><span></span><span></span></div></div>
+</aside>
+<style>
+  .jr-panel { position:fixed; top:0; right:0; bottom:0; width:min(420px, 100vw); z-index:1065; background:#fbfaff; border-left:1px solid var(--border-color);
+              box-shadow:-24px 0 60px -30px rgba(36,26,56,.45); display:flex; flex-direction:column; transform:translateX(100%); transition:transform .32s cubic-bezier(.2,.8,.2,1); }
+  .jr-panel.is-open { transform:none; }
+  .jr-head { display:flex; gap:12px; align-items:center; padding:16px 16px 12px; border-bottom:1px solid var(--border-color); background:#fff; }
+  .jr-head-ico { width:40px; height:40px; border-radius:14px; display:grid; place-items:center; color:#fff; font-size:1.1rem;
+                 background:linear-gradient(135deg, var(--primary-berry), #f59e0b); animation:jrTurn 6s ease-in-out infinite; }
+  @keyframes jrTurn { 0%, 100% { transform:rotate(0); } 50% { transform:rotate(-6deg) scale(1.05); } }
+  .jr-head div { flex:1; min-width:0; display:grid; } .jr-head b { font-size:1.05rem; } .jr-head span { font-size:.78rem; color:var(--muted); }
+  .jr-close { border:0; background:#f3f0f8; width:34px; height:34px; border-radius:50%; color:#5b5470; }
+  .jr-scroll { overflow-y:auto; padding:14px 14px 30px; flex:1; }
+  .jr-loading { display:flex; gap:6px; justify-content:center; padding:40px 0; } .jr-loading span { width:9px; height:9px; border-radius:50%; background:var(--primary-berry); animation:jrDot 1s ease-in-out infinite; }
+  .jr-loading span:nth-child(2) { animation-delay:.15s; } .jr-loading span:nth-child(3) { animation-delay:.3s; }
+  @keyframes jrDot { 0%, 100% { opacity:.25; transform:translateY(0); } 50% { opacity:1; transform:translateY(-5px); } }
+  .jr-corner { background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:12px 14px; margin-bottom:14px; }
+  .jr-corner-title { font-weight:800; font-size:.9rem; display:flex; gap:7px; align-items:center; color:var(--primary-berry); }
+  .jr-corner-sub { font-size:.76rem; color:var(--muted); margin:2px 0 6px; }
+  .jr-tip { display:flex; gap:9px; align-items:flex-start; padding:7px 0; border-top:1px dashed #ece7f4; font-size:.8rem; }
+  .jr-tip:first-of-type { border-top:0; } .jr-tip i { color:var(--primary-berry); margin-top:2px; } .jr-tip small { display:block; color:#5b5470; font-size:.76rem; }
+  .jr-tip.is-add i { color:#15803d; } .jr-tip.is-change i { color:#b45309; } .jr-tip-prog { color:var(--muted); font-size:.74rem; }
+  .jr-cards { display:grid; gap:12px; }
+  .jr-card { display:block; background:#fff; border:1px solid var(--border-color); border-radius:18px; overflow:hidden; text-decoration:none; color:inherit;
+             animation:jrIn .45s ease both; animation-delay:calc(var(--i) * 60ms); transition:transform .2s ease, box-shadow .2s ease; }
+  .jr-card:hover { transform:translateY(-2px); box-shadow:0 14px 30px -20px rgba(36,26,56,.5); color:inherit; }
+  @keyframes jrIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+  .jr-photo { position:relative; display:block; height:150px; overflow:hidden;
+              background:linear-gradient(135deg, hsl(var(--h) 70% 55%), hsl(calc(var(--h) + 50) 75% 62%)); }
+  /* The photo moves slowly (a slow zoom and pan), so the journal is never still. */
+  .jr-photo img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:1; animation:jrKen 16s ease-in-out infinite alternate; }
+  .jr-card:nth-child(even) .jr-photo img { animation-direction:alternate-reverse; }
+  @keyframes jrKen { from { transform:scale(1.02) translate(0, 0); } to { transform:scale(1.16) translate(-3%, -2%); } }
+  /* No photo: a moving picture of the field instead. */
+  .jr-scene { position:absolute; inset:0; display:grid; place-items:center; color:rgba(255,255,255,.95); font-size:2.6rem; }
+  .jr-scene i { animation:jrFloat 4s ease-in-out infinite; position:relative; z-index:0; }
+  .jr-scene b { position:absolute; border-radius:50%; background:rgba(255,255,255,.18); animation:jrFloat 6s ease-in-out infinite; }
+  .jr-scene b:nth-of-type(1) { width:90px; height:90px; left:-20px; top:-20px; } .jr-scene b:nth-of-type(2) { width:60px; height:60px; right:24px; bottom:-16px; animation-delay:1s; }
+  .jr-scene b:nth-of-type(3) { width:26px; height:26px; right:70px; top:24px; animation-delay:2s; }
+  @keyframes jrFloat { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
+  .jr-field { position:absolute; left:10px; bottom:10px; z-index:2; display:inline-flex; gap:5px; align-items:center; font-size:.68rem; font-weight:800;
+              background:rgba(255,255,255,.92); color:#3b3150; border-radius:999px; padding:3px 9px; }
+  .jr-text { display:grid; gap:4px; padding:11px 13px 12px; }
+  .jr-title { font-weight:800; font-size:.88rem; line-height:1.3; color:var(--ink-text); }
+  .jr-sum { font-size:.76rem; color:#5b5470; line-height:1.4; }
+  .jr-meta { font-size:.7rem; color:var(--muted); font-weight:600; }
+  .jr-empty { text-align:center; color:var(--muted); font-size:.84rem; padding:30px 10px; } .jr-empty i { font-size:2rem; display:block; margin-bottom:6px; }
+  .jr-foot { text-align:center; font-size:.72rem; color:var(--muted); margin-top:14px; }
+  .topbar-help .jr-dot { position:absolute; top:4px; right:4px; width:9px; height:9px; border-radius:50%; background:#f59e0b; box-shadow:0 0 0 2px #fff; animation:jrBeat 2s ease-in-out infinite; }
+  @keyframes jrBeat { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.35); } }
+  @media (prefers-reduced-motion: reduce) { .jr-panel { transition:none; } .jr-head-ico, .jr-card, .jr-photo img, .jr-scene i, .jr-scene b, .jr-loading span, .topbar-help .jr-dot { animation:none; } }
+</style>
+<script>
+(() => {
+  const panel = document.getElementById("journal-panel"), body = document.getElementById("journal-body");
+  if (!panel) return;
+  const store = { get: key => { try { return localStorage.getItem(key); } catch (error) { return null; } },
+                  set: (key, value) => { try { localStorage.setItem(key, value); } catch (error) {} } };
+  let loadedAt = 0;
+  async function load() {
+    try {
+      const response = await fetch("/account/journal", { headers: { accept: "text/html" } });
+      if (!response.ok) return;
+      body.innerHTML = await response.text();
+      loadedAt = Date.now();
+    } catch (error) {}
+  }
+  function open() {
+    panel.hidden = false;
+    requestAnimationFrame(() => panel.classList.add("is-open"));
+    // Read again each time it is opened after a while: always the latest articles.
+    if (!loadedAt || Date.now() - loadedAt > 10 * 60 * 1000) load();
+    store.set("journal-seen", String(Date.now()));
+    document.querySelectorAll("[data-journal-open] .jr-dot").forEach(dot => dot.remove());
+  }
+  function close() { panel.classList.remove("is-open"); setTimeout(() => { if (!panel.classList.contains("is-open")) panel.hidden = true; }, 340); }
+  document.addEventListener("click", event => {
+    if (event.target.closest("[data-journal-open]")) { event.preventDefault(); panel.classList.contains("is-open") ? close() : open(); }
+    else if (event.target.closest("#journal-close")) close();
+    else if (panel.classList.contains("is-open") && !panel.contains(event.target)) close();
+  });
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && panel.classList.contains("is-open")) close(); });
+  window.openJournal = open;
+  // New articles since it was last opened: a small dot calls on its button.
+  setTimeout(async () => {
+    try {
+      const response = await fetch("/account/journal/new?since=" + encodeURIComponent(store.get("journal-seen") || ""));
+      if (!response.ok) return;
+      if ((await response.json()).new > 0) document.querySelectorAll("[data-journal-open]").forEach(button => {
+        if (!button.querySelector(".jr-dot")) { const dot = document.createElement("span"); dot.className = "jr-dot"; button.appendChild(dot); }
+      });
+    } catch (error) {}
+  }, 2500);
+})();
+</script>

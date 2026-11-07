@@ -41,7 +41,7 @@ def social_page(request: Request, db: Session = Depends(get_db)):
         "proposals": social_content.listen_proposals(db),
         "plan": marketing.week_plan(db, lang), "tips": marketing.tips(db), "trends": marketing.trends(db), "times": marketing.best_times(db),
         "trending_moods": social_music.TRENDING, "trend_looks": social_images.TREND_LOOKS,
-        "chosen_kind": params.get("kind") if params.get("kind") in social_video.KINDS else "both",
+        "chosen_kind": params.get("kind") if params.get("kind") in social_video.KINDS else "both", "video_styles": social_video.STYLES,
         "notice": params.get("notice"), "error": params.get("error"),
     })
 
@@ -62,6 +62,7 @@ def image(idea: str, fmt: str = "post", look: str = social_images.DEFAULT_LOOK, 
 @router.post("/video")
 async def make_video(request: Request, db: Session = Depends(get_db), kind: str = Form("both"), fmt: str = Form("story"),
                      lang: str = Form("tn"), look: str = Form(social_images.DEFAULT_LOOK), mood: str = Form("trend"), music_file: str = Form(""),
+                     style: str = Form("hook"),
                      music: UploadFile | None = File(None)):
     """A video, made in the background (about a minute); the page shows it when it is ready."""
     if not social_video.available():
@@ -76,7 +77,7 @@ async def make_video(request: Request, db: Session = Depends(get_db), kind: str 
         chosen = music_file if (social_video.folder() / music_file).exists() and music_file.startswith("music-") else None
         if chosen is None:
             return _back("#videos", error="Choose your music file again.")
-    asset = social_video.make(db, kind=kind, fmt=fmt, lang=lang, look=look, mood="trend" if mood == "own" else mood, music_file=chosen)
+    asset = social_video.make(db, kind=kind, fmt=fmt, lang=lang, look=look, mood="trend" if mood == "own" else mood, music_file=chosen, style=style)
     background.run_in_background(social_video.render_task, asset.id)
     return _back("#videos", notice="The video is being made: about a minute. It appears here by itself when it is ready.")
 

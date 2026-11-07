@@ -732,6 +732,9 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
           <label class="is-wide">The registration form, given to whoever asks how to register (email, WhatsApp, SMS, the assistant, Yasmine)
             <input name="form" value="{{ settings.registration_form_url or '' }}" placeholder="{{ registration_form }}" inputmode="url">
             <small>Empty = the form used today: <a href="{{ registration_form }}" target="_blank" rel="noopener">open it</a>.</small></label>
+          <label class="is-wide">Your Google review link, where happy candidates are sent after their review
+            <input name="google" value="{{ settings.google_review_url or '' }}" placeholder="https://g.page/r/…/review" inputmode="url">
+            <small>In Google Business Profile, “Ask for reviews” gives this link. Empty = only Facebook is offered.</small></label>
         </div>
         <div class="st-centre-do"><button class="btn btn-berry btn-sm px-4">Save your centre</button>
           <span class="st-sub">To change the WhatsApp Business number the assistant answers from, see <a href="#whatsapp">WhatsApp Business</a>.</span></div>

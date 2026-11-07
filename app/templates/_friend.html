@@ -95,6 +95,10 @@
   @keyframes frListen { 0% { opacity:.55; transform:scale(.85); } 100% { opacity:0; transform:scale(1.25); } }
   .fr-back .fr-fig { width:100%; height:100%; }
   @media print { .fr, .fr-back { display:none !important; } }
+  /* The visit: the next page's link in the menu calls softly. */
+  aside.sidebar a.fr-next { position:relative; box-shadow:inset 0 0 0 2px var(--primary-berry); border-radius:12px; animation:frNext 1.8s ease-in-out infinite; }
+  @keyframes frNext { 0%, 100% { box-shadow:inset 0 0 0 2px rgba(164,44,103,.9); } 50% { box-shadow:inset 0 0 0 2px rgba(164,44,103,.2), 0 0 0 6px rgba(164,44,103,.12); } }
+  @media (prefers-reduced-motion: reduce) { aside.sidebar a.fr-next { animation:none; } }
 </style>
 
 <div class="fr" id="friend" hidden>
@@ -231,6 +235,7 @@
     actions.innerHTML = "";
     schemaBox.innerHTML = "";
     type(line.schema ? "" : line.text, function () {
+      if (typeof line.tour === "number") { tourButtons(line.tour); return; }
       // A how-to: drawn step by step, with its arrows; what is missing: a list that leads to each place.
       if (line.schema && window.drawSchema) schemaBox.appendChild(window.drawSchema(line.schema));
       else (line.links || []).slice(0, 3).forEach(function (item, number) { link(item.label, item.url, number === 0); });
@@ -238,11 +243,52 @@
       if (index < queue.length - 1) button(data.words.next + " (" + (index + 1) + "/" + queue.length + ")", function () { say(index + 1); });
       // One assistant: what you ask her goes to its window.
       if (window.openAssistant) button(data.words.ask.replace(/[.…]+$/, ""), function () { close(); window.openAssistant(); }, !line.url && index === queue.length - 1);
+      // The last thing she says: she can also show the application around, page after page.
+      if (index === queue.length - 1 && data.tour && data.tour.length && tourAt() < 0) button(data.words.tour_start, function () { tourGo(0); });
     });
     speak(line.text);
     ask.hidden = !(data && data.can_ask) || !!window.openAssistant;
     if (options.autoHide) hideTimer = setTimeout(function () { if (!bubble.matches(":hover") && document.activeElement !== input) close(); }, options.autoHide);
   }
+
+  // ---------- The visit: page after page (services/grand_tour.py) ----------
+  function tourAt() { var at = parseInt(store.get("grand-tour", "-1"), 10); return isNaN(at) ? -1 : at; }
+  function samePage(path) { return location.pathname.replace(/\/+$/, "") === path.replace(/\/+$/, ""); }
+  function tourGo(at) {
+    if (!data.tour || at >= data.tour.length) {
+      store.set("grand-tour", "-1");
+      queue = [{ text: data.words.tour_done }]; wave(); say(0);
+      return;
+    }
+    store.set("grand-tour", String(at));
+    if (samePage(data.tour[at].path)) { tourHere(); return; }
+    location.href = data.tour[at].path;
+  }
+  function tourButtons(at) {
+    var next = data.tour[at + 1];
+    if (window.PageTour) button(data.words.tour_show, function () { close(); window.PageTour.open(); }, true);
+    button(next ? data.words.tour_next.replace("{name}", next.name) : data.words.tour_stop, function () { tourGo(at + 1); }, !window.PageTour);
+    if (next) {
+      button(data.words.tour_stop, function () { store.set("grand-tour", "-1"); close(); });
+      // Where the visit goes next: its link in the menu pulses.
+      document.querySelectorAll("aside.sidebar a[href]").forEach(function (link) {
+        link.classList.toggle("fr-next", link.getAttribute("href").replace(/\/+$/, "") === next.path.replace(/\/+$/, ""));
+      });
+    }
+  }
+  function tourHere() {
+    var at = tourAt();
+    if (at < 0 || !data.tour || !data.tour[at] || !samePage(data.tour[at].path)) return false;
+    var step = data.tour[at];
+    queue = [{ text: data.words.tour_step.replace("{i}", at + 1).replace("{n}", data.tour.length) + " · " + step.say, tour: at }];
+    setTimeout(function () { wave(); say(0); }, 700);
+    return true;
+  }
+  // The page's own tour ended: she offers the next page.
+  document.addEventListener("tour:closed", function () {
+    var at = tourAt();
+    if (at >= 0 && data && data.tour && data.tour[at] && samePage(data.tour[at].path)) { queue = [{ text: data.tour[at].say, tour: at }]; say(0); }
+  });
 
   function everything() {
     var lines = [{ text: data.greeting }].concat(data.lines || []);
@@ -262,6 +308,14 @@
     input.placeholder = data.words.ask;
     showBadge();
     setPressed();
+    if (tourHere()) return;                    // in the middle of the visit: the page is shown, nothing else
+    if (data.away) {
+      // Back after a while: what came in and what went out meanwhile, first.
+      queue = [{ text: data.greeting + " " + data.away, links: data.away_links }].concat(data.lines || []);
+      store.set("friend-day", today);
+      setTimeout(function () { wave(); say(0); }, 900);
+      return;
+    }
     var first = store.get("friend-day", "") !== today;
     if (first) {
       store.set("friend-day", today);
@@ -282,9 +336,11 @@
   }
 
   function load(then) {
-    fetch("/account/friend?path=" + encodeURIComponent(location.pathname) + "&lang=" + encodeURIComponent(chosen()), { headers: { accept: "application/json" } })
+    var since = store.get("friend-last", "");
+    fetch("/account/friend?path=" + encodeURIComponent(location.pathname) + "&lang=" + encodeURIComponent(chosen()) + (since ? "&since=" + encodeURIComponent(since) : ""),
+          { headers: { accept: "application/json" } })
       .then(function (response) { return response.ok ? response.json() : null; })
-      .then(function (answer) { if (answer) { data = answer; window.friendData = answer; then(); } })
+      .then(function (answer) { if (answer) { store.set("friend-last", String(Date.now())); data = answer; window.friendData = answer; then(); } })
       .catch(function () {});
   }
   // The assistant's window reads its answers aloud through her (when her voice is on), and she reacts when it opens.

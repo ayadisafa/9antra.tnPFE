@@ -18,7 +18,11 @@ CAPTIONS = {
     "program": "🚀 Session jdida: {program}!\n📅 {starts}\n⏱️ {weeks}\n📍 {mode}{price}\n\nEl blayes m7doudin, sajjel tawa 👉 {link}",
     "trend": "📈 El kol yahkiw 3lih: {term}.\nKhabar behi: {taught} {program} 3and {brand}! 💡\n\n👉 Chouf el formation: {link}",
     "join": "✨ El compétence el jeya mte3ek tebda lehna.\n{programs}\n\n📝 Inscription: {link}\n📞 {phone}",
+    "story": "🎉 {headline} {success} ba3d formation {program} m3a {brand}. 💪\n\nNja7kom howa akber fakhr lina.\n\n👉 Dourek enti: {link}",
 }
+# A success story: what they got, and who (a first name only once they accepted it).
+STORY = {"internship": "Stage jdid", "pfe": "PFE nej7", "certification": "Certification jdida", "job": "Khedma jdida",
+         "headline": "Mabrouk {name}!", "someone": "wa7ed mel candidats mte3na", "kicker": "NJA7 JDID"}
 
 # The first scene of each kind of video: (kicker, title).
 INTRO = {"success": ("YENJ7OU M3ANA", "Nja7hom howa fakhrna"), "listen": ("TEHKIW, NESM3OU", "Ara2kom tkabberna"),

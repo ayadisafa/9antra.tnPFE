@@ -585,6 +585,7 @@
 {% block content %}
 {% include "_flash.html" %}
 {% set hour = now.hour %}
+{% if stories is defined and streak is defined %}{% include "_stories.html" %}{% endif %}
 
 {% set sessions_today = sessions | selectattr('is_today') | list | length %}
 <section class="db-hero">

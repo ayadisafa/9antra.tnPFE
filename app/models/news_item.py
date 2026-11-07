@@ -17,6 +17,7 @@ class NewsItem(Base):
     title = Column(String, nullable=False)
     url = Column(String, nullable=True, unique=True, index=True)
     summary = Column(Text, nullable=True)                        # its first sentences, as the feed writes them
+    image_url = Column(String, nullable=True)                    # its photo, as the feed gives it (none: an animated picture)
     terms = Column(Text, nullable=True)                          # JSON: the words of its field it names
     published_at = Column(DateTime, nullable=True, index=True)
     fetched_at = Column(DateTime, default=datetime.utcnow, index=True)

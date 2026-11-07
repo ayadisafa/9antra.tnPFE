@@ -35,6 +35,10 @@
 "% de correspondance",
 "% تطابق"
 ],
+"% of all answers": [
+"% de toutes les réponses",
+"% من كل الردود"
+],
 "% of all answers · last": [
 "% de toutes les réponses · derniers",
 "% من كل الإجابات · آخر"
@@ -146,6 +150,10 @@
 "% similarity).": [
 "% de similarité).",
 "% تشابه)."
+],
+"% sure": [
+"% sûre",
+"% متأكدة"
 ],
 "% sure. Below that, it asks you.": [
 "%. En dessous, il vous demande.",
@@ -471,6 +479,10 @@
 ". Elles restent là où elles sont hébergées et se lisent ici, dans l'application. Les vidéos de chaque semaine de cours sont sur la page de la formation et sur la",
 ". تبقى حيث هي مستضافة وتُعرض هنا داخل التطبيق. فيديوهات كل أسبوع دراسة موجودة في صفحة البرنامج وفي"
 ],
+". They were told the team would contact them.": [
+". On lui a dit que l'équipe le ou la contacterait.",
+". قيل له إن الفريق سيتواصل معه."
+],
 ". They wrote to you after the last reminder": [
 ". Il vous a écrit après le dernier rappel",
 ". كتب إليك بعد آخر تذكير"
@@ -663,9 +675,21 @@
 "Un lien Meet ou Zoom, ou une salle privée ; chaque candidat reçoit son propre lien.",
 "رابط Meet أو Zoom أو قاعة خاصة؛ كل مترشح يتلقى رابطه الخاص."
 ],
+"A NEW SUCCESS": [
+"UNE NOUVELLE RÉUSSITE",
+"نجاح جديد"
+],
 "A PDF of your programs is read and turned into programs, for you to confirm.": [
 "Un PDF de vos formations est lu et transformé en formations, à confirmer.",
 "يُقرأ ملف PDF لبرامجك ويُحوَّل إلى برامج، لتؤكدها."
+],
+"A PFE": [
+"Un PFE",
+"مشروع ختم الدروس"
+],
+"A PFE passed": [
+"Un PFE réussi",
+"مشروع ختم دروس ناجح"
 ],
 "A banner across the top": [
 "Une bannière en haut",
@@ -730,6 +754,14 @@
 "A candidate's file": [
 "Le dossier d'un candidat",
 "ملف مترشح"
+],
+"A certification": [
+"Une certification",
+"شهادة"
+],
+"A certification earned": [
+"Une certification obtenue",
+"شهادة جديدة"
 ],
 "A checked copy every day, kept two weeks.": [
 "Une copie vérifiée chaque jour, gardée deux semaines.",
@@ -835,6 +867,10 @@
 "Quelques actions pour votre marketing",
 "بعض الخطوات لتسويقك"
 ],
+"A few words are enough, even in Tunisian: Reformulate writes the email.": [
+"Quelques mots suffisent, même en tunisien : Reformuler écrit l'email.",
+"بضع كلمات تكفي، حتى بالتونسي: «إعادة الصياغة» تكتب البريد."
+],
 "A file added to a course is read: whether it belongs to the program, or to which one.": [
 "Un fichier ajouté à un cours est lu : s'il appartient à la formation, ou à laquelle.",
 "يُقرأ الملف المضاف إلى درس: هل ينتمي إلى البرنامج، أو إلى أي برنامج."
@@ -883,9 +919,17 @@
 "Un titre qui change selon les jours restants",
 "عنوان يتغيّر حسب الأيام المتبقية"
 ],
+"A job": [
+"Un emploi",
+"عمل"
+],
 "A job board for the centre's former candidates": [
 "Un espace d'offres d'emploi pour les anciens candidats du centre",
 "فضاء عروض شغل لقدماء مترشحي المركز"
+],
+"A job landed": [
+"Un emploi décroché",
+"عمل جديد"
 ],
 "A level check is for a candidate who paid and whose training is not over.": [
 "Un test de niveau est pour un candidat qui a payé et dont la formation n'est pas terminée.",
@@ -1111,6 +1155,10 @@
 "Un projet à rendre",
 "مشروع للتسليم"
 ],
+"A punch line in the first second, fast cuts, zoom punches, and an end that loops back to the start.": [
+"Une accroche dès la première seconde, des coupes rapides, des zooms percutants, et une fin qui reboucle sur le début.",
+"جملة جاذبة من الثانية الأولى، ولقطات سريعة، وتقريبات قوية، ونهاية تعود إلى البداية."
+],
 "A question and its answer": [
 "Une question et sa réponse",
 "سؤال وإجابته"
@@ -1203,6 +1251,10 @@
 "Un petit mot personnel fait souvent revenir un candidat.",
 "كلمة شخصية قصيرة غالبا ما تعيد المترشح."
 ],
+"A simpler inbox": [
+"Une boîte de réception plus simple",
+"صندوق رسائل أبسط"
+],
 "A skills check before and after each program": [
 "Un bilan des compétences avant et après chaque formation",
 "تقييم المهارات قبل كل برنامج وبعده"
@@ -1226,6 +1278,14 @@
 "A subject much talked about that a program does not teach yet, or one to say it does.": [
 "Un sujet dont on parle beaucoup qu'une formation n'enseigne pas encore, ou qu'elle enseigne et qu'il faut dire.",
 "موضوع كثر الحديث عنه لا يدرّسه برنامج بعد، أو يدرّسه ويجب قول ذلك."
+],
+"A success": [
+"Une réussite",
+"نجاح"
+],
+"A success story": [
+"Une belle réussite",
+"قصة نجاح"
 ],
 "A summary of everything (candidates, payments, classes, what to improve) with its PDFs.": [
 "Un résumé de tout (candidats, paiements, classes, quoi améliorer) avec ses PDF.",
@@ -2079,6 +2139,18 @@
 "Une lettre d'information",
 "رسالة إعلامية"
 ],
+"An internship": [
+"Un stage",
+"تربص"
+],
+"An internship landed": [
+"Un stage décroché",
+"تربص جديد"
+],
+"An internship, a PFE, a certification or a job: from the candidate's page, congratulate them and ask, at that happy moment, for a review on Google or Facebook. The success becomes a post idea on the Social media page.": [
+"Un stage, un PFE, une certification ou un emploi : depuis la page du candidat, félicitez-le et demandez, en ce moment heureux, un avis sur Google ou Facebook. La réussite devient une idée de publication sur la page Réseaux sociaux.",
+"تربص، أو مشروع ختم دروس، أو شهادة، أو عمل: من صفحة المترشح، هنّئه واطلب، في هذه اللحظة السعيدة، رأيا على Google أو Facebook. يصبح النجاح فكرة منشور في صفحة وسائل التواصل."
+],
 "An online community for candidates and former candidates": [
 "Une communauté en ligne pour les candidats et les anciens",
 "مجتمع على الإنترنت للمترشحين والقدماء"
@@ -2567,6 +2639,10 @@
 "Demander quelle formation",
 "اسأل عن البرنامج"
 ],
+"Ask why, correct it, what it is based on": [
+"Demander pourquoi, corriger, sur quoi elle s'appuie",
+"اسأل لماذا، صحّح، على ماذا تستند"
+],
 "Ask why, or correct it in a few words": [
 "Demander pourquoi, ou la corriger en quelques mots",
 "اسأل لماذا، أو صحّحها ببضع كلمات"
@@ -2823,6 +2899,10 @@
 "BI et données",
 "ذكاء الأعمال والبيانات"
 ],
+"Back after a while, she says what came in and what went out meanwhile. Ask her “what happened today?”. “Show me around” takes you from page to page, the next one calling in the menu.": [
+"De retour après un moment, elle dit ce qui est arrivé et ce qui est parti entre-temps. Demandez-lui « qu'est-ce qui s'est passé aujourd'hui ? ». « Faites-moi visiter » vous mène de page en page, la suivante appelant dans le menu.",
+"عند عودتك بعد مدة، تقول ما وصل وما أُرسل في الأثناء. اسألها «ماذا حدث اليوم؟». «عرّفيني بالتطبيق» تأخذك من صفحة إلى صفحة، والصفحة التالية تناديك في القائمة."
+],
 "Back on the website": [
 "De retour sur le site",
 "عاد إلى الموقع"
@@ -3006,6 +3086,10 @@
 "Bravo !": [
 "Bravo !",
 "أحسنت!"
+],
+"Bravo {name} !": [
+"Bravo {name} !",
+"مبروك {name}!"
 ],
 "Breakpoints, fluid sizes, images, touch. Practice: one page that reads well on a phone, a tablet and a wide screen.": [
 "Points de rupture, tailles fluides, images, tactile. Pratique : une page qui se lit bien sur un téléphone, une tablette et un grand écran.",
@@ -3426,6 +3510,10 @@
 "Care with questions": [
 "Soin des réponses",
 "العناية بالأسئلة"
+],
+"Celebrate a success": [
+"Fêter une réussite",
+"الاحتفال بنجاح"
 ],
 "Centre de formation": [
 "Centre de formation",
@@ -3923,6 +4011,10 @@
 "Choisissez ce qu'elle raconte et sa musique, puis « Faire la vidéo ».",
 "اختر ما يرويه وموسيقاه، ثم «صنع الفيديو»."
 ],
+"Choose what they succeeded in.": [
+"Choisissez ce qu'il ou elle a réussi.",
+"اختر ما نجح فيه."
+],
 "Choose when": [
 "Choisir quand",
 "اختر متى"
@@ -4231,6 +4323,10 @@
 "Fermer la discussion",
 "إغلاق المحادثة"
 ],
+"Close the journal": [
+"Fermer le journal",
+"إغلاق الجريدة"
+],
 "Closed": [
 "Fermé",
 "مغلق"
@@ -4451,6 +4547,18 @@
 "Confirmée. Corrigez ce qui ne va pas et enregistrez à nouveau.",
 "مؤكدة. صحّح ما هو خطأ واحفظ من جديد."
 ],
+"Congratulate and ask": [
+"Féliciter et demander",
+"التهنئة والطلب"
+],
+"Congratulated for": [
+"Félicité(e) pour",
+"تمت تهنئته على"
+],
+"Congratulated: they are asked, at this happy moment, to tell it on Google or Facebook.": [
+"Félicité(e) : on lui demande, en ce moment heureux, de le dire sur Google ou Facebook.",
+"تمت التهنئة: يُطلب منه، في هذه اللحظة السعيدة، أن يقول ذلك على Google أو Facebook."
+],
 "Connect": [
 "Connecter",
 "ربط"
@@ -4518,6 +4626,14 @@
 "Contact line under the email": [
 "Ligne de contact sous l'email",
 "سطر الاتصال تحت البريد"
+],
+"Contact them": [
+"Contactez-les",
+"تواصل معهم"
+],
+"Contacted": [
+"Contacté(e)",
+"تم التواصل"
 ],
 "Contacts, pipeline, follow-ups, automation with HubSpot. Practice: follow twenty leads from first contact to sale.": [
 "Contacts, pipeline, relances, automatisation avec HubSpot. Pratique : suivre vingt prospects du premier contact à la vente.",
@@ -5039,6 +5155,10 @@
 "Jours entre les deux formations",
 "الأيام بين البرنامجين"
 ],
+"Days in a row the team opened the application · best": [
+"Jours d'affilée où l'équipe a ouvert l'application · record",
+"الأيام المتتالية التي فتح فيها الفريق التطبيق · الأفضل"
+],
 "Days left before the first session": [
 "Jours restants avant la première séance",
 "الأيام المتبقية قبل الحصة الأولى"
@@ -5550,6 +5670,10 @@
 "Each of them then": [
 "Chacun ensuite",
 "ثم كل واحد منها"
+],
+"Each opens WhatsApp or your messages with the text written: press send there, then “Sent” here.": [
+"Chacun ouvre WhatsApp ou vos messages avec le texte écrit : appuyez sur envoyer là-bas, puis « Envoyé » ici.",
+"كل واحدة تفتح واتساب أو رسائلك مع النص مكتوبا: اضغط إرسال هناك، ثم «أُرسلت» هنا."
 ],
 "Each page explains itself in steps you can click, and “How it works” lists them all.": [
 "Chaque page s'explique en étapes que vous pouvez cliquer, et « Comment ça marche » les liste toutes.",
@@ -7707,6 +7831,10 @@
 "Accueil",
 "الرئيسية"
 ],
+"Hook": [
+"Accroche",
+"خطّاف"
+],
 "Hour": [
 "Heure",
 "الساعة"
@@ -7819,6 +7947,10 @@
 "Son apparence",
 "مظهره"
 ],
+"How it moves": [
+"Comment elle bouge",
+"كيف يتحرك"
+],
 "How it reaches the candidate": [
 "Comment il atteint le candidat",
 "كيف يصل إلى المترشح"
@@ -7899,6 +8031,14 @@
 "La rapidité de ses réponses à ce qu'on lui envoie : dans la journée 100, en trois jours 70, plus tard 40, jamais 0.",
 "سرعة إجابته عمّا يُرسل إليه: خلال يوم 100، خلال ثلاثة أيام 70، لاحقا 40، أبدا 0."
 ],
+"How sure I was, and what I looked at": [
+"À quel point j'étais sûre, et ce que j'ai consulté",
+"مدى تأكدي، وما اطّلعت عليه"
+],
+"How sure the assistant was": [
+"À quel point l'assistant était sûr",
+"مدى تأكد المساعد"
+],
 "How the application behaves": [
 "Comment l'application se comporte",
 "كيف يتصرف التطبيق"
@@ -7918,6 +8058,10 @@
 "How the assistant answers on WhatsApp": [
 "Comment l'assistant répond sur WhatsApp",
 "كيف يجيب المساعد على WhatsApp"
+],
+"How the assistant does": [
+"Comment s'en sort l'assistant",
+"كيف يعمل المساعد"
 ],
 "How the assistant looks and sounds": [
 "Comment l'assistant apparaît et parle",
@@ -8019,6 +8163,10 @@
 "Hugging Face",
 "Hugging Face"
 ],
+"I answered": [
+"J'ai répondu à",
+"أجبت على"
+],
 "I asked": [
 "J'ai demandé à",
 "سألت"
@@ -8034,6 +8182,14 @@
 "I checked them: all ready": [
 "Je les ai vérifiées : toutes prêtes",
 "راجعتها: كلها جاهزة"
+],
+"I contacted them": [
+"Je l'ai contacté(e)",
+"تواصلت معه"
+],
+"I could not answer this one alone": [
+"Je n'ai pas pu répondre seule à celui-ci",
+"لم أستطع الرد على هذه وحدي"
 ],
 "I could not answer. Try again in a moment.": [
 "Je n'ai pas pu répondre. Réessayez dans un instant.",
@@ -8054,6 +8210,10 @@
 "I reword it (add": [
 "Je le reformule (ajoutez",
 "أعيد صياغته (أضف"
+],
+"I tell you as soon as someone needs you.": [
+"Je vous préviens dès que quelqu'un a besoin de vous.",
+"أخبرك فور أن يحتاجك أحد."
 ],
 "I would like to cancel my registration": [
 "Je voudrais annuler mon inscription",
@@ -8170,6 +8330,10 @@
 "In Gmail: Settings → See all settings → Forwarding and POP/IMAP → Enable IMAP → Save.": [
 "Dans Gmail : Paramètres → Voir tous les paramètres → Transfert et POP/IMAP → Activer IMAP → Enregistrer.",
 "في Gmail: الإعدادات ← عرض كل الإعدادات ← إعادة التوجيه وPOP/IMAP ← تفعيل IMAP ← حفظ."
+],
+"In Google Business Profile, “Ask for reviews” gives this link. Empty = only Facebook is offered.": [
+"Dans Google Business Profile, « Demander des avis » donne ce lien. Vide = seul Facebook est proposé.",
+"في Google Business Profile، «طلب التقييمات» يعطي هذا الرابط. فارغ = يُقترح Facebook فقط."
 ],
 "In a class": [
 "Dans une classe",
@@ -8827,6 +8991,14 @@
 "Rejoignez-nous",
 "انضموا إلينا"
 ],
+"Journal": [
+"Journal",
+"الجريدة"
+],
+"Journal: what is new in your fields": [
+"Journal : ce qui est nouveau dans vos domaines",
+"الجريدة: الجديد في مجالاتك"
+],
 "Jul": [
 "juil.",
 "جويلية"
@@ -8930,6 +9102,10 @@
 "Kept their registrations": [
 "A gardé ses inscriptions",
 "حافظ على تسجيلاته"
+],
+"Kept, but nothing could be sent: no email or phone reaches them.": [
+"Gardé, mais rien n'a pu être envoyé : aucun email ni téléphone ne le ou la joint.",
+"حُفظ، لكن لم يُرسل شيء: لا بريد ولا هاتف يصل إليه."
 ],
 "Kept. Add what you did about it, and it becomes a post and a scene of the videos.": [
 "Gardé. Ajoutez ce que vous avez fait, et cela devient une publication et une scène des vidéos.",
@@ -9675,6 +9851,10 @@
 "Mesures, contexte de filtre, intelligence temporelle. Pratique : cette année contre l'année dernière, par mois et par produit.",
 "المقاييس، سياق التصفية، التحليل الزمني. تطبيق: هذه السنة مقارنة بالسنة الماضية، حسب الشهر والمنتج."
 ],
+"Meet them": [
+"Les découvrir",
+"تعرّف عليهم"
+],
 "Meeting links used": [
 "Liens de réunion utilisés",
 "روابط الاجتماع المستعملة"
@@ -9859,6 +10039,10 @@
 "Lundi",
 "الإثنين"
 ],
+"Money in": [
+"Encaissé",
+"المداخيل"
+],
 "Money received": [
 "Argent reçu",
 "المال المقبوض"
@@ -9906,6 +10090,10 @@
 "More time with the trainer": [
 "Plus de temps avec le formateur",
 "وقت أكثر مع المكوّن"
+],
+"More: how messages go, figures, tools": [
+"Plus : comment partent les messages, les chiffres, les outils",
+"المزيد: كيف تُرسل الرسائل، الأرقام، الأدوات"
 ],
 "Morning (5–12 h": [
 "Matin (5–12 h",
@@ -10247,6 +10435,10 @@
 "Nouveau mot de passe pour",
 "كلمة مرور جديدة لـ"
 ],
+"New people": [
+"Nouvelles personnes",
+"وجوه جديدة"
+],
 "New program from the website": [
 "Nouvelle formation venue du site",
 "برنامج جديد من الموقع"
@@ -10378,6 +10570,10 @@
 "No article yet": [
 "Pas encore d'article",
 "لا مقال بعد"
+],
+"No article yet: the news of each field is read every six hours, when this computer is on the internet.": [
+"Pas encore d'article : l'actualité de chaque domaine est lue toutes les six heures, quand cet ordinateur est connecté à internet.",
+"لا مقالات بعد: تُقرأ أخبار كل مجال كل ست ساعات، عندما يكون هذا الحاسوب متصلا بالإنترنت."
 ],
 "No bank recognised on it.": [
 "Aucune banque reconnue dessus.",
@@ -10799,6 +10995,10 @@
 "Pas encore de lecture.",
 "لا توجد قراءة بعد."
 ],
+"No recommendation yet: they come with the articles and the job offers of your field.": [
+"Pas encore de recommandation : elles viennent avec les articles et les offres d'emploi de votre domaine.",
+"لا توصيات بعد: تأتي مع المقالات وعروض الشغل في مجالك."
+],
 "No record matches this search.": [
 "Aucune fiche ne correspond à cette recherche.",
 "لا يوجد سجل يطابق هذا البحث."
@@ -11019,6 +11219,10 @@
 "Personne ne l'enseigne encore.",
 "لا أحد يدرّسه بعد."
 ],
+"Nobody was asked yet. It happens by itself on the last session day.": [
+"Personne n'a encore été sollicité. Cela se fait tout seul le jour de la dernière séance.",
+"لم يُسأل أحد بعد. يحدث ذلك تلقائيا في يوم الحصة الأخيرة."
+],
 "Nobody was asked yet. It happens by itself when the class is completed.": [
 "Personne n'a encore été sollicité. Cela se fait tout seul quand la classe est terminée.",
 "لم يُسأل أحد بعد. يحدث ذلك تلقائيا عند اكتمال القسم."
@@ -11126,6 +11330,10 @@
 "Not fully happy": [
 "Pas tout à fait content",
 "ليس راضيا تماما"
+],
+"Not fully happy: told the team would contact them": [
+"Pas entièrement satisfait(e) : on lui a dit que l'équipe le ou la contacterait",
+"غير راضٍ تماما: قيل له إن الفريق سيتواصل معه"
 ],
 "Not in the week yet: no day or hours set": [
 "Pas encore dans la semaine : aucun jour ni horaire fixé",
@@ -11274,6 +11482,10 @@
 "Noted very active in": [
 "Noté très actif dans",
 "مسجّل نشيطا جدا في"
+],
+"Noted: they were contacted.": [
+"C'est noté : il ou elle a été contacté(e).",
+"تم التسجيل: تم التواصل معه."
 ],
 "Noted: this answer is right, and counts in the assistant's results.": [
 "Noté : cette réponse est juste, et compte dans les résultats de l'assistant.",
@@ -11462,6 +11674,10 @@
 "Nothing to show yet for this video": [
 "Rien à montrer encore pour cette vidéo",
 "لا شيء يُعرض بعد لهذا الفيديو"
+],
+"Nothing waits for you": [
+"Rien ne vous attend",
+"لا شيء ينتظرك"
 ],
 "Nothing was changed.": [
 "Rien n'a été changé.",
@@ -11682,6 +11898,10 @@
 "On the dashboard, under what people say: plans from their feedback and from how the classes go, and what is going on in every industry, each with the facts it rests on and a target to reach by a date.": [
 "Sur le tableau de bord, sous ce que disent les gens : des plans d'après leurs avis et la marche des classes, et ce qui se passe dans chaque secteur, chacun avec les faits sur lesquels il repose et un objectif à atteindre à une date.",
 "في لوحة القيادة، تحت ما يقوله الناس: خطط من آرائهم ومن سير الأقسام، وما يحدث في كل قطاع، كل منها مع الوقائع التي يستند إليها وهدف يجب بلوغه في تاريخ محدد."
+],
+"On the last session day, each candidate is asked once (WhatsApp first once a Business number is connected, else email): the stars are in the message, one tap gives the rating, words and their professor come after if they want. Show the QR code in the room at that session: they answer there, in ten seconds.": [
+"Le jour de la dernière séance, chaque candidat est sollicité une fois (WhatsApp d'abord une fois un numéro Business connecté, sinon email) : les étoiles sont dans le message, un geste donne la note, les mots et le formateur viennent ensuite s'il le veut. Montrez le QR code dans la salle à cette séance : ils répondent sur place, en dix secondes.",
+"في يوم الحصة الأخيرة، يُسأل كل مترشح مرة واحدة (عبر واتساب أولا بمجرد ربط رقم أعمال، وإلا بالبريد): النجوم داخل الرسالة، ولمسة واحدة تعطي التقييم، والكلمات والأستاذ بعد ذلك إن أراد. اعرض رمز QR في القاعة في تلك الحصة: يجيبون في المكان، في عشر ثوانٍ."
 ],
 "On the left": [
 "À gauche",
@@ -12454,6 +12674,10 @@
 "Optional": [
 "Facultatif",
 "اختياري"
+],
+"Options": [
+"Options",
+"خيارات"
 ],
 "Or ask the assistant: “send the DevOps program to Fares”; with “Send at once” on, it goes with the PDF attached.": [
 "Ou demandez à l'assistant : « envoie la formation DevOps à Fares » ; avec « Envoyer tout de suite » activé, elle part avec le PDF joint.",
@@ -13703,6 +13927,10 @@
 "Développeur Python",
 "مطوّر Python"
 ],
+"QR code for the room": [
+"QR code pour la salle",
+"رمز QR للقاعة"
+],
 "Question": [
 "Question",
 "السؤال"
@@ -13887,6 +14115,10 @@
 "Relu par le système",
 "أعاد النظام قراءته"
 ],
+"Read again every six hours · last read": [
+"Relu toutes les six heures · dernière lecture",
+"تُقرأ كل ست ساعات · آخر قراءة"
+],
 "Read again now": [
 "Relire maintenant",
 "أعد القراءة الآن"
@@ -13931,6 +14163,10 @@
 "Lue par le système ; vous seul pouvez confirmer le paiement ou le refuser.",
 "قرأها النظام؛ أنت وحدك من يمكنه تأكيد الدفع أو رفضه."
 ],
+"Read every six hours": [
+"Lu toutes les six heures",
+"تُقرأ كل ست ساعات"
+],
 "Read in": [
 "Lu dans",
 "مقروء في"
@@ -13962,6 +14198,10 @@
 "Read the job market, or paste an offer.": [
 "Lisez le marché de l'emploi, ou collez une offre.",
 "اقرأ سوق الشغل، أو ألصق عرضا."
+],
+"Read the latest articles": [
+"Lire les derniers articles",
+"اقرأ آخر المقالات"
 ],
 "Read the message": [
 "Lire le message",
@@ -14655,6 +14895,10 @@
 "Relire",
 "مراجعة"
 ],
+"Review not found": [
+"Avis introuvable",
+"الرأي غير موجود"
+],
 "Review request": [
 "Demande d'avis",
 "طلب الرأي"
@@ -14674,6 +14918,14 @@
 "Reviews by program": [
 "Avis par formation",
 "الآراء حسب البرنامج"
+],
+"Reviews in ten seconds": [
+"Des avis en dix secondes",
+"آراء في عشر ثوانٍ"
+],
+"Reviews in ten seconds, a simpler inbox, the journal and the stories": [
+"Des avis en dix secondes, une boîte de réception plus simple, le journal et les stories",
+"آراء في عشر ثوانٍ، صندوق رسائل أبسط، الجريدة والقصص"
 ],
 "Reword": [
 "Reformuler",
@@ -15051,6 +15303,10 @@
 "Des scénarios qui envoient le bon message au bon moment. Pratique : un scénario pour un panier oublié.",
 "سيناريوهات ترسل الرسالة المناسبة في الوقت المناسب. تطبيق: سيناريو لسلة منسية."
 ],
+"Scenes that come in softly, one after the other.": [
+"Des scènes qui arrivent en douceur, l'une après l'autre.",
+"مشاهد تأتي بلطف، واحدة تلو الأخرى."
+],
 "Schedule to be set": [
 "Horaire à fixer",
 "التوقيت يُحدَّد لاحقا"
@@ -15267,6 +15523,10 @@
 "Voir les offres",
 "رؤية العروض"
 ],
+"See the payments": [
+"Voir les paiements",
+"عرض المدفوعات"
+],
 "See the presence sheet": [
 "Voir la feuille de présence",
 "عرض ورقة الحضور"
@@ -15274,6 +15534,10 @@
 "See the way a question goes": [
 "Voir le chemin d'une question",
 "رؤية مسار السؤال"
+],
+"See them": [
+"Les voir",
+"عرضها"
 ],
 "See these jobs on LinkedIn": [
 "Voir ces emplois sur LinkedIn",
@@ -15286,6 +15550,10 @@
 "See what it would answer, and from where.": [
 "Voyez ce qu'il répondrait, et à partir d'où.",
 "شاهد ما سيجيب به، ومن أين."
+],
+"See what they suggest for the programs": [
+"Voir ce qu'ils suggèrent pour les formations",
+"انظر ما تقترحه للبرامج"
 ],
 "See what you can do here, part by part.": [
 "Voyez ce que vous pouvez faire ici, partie par partie.",
@@ -16351,6 +16619,10 @@
 "Normes (ISO 27001, NIST, RGPD",
 "المعايير (ISO 27001، NIST، GDPR"
 ],
+"Stanna… hedha ynajjem ybaddel 7yetek.": [
+"Stanna… hedha ynajjem ybaddel 7yetek.",
+"Stanna… hedha ynajjem ybaddel 7yetek."
+],
 "Star schemas, keys, granularity, slowly changing data. Practice: model a business from its questions.": [
 "Schémas en étoile, clés, granularité, données qui changent lentement. Pratique : modéliser une activité à partir de ses questions.",
 "مخططات النجمة، المفاتيح، دقة التفاصيل، البيانات المتغيّرة ببطء. تطبيق: نمذجة نشاط انطلاقا من أسئلته."
@@ -16542,6 +16814,10 @@
 "Stopped coming": [
 "Ne viennent plus",
 "توقفوا عن الحضور"
+],
+"Stories and days in a row": [
+"Stories et jours d'affilée",
+"القصص والأيام المتتالية"
 ],
 "Stories and reels fill the screen (9:16); the square post comes second.": [
 "Les stories et les reels remplissent l'écran (9:16) ; la publication carrée vient ensuite.",
@@ -16879,6 +17155,10 @@
 "Aide technique",
 "مساعدة تقنية"
 ],
+"Tell it in a post": [
+"Le raconter dans une publication",
+"احكِه في منشور"
+],
 "Tell its": [
 "Dites à ses",
 "أخبر"
@@ -17038,6 +17318,10 @@
 "The Google key file could not be used": [
 "Le fichier de clé Google n'a pas pu être utilisé",
 "تعذّر استعمال ملف مفتاح Google"
+],
+"The Google review link": [
+"Le lien d'avis Google",
+"رابط تقييمات Google"
 ],
 "The LinkedIn page": [
 "La page LinkedIn",
@@ -17703,6 +17987,10 @@
 "Le tableau de bord garde en haut ce qui vous attend, le reste en quatre onglets (Aujourd'hui, Personnes, Classes, Croissance). Les paramètres, chaque classe et le site ont aussi des onglets, et chaque page s'ouvre avec sa propre image animée.",
 "لوحة القيادة تُبقي ما ينتظرك في الأعلى، والباقي في أربع علامات تبويب (اليوم، الأشخاص، الأقسام، النمو). والإعدادات وكل قسم والموقع لها علامات تبويب أيضا، وكل صفحة تفتح بصورتها المتحركة."
 ],
+"The dashboard opens with stories to tap (new people, reviews, money in, sessions, news, successes), full screen, and the days in a row the team opened the application. Videos get a “Hook” style: a punch line first, fast cuts, a loop.": [
+"Le tableau de bord s'ouvre sur des stories à toucher (nouvelles personnes, avis, encaissements, séances, actualités, réussites), en plein écran, et les jours d'affilée où l'équipe a ouvert l'application. Les vidéos gagnent un style « Accroche » : une phrase choc d'abord, des coupes rapides, une boucle.",
+"تُفتح لوحة القيادة بقصص تُلمس (وجوه جديدة، آراء، مداخيل، حصص، أخبار، نجاحات)، بملء الشاشة، والأيام المتتالية التي فتح فيها الفريق التطبيق. وتحصل الفيديوهات على أسلوب «خطّاف»: جملة جاذبة أولا، ولقطات سريعة، وحلقة."
+],
 "The data is in": [
 "Les données sont dans",
 "البيانات في"
@@ -17895,6 +18183,10 @@
 "La première inscription",
 "التسجيل الأول"
 ],
+"The five stars are inside the email and the WhatsApp: one tap gives the rating, a few words and the trainer come after only if they want. Asked on the last session day, with a QR code to show in the room. Who gives 1 to 3 stars is thanked privately and you are asked to call them; who gives 4 or 5 is offered Google and Facebook, their words copied.": [
+"Les cinq étoiles sont dans l'email et le WhatsApp : un geste donne la note, quelques mots et le formateur viennent ensuite, seulement s'ils le veulent. Demandé le jour de la dernière séance, avec un QR code à montrer dans la salle. Qui donne 1 à 3 étoiles est remercié en privé et on vous demande de l'appeler ; qui donne 4 ou 5 se voit proposer Google et Facebook, ses mots copiés.",
+"النجوم الخمس داخل البريد وواتساب: لمسة واحدة تعطي التقييم، وبضع كلمات والأستاذ بعد ذلك، فقط إن أرادوا. يُطلب في يوم الحصة الأخيرة، مع رمز QR يُعرض في القاعة. من يعطي من 1 إلى 3 نجوم يُشكر على انفراد ويُطلب منك الاتصال به؛ ومن يعطي 4 أو 5 يُقترح عليه Google وFacebook، مع نسخ كلماته."
+],
 "The format, trends, the algorithm, ads. Practice: five videos for one brand and what they taught.": [
 "Le format, les tendances, l'algorithme, les publicités. Pratique : cinq vidéos pour une marque et ce qu'elles ont appris.",
 "الصيغة، التوجهات، الخوارزمية، الإعلانات. تطبيق: خمسة فيديوهات لعلامة وما تعلّمناه منها."
@@ -17978,6 +18270,10 @@
 "The journal's marketing articles": [
 "Les articles de marketing du journal",
 "مقالات التسويق في الجريدة"
+],
+"The journal, on every page": [
+"Le journal, sur chaque page",
+"الجريدة، في كل صفحة"
 ],
 "The journey": [
 "Le parcours",
@@ -18306,6 +18602,10 @@
 "The news of every field you teach, and what it suggests.": [
 "Les nouvelles de chaque domaine que vous enseignez, et ce qu'elles suggèrent.",
 "أخبار كل مجال تدرّسه، وما تقترحه."
+],
+"The newspaper at the top opens the latest news of each field you teach, with moving photos, read again every six hours. Professors find their corner there: the news of what they teach and what could make their courses better.": [
+"Le journal en haut ouvre les dernières nouvelles de chaque domaine que vous enseignez, avec des photos animées, relues toutes les six heures. Les formateurs y trouvent leur coin : l'actualité de ce qu'ils enseignent et ce qui pourrait améliorer leurs cours.",
+"الجريدة في الأعلى تفتح آخر أخبار كل مجال تدرّسه، مع صور متحركة، تُقرأ كل ست ساعات. يجد الأساتذة فيها ركنهم: أخبار ما يدرّسونه وما قد يحسّن دروسهم."
 ],
 "The next one": [
 "Le prochain",
@@ -19275,6 +19575,10 @@
 "Toute l'application en un parcours, d'une inscription à un avis.",
 "التطبيق كله في مسار واحد، من التسجيل إلى الرأي."
 ],
+"The whole journal": [
+"Tout le journal",
+"الجريدة كاملة"
+],
 "The whole plan": [
 "Tout le plan",
 "الخطة كاملة"
@@ -19575,6 +19879,10 @@
 "Ils sont sollicités tout seuls quand une classe se termine.",
 "يُسألون تلقائيا عند انتهاء القسم."
 ],
+"They are first below, with my draft.": [
+"Ils sont en premier ci-dessous, avec mon brouillon.",
+"هم في الأعلى أدناه، مع مسودتي."
+],
 "They are first in the row below: read them and answer the person.": [
 "Ils sont en premier dans la rangée ci-dessous : lisez-les et répondez à la personne.",
 "هم في المقدمة في الصف أدناه: اقرأها وأجب الشخص."
@@ -19606,6 +19914,10 @@
 "They follow another class on the same hours. Start them in a new class now anyway?": [
 "Ils suivent une autre classe sur les mêmes heures. Les démarrer quand même dans une nouvelle classe maintenant ?",
 "يتابعون قسما آخر في نفس الساعات. ابدأ معهم الآن في قسم جديد رغم ذلك؟"
+],
+"They get congratulations (WhatsApp first once a Business number is connected), and, at this happy moment, the way to tell it on Google or Facebook.": [
+"Il ou elle reçoit des félicitations (WhatsApp d'abord une fois un numéro Business connecté) et, à ce moment heureux, le moyen de le dire sur Google ou Facebook.",
+"يتلقى تهنئة (عبر واتساب أولا بمجرد ربط رقم أعمال)، وفي هذه اللحظة السعيدة، طريقة قول ذلك على Google أو Facebook."
 ],
 "They go by themselves after each week's session.": [
 "Elles partent toutes seules après la séance de chaque semaine.",
@@ -19674,6 +19986,10 @@
 "They wrote: “": [
 "Ils ont écrit : «",
 "كتبوا: «"
+],
+"This QR code is no longer valid": [
+"Ce QR code n'est plus valable",
+"رمز QR هذا لم يعد صالحا"
 ],
 "This SVG file cannot be used: it is not a plain drawing.": [
 "Ce fichier SVG ne peut pas être utilisé : ce n'est pas un simple dessin.",
@@ -20099,6 +20415,10 @@
 "Trois photos au maximum.",
 "ثلاث صور على الأكثر."
 ],
+"Three tabs: what needs you, what needs no reply, every conversation. One line says what waits; the rest (how messages go, the figures, the tools) is behind “⋯”. The assistant's answers are signed Yasmine.": [
+"Trois onglets : ce qui a besoin de vous, ce qui n'attend pas de réponse, toutes les conversations. Une ligne dit ce qui attend ; le reste (comment partent les messages, les chiffres, les outils) est derrière « ⋯ ». Les réponses de l'assistant sont signées Yasmine.",
+"ثلاث علامات تبويب: ما يحتاجك، وما لا يحتاج ردا، وكل المحادثات. سطر واحد يقول ما ينتظر؛ والباقي (كيف تُرسل الرسائل، الأرقام، الأدوات) خلف «⋯». ردود المساعد موقّعة باسم ياسمين."
+],
 "Thu": [
 "Jeu",
 "خمي"
@@ -20191,6 +20511,10 @@
 "Pour en restaurer une : arrêtez l'application, mettez à leur place le app.db et le dossier data de la copie, puis redémarrez-la.",
 "لاسترجاع نسخة: أوقف التطبيق، ضع app.db ومجلد data من النسخة مكانهما، ثم أعد تشغيله."
 ],
+"To call": [
+"À appeler",
+"للاتصال"
+],
 "To change the": [
 "Pour changer le",
 "لتغيير"
@@ -20206,6 +20530,10 @@
 "To check in the first session, they describe themselves as more advanced than their answers show": [
 "À vérifier à la première séance, ils se décrivent comme plus avancés que ne le montrent leurs réponses",
 "للتحقّق في الحصة الأولى، يصفون أنفسهم بأنهم أكثر تقدّما مما تُظهره إجاباتهم"
+],
+"To do today": [
+"À faire aujourd'hui",
+"للقيام به اليوم"
 ],
 "To improve, from what they said": [
 "À améliorer, d'après ce qu'ils ont dit",
@@ -20486,6 +20814,10 @@
 "UTC": [
 "UTC",
 "UTC"
+],
+"Un(e) candidat(e": [
+"Un(e) candidat(e",
+"مترشح(ة"
 ],
 "Unable to refresh notifications": [
 "Impossible d'actualiser les notifications",
@@ -20907,6 +21239,10 @@
 "En attente de réponses",
 "في انتظار الإجابات"
 ],
+"Waiting for you": [
+"Vous attendent",
+"ينتظرونك"
+],
 "Waiting for you to send it": [
 "En attente de votre envoi",
 "في انتظار إرسالك"
@@ -20966,6 +21302,10 @@
 "Waits for your phone (no Business number yet": [
 "Attend votre téléphone (pas encore de numéro Business",
 "ينتظر هاتفك (لا يوجد رقم Business بعد"
+],
+"Wait… this could change your life.": [
+"Attends… ça peut changer ta vie.",
+"انتظر… هذا قد يغيّر حياتك."
 ],
 "Was due": [
 "Devait",
@@ -21183,6 +21523,10 @@
 "Bienvenue. Configurons votre centre de formation.",
 "مرحبا. لنُعدّ مركز التكوين الخاص بك."
 ],
+"Well done {name}!": [
+"Bravo {name} !",
+"مبروك {name}!"
+],
 "What": [
 "Quoi",
 "ماذا"
@@ -21335,6 +21679,10 @@
 "Ce qui s'est passé dans",
 "ما حدث في"
 ],
+"What happened lately": [
+"Ce qui s'est passé récemment",
+"ما حدث مؤخرا"
+],
 "What happened, by part of the work. Each figure opens its page.": [
 "Ce qui s'est passé, par partie du travail. Chaque chiffre ouvre sa page.",
 "ما حدث، حسب جزء العمل. كل رقم يفتح صفحته."
@@ -21391,6 +21739,10 @@
 "Les nouveautés de chaque domaine que vous enseignez, en bref, depuis des sites d'actualité publics",
 "الجديد في كل مجال تدرّسه، باختصار، من مواقع أخبار عامة"
 ],
+"What is new in each field you teach, with moving photos, read again every six hours. Professors find their corner there: the news of what they teach, and what could make their courses better.": [
+"Ce qui est nouveau dans chaque domaine que vous enseignez, avec des photos animées, relu toutes les six heures. Les formateurs y trouvent leur coin : l'actualité de ce qu'ils enseignent, et ce qui pourrait améliorer leurs cours.",
+"الجديد في كل مجال تدرّسه، مع صور متحركة، يُقرأ كل ست ساعات. يجد الأساتذة فيها ركنهم: أخبار ما يدرّسونه، وما قد يحسّن دروسهم."
+],
 "What is new in every field": [
 "Ce qui est nouveau dans chaque domaine",
 "الجديد في كل مجال"
@@ -21406,6 +21758,14 @@
 "What is new in the application": [
 "Ce qui est nouveau dans l'application",
 "الجديد في التطبيق"
+],
+"What is new in the fields you teach": [
+"Ce qui est nouveau dans les domaines que vous enseignez",
+"الجديد في المجالات التي تدرّسها"
+],
+"What is new in what you teach": [
+"Ce qui est nouveau dans ce que vous enseignez",
+"الجديد فيما تدرّسه"
 ],
 "What is said about 9antra elsewhere: Google, LinkedIn, Facebook, a partner's site, an article, your own documents. Give a public link and the page is read once; LinkedIn, Facebook and Google do not let applications read them: copy the text there and paste it here. The assistant then answers from it, with its source.": [
 "Ce qui est dit de 9antra ailleurs : Google, LinkedIn, Facebook, le site d'un partenaire, un article, vos propres documents. Donnez un lien public et la page est lue une fois ; LinkedIn, Facebook et Google ne laissent pas les applications les lire : copiez-y le texte et collez-le ici. L'assistant répond ensuite à partir de lui, avec sa source.",
@@ -21663,6 +22023,10 @@
 "De quoi parlent les messages",
 "عمّ تتحدث الرسائل"
 ],
+"What the news suggests": [
+"Ce que suggère l'actualité",
+"ما تقترحه الأخبار"
+],
 "What the news talks about, and that you teach it.": [
 "Ce dont parle l'actualité, et que vous l'enseignez.",
 "ما تتحدث عنه الأخبار، وأنك تدرّسه."
@@ -21767,6 +22131,10 @@
 "Ce qu'ils disent avoir trouvé difficile",
 "ما يقولون إنه كان صعبا"
 ],
+"What they succeeded in": [
+"Ce qu'il ou elle a réussi",
+"ما نجح فيه"
+],
 "What they talk about": [
 "De quoi ils parlent",
 "عمّ يتحدثون"
@@ -21774,6 +22142,10 @@
 "What they teach": [
 "Ce qu'ils enseignent",
 "ما يدرّسونه"
+],
+"What they think": [
+"Ce qu'ils en pensent",
+"رأيهم"
 ],
 "What they thought of the program": [
 "Ce qu'ils ont pensé de la formation",
@@ -22299,6 +22671,10 @@
 "Là où votre formation dit autre chose, choisissez la vôtre ou celle du site.",
 "حيث يقول برنامجك شيئا آخر، اختر نسختك أو نسخة الموقع."
 ],
+"Where, or which one (optional": [
+"Où, ou lequel (facultatif",
+"أين، أو أيّها (اختياري"
+],
 "Which agent?": [
 "Quel agent ?",
 "أي وكيل؟"
@@ -22310,6 +22686,10 @@
 "Which class meets on which day. A red line means the same professor is booked twice.": [
 "Quelle classe se réunit quel jour. Une ligne rouge signifie que le même formateur est réservé deux fois.",
 "أي قسم يجتمع في أي يوم. الخط الأحمر يعني أن المكوّن نفسه محجوز مرتين."
+],
+"Which discussions": [
+"Quelles discussions",
+"أي محادثات"
 ],
 "Which feedback to show": [
 "Quels avis afficher",
@@ -23095,6 +23475,10 @@
 "Yasmine parle comme une personne",
 "ياسمين تتحدث كإنسان"
 ],
+"Yasmine tells you what happened, and shows you around": [
+"Yasmine vous dit ce qui s'est passé, et vous fait visiter",
+"ياسمين تخبرك بما حدث، وتعرّفك بالتطبيق"
+],
 "Yasmine's window, livelier": [
 "La fenêtre de Yasmine, plus vivante",
 "نافذة ياسمين، أكثر حيوية"
@@ -23295,6 +23679,10 @@
 "Votre projet Firebase",
 "مشروعك في Firebase"
 ],
+"Your Google review link, where happy candidates are sent after their review": [
+"Votre lien d'avis Google, où les candidats satisfaits sont envoyés après leur avis",
+"رابط تقييماتك على Google، حيث يُوجَّه المترشحون الراضون بعد رأيهم"
+],
 "Your account (Password) › write the old one, then the new one twice.": [
 "Votre compte (Mot de passe) › écrivez l'ancien, puis le nouveau deux fois.",
 "حسابك (كلمة المرور) › اكتب القديمة، ثم الجديدة مرتين."
@@ -23398,6 +23786,10 @@
 "Your conversation with the centre, and candidates' questions about your course.": [
 "Votre conversation avec le centre, et les questions des candidats sur votre cours.",
 "محادثتك مع المركز، وأسئلة المترشحين عن درسك."
+],
+"Your corner": [
+"Votre coin",
+"ركنك"
 ],
 "Your correction corrects every analysis": [
 "Votre correction corrige chaque analyse",
@@ -23667,9 +24059,21 @@
 "Le vôtre",
 "خاصتك"
 ],
+"a PFE": [
+"un PFE",
+"مشروع ختم الدروس"
+],
 "a WhatsApp message waits in the inbox (“To send on WhatsApp”) with a button that opens WhatsApp with the message written; you press send": [
 "un message WhatsApp attend dans la boîte de réception (« À envoyer sur WhatsApp ») avec un bouton qui ouvre WhatsApp avec le message écrit ; vous appuyez sur envoyer",
 "تنتظر رسالة WhatsApp في البريد الوارد («للإرسال على WhatsApp») بزرّ يفتح WhatsApp والرسالة مكتوبة؛ تضغط إرسال"
+],
+"a certification": [
+"une certification",
+"شهادة"
+],
+"a job": [
+"un emploi",
+"عمل"
 ],
 "a message without text": [
 "un message sans texte",
@@ -23831,6 +24235,10 @@
 "contre les 4 semaines précédentes",
 "مقارنة بالأسابيع 4 السابقة"
 ],
+"alone in the last": [
+"messages seule ces",
+"رسائل وحدي خلال آخر"
+],
 "already answered": [
 "ont déjà répondu",
 "أجابوا مسبقا"
@@ -23918,6 +24326,10 @@
 "an empty SMS": [
 "un SMS vide",
 "SMS فارغة"
+],
+"an internship": [
+"un stage",
+"تربص"
 ],
 "an offer (internship, job)": [
 "une offre (stage, emploi)",
@@ -24010,6 +24422,10 @@
 "and waits": [
 "et attend",
 "وينتظر"
+],
+"and what could make your courses better.": [
+"et ce qui pourrait améliorer vos cours.",
+"وما قد يحسّن دروسك."
 ],
 "and what it suggests for your programs. Open an article to read it on its site.": [
 "et ce qu'il suggère pour vos formations. Ouvrez un article pour le lire sur son site.",
@@ -24623,6 +25039,10 @@
 "jour",
 "يوم"
 ],
+"day in a row": [
+"jour d'affilée",
+"يوم متتالٍ"
+],
 "day(s) before the first session of": [
 "jour(s) avant la première séance de",
 "يوم(أيام) قبل الحصة الأولى لـ"
@@ -24694,6 +25114,10 @@
 "days from today, on the first session day.": [
 "jours à partir d'aujourd'hui, le premier jour de séance.",
 "أيام من اليوم، في أول يوم حصة."
+],
+"days in a row": [
+"jours d'affilée",
+"أيام متتالية"
 ],
 "days later, on its first session day.": [
 "jours plus tard, à son premier jour de séance.",
@@ -24774,6 +25198,10 @@
 "does not have": [
 "n'a pas",
 "ليس لديه"
+],
+"done today": [
+"fait aujourd'hui",
+"أُنجز اليوم"
 ],
 "due": [
 "dus",
@@ -25031,9 +25459,17 @@
 "à vous de décider",
 "القرار لك"
 ],
+"for you to send from your phone.": [
+"que vous envoyiez depuis votre téléphone.",
+"أن ترسلها من هاتفك."
+],
 "for you to send from your phone. Each opens WhatsApp or your messages with the text written: press send there, then “Sent” here.": [
 "que vous les envoyiez depuis votre téléphone. Chacun ouvre WhatsApp ou vos messages avec le texte écrit : appuyez sur envoyer là-bas, puis sur « Envoyé » ici.",
 "أن ترسلها من هاتفك. كل واحدة تفتح WhatsApp أو رسائلك والنص مكتوب: اضغط إرسال هناك، ثم «أُرسل» هنا."
+],
+"for your answer": [
+"votre réponse",
+"ردّك"
 ],
 "found it too slow.": [
 "l'ont trouvé trop lent.",
@@ -25058,6 +25494,10 @@
 "from": [
 "de",
 "من"
+],
+"from 1 candidate.": [
+"d'après 1 candidat.",
+"من 1 مترشح."
 ],
 "from programs and classes": [
 "des formations et des classes",
@@ -25234,6 +25674,10 @@
 "here": [
 "présent",
 "حاضر"
+],
+"here is my draft below": [
+"voici mon brouillon plus bas",
+"هذه مسودتي في الأسفل"
 ],
 "hour": [
 "heure",
@@ -25823,6 +26267,10 @@
 "nouveaux projets publics en 30 jours",
 "مشاريع عمومية جديدة في 30 يوما"
 ],
+"new registrations in seven days.": [
+"nouvelles inscriptions en sept jours.",
+"تسجيلات جديدة في سبعة أيام."
+],
 "new things in the application. Open What's new to see each one.": [
 "nouveautés dans l'application. Ouvrez Nouveautés pour voir chacune.",
 "أشياء جديدة في التطبيق. افتح «الجديد» لرؤية كل واحد."
@@ -26002,6 +26450,10 @@
 "not fully happy": [
 "pas tout à fait contents",
 "ليست راضية تماما"
+],
+"not fully happy, waiting for a call from the team.": [
+"pas entièrement satisfaits, en attente d'un appel de l'équipe.",
+"غير راضين تماما، ينتظرون اتصالا من الفريق."
 ],
 "not fully happy.": [
 "pas tout à fait contents.",
@@ -26275,6 +26727,10 @@
 "une notification à chaque fois",
 "إشعار في كل مرة"
 ],
+"one of our candidates": [
+"un de nos candidats",
+"أحد مترشحينا"
+],
 "one piece at a time": [
 "une chose à la fois",
 "شيئا فشيئا"
@@ -26427,6 +26883,14 @@
 "paiements, emails, classes, réponses",
 "الدفوعات، الرسائل، الأقسام، الإجابات"
 ],
+"people wait": [
+"personnes attendent",
+"أشخاص ينتظرون"
+],
+"people wait for your answer. My draft is ready for each.": [
+"personnes attendent votre réponse. Mon brouillon est prêt pour chacune.",
+"أشخاص ينتظرون ردّك. مسودتي جاهزة لكل واحد."
+],
 "per field": [
 "par domaine",
 "لكل مجال"
@@ -26446,6 +26910,10 @@
 "percent needed": [
 "pour cent nécessaires",
 "بالمائة مطلوبة"
+],
+"person waits": [
+"personne attend",
+"شخص ينتظر"
 ],
 "personalized emails. Each one appears here as it goes out.": [
 "emails personnalisés. Chacun apparaît ici au moment où il part.",
@@ -27411,6 +27879,18 @@
 "il en faut deux pour un score",
 "يلزم اثنان لحساب المؤشر"
 ],
+"un PFE": [
+"un PFE",
+"مشروع ختم الدروس"
+],
+"un emploi": [
+"un emploi",
+"عمل"
+],
+"un stage": [
+"un stage",
+"تربص"
+],
 "unavailable": [
 "indisponible",
 "غير متاح"
@@ -28246,6 +28726,10 @@
 "✨ Your next skill starts here. {programs} 📝 Register: {link} 📞 {phone}": [
 "✨ Votre prochaine compétence commence ici. {programs} 📝 Inscription : {link} 📞 {phone}",
 "✨ مهارتك القادمة تبدأ هنا. {programs} 📝 التسجيل: {link} 📞 {phone}"
+],
+"🎉 {headline} {success} after the {program} program at {brand}. 💪 Your success is our proudest achievement. 👉 Your turn: {link}": [
+"🎉 {headline} {success} après la formation {program} chez {brand}. 💪 Votre réussite est notre plus belle fierté. 👉 Votre tour : {link}",
+"🎉 {headline} {success} بعد برنامج {program} في {brand}. 💪 نجاحكم هو أكبر فخر لنا. 👉 جاء دورك: {link}"
 ],
 "👂 You speak, we listen. You said: {said} ✅ We did: {did} Your feedback makes us better. Keep telling us! 🙏": [
 "👂 Vous parlez, nous écoutons. Vous avez dit : {said} ✅ Nous avons fait : {did} Vos avis nous font grandir. Continuez à nous écrire ! 🙏",

@@ -81,14 +81,16 @@ row = program_feedback.ask(db, reg, manual=True)
 db.commit()
 anon = TestClient(main.app, follow_redirects=False)
 form = anon.get(f"/opinion/{row.external_id}").text
-check("review form: happiness, what to improve, the professor by name, recommend", 'name="happy"' in form and 'name="improve"' in form
-      and 'name="prof_stars"' in form and "Hela Prof" in form and 'name="recommend"' in form)
+check("review form: the stars first, nothing else to fill in", form.count('name="stars"') == 5 and 'name="improve"' not in form and 'name="happy"' not in form)
 answer = anon.post(f"/opinion/{row.external_id}", data={"stars": "4", "words": "Les projets étaient concrets.", "happy": "5",
                                                          "improve": "Le rythme était trop rapide, plus d'exercices svp.", "prof_stars": "5",
                                                          "prof_words": "Très disponible", "recommend": "yes"})
 check("review: kept, then the thank-you page", answer.status_code == 303 and "thanks=1" in answer.headers["location"])
 thanks = anon.get(answer.headers["location"]).text
-check("review: then they are taken to the Facebook page", "facebook.com/" in thanks and "window.location.href" in thanks and "Rester ici" in thanks)
+check("review: then Facebook is offered", "facebook.com/" in thanks)
+later = anon.get(f"/opinion/{row.external_id}?step=more").text + anon.get(f"/opinion/{row.external_id}?step=prof").text
+check("review: what to improve, then the professor by name and recommend, in the next steps", 'name="improve"' in later and 'name="prof_stars"' in later
+      and "Hela Prof" in later and 'name="recommend"' in later)
 db.expire_all()
 kept = program_feedback._payload(program_feedback.of_registration(db, reg.id))
 check("review: everything kept", kept.get("happy") == 5 and kept.get("prof_stars") == 5 and kept.get("recommend") == "yes" and "rythme" in kept.get("improve", "")

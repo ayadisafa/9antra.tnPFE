@@ -49,6 +49,7 @@ VARIABLES = [
     ("professor", "Professor", "M. Trabelsi"),
     ("paid_amount", "Amount paid", "390 DT"),
     ("remaining_amount", "Amount left to pay", "0 DT"),
+    ("rating_line", "What candidates think, in one line (empty while fewer than 3 gave stars)", "4,8/5 d'après 120 candidats"),
 ]
 SAMPLE_CONTEXT = {name: sample for name, _, sample in VARIABLES}
 
@@ -157,7 +158,8 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
           closing: str | None = None, style: str = "brand", rows=None, topics=None,
           image: EmailFile | None = None, image_position: str = "top", attachments=(),
           cta_label: str | None = None, cta_url: str | None = None,
-          lang: str = "fr", browser: bool = False, signed: bool = True, design: dict | None = None) -> dict:
+          lang: str = "fr", browser: bool = False, signed: bool = True, design: dict | None = None,
+          stars: list | None = None) -> dict:
     """One candidate's email from a template: subject, plain text, HTML and files.
 
     `browser=True` makes the photo point at this server, for previews; an
@@ -185,12 +187,12 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
 
     # The text version (also what the discussion shows) has no use for the bold marks.
     text = render_plain(
-        text=_BOLD.sub(r"\1", strip_marks(final_body)), rows=rows, bullets=topics,
+        text=_BOLD.sub(r"\1", strip_marks(final_body)) + (f"\n\n{stars_text(stars)}" if stars else ""), rows=rows, bullets=topics,
         bullets_title="Au programme :" if topics else None,
         cta=cta, closing=_BOLD.sub(r"\1", final_closing) or None, signature=brand["signature"],
     )
     html_body = render_email(
-        title=final_title, body_html=text_to_html(final_body, design.get("accent") or brand["accent"]),
+        title=final_title, body_html=text_to_html(final_body, design.get("accent") or brand["accent"]) + (stars_html(stars) if stars else ""),
         rows=rows, bullets=topics, bullets_title="Au programme :" if topics else None,
         closing_html=text_to_html(final_closing, design.get("accent") or brand["accent"]) if final_closing else "",
         cta=cta, style=style if style in STYLES else "brand", lang=lang,
@@ -208,6 +210,33 @@ def build(db: Session, *, subject: str, body: str, context: dict, title: str | N
         "inline": [picture for picture in ([image] if image is not None else []) + ([banner] if banner is not None else []) + pictures],
         "files": list(attachments or []),
     }
+
+
+STAR = chr(0x2B50)                  # the star emoji, shown the same in mail apps and on WhatsApp
+STAR_WORDS = {1: "Mauvais", 2: "Décevant", 3: "Correct", 4: "Très bien", 5: "Excellent"}
+
+
+def stars_html(links: list) -> str:
+    """Five gold stars, each a link (1 to 5, left to right): a tap in the email opens their page with that rating."""
+    import html as markup
+
+    cells = "".join(
+        f'<td align="center" style="padding:0 4px;"><a href="{markup.escape(url, quote=True)}" title="{value}/5 · {STAR_WORDS[value]}" '
+        f'style="display:block;text-decoration:none;font-size:38px;line-height:1;color:#f5b301;">&#9733;</a>'
+        f'<div style="font-size:11px;line-height:1.4;color:#77718c;margin-top:4px;">{value}</div></td>'
+        for value, url in links
+    )
+    return ('<table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:4px auto 6px;"><tr>'
+            f'{cells}</tr></table><p style="margin:0 0 18px;text-align:center;font-size:13px;color:#77718c;">'
+            '1 = décevant, 5 = excellent. Votre note est gardée dès que vous touchez une étoile.</p>')
+
+
+def stars_text(links: list) -> str:
+    """The same five stars in the text and on WhatsApp: one line per rating, its link after it."""
+    lines = ["Votre note, en un geste :"]
+    for value, url in sorted(links, reverse=True):
+        lines.append(f"{STAR * value} {STAR_WORDS[value]} : {url}")
+    return "\n".join(lines)
 
 
 def check_design(db: Session, design: dict) -> None:
@@ -266,6 +295,7 @@ class AutoEmail:
     cta_url: str = ""
     extra: tuple = ()           # (variable, what it shows, sample) known only to this email
     signed: bool = True         # False: the text carries its own sign-off, the usual signature is not added
+    stars: bool = False         # five stars under the text, each a link: one tap gives the rating
 
 
 _CLASS_CLOSING = (
@@ -631,16 +661,38 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         title="Comment s'est passée votre formation ?",
         body=(
             "Bonjour {candidate_name},\n\n"
-            "Votre formation « {program_name} » est terminée : bravo pour le chemin parcouru !\n\n"
-            "Votre avis compte beaucoup pour nous. En une minute, dites-nous combien d'étoiles vous donnez "
-            "à cette formation et ce que vous en retenez."
+            "Votre formation « {program_name} » se termine : bravo pour le chemin parcouru !\n\n"
+            "Dix secondes suffisent : touchez une étoile ci-dessous, c'est tout. Un mot ensuite, seulement si vous le voulez."
         ),
-        closing="Vous pouvez aussi laisser votre avis sur notre page Facebook : {facebook_link}",
-        style="letter",
+        closing="",
+        style="letter", stars=True,
         cta_label="Donner mon avis", cta_url="{feedback_link}",
         extra=(
             ("feedback_link", "The candidate's private link to give their opinion", "https://9antra.tn/feedback"),
             ("facebook_link", "Where reviews are left on your Facebook page", "https://www.facebook.com/9antra.tn/reviews"),
+        ),
+    ),
+    AutoEmail(
+        key="success_review", group="Registration and class",
+        name="Congratulations on a success",
+        when="Sent when you celebrate a candidate's success from their page (an internship, a PFE, a certification, a "
+             "job): congratulations, and, at that happy moment, would they tell it on Google or Facebook.",
+        subject="Félicitations {first_name} !",
+        title="Bravo pour {success} !",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Nous venons d'apprendre la nouvelle : {success}. Toute l'équipe est fière de vous, félicitations !\n\n"
+            "Accepteriez-vous de partager votre expérience ? Quelques mots sur Google ou Facebook aident d'autres personnes "
+            "à franchir le pas, comme vous l'avez fait."
+        ),
+        closing="Sur Facebook : {facebook_link}",
+        style="letter", switchable=False,
+        cta_label="Partager sur Google", cta_url="{google_link}",
+        extra=(
+            ("success", "What they succeeded in", "un stage chez Vermeg"),
+            ("google_link", "Where reviews are left on Google (Settings, Your centre), or Facebook without it", "https://g.page/r/9antra/review"),
+            ("facebook_link", "Where reviews are left on your Facebook page", "https://www.facebook.com/9antra.tn/reviews"),
+            ("feedback_link", "The candidate's private link to give their opinion", "https://9antra.tn/feedback"),
         ),
     ),
 ]}
@@ -983,7 +1035,15 @@ def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
     else:
         context = {**SAMPLE_CONTEXT, **samples}
         rows, topics = list(SAMPLE_ROWS), list(SAMPLE_TOPICS)
+    if candidate is not None:
+        from app.services import program_feedback
+
+        context["rating_line"] = program_feedback.rating_line(db)
     context.update(values or {})
+    stars = None
+    if spec.stars:
+        stars = context.get("star_links") or [(value, f"{context.get('feedback_link') or 'https://9antra.tn/feedback'}?stars={value}")
+                                              for value in (1, 2, 3, 4, 5)]
 
     show_details = spec.details and template.show_details
     if show_details and spec.topics:
@@ -1013,18 +1073,19 @@ def render_auto(db: Session, key: str, *, candidate: Candidate | None = None,
         topics=topics if show_details and spec.topics else None,
         image=find_image(db, template.image_id), image_position=template.image_position,
         attachments=email_files.load(db, template.attachment_ids),
-        browser=browser, signed=spec.signed, design=template.design, **fields,
+        browser=browser, signed=spec.signed, design=template.design, stars=stars, **fields,
     )
 
 
 def send(db: Session, key: str, *, registration: Registration | None = None,
          candidate: Candidate | None = None, values: dict | None = None,
-         overrides: dict | None = None, manual: bool = False) -> CandidateEmail | None:
+         overrides: dict | None = None, manual: bool = False, first: str | None = None) -> CandidateEmail | None:
     """Send an automatic email and record it in the candidate's discussions.
 
     Returns the stored message (its status says whether it was delivered), or
     None when nothing was sent: the email is switched off and nobody asked for
-    it (`manual=False`), or it cannot be written yet.
+    it (`manual=False`), or it cannot be written yet. `first` tries a way first ("whatsapp") when the template
+    leaves the way to the system.
     """
     template = get(db, key)
     if not manual and not template.sends_itself:
@@ -1050,7 +1111,7 @@ def send(db: Session, key: str, *, registration: Registration | None = None,
     if channel in ("auto", "whatsapp"):
         # The way chosen above the inbox (or WhatsApp first), and the next one when it does not work.
         message = channels.deliver(db, candidate, {**rendered, "short": whatsapp_text(rendered)}, kind=key, registration=registration,
-                                   first="whatsapp" if channel == "whatsapp" else None)
+                                   first="whatsapp" if channel == "whatsapp" else first)
         if channel == "auto" and message is not None and message.channel == "email" and delivered(message):
             whatsapp.after_email(db, candidate, key, rendered["text"])    # the reminders also on WhatsApp, once a Business number is connected
         return message

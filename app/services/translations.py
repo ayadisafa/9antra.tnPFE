@@ -34,7 +34,7 @@ TEMPLATES = Path("app/templates")
 _NOT_INTERFACE = ("level_check", "join", "opinion", "learn", "setup", "email", "quiz_take", "public")
 # Services whose sentences do not appear on the pages: what candidates receive (written in French), what the model is
 # asked, what the assistant answers in the language it is asked in. Every other service's sentences are collected.
-_SILENT = ("answer_sync", "background", "brand", "catalogue_reader", "chatbot", "chatbot_actions", "chatbot_data", "chatbot_send",
+_SILENT = ("answer_sync", "background", "brand", "digest", "grand_tour", "catalogue_reader", "chatbot", "chatbot_actions", "chatbot_data", "chatbot_send",
            "chatbot_sources", "class_emails", "course_questions", "derja", "document_pdf", "email_account", "email_assistant",
            "email_composer", "email_files", "email_layout", "email_service", "email_templates", "email_threads", "embedding_service",
            "firebase_service", "google_forms", "jobs", "knowledge_service", "level_bank", "mailbox_service", "page_pdf_links",

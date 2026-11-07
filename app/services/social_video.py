@@ -33,6 +33,13 @@ KINDS = {
     "program": ("The next sessions", "The programs that start soon, and how to join."),
 }
 FORMATS = {"story": "Vertical 9:16 (stories, reels, TikTok)", "post": "Square 1:1 (feed)"}
+# How it moves. "hook": what sticks in the mind on a feed: a punch line in the first second, short scenes cut fast,
+# a zoom punch and a flash at each cut, and an end that comes back to the first image, so it loops without a seam.
+STYLES = {"calm": ("Calm", "Scenes that come in softly, one after the other."),
+          "hook": ("Hook", "A punch line in the first second, fast cuts, zoom punches, and an end that loops back to the start.")}
+HOOKS = {"fr": "Attends… ça peut changer ta vie.", "en": "Wait… this could change your life.",
+         "ar": "انتظر… هذا قد يغيّر حياتك.", "tn": "Stanna… hedha ynajjem ybaddel 7yetek."}
+_HOOK_SECONDS, _HOOK_END, _HOOK_PACE = 1.3, 0.9, 0.72
 _SECONDS = {"intro": 2.6, "success": 4.6, "testimonial": 5.2, "listen": 5.6, "program": 4.4, "trend": 4.2, "join": 4.0}
 _INTRO = {
     "success": {"fr": ("ILS RÉUSSISSENT AVEC NOUS", "Leur réussite, notre fierté"), "en": ("THEY SUCCEED WITH US", "Their success, our pride"),
@@ -65,8 +72,9 @@ def available() -> bool:
     return ffmpeg() is not None
 
 
-def scenes(db: Session, kind: str, lang: str) -> list[dict]:
-    """The ideas a video is made of, in order (an intro first, how to join last)."""
+def scenes(db: Session, kind: str, lang: str, style: str = "calm") -> list[dict]:
+    """The ideas a video is made of, in order (an intro first, how to join last; with the hook style, the punch line
+    first and again at the very end, so the video loops)."""
     every = social_content.ideas(db, lang)
     by_topic: dict[str, list[dict]] = {}
     for item in every:
@@ -86,6 +94,9 @@ def scenes(db: Session, kind: str, lang: str) -> list[dict]:
         picked = by_topic.get("program", [])[:3] or by_topic.get("trend", [])[:2]
     if not picked:
         return []
+    if style == "hook":
+        hook = {**base, "key": "hook", "topic": "intro", "kicker": "", "headline": HOOKS.get(lang, HOOKS["fr"])}
+        return [hook] + picked + join + [{**hook, "key": "hook-end"}]
     return [intro] + picked + join
 
 
@@ -116,19 +127,36 @@ def _bars(canvas: Image.Image, index: int, count: int, share: float) -> None:
             draw.rounded_rectangle((x, 26, x + each * filled, 32), radius=3, fill=(255, 255, 255, 235))
 
 
-def frames(pictures: list, durations: list[float]):
+def _punch(canvas: Image.Image, t: float) -> Image.Image:
+    """The zoom punch of a cut: the picture starts a little closer and settles in a quarter of a second."""
+    zoom = 1 + 0.08 * (1 - _ease(t / 0.25))
+    if zoom <= 1.001:
+        return canvas
+    width, height = canvas.size
+    bigger = canvas.resize((int(width * zoom), int(height * zoom)), Image.BILINEAR)
+    left, top = (bigger.width - width) // 2, (bigger.height - height) // 2
+    return bigger.crop((left, top, left + width, top + height))
+
+
+def frames(pictures: list, durations: list[float], style: str = "calm"):
     """Every frame of the video, as RGB bytes."""
     count = len(pictures)
+    hook = style == "hook"
     for index, (shot, seconds) in enumerate(zip(pictures, durations)):
         total = int(seconds * FPS)
         background = shot.background
         for frame in range(total):
             t = frame / FPS
             canvas = background.copy()
-            leaving = max(0.0, (t - (seconds - 0.35)) / 0.35)             # the last moment: everything fades out
+            # The last moment: everything fades out (with the hook style, a hard cut instead, except at the very end).
+            leaving = 0.0 if hook else max(0.0, (t - (seconds - 0.35)) / 0.35)
             for piece in shot.pieces:
-                start = 0.15 + (0.35 if piece.step >= 9 else piece.step * 0.42)
-                arrive = _ease((t - start) / 0.55)
+                if hook:
+                    start = 0.04 + (0.2 if piece.step >= 9 else piece.step * 0.2)
+                    arrive = _ease((t - start) / 0.28)
+                else:
+                    start = 0.15 + (0.35 if piece.step >= 9 else piece.step * 0.42)
+                    arrive = _ease((t - start) / 0.55)
                 if arrive <= 0:
                     continue
                 alpha = arrive * (1 - leaving)
@@ -139,20 +167,28 @@ def frames(pictures: list, durations: list[float]):
                     shown = round(value * counted, 1) if isinstance(value, float) else int(round(value * counted))
                     image = social_images.number_image(shown, piece.number["suffix"], piece.number["size"], piece.number["colour"],
                                                        piece.number["width"])
-                canvas.alpha_composite(_faded(image, alpha), (piece.x, piece.y + int((1 - arrive) * 46)))
-            _bars(canvas, index, count, t / seconds)
+                canvas.alpha_composite(_faded(image, alpha), (piece.x, piece.y + int((1 - arrive) * (90 if hook else 46))))
+            if hook:
+                canvas = _punch(canvas, t)
+                if frame < 4 and index > 0:
+                    # A flash at the cut: the eye catches the new scene.
+                    flash = Image.new("RGBA", canvas.size, (255, 255, 255, (150, 95, 50, 20)[frame]))
+                    canvas.alpha_composite(flash)
+            else:
+                _bars(canvas, index, count, t / seconds)
             yield canvas.convert("RGB").tobytes()
 
 
 def make(db: Session, *, kind: str = "both", fmt: str = "story", lang: str = social_content.DEFAULT_LANGUAGE, look: str = social_images.DEFAULT_LOOK, mood: str = "trend",
-         music_file: str | None = None, title: str | None = None) -> SocialAsset:
+         music_file: str | None = None, title: str | None = None, style: str = "calm") -> SocialAsset:
     """Writes the video down as waiting (its file comes from render()). The music is the trending one that fits the
     kind of video unless another is chosen ("none" for none)."""
     kind = kind if kind in KINDS else "both"
     if mood not in social_music.MOODS and mood != "none":
         mood = social_music.FOR_VIDEO.get(kind, social_music.TRENDING[0])
     spec = {"kind": kind, "fmt": fmt if fmt in FORMATS else "story", "lang": lang if lang in social_content.LANGUAGES else social_content.DEFAULT_LANGUAGE,
-            "look": look if look in social_images.LOOKS else social_images.DEFAULT_LOOK, "mood": mood, "music_file": music_file}
+            "look": look if look in social_images.LOOKS else social_images.DEFAULT_LOOK, "mood": mood, "music_file": music_file,
+            "style": style if style in STYLES else "calm"}
     asset = SocialAsset(kind="video", title=title or KINDS[spec["kind"]][0], status="working", spec=json.dumps(spec))
     db.add(asset)
     db.commit()
@@ -167,12 +203,16 @@ def render(db: Session, asset: SocialAsset) -> SocialAsset:
     try:
         if tool is None:
             raise RuntimeError("ffmpeg is missing (install the imageio-ffmpeg package).")
-        ideas = scenes(db, spec["kind"], spec["lang"])
+        style = spec.get("style") or "calm"
+        ideas = scenes(db, spec["kind"], spec["lang"], style)
         if not ideas:
             raise ValueError("Nothing to show yet for this video: " + {"listen": "write what you did about a feedback first (We listen).",
                                                                         "program": "no program has a class starting soon."}.get(spec["kind"], "no figure or testimonial yet."))
         pictures = [social_images.picture(item, spec["fmt"], spec["look"]) for item in ideas]
         durations = [_SECONDS.get(item["topic"], 4.0) for item in ideas]
+        if style == "hook":
+            durations = [_HOOK_SECONDS if item["key"] == "hook" else _HOOK_END if item["key"] == "hook-end" else max(2.4, seconds * _HOOK_PACE)
+                         for item, seconds in zip(ideas, durations)]
         seconds = sum(durations)
         width, height = social_images.SIZES[spec["fmt"]]
         name = f"video-{asset.id[:8]}-{datetime.utcnow():%Y%m%d%H%M%S}.mp4"
@@ -195,7 +235,7 @@ def render(db: Session, asset: SocialAsset) -> SocialAsset:
             process = subprocess.Popen(command, stdin=subprocess.PIPE, stderr=subprocess.PIPE,
                                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             try:
-                for frame in frames(pictures, durations):
+                for frame in frames(pictures, durations, style):
                     process.stdin.write(frame)
                 process.stdin.close()
             except (BrokenPipeError, OSError):

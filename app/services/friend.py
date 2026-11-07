@@ -379,9 +379,13 @@ def lines_for_admin(db: Session, words: dict, now_utc: datetime, now_local: date
     return found
 
 
-def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | None = None) -> dict:
+from app.services import digest  # noqa: E402
+
+
+def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | None = None, since: datetime | None = None) -> dict:
     """Everything she can say on this page, for this person, now: in the language chosen in her window (or the
-    pages' language). In Tunisian, what comes from the pages' translations is said in French."""
+    pages' language). In Tunisian, what comes from the pages' translations is said in French. `since`: when this
+    browser last heard from her; back after a while, the admin is told what came in and went out meanwhile."""
     from app.services import guides
     from app.services.schedule_utils import local_now
 
@@ -423,6 +427,14 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
         title, text = _in_language(db, written, tour["title"]), _in_language(db, written, tour["purpose"])
         tip = {"text": words["page"].format(title=title.rstrip("."), text=text), "key": "tour:" + tour["key"]}
     cheer = words["cheers"][now_local.toordinal() % len(words["cheers"])]
+    away, away_links = None, []
+    if is_admin and since is not None and (now_utc - since).total_seconds() >= digest.AWAY_AFTER_HOURS * 3600:
+        happened = digest.lines(db, since, lang)
+        if happened:
+            away = digest.sentence(db, since, lang)
+            away_links = [{"label": item["text"], "url": item["url"]} for item in happened[:3]]
+    from app.services import grand_tour
+
     return {
         "name": chosen["name"], "lang": lang, "voice_lang": {"fr": "fr-FR", "tn": "fr-FR", "ar": "ar-SA"}.get(lang, "en-US"),
         "voice": voice_of(chosen), "gender": chosen["gender"],
@@ -434,6 +446,10 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
         "can_ask": True,
         # The admin (and whoever was given the assistant) asks the assistant; everyone else asks the guide.
         "ask_url": "/assistant/chat" if is_admin or (getattr(user, "permissions", None) or {}).get("assistant") in ("view", "edit") else "/account/guide",
-        "words": {key: words[key] for key in ("open", "next", "ask", "voice_on", "voice_off", "news", "thinking", "sorry", "hello_again")},
+        "words": {**{key: words[key] for key in ("open", "next", "ask", "voice_on", "voice_off", "news", "thinking", "sorry", "hello_again")},
+                  **{f"tour_{key}": value for key, value in grand_tour.WORDS[lang].items()}},
+        # Back after a while: what came in and what went out meanwhile; and the visit of the application, page after page.
+        "away": away, "away_links": away_links,
+        "tour": grand_tour.steps(lang) if is_admin else [],
         "urgent": sum(1 for line in lines if line["tone"] in ("bad", "warn")),
     }

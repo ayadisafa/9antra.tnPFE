@@ -1,0 +1,47 @@
+{# The journal beside every page: loaded when it is opened (services/journal.panel). #}
+{% set j = journal %}
+<div class="jr-body" data-newest="{{ j.newest.isoformat() if j.newest else '' }}">
+  {% if j.mine %}
+  <section class="jr-corner">
+    <div class="jr-corner-title"><i class="bi bi-mortarboard-fill"></i>Your corner</div>
+    <div class="jr-corner-sub">What is new in what you teach{% if j.programs %} ({% for program in j.programs[:3] %}{{ program.name }}{{ ', ' if not loop.last }}{% endfor %}){% endif %}, and what could make your courses better.</div>
+    {% for item in j.advice %}
+    <div class="jr-tip is-{{ item.kind }}"><i class="bi {{ 'bi-plus-circle' if item.kind == 'add' else 'bi-arrow-left-right' if item.kind == 'change' else 'bi-arrow-up-circle' }}"></i>
+      <div><b>{{ item.title }}</b> <span class="jr-tip-prog">· {{ item.program }}</span><small>{{ item.why }}</small></div></div>
+    {% endfor %}
+    {% for item in j.suggestions %}
+    <div class="jr-tip"><i class="bi bi-lightbulb"></i><div><small>{{ item.text }}</small></div></div>
+    {% endfor %}
+    {% if not j.advice and not j.suggestions %}<div class="jr-corner-sub">No recommendation yet: they come with the articles and the job offers of your field.</div>{% endif %}
+  </section>
+  {% elif j.suggestions %}
+  <section class="jr-corner is-soft">
+    <div class="jr-corner-title"><i class="bi bi-lightbulb-fill"></i>What the news suggests</div>
+    {% for item in j.suggestions %}<div class="jr-tip"><i class="bi bi-dot"></i><div><small>{{ item.text }}</small></div></div>{% endfor %}
+  </section>
+  {% endif %}
+
+  <div class="jr-cards">
+    {% for item in j.articles %}
+    {% set field = j.domains.get(item.domain, ("News", "bi-newspaper")) %}
+    <a class="jr-card" href="{{ item.url or '#' }}" target="_blank" rel="noopener noreferrer" style="--i:{{ loop.index0 }}; --h:{{ (loop.index0 * 47 + 320) % 360 }};">
+      <span class="jr-photo">
+        {% if item.image_url %}<img src="{{ item.image_url }}" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.remove()">{% endif %}
+        <span class="jr-scene" aria-hidden="true"><i class="bi {{ field[1] }}"></i><b></b><b></b><b></b></span>
+        <span class="jr-field"><i class="bi {{ field[1] }}"></i>{{ field[0] }}</span>
+      </span>
+      <span class="jr-text">
+        <span class="jr-title" data-no-i18n>{{ item.title }}</span>
+        {% if item.summary %}<span class="jr-sum" data-no-i18n>{{ item.summary[:150] }}{{ '…' if item.summary | length > 150 }}</span>{% endif %}
+        <span class="jr-meta"><span data-no-i18n>{{ item.source }}</span>{% if item.published_at %} · {{ item.published_at.strftime('%d/%m') }}{% endif %}</span>
+      </span>
+    </a>
+    {% else %}
+    <div class="jr-empty"><i class="bi bi-newspaper"></i><div>No article yet: the news of each field is read every six hours, when this computer is on the internet.</div></div>
+    {% endfor %}
+  </div>
+  <div class="jr-foot">
+    {% if j.last %}Read again every six hours · last read {{ j.last.strftime('%d/%m %H:%M') }}{% else %}Read every six hours{% endif %}
+    {% if is_admin %} · <a href="/journal">The whole journal</a>{% endif %}
+  </div>
+</div>

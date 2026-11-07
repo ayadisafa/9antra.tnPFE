@@ -217,7 +217,7 @@ def after_sessions(db: Session, base_url: str, now: datetime | None = None) -> d
     "their link", the professor can still change it); and its professor is asked, once, to confirm the sheet in one
     tap. Returns {"absent": marked, "asked": professors asked}."""
     from app.models.professor import Professor
-    from app.services import team_messages
+    from app.services import program_feedback, team_messages
 
     now = now or local_now()
     done = {"absent": 0, "asked": 0}
@@ -240,6 +240,11 @@ def after_sessions(db: Session, base_url: str, now: datetime | None = None) -> d
                     done["absent"] += 1
             db.commit()
             marks = attendance.marks_of(db, session.id)
+        if members and program_feedback.is_last_session(db, session):
+            # The last session is over: its candidates are asked what they thought now, while it is fresh (the QR code
+            # of the class's page can be shown in the room too); asked once, see program_feedback.queue_class.
+            program_feedback.queue_class(db, class_group, members)
+            db.commit()
         if session.sheet_asked_at is not None or confirmed(marks) or not members or not class_group.professor_id:
             continue
         professor = db.get(Professor, class_group.professor_id)

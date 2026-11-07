@@ -417,14 +417,33 @@
       <div class="d-flex flex-wrap gap-2 align-items-center py-2" style="border-top:1px solid var(--border-color);">
         <b style="font-size:.88rem;">{{ item.registration.program_name }}</b>
         {% if item.review and item.review.answered %}
-          <span class="ui-chip ok">{{ ('★' * item.review.stars) if item.review.stars else 'Answered' }}</span>
+          <span class="ui-chip {{ 'warn' if item.review.low else 'ok' }}">{{ ('★' * item.review.stars) if item.review.stars else 'Answered' }}</span>
           <span class="small text-muted" style="flex:1 1 260px;">{{ item.review.words[:220] }}</span>
+          {% if item.review.low %}
+            {% if item.review.contacted %}<span class="ui-chip ok"><i class="bi bi-telephone-fill"></i>Contacted</span>
+            {% else %}<span class="ui-chip warn"><i class="bi bi-exclamation-circle"></i>Not fully happy: told the team would contact them</span>
+            <form method="post" action="/candidate/{{ candidate.id }}/review/{{ item.registration.id }}/contacted" class="ms-auto">
+              <button class="ui-btn sm"><i class="bi bi-telephone"></i>I contacted them</button></form>{% endif %}
+          {% endif %}
         {% else %}
           <span class="ui-chip muted">{{ 'Asked, no answer yet' if item.review and item.review.asked else 'Not asked yet' }}</span>
           <form method="post" action="/candidate/{{ candidate.id }}/ask-review/{{ item.registration.id }}" class="ms-auto">
             <button class="ui-btn sm"><i class="bi bi-send"></i>{{ 'Ask again' if item.review and item.review.asked else 'Ask for their review' }}</button></form>
         {% endif %}
       </div>
+      {% for success in (item.review.successes if item.review else []) %}
+      <div class="small text-muted ps-1 pb-1"><i class="bi bi-trophy-fill me-1" style="color:#f5b301;"></i>Congratulated for {{ success.label }}{% if success.words %} ({{ success.words }}){% endif %}{{ '' if success.sent else ' · not sent' }}</div>
+      {% endfor %}
+      <details class="pb-2"><summary class="small fw-semibold" style="color:var(--primary-berry); cursor:pointer;"><i class="bi bi-trophy me-1"></i>Celebrate a success</summary>
+        <form method="post" action="/candidate/{{ candidate.id }}/celebrate/{{ item.registration.id }}" class="d-flex gap-2 flex-wrap align-items-center mt-2">
+          <select name="kind" class="form-select form-select-sm" style="max-width:190px; border-radius:10px;" aria-label="What they succeeded in">
+            <option value="internship">An internship</option><option value="pfe">A PFE</option><option value="certification">A certification</option><option value="job">A job</option>
+          </select>
+          <input name="words" class="form-control form-control-sm" style="max-width:240px; border-radius:10px;" placeholder="Where, or which one (optional)" maxlength="200">
+          <button class="ui-btn sm"><i class="bi bi-stars"></i>Congratulate and ask</button>
+        </form>
+        <div class="small text-muted mt-1">They get congratulations (WhatsApp first once a Business number is connected), and, at this happy moment, the way to tell it on Google or Facebook.</div>
+      </details>
       {% endfor %}
     </section>
     {% endif %}

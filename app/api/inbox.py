@@ -51,10 +51,10 @@ templates = Jinja2Templates(directory="app/templates", context_processors=[notif
 templates.env.filters["fromjson"] = lambda value: json.loads(value) if value else {}
 
 FILTERS = {
-    "todo": "Needs your answer",
-    "conversations": "Conversations",
+    "todo": "Needs you",
+    "aside": "No reply needed",
+    "conversations": "All conversations",
     "auto": "Answered by the system",
-    "aside": "Set aside",
     "whatsapp": "WhatsApp",
     "sms": "SMS",
     "to_send": "To send from your phone",

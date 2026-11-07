@@ -24,6 +24,14 @@
   .btn-berry:hover { background: var(--berry-dark); color: #fff; }
   .ix-toolbar .btn { font-size: .8rem; font-weight: 700; border-radius: 999px; }
 
+  .ix-y { width:20px; height:20px; border-radius:50%; display:inline-grid; place-items:center; font-size:.62rem; font-weight:800; color:#fff; vertical-align:-4px;
+          background:linear-gradient(135deg, var(--primary-berry), #f472b6); margin-right:4px; }
+  .ix-info { color:var(--muted); cursor:help; font-size:.8rem; }
+  .ix-fold { margin-top:6px; }
+  .ix-fold > summary { cursor:pointer; list-style:none; font-size:.76rem; font-weight:700; color:var(--muted); display:inline-flex; gap:6px; align-items:center; }
+  .ix-fold > summary::-webkit-details-marker { display:none; }
+  .ix-fold[open] > summary { color:var(--primary-berry); margin-bottom:6px; }
+  .ix-sources-list { font-size:.78rem; color:#5b5470; margin-top:6px; } .ix-sources-list ul { margin:4px 0 0; padding-left:18px; }
   .ix-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
   @media (max-width: 1199px) { .ix-layout { grid-template-columns: 1fr; } }
   .ix-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; }
@@ -165,8 +173,33 @@
 {% set inbox_side = "candidates" %}
 {% include "_inbox_switch.html" %}
 
-{# How messages to candidates go: the admin's choice, and the next way when one does not work (services/channels.py). #}
-<form class="ix-ways" method="post" action="/inbox/channels" id="ways">
+<!-- ============ KPIs ============ -->
+<!-- ============ What waits, in one line ============ -->
+<section class="ix-hello">
+  <span class="ix-hello-face" aria-hidden="true">Y</span>
+  <div class="ix-hello-text">
+    <b>{% if kpis.waiting %}{{ kpis.waiting }} {{ 'person waits' if kpis.waiting == 1 else 'people wait' }} for your answer{% else %}Nothing waits for you{% endif %}</b>
+    <span>{% if kpis.auto_answered %}I answered {{ kpis.auto_answered }} alone in the last {{ kpis.days }} days{% if kpis.auto_rate is not none %} ({{ kpis.auto_rate }}% of all answers){% endif %}. {% endif %}{% if kpis.waiting %}They are first below, with my draft.{% else %}I tell you as soon as someone needs you.{% endif %}</span>
+    <div class="ix-hello-problems">
+      {% if mailbox_ready and mailbox_state.last_error %}<a class="ix-state off" href="/settings#email" title="{{ mailbox_state.last_error }}"><i class="bi bi-exclamation-triangle-fill"></i>Mailbox error</a>{% endif %}
+      {% if not mailbox_ready %}<a class="ix-state off" href="/settings#email"><i class="bi bi-plug-fill"></i>Mailbox not connected</a>{% endif %}
+      {% if not smtp_ready %}<a class="ix-state off" href="/settings#email"><i class="bi bi-send-slash-fill"></i>Sending is off</a>{% endif %}
+      {% if not model_ready %}<a class="ix-state off" href="/settings#assistant" title="The assistant that writes the answers is not running on this computer. Settings says how to start it."><i class="bi bi-cpu-fill"></i>Assistant not reachable</a>{% endif %}
+    </div>
+  </div>
+  <a class="btn btn-berry rounded-pill px-3" href="/inbox/compose"><i class="bi bi-pencil-square me-1"></i>Write a message</a>
+  <details class="ix-menu" id="ix-menu">
+    <summary class="ix-menu-btn" aria-label="More: how messages go, figures, tools"><i class="bi bi-three-dots"></i></summary>
+    <div class="ix-menu-panel">
+      <div class="ix-menu-links">
+        <button type="button" data-bs-toggle="modal" data-bs-target="#simulateModal"><i class="bi bi-magic"></i>Try with a sample email</button>
+        {% if mailbox_ready %}<form method="post" action="/inbox/check" class="m-0"><button><i class="bi bi-arrow-repeat"></i>Check mailbox{% if mailbox_state.last_success_at %} <small>· checked {{ mailbox_state.last_success_at | ago }}</small>{% endif %}</button></form>{% endif %}
+        <a href="/inbox/knowledge"><i class="bi bi-lightbulb"></i>Knowledge base</a>
+        <a href="/inbox/templates"><i class="bi bi-envelope-paper"></i>Email templates</a>
+        <a href="/settings#assistant"><i class="bi bi-sliders"></i>{% if mode == "auto" %}Answers alone from {{ threshold }}% confidence{% elif mode == "review" %}Asks you before every answer{% else %}Assistant off{% endif %}</a>
+      </div>
+      <div class="ix-menu-title">How messages go</div>
+      <form class="ix-ways" method="post" action="/inbox/channels" id="ways">
   <span class="ix-ways-title"><i class="bi bi-signpost-split-fill"></i>Messages go by</span>
   {% for way in ["auto", "email", "whatsapp", "sms"] %}
   <label class="ix-way {{ 'is-on' if send_choice.way == way }}" title="{{ send_status[way].note if way in send_status else 'WhatsApp when your Business number is connected, otherwise email; then the ways that need your phone' }}">
@@ -178,22 +211,8 @@
   <label class="ix-way-next"><input type="checkbox" name="fallback" value="true" {{ 'checked' if send_choice.fallback }} onchange="this.form.requestSubmit()"> If it does not work, the next way</label>
   <noscript><button class="ui-btn sm">Save</button></noscript>
 </form>
-<style>
-  .ix-ways { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:9px 12px; margin-bottom:14px; }
-  .ix-ways-title { font-size:.76rem; font-weight:800; color:var(--muted); display:inline-flex; gap:6px; align-items:center; margin-right:4px; text-transform:uppercase; letter-spacing:.04em; }
-  .ix-way { position:relative; display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); border-radius:999px; padding:5px 12px; font-size:.8rem; font-weight:700; cursor:pointer; color:#5b5470; }
-  .ix-way input { position:absolute; opacity:0; pointer-events:none; }
-  .ix-way.is-on { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
-  .ix-way em { font-style:normal; font-size:.66rem; font-weight:800; border-radius:999px; padding:1px 7px; }
-  .ix-way em.ok { background:#dcfce7; color:#166534; } .ix-way em.wait { background:var(--gold-subtle); color:var(--gold-dark); }
-  .ix-way.is-on em { background:rgba(255,255,255,.22); color:#fff; }
-  .ix-way-next { font-size:.78rem; font-weight:700; color:#5b5470; display:inline-flex; gap:6px; align-items:center; margin-left:auto; }
-  .ix-way-next input { accent-color:var(--primary-berry); }
-  @media (max-width: 767px) { .ix-way-next { margin-left:0; } }
-</style>
-
-<!-- ============ KPIs ============ -->
-<div class="ix-kpis mb-3" id="live-inbox-kpis" data-live-region>
+      <div class="ix-menu-title">How the assistant does</div>
+      <div class="ix-kpis mb-3" id="live-inbox-kpis" data-live-region>
   <a class="ix-kpi {% if kpis.waiting %}is-alert{% endif %}" href="/inbox?filter=todo">
     <div class="ix-kpi-label">Needs your answer</div>
     <div class="ix-kpi-value">{{ kpis.waiting }}</div>
@@ -225,49 +244,65 @@
     <div class="ix-kpi-sub">answer(s) you taught · {{ knowledge.system }} from programs and classes</div>
   </a>
 </div>
-
-<!-- ============ Status and actions ============ -->
-<div class="ix-toolbar mb-3">
-  {% if mailbox_ready %}
-    {% if mailbox_state.last_error %}
-    <a class="ix-state off" href="/settings#email" title="{{ mailbox_state.last_error }}"><i class="bi bi-exclamation-triangle-fill"></i>Mailbox error</a>
-    {% else %}
-    <span class="ix-state ok" title="Read-only: nothing is marked as read or deleted"><i class="bi bi-check-circle-fill"></i>Mailbox connected{% if mailbox_state.last_success_at %} · checked {{ mailbox_state.last_success_at | ago }}{% endif %}</span>
-    {% endif %}
-  {% else %}
-    <a class="ix-state off" href="/settings#email"><i class="bi bi-plug-fill"></i>Mailbox not connected</a>
-  {% endif %}
-  {% if not smtp_ready %}<a class="ix-state off" href="/settings#email"><i class="bi bi-send-slash-fill"></i>Sending is off</a>{% endif %}
-  {% if model_ready %}
-    <span class="ix-state ok"><i class="bi bi-check-circle-fill"></i>Assistant ready</span>
-  {% else %}
-    <a class="ix-state off" href="/settings#assistant" title="The assistant that writes the answers is not running on this computer. Settings says how to start it."><i class="bi bi-cpu-fill"></i>Assistant not reachable</a>
-  {% endif %}
-  <a class="ix-state" href="/settings#assistant">
-    <i class="bi bi-sliders"></i>
-    {% if mode == "auto" %}Answers alone from {{ threshold }}% confidence
-    {% elif mode == "review" %}Asks you before every answer
-    {% else %}Assistant off{% endif %}
-  </a>
-
-  <div class="ms-auto d-flex flex-wrap gap-2">
-    <button class="btn btn-light border" type="button" data-bs-toggle="modal" data-bs-target="#simulateModal"><i class="bi bi-magic me-1"></i>Try with a sample email</button>
-    {% if mailbox_ready %}
-    <form method="post" action="/inbox/check"><button class="btn btn-light border"><i class="bi bi-arrow-repeat me-1"></i>Check mailbox</button></form>
-    {% endif %}
-    <a class="btn btn-light border" href="/inbox/knowledge"><i class="bi bi-lightbulb me-1"></i>Knowledge base</a>
-    <a class="btn btn-light border" href="/inbox/templates"><i class="bi bi-envelope-paper me-1"></i>Email templates</a>
-    <a class="btn btn-berry" href="/inbox/compose"><i class="bi bi-pencil-square me-1"></i>Write an email</a>
-  </div>
-</div>
+    </div>
+  </details>
+</section>
+<style>
+  .ix-ways { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; background:#fff; border:1px solid var(--border-color); border-radius:18px; padding:9px 12px; margin-bottom:14px; }
+  .ix-ways-title { font-size:.76rem; font-weight:800; color:var(--muted); display:inline-flex; gap:6px; align-items:center; margin-right:4px; text-transform:uppercase; letter-spacing:.04em; }
+  .ix-way { position:relative; display:inline-flex; gap:6px; align-items:center; border:1px solid var(--border-color); border-radius:999px; padding:5px 12px; font-size:.8rem; font-weight:700; cursor:pointer; color:#5b5470; }
+  .ix-way input { position:absolute; opacity:0; pointer-events:none; }
+  .ix-way.is-on { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  .ix-way em { font-style:normal; font-size:.66rem; font-weight:800; border-radius:999px; padding:1px 7px; }
+  .ix-way em.ok { background:#dcfce7; color:#166534; } .ix-way em.wait { background:var(--gold-subtle); color:var(--gold-dark); }
+  .ix-way.is-on em { background:rgba(255,255,255,.22); color:#fff; }
+  .ix-way-next { font-size:.78rem; font-weight:700; color:#5b5470; display:inline-flex; gap:6px; align-items:center; margin-left:auto; }
+  .ix-way-next input { accent-color:var(--primary-berry); }
+  @media (max-width: 767px) { .ix-way-next { margin-left:0; } }
+</style>
+<style>
+  .ix-hello { display:flex; gap:14px; align-items:center; flex-wrap:wrap; background:#fff; border:1px solid var(--border-color); border-radius:22px; padding:14px 16px; margin-bottom:16px; position:relative; }
+  .ix-hello-face { width:46px; height:46px; border-radius:50%; flex:none; display:grid; place-items:center; font-weight:800; font-size:1.15rem; color:#fff;
+                   background:linear-gradient(135deg, var(--primary-berry), #f472b6); box-shadow:0 8px 18px -10px var(--primary-berry); animation:ixBreathe 4s ease-in-out infinite; }
+  @keyframes ixBreathe { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.05); } }
+  .ix-hello-text { flex:1 1 320px; min-width:0; display:grid; gap:2px; }
+  .ix-hello-text b { font-size:1.05rem; color:var(--ink-text); }
+  .ix-hello-text span { font-size:.84rem; color:var(--muted); }
+  .ix-hello-problems { display:flex; gap:6px; flex-wrap:wrap; } .ix-hello-problems:empty { display:none; }
+  .ix-menu { position:relative; }
+  .ix-menu-btn { list-style:none; width:40px; height:40px; border-radius:50%; border:1px solid var(--border-color); display:grid; place-items:center; cursor:pointer; color:#5b5470; font-size:1.1rem; }
+  .ix-menu-btn::-webkit-details-marker { display:none; }
+  .ix-menu[open] .ix-menu-btn { background:var(--berry-subtle); color:var(--primary-berry); border-color:var(--primary-berry); }
+  .ix-menu-panel { position:absolute; right:0; top:48px; z-index:30; width:min(560px, calc(100vw - 32px)); background:#fff; border:1px solid var(--border-color); border-radius:20px;
+                   box-shadow:0 24px 50px -24px rgba(36,26,56,.4); padding:14px; display:grid; gap:10px; animation:ixDrop .18s ease both; }
+  @keyframes ixDrop { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:none; } }
+  .ix-menu-links { display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:6px; }
+  .ix-menu-links a, .ix-menu-links button { display:flex; gap:8px; align-items:center; width:100%; text-align:left; background:#faf8fd; border:0; border-radius:12px; padding:9px 11px;
+                   font-size:.82rem; font-weight:700; color:var(--ink-text); text-decoration:none; cursor:pointer; }
+  .ix-menu-links a:hover, .ix-menu-links button:hover { background:var(--berry-subtle); color:var(--primary-berry); }
+  .ix-menu-links small { font-weight:600; color:var(--muted); }
+  .ix-menu-title { font-size:.68rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); margin-top:4px; }
+  .ix-menu .ix-ways { margin:0; border-radius:14px; }
+  .ix-menu .ix-kpis { grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:8px; margin:0 !important; }
+  .ix-menu .ix-kpi { padding:10px 12px; border-radius:14px; }
+  .ix-menu .ix-kpi-value { font-size:1.25rem; }
+  @media (prefers-reduced-motion: reduce) { .ix-hello-face, .ix-menu-panel { animation:none; } }
+</style>
+<script>
+  // The "⋯" menu closes when clicking anywhere else.
+  document.addEventListener("click", event => {
+    const menu = document.getElementById("ix-menu");
+    if (menu && menu.open && !menu.contains(event.target)) menu.open = false;
+  });
+</script>
 
 {% set keep_filters = ("&q=" ~ (search | urlencode) if search else "") ~ ("&candidate=" ~ candidate_filter.id if candidate_filter else "") ~ ("&category=" ~ current_category if current_category else "") %}
 {% set keep = keep_filters ~ ("&view=all" if whole_history else "") %}
 
 {% if counts.to_send %}
-<div class="ix-wa-bar">
+<div class="ix-wa-bar" title="Each opens WhatsApp or your messages with the text written: press send there, then “Sent” here.{% if not whatsapp_ready %} Once your WhatsApp Business number is connected, WhatsApp messages go by themselves.{% endif %}">
   <i class="bi bi-whatsapp"></i>
-  <span><strong>{{ counts.to_send }} message{{ 's' if counts.to_send != 1 }} (WhatsApp or SMS)</strong> wait{{ '' if counts.to_send != 1 else 's' }} for you to send from your phone. Each opens WhatsApp or your messages with the text written: press send there, then “Sent” here.{% if not whatsapp_ready %} Once your WhatsApp Business number is connected, WhatsApp messages go by themselves.{% endif %}</span>
+  <span><strong>{{ counts.to_send }} message{{ 's' if counts.to_send != 1 }} (WhatsApp or SMS)</strong> wait{{ '' if counts.to_send != 1 else 's' }} for you to send from your phone.</span>
   <a class="ui-btn sm" href="/inbox?filter=to_send" style="margin-left:auto;">Open them</a>
 </div>
 {% endif %}
@@ -275,17 +310,19 @@
 <div class="ix-layout">
   <!-- ============ Discussions ============ -->
   <aside class="ix-card">
-    <div class="ix-filters">
-      {% for key, label in filters.items() %}
-      <a class="ix-filter {% if key == current_filter %}active{% endif %}" href="/inbox?filter={{ key }}{{ keep }}">{{ label }}{% if counts[key] is defined %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
+    {% set main_tabs = [("todo", "bi-person-raised-hand"), ("aside", "bi-moon-stars"), ("conversations", "bi-chat-left-text")] %}
+    <nav class="ix-tabs3" aria-label="Which discussions">
+      {% for key, icon in main_tabs %}
+      <a class="ix-tab3 {{ 'is-on' if key == current_filter }} {{ 'is-alert' if key == 'todo' and counts.todo }}" href="/inbox?filter={{ key }}{{ keep }}"><i class="bi {{ icon }}"></i><span>{{ filters[key] }}</span>{% if key != 'conversations' %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
       {% endfor %}
-    </div>
-    {% if current_filter == "aside" %}
-    <form method="post" action="/inbox/rules/read-again" class="ix-read-again">
-      <button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Read them again with what the system learnt</button>
-      <span>It corrects itself: what asks something comes back to you, and an opinion that was a question leaves the reviews. It also does it by itself every 30 minutes.</span>
-    </form>
-    {% endif %}
+    </nav>
+    <details class="ix-more-filters" {{ 'open' if current_filter not in ('todo', 'aside', 'conversations') or current_category }}>
+      <summary><i class="bi bi-funnel"></i>More{% if current_filter not in ('todo', 'aside', 'conversations') %}: {{ filters[current_filter] }}{% endif %}{% if current_category %} · {{ (categories | selectattr('key', 'equalto', current_category) | first).label if categories else '' }}{% endif %}</summary>
+      <div class="ix-filters">
+        {% for key, label in filters.items() if key not in ('todo', 'aside', 'conversations') %}
+        <a class="ix-filter {% if key == current_filter %}active{% endif %}" href="/inbox?filter={{ key }}{{ keep }}">{{ label }}{% if counts[key] is defined %}<span class="n">{{ counts[key] }}</span>{% endif %}</a>
+        {% endfor %}
+      </div>
     {% if categories %}
     <div class="ix-cats" aria-label="What the messages are about">
       <a class="ix-cat {{ 'is-on' if not current_category }}" href="/inbox?filter={{ current_filter }}{{ ('&q=' ~ (search | urlencode)) if search }}"><i class="bi bi-grid"></i>All subjects</a>
@@ -300,6 +337,29 @@
       .ix-catchip { display:inline-flex; gap:4px; align-items:center; font-size:.66rem; font-weight:800; border-radius:999px; padding:2px 8px; color:var(--c); background:color-mix(in srgb, var(--c) 12%, #fff); white-space:nowrap; }
     </style>
     {% endif %}
+    </details>
+    {% if current_filter == "aside" %}
+    <form method="post" action="/inbox/rules/read-again" class="ix-read-again">
+      <button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Read them again with what the system learnt</button>
+      <span>It corrects itself: what asks something comes back to you, and an opinion that was a question leaves the reviews. It also does it by itself every 30 minutes.</span>
+    </form>
+    {% endif %}
+    <style>
+      .ix-tabs3 { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:4px; padding:10px 10px 6px; }
+      .ix-tab3 { display:flex; flex-direction:column; align-items:center; gap:2px; padding:9px 4px; border-radius:14px; text-decoration:none; color:#5b5470; font-size:.76rem; font-weight:800; text-align:center; position:relative; transition:background .15s ease, color .15s ease; }
+      .ix-tab3 i { font-size:1.1rem; }
+      .ix-tab3 .n { position:absolute; top:4px; right:8px; min-width:20px; height:20px; border-radius:999px; background:#f1edf7; color:#5b5470; font-size:.68rem; display:grid; place-items:center; padding:0 5px; }
+      .ix-tab3.is-alert .n { background:var(--primary-berry); color:#fff; animation:ixPulse 2.4s ease-in-out infinite; }
+      @keyframes ixPulse { 0%, 100% { box-shadow:0 0 0 0 rgba(164,44,103,.35); } 50% { box-shadow:0 0 0 6px rgba(164,44,103,0); } }
+      .ix-tab3:hover { background:#faf8fd; color:var(--primary-berry); }
+      .ix-tab3.is-on { background:var(--berry-subtle); color:var(--primary-berry); }
+      .ix-more-filters { padding:0 14px 8px; }
+      .ix-more-filters > summary { cursor:pointer; font-size:.74rem; font-weight:700; color:var(--muted); list-style:none; display:inline-flex; gap:6px; align-items:center; }
+      .ix-more-filters > summary::-webkit-details-marker { display:none; }
+      .ix-more-filters .ix-filters { padding:8px 0 4px; }
+      .ix-more-filters .ix-cats { padding:0 0 6px; }
+      @media (prefers-reduced-motion: reduce) { .ix-tab3.is-alert .n { animation:none; } }
+    </style>
     <form class="ix-search" method="get" action="/inbox">
       <input type="hidden" name="filter" value="{{ current_filter }}">
       {% if current_category %}<input type="hidden" name="category" value="{{ current_category }}">{% endif %}
@@ -405,9 +465,8 @@
         <div class="ix-msg-meta">
           <span class="ix-msg-who">{% if message.channel == "whatsapp" %}<i class="bi bi-whatsapp ix-wa"></i> {% endif %}{{ selected.candidate.full_name or selected.candidate.email }}</span>
           <span>{{ message.received_at | localdt }}</span>
-          {% if message.language %}<span class="ix-chip quiet">{{ language_labels.get(message.language, message.language) }}</span>{% endif %}
           {% if message.category %}{% set sorted_as = category_of(message.category) %}<span class="ix-catchip" style="--c:{{ sorted_as.colour }};" title="What it is about: the agent of this subject handled it"><i class="bi {{ sorted_as.icon }}"></i>{{ sorted_as.label }}</span>{% endif %}
-          {% if message.intent and message.intent in intent_labels %}<span class="ix-chip quiet">{{ intent_labels[message.intent] }}</span>{% endif %}
+          {% if message.language or (message.intent and message.intent in intent_labels) %}<span class="ix-info" title="{{ language_labels.get(message.language, message.language) if message.language }}{{ ' · ' if message.language and message.intent in intent_labels }}{{ intent_labels[message.intent] if message.intent in intent_labels }}"><i class="bi bi-info-circle"></i></span>{% endif %}
           {% if message.emotions %}{% import "_emoji.html" as emo %}{% set felt = message.emotions | fromjson %}{% for item in felt.emotions[:3] %}<span class="ix-chip {{ 'bad' if item.key in ('frustrated', 'disappointed') else 'warn' if item.key in ('worried', 'confused', 'urgent') else 'ok' }}" title="Words that showed it: {{ item.words | join(', ') }}. {{ felt.how }}">{{ emo.feel(item.key) }} {{ item.label }}</span>{% endfor %}
           {% elif message.sentiment in ("concerned", "frustrated") %}<span class="ix-chip bad">{{ message.sentiment | capitalize }}</span>{% endif %}
           {% if message.message_id and message.message_id.startswith("<test-") %}<span class="ix-chip berry">Test</span>{% endif %}
@@ -450,11 +509,10 @@
         <div class="ix-msg-meta">
           <span class="ix-msg-who">
             {% if by_admin %}You
-            {% elif message.intent == "reply" %}<i class="bi bi-robot"></i> 9antra assistant
+            {% elif message.intent == "reply" %}<span class="ix-y" aria-hidden="true">Y</span> Yasmine
             {% else %}<i class="bi bi-envelope-check"></i> Automatic email{% endif %}
           </span>
           {% if message.intent in kind_labels and message.intent != "reply" %}<span class="ix-chip quiet">{{ kind_labels[message.intent] }}</span>{% endif %}
-          {% if message.confidence is not none and not by_admin %}<span class="ix-chip ok" title="Confidence KPI of this answer">{{ (message.confidence * 100) | round | int }}% confidence</span>{% endif %}
           <span>{{ message.received_at | localdt }}</span>
         </div>
         <div class="ix-bubble" data-no-i18n>{{ message.body }}</div>
@@ -486,12 +544,13 @@
         {% endif %}
         {% if not by_admin and message.intent == "reply" and message.status in ("sent", "test") %}
         <div class="ix-score">
-          <span>Was this answer right?</span>
+          <span>Was this answer right?{% if message.confidence is not none %} <small title="How sure the assistant was">· {{ (message.confidence * 100) | round | int }}% sure</small>{% endif %}</span>
           <form method="post" action="/inbox/message/{{ message.id }}/score"><input type="hidden" name="verdict" value="{{ 'clear' if message.admin_score == 1 else 'right' }}">
             <button class="right {{ 'is-on' if message.admin_score == 1 }}"><i class="bi bi-hand-thumbs-up"></i> Right</button></form>
           <form method="post" action="/inbox/message/{{ message.id }}/score"><input type="hidden" name="verdict" value="{{ 'clear' if message.admin_score == -1 else 'wrong' }}">
             <button class="wrong {{ 'is-on' if message.admin_score == -1 }}"><i class="bi bi-hand-thumbs-down"></i> Wrong</button></form>
         </div>
+        <details class="ix-fold"><summary><i class="bi bi-three-dots"></i> Ask why, correct it, what it is based on</summary>
         <button type="button" class="ix-linkbtn ix-review-open" data-chat-open="review-{{ message.id }}" aria-expanded="false"><i class="bi bi-chat-square-text"></i> Ask why, or correct it in a few words</button>
         <div class="ix-aside-chat ix-review-chat" id="review-{{ message.id }}" data-chat-url="/inbox/message/{{ message.id }}/review" data-chat-first="Why?" hidden>
           <div class="ix-aside-log" aria-live="polite"></div>
@@ -514,14 +573,15 @@
             <button class="ui-btn sm primary mt-2"><i class="bi bi-mortarboard"></i>Teach it</button>
           </form>
         </details>
-        {% endif %}
-        {% if not by_admin and (sources.hits or sources.used_record) %}
-        <details class="ix-sources text-end">
-          <summary>What this answer is based on</summary>
-          <ul class="text-start">
+        {% if sources.hits or sources.used_record %}
+        <div class="ix-sources-list">
+          <b>What this answer is based on</b>
+          <ul>
             {% if sources.used_record %}<li>The candidate's own registrations, payments and class, read from the database</li>{% endif %}
             {% for hit in sources.hits %}<li>{{ hit.title }} <span class="text-muted">· {{ (hit.score * 100) | round | int }}% match{% if hit.origin != "system" %} · taught by you{% endif %}</span></li>{% endfor %}
           </ul>
+        </div>
+        {% endif %}
         </details>
         {% endif %}
       </div>
@@ -542,9 +602,10 @@
       {% if pending %}
       {% set sources = pending_sources %}
       <div class="ix-ask">
-        <div class="ix-ask-title"><i class="bi bi-question-circle-fill me-1"></i>The system needs your answer</div>
+        <div class="ix-ask-title"><span class="ix-y" aria-hidden="true">Y</span>I could not answer this one alone{{ ': here is my draft below' if pending.suggested_reply else '' }}</div>
         {% if pending.question %}<div class="ix-ask-question">{{ pending.question }}</div>{% endif %}
         {% if pending.escalation_reason %}<div class="ix-ask-why">{{ pending.escalation_reason }}</div>{% endif %}
+        <details class="ix-fold"><summary><i class="bi bi-three-dots"></i> How sure I was, and what I looked at</summary>
         {% if pending.confidence is not none and sources.method is defined %}
         {% set percent = (pending.confidence * 100) | round | int %}
         <div class="ix-meter" role="img" aria-label="Confidence {{ percent }} percent, {{ threshold }} percent needed">
@@ -568,6 +629,7 @@
           </ul>
         </details>
         {% endif %}
+        </details>
         {% if not pending.suggested_reply %}
         <div class="ix-ask-why"><a href="/inbox/knowledge?question={{ (pending.question or '') | urlencode }}#write" class="fw-bold" style="color:#7c4a03;">Add it to the knowledge base</a> instead if you would rather not answer by email now.</div>
         {% endif %}
@@ -593,8 +655,9 @@
             <option value="en" {{ 'selected' if reply_lang == 'en' }}>in English</option>
           </select>
           <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 d-none" id="reformulate-undo">Put my words back</button>
-          <span class="small text-muted" id="reformulate-status">Write your answer in a few words, in Tunisian, French or English: the system turns it into a proper email in the language chosen. You read it before sending.</span>
+          <span class="small text-muted" id="reformulate-status">A few words are enough, even in Tunisian: Reformulate writes the email.</span>
         </div>
+        <details class="ix-fold ix-options"><summary><i class="bi bi-sliders"></i> Options</summary>
         <label class="ix-reword" title="Your words are reworded and sent at once. When the rewording changes a figure, it waits for you instead.">
           <input type="checkbox" name="reword" value="true" id="reword-send" {{ 'checked' if reword_default }}>
           <span><b>Reword and send at once</b> · no waiting: “Send answer” rewords your words in the language chosen, then sends. When the rewording would change a figure, it waits for your eye. Untick to read it first.</span>
@@ -606,6 +669,7 @@
         <style>.ix-reword { display:flex; gap:8px; align-items:flex-start; font-size:.8rem; color:#5b5470; margin-top:8px; background:#faf8fd; border-radius:12px; padding:8px 10px; }
                .ix-reword input { margin-top:3px; accent-color:var(--primary-berry); } .ix-reword b { color:var(--ink-text); }</style>
         <div class="form-text">Your signature is added automatically. An empty line starts a new paragraph; lines starting with “-” become a list.</div>
+        </details>
 
         {{ email_files.picker(accept_documents, photo=False, attached=draft_files) }}
 

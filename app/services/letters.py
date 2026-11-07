@@ -1,9 +1,10 @@
 """One letter a week, and a limit on what the application sends by itself.
 
 A candidate receives at most WEEKLY_LIMIT automatic messages in seven days. Past it, what can wait (the week's
-questions, the questions after a session, the review request) is not sent on its own: it is kept for the candidate's
-weekly letter (status "in_letter", it counts as on its way). What must arrive on time is never kept: the payment
-reminder, a class that moved, the reminders before the start, the session link, the level check, the welcome.
+questions, the questions after a session) is not sent on its own: it is kept for the candidate's weekly letter
+(status "in_letter", it counts as on its way). What must arrive on time is never kept: the payment reminder, a class
+that moved, the reminders before the start, the session link, the level check, the welcome, and the review request
+(asked on the last session day, while it is fresh).
 What the admin sends by hand never counts and is never kept.
 
 The weekly letter ("weekly_letter" in Email templates, where its words are changed or it is switched off) leaves on
@@ -20,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.models.candidate_email import CandidateEmail
 
 WEEKLY_LIMIT = 4                    # automatic messages in seven days, the letter included
-CAN_WAIT = ("weekly_questions", "session_check", "feedback_request")
+CAN_WAIT = ("weekly_questions", "session_check")
 KEY = "weekly_letter"
 LETTER_WEEKDAY = 0                  # Monday
 LETTER_HOUR = 9

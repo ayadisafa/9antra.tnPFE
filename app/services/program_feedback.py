@@ -8,6 +8,15 @@ feedback (see feedback.analyse), so satisfaction is read, not guessed.
 
 An opinion is a row of `candidate_feedback`: asked ("to_ask", then "asked"),
 then answered ("received").
+
+It takes ten seconds: each star of the email or WhatsApp is a link, so one tap
+gives the rating; a few words, then their professor, come after, only if they
+want. Who gives 1 to 3 stars is thanked privately and the admin is told to call
+them (it rings until someone wrote to them); who gives 4 or 5 and accepts
+publication is offered to say it again on Google or Facebook, their words
+copied for them. A class is asked on its last session day (with a QR code to
+show in the room), and a candidate who succeeds (an internship, a PFE, a
+certification) can be congratulated and asked then.
 """
 from __future__ import annotations
 
@@ -20,6 +29,7 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.candidate import Candidate
+from app.models.candidate_email import CandidateEmail
 from app.models.classgroup import ClassGroup
 from app.models.feedback import CandidateFeedback
 from app.models.notification import Notification
@@ -49,6 +59,35 @@ def facebook_reviews() -> str:
     from app.services import website_sync
 
     return f"https://www.facebook.com/{website_sync.FACEBOOK_PAGE}/reviews"
+
+
+def google_reviews(db: Session) -> str:
+    """Where a happy candidate leaves a review on Google (Settings, Your centre); empty when it was not given."""
+    return (getattr(settings_service.get_settings(db), "google_review_url", None) or "").strip()
+
+
+def star_links(db: Session, row: CandidateFeedback) -> list[tuple[int, str]]:
+    """The five stars of the email or WhatsApp, each a link: one tap opens their page with that rating, which keeps it."""
+    page = f"{settings_service.public_base_url(db)}/opinion/{row.external_id}"
+    return [(stars, f"{page}?stars={stars}") for stars in (1, 2, 3, 4, 5)]
+
+
+def rating(db: Session) -> dict:
+    """The stars candidates gave at the end of their program: {"stars": 4.8, "count": 120}, stars None when there is none."""
+    given = [value for (value,) in db.query(CandidateFeedback.rating).filter(
+        CandidateFeedback.source == SOURCE, CandidateFeedback.status == "received", CandidateFeedback.rating.isnot(None)).all()]
+    return {"stars": round(sum(given) / len(given), 1) if given else None, "count": len(given)}
+
+
+RATING_SHOWN_FROM = 3               # fewer reviews than this: the rating is not said (one 5 is not "5/5")
+
+
+def rating_line(db: Session) -> str:
+    """"4,8/5 d'après 120 candidats", for the emails ({rating_line}); empty while there are too few reviews."""
+    found = rating(db)
+    if found["stars"] is None or found["count"] < RATING_SHOWN_FROM:
+        return ""
+    return f"{str(found['stars']).replace('.', ',')}/5 d'après {found['count']} candidats"
 
 
 def of_registration(db: Session, registration_id: str) -> CandidateFeedback | None:
@@ -106,7 +145,8 @@ def ask(db: Session, registration: Registration, *, manual: bool = False) -> Can
     link = f"{settings_service.public_base_url(db)}/opinion/{row.external_id}"
     message = email_templates.send(
         db, "feedback_request", registration=registration,
-        values={"feedback_link": link, "facebook_link": facebook_reviews()}, manual=manual,
+        values={"feedback_link": link, "facebook_link": facebook_reviews(), "star_links": star_links(db, row)},
+        manual=manual, first=first_way(db),
     )
     # By the way chosen above the inbox: an email sent, or a WhatsApp / SMS waiting for the admin's phone, both count.
     if not (message is not None and message.status in ("sent", "to_send", "in_letter")):
@@ -117,6 +157,14 @@ def ask(db: Session, registration: Registration, *, manual: bool = False) -> Can
     _keep(row, asked_at=datetime.now(timezone.utc).isoformat(), asks=(_payload(row).get("asks") or 0) + 1)
     db.flush()
     return row
+
+
+def first_way(db: Session) -> str | None:
+    """WhatsApp first, when a Business number sends by itself and the way above the inbox is left to the system:
+    a review is given where people already are. Otherwise None (the usual way)."""
+    from app.services import channels, whatsapp
+
+    return "whatsapp" if whatsapp.configured() and channels.choice(db)["way"] == "auto" else None
 
 
 def send_due(db: Session, limit: int = 20) -> int:
@@ -211,16 +259,81 @@ def answer(db: Session, row: CandidateFeedback, *, stars: int | None, words: str
           professor=professor_of(db, row) or None, prof_stars=prof_stars, prof_words=prof_words or None,
           prof_tone=feedback.analyse(prof_words, stars=prof_stars)["sentiment"] if (prof_words or prof_stars) else None,
           recommend=recommend if recommend in RECOMMEND else None)
-    if first:
-        happy = reading["sentiment"] == "positive"
-        db.add(Notification(
-            recipient_role="admin", category="FEEDBACK", candidate_id=row.candidate_id,
-            title=f"{row.author_name or 'A candidate'} gave {stars} star{'s' if stars != 1 else ''}" if stars else f"{row.author_name or 'A candidate'} gave their opinion",
-            message=(words[:200] or row.program_name or "") if happy else ("Not fully happy: " + (words[:180] or "no words, only the stars")),
-            action_url=f"/classes/{_payload(row).get('class_id')}#opinions" if _payload(row).get("class_id") else "/website#feedback",
-        ))
+    _keep(row, low=is_low(row))
+    _tell_admin(db, row, first)
     db.flush()
     return row
+
+
+def is_low(row: CandidateFeedback) -> bool:
+    """1 to 3 stars, or (without stars) words that are not happy: thanked privately, and the team contacts them."""
+    if row.rating:
+        return row.rating <= 3
+    return row.sentiment in ("negative", "mixed")
+
+
+def _tell_admin(db: Session, row: CandidateFeedback, first: bool) -> None:
+    """The admin hears of each review once. A low one asks them to contact the person and rings until someone wrote to
+    them (see notification_rules); the words added after the stars, or a rating changed, change that same notification."""
+    data = _payload(row)
+    name, stars, words = row.author_name or "A candidate", row.rating, row.comment or ""
+    low = is_low(row)
+    title = f"{name} gave {stars} star{'s' if stars != 1 else ''}" if stars else f"{name} gave their opinion"
+    if low:
+        message = "Not fully happy: " + (words[:180] or "no words, only the stars") + ". They were told the team would contact them."
+    else:
+        message = words[:200] or row.program_name or ""
+    category = "REVIEW_LOW" if low else "FEEDBACK"
+    url = (f"/candidate/{row.candidate_id}#reviews" if low and row.candidate_id
+           else f"/classes/{data.get('class_id')}#opinions" if data.get("class_id") else "/website#feedback")
+    known = db.get(Notification, data["notified"]) if data.get("notified") else None
+    if known is None and not first:
+        return                  # told before this was kept (an older review): not again
+    if known is not None:
+        if low and known.category != "REVIEW_LOW":
+            known.is_read, known.status, known.read_at = False, "unread", None       # it became low: it needs them now
+        known.title, known.message, known.category, known.action_url = title, message, category, url
+        return
+    note = Notification(recipient_role="admin", category=category, candidate_id=row.candidate_id, title=title,
+                        message=message, action_url=url, registration_id=row.registration_id)
+    db.add(note)
+    db.flush()
+    _keep(row, notified=note.id)
+
+
+def change(db: Session, row: CandidateFeedback, **changes) -> CandidateFeedback:
+    """One step of their page (the stars, then a few words, then their professor): what they gave before is kept."""
+    data = _payload(row) if row.status == "received" else {}
+    values = {
+        "stars": row.rating if row.status == "received" else None, "words": (row.comment or "") if row.status == "received" else "",
+        "may_publish": bool(data.get("may_publish")), "channel": data.get("channel") or "page", "happy": data.get("happy"),
+        "improve": data.get("improve") or "", "prof_stars": data.get("prof_stars"), "prof_words": data.get("prof_words") or "",
+        "recommend": data.get("recommend") or "",
+    }
+    return answer(db, row, **{**values, **changes})
+
+
+def contacted(db: Session, row: CandidateFeedback, by: str = "") -> None:
+    """The team contacted someone who was not fully happy (a call, a visit): their notification closes."""
+    _keep(row, contacted={"at": datetime.now(timezone.utc).isoformat(timespec="seconds"), "by": by or None})
+    note = db.get(Notification, _payload(row).get("notified")) if _payload(row).get("notified") else None
+    if note is not None and not note.is_read:
+        note.is_read, note.status, note.read_at = True, "settled", datetime.utcnow()
+    db.flush()
+
+
+def was_contacted(db: Session, row: CandidateFeedback) -> bool:
+    """Someone of the team wrote to them after their review, or said they contacted them."""
+    from app.models.candidate_email import CandidateEmail
+
+    if _payload(row).get("contacted"):
+        return True
+    if row.submitted_at is None or not row.candidate_id:
+        return False
+    since = row.submitted_at.astimezone(timezone.utc).replace(tzinfo=None) if row.submitted_at.tzinfo else row.submitted_at
+    return db.query(CandidateEmail.id).filter(
+        CandidateEmail.candidate_id == row.candidate_id, CandidateEmail.direction == "outbound",
+        CandidateEmail.author == "admin", CandidateEmail.received_at > since).first() is not None
 
 
 def from_reply(db: Session, registration_id: str | None, body: str, message_id: str | None = None) -> CandidateFeedback | None:
@@ -292,6 +405,102 @@ def withdraw(db: Session, message=None, row: CandidateFeedback | None = None) ->
 
 
 # ------------------------------------------------------------------
+# The last session: asked in the room, with a QR code
+# ------------------------------------------------------------------
+
+def is_last_session(db: Session, session) -> bool:
+    """No session of its class comes after this one."""
+    from app.models.classsession import ClassSession
+
+    return db.query(ClassSession.id).filter(ClassSession.class_group_id == session.class_group_id,
+                                            ClassSession.session_date > session.session_date).first() is None
+
+
+def class_token(db: Session, class_group: ClassGroup) -> str:
+    """The class's QR code leads to /opinion/class/<this>: who scans it finds their own review there."""
+    if not class_group.opinion_token:
+        class_group.opinion_token = secrets.token_urlsafe(18)
+        db.flush()
+    return class_group.opinion_token
+
+
+def by_class_token(db: Session, token: str) -> ClassGroup | None:
+    if not token or len(token) < 16:
+        return None
+    return db.query(ClassGroup).filter(ClassGroup.opinion_token == token).first()
+
+
+def find_in_class(db: Session, class_group: ClassGroup, said: str) -> CandidateFeedback | None:
+    """Someone scanned the class's QR code and gave their email or phone number: their own review, when they are in
+    this class (the QR code alone never shows who is in it)."""
+    said = (said or "").strip().lower()
+    digits = re.sub(r"\D", "", said)
+    if not said:
+        return None
+    for registration in (db.query(Registration).options(joinedload(Registration.candidate))
+                         .filter(Registration.class_group_id == class_group.id, Registration.status != RegistrationStatus.CANCELLED).all()):
+        candidate = registration.candidate
+        if candidate is None:
+            continue
+        phone = re.sub(r"\D", "", candidate.phone or "")
+        if (candidate.email and candidate.email.strip().lower() == said) or (len(digits) >= 8 and len(phone) >= 8 and phone[-8:] == digits[-8:]):
+            row = _row_for(db, registration, class_group)
+            if row.status == "to_ask":
+                row.status = "asked"
+                _keep(row, asked_at=datetime.now(timezone.utc).isoformat(), channel="qr")
+            return row
+    return None
+
+
+# ------------------------------------------------------------------
+# A success: congratulated, and asked then
+# ------------------------------------------------------------------
+
+SUCCESSES = {
+    "internship": ("an internship", "un stage"),
+    "pfe": ("a PFE", "un PFE"),
+    "certification": ("a certification", "une certification"),
+    "job": ("a job", "un emploi"),
+}
+
+
+def celebrate(db: Session, registration: Registration, kind: str, words: str = "") -> CandidateEmail | None:
+    """A candidate got an internship, a PFE, a certification or a job: they are congratulated (WhatsApp first) and asked,
+    at that happy moment, to tell it on Google or Facebook. Kept on their review, and given to the Social media page as a
+    success story to tell (with their first name only once they accepted)."""
+    if kind not in SUCCESSES:
+        raise ValueError("Choose what they succeeded in.")
+    words = " ".join((words or "").split())[:200]
+    row = _row_for(db, registration, registration.class_group)
+    link = f"{settings_service.public_base_url(db)}/opinion/{row.external_id}"
+    message = email_templates.send(
+        db, "success_review", registration=registration, manual=True, first=first_way(db),
+        values={"success": SUCCESSES[kind][1] + (f" ({words})" if words else ""), "feedback_link": link,
+                "facebook_link": facebook_reviews(), "google_link": google_reviews(db) or facebook_reviews()},
+    )
+    successes = list(_payload(row).get("successes") or [])
+    successes.append({"kind": kind, "words": words or None, "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                      "sent": bool(message is not None and message.status in ("sent", "to_send", "in_letter"))})
+    _keep(row, successes=successes[-5:])
+    if row.status == "to_ask" and successes[-1]["sent"]:
+        row.status = "asked"
+    db.flush()
+    return message
+
+
+def successes(db: Session, limit: int = 6) -> list[dict]:
+    """The latest successes, for the Social media page: {"first_name", "kind", "words", "program", "at", "may_publish"}."""
+    found = []
+    for row in db.query(CandidateFeedback).filter(CandidateFeedback.source == SOURCE).all():
+        data = _payload(row)
+        for item in data.get("successes") or []:
+            found.append({"first_name": ((row.author_name or "").split() or ["Un(e) candidat(e)"])[0].capitalize(),
+                          "kind": item.get("kind"), "label": SUCCESSES.get(item.get("kind"), ("", ""))[0], "words": item.get("words") or "",
+                          "program": row.program_name or "", "at": item.get("at") or "", "may_publish": bool(data.get("may_publish"))})
+    return sorted(found, key=lambda item: item["at"], reverse=True)[:limit]
+
+
+# ------------------------------------------------------------------
 # What the pages show
 # ------------------------------------------------------------------
 
@@ -307,6 +516,8 @@ def _view(row: CandidateFeedback) -> dict:
         "happy": data.get("happy"), "improve": data.get("improve") or "", "professor": data.get("professor") or "",
         "prof_stars": data.get("prof_stars"), "prof_words": data.get("prof_words") or "", "recommend": data.get("recommend"),
         "improve_themes": [feedback.THEMES[key] for key in data.get("improve_themes") or [] if key in feedback.THEMES],
+        "low": row.status == "received" and is_low(row), "contacted": bool(data.get("contacted")),
+        "successes": [{**item, "label": SUCCESSES.get(item.get("kind"), ("", ""))[0]} for item in data.get("successes") or []],
     }
 
 
@@ -374,15 +585,16 @@ def of_program(db: Session, program_id: str) -> dict:
 
 
 def of_candidate(db: Session, candidate_id: str) -> list[dict]:
-    """A candidate's programs that ended: their opinion (or that it was asked), and whether it can be asked."""
+    """A candidate's programs that ended (or whose review was asked, on the last session day): their opinion (or that it
+    was asked), and whether it can be asked."""
     from app.models import Candidate
 
     candidate = db.get(Candidate, candidate_id)
     found = []
     for registration in (candidate.registrations if candidate else []):
-        if registration.status != RegistrationStatus.COMPLETED:
-            continue
         row = of_registration(db, registration.id)
+        if registration.status != RegistrationStatus.COMPLETED and row is None:
+            continue
         found.append({"registration": registration, "review": _view(row) if row is not None else None})
     return found
 

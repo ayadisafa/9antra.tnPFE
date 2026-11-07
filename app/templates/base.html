@@ -704,6 +704,9 @@
                 {% if page_tour %}
                 <button type="button" class="topbar-help" data-tour-show title="What you can do on this page" aria-label="What you can do on this page"><i class="bi bi-question-lg"></i></button>
                 {% endif %}
+                {% if current_user and current_user.id %}
+                <button type="button" class="topbar-help" data-journal-open style="position:relative;" title="Journal: what is new in your fields" aria-label="Journal: what is new in your fields"><i class="bi bi-newspaper"></i></button>
+                {% endif %}
                 {# The language of the pages, for whoever is signed in; remembered on this browser. #}
                 <div class="dropdown" data-no-i18n>
                     <button type="button" class="topbar-help" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Language" title="Language · Langue · اللغة"><i class="bi bi-translate"></i></button>
@@ -992,7 +995,7 @@
       CLASS: ["#live-class-hero"], REMINDER: ["#live-class-hero"],
       ASSIGNMENT: ["#live-class-focus", "tr.is-focus", "#live-class-members", "#live-decisions"],
       PROGRAM_PROPOSAL: ["#reviewModal.show .modal-content", "#live-program-grid"],
-      WEEK_QUESTIONS: ["#questions"], WEBSITE: ["#formation"], FEEDBACK: ["#feedback"],
+      WEEK_QUESTIONS: ["#questions"], WEBSITE: ["#formation"], FEEDBACK: ["#feedback"], REVIEW_LOW: ["#reviews"],
       LEVEL: [".lv-row.is-focus", "#live-levels"],
       PAYMENT_PROOF: ["#proofs .pf", "#proofs"], PROGRAM_APPROVAL: ["#live-program-grid"],
       COURSE_FILE: [".cf-wait", "#course-files"], PROGRAM_FILE: [".pg-file.is-wait", "#program-files"],
@@ -1003,7 +1006,7 @@
       ASSIGNMENT_PENDING: "Waiting for your decision", CANDIDATE_STATUS: "Their status changed", EMAIL_QUESTION: "The question waiting for you",
       CANDIDATE_EMAIL: "The email received", EMAIL_ANSWERED: "The answer that was sent", EMAIL_FAILED: "This email did not go out", EMAIL_CONFIG: "Set this up",
       CLASS: "This class", REMINDER: "This class was reminded", ASSIGNMENT: "The candidate placed here", PROGRAM_PROPOSAL: "Read and confirm",
-      WEEK_QUESTIONS: "The questions of the week", WEBSITE: "What changed on the website", FEEDBACK: "The new feedback",
+      WEEK_QUESTIONS: "The questions of the week", WEBSITE: "What changed on the website", FEEDBACK: "The new feedback", REVIEW_LOW: "Contact them",
       LEVEL: "Where they start from",
       PAYMENT_PROOF: "The proof to check", PROGRAM_APPROVAL: "The program to approve", COURSE_FILE: "The file waiting for you",
       PROGRAM_FILE: "The file waiting for you", TEAM_MESSAGE: "The message", RESEND: "What was sent again",
@@ -2129,7 +2132,7 @@ document.addEventListener("submit", event => {
 })();
 </script>
 {% block extra_scripts %}{% endblock %}
-{% if current_user and current_user.id %}{% include "_page_tour.html" %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
+{% if current_user and current_user.id %}{% include "_journal.html" %}{% include "_page_tour.html" %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
 {% include "_motion.html" %}
 
 {% if ui_lang != 'en' %}

@@ -101,6 +101,7 @@
     window.removeEventListener("scroll", follow, true);
     if (tour.finish) { const back = document.querySelector(tour.finish); if (back) back.click(); }
     remember();
+    document.dispatchEvent(new CustomEvent("tour:closed"));      // Yasmine's visit goes on from here
   }
   function keys(event) {
     if (event.key === "Escape") close();
