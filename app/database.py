@@ -247,6 +247,9 @@ def ensure_sqlite_compatibility():
             "symbol": "VARCHAR",
             "color": "VARCHAR",
             "opinion_token": "VARCHAR",
+            "delivery_mode": "VARCHAR",
+            "meeting_url": "VARCHAR",
+            "link_asked_at": "DATETIME",
         },
 
         # Professors can be reached, and can be given a login.
@@ -421,7 +424,7 @@ def ensure_sqlite_compatibility():
         },
 
         # Weekly questions are quizzes of a class week, opened with a private link.
-        "class_sessions": {"meeting_url": "VARCHAR", "sheet_asked_at": "DATETIME"},
+        "class_sessions": {"meeting_url": "VARCHAR", "sheet_asked_at": "DATETIME", "substitute_professor_id": "VARCHAR"},
         "attendance": {"participation": "INTEGER", "questions": "INTEGER"},
         "quizzes": {
             "kind": "VARCHAR DEFAULT 'level'",
@@ -461,6 +464,8 @@ def ensure_sqlite_compatibility():
         },
         # The journal's articles: their photo, as their feed gives it.
         "news_items": {"image_url": "VARCHAR"},
+        # The admin's reminders: before each session, how many hours before.
+        "admin_reminders": {"hours_before": "INTEGER"},
     }
 
     with engine.begin() as connection:

@@ -363,6 +363,10 @@
 ". Aucune copie n'a été gardée ; les précédentes sont intactes.",
 ". لم تُحفظ أي نسخة؛ النسخ السابقة سليمة."
 ],
+". No meeting link is needed.": [
+". Aucun lien de réunion n'est nécessaire.",
+". لا حاجة إلى رابط اجتماع."
+],
 ". No open class existed, so": [
 ". Aucune classe ouverte n'existait, donc",
 ". لم يكن هناك قسم مفتوح، لذا"
@@ -398,6 +402,10 @@
 ". One program at a time: they are placed in a class of this program starting about": [
 ". Une formation à la fois : il est placé dans une classe de cette formation qui démarre environ",
 ". برنامج واحد في كل مرة: يوضع في قسم من هذا البرنامج يبدأ بعد نحو"
+],
+". One program at a time: they follow": [
+". Une formation à la fois : il ou elle suit",
+". برنامج واحد في كل مرة: يتابع"
 ],
 ". One reminder goes out by itself 24 hours after the registration.": [
 ". Un rappel part tout seul 24 heures après l'inscription.",
@@ -731,6 +739,10 @@
 "Un candidat",
 "مترشح"
 ],
+"A candidate gets an answer alone only when every point of their message was answered from checked facts. Something your records do not say (an internship, paying in instalments…) is never guessed: the answer waits for you, saying which point. Refunds, cancellations and complaints always come to you, with no draft. When the free daily quota is used up, answers wait for you until the next day.": [
+"Un candidat reçoit une réponse seule uniquement quand chaque point de son message a été répondu à partir de faits vérifiés. Ce que vos données ne disent pas (un stage, un paiement en plusieurs fois…) n'est jamais deviné : la réponse vous attend, en disant quel point. Les remboursements, annulations et réclamations vous arrivent toujours, sans brouillon. Quand le quota gratuit du jour est épuisé, les réponses vous attendent jusqu'au lendemain.",
+"لا يتلقى المترشح إجابة وحدها إلا عندما يُجاب عن كل نقطة من رسالته انطلاقا من معلومات متحقق منها. ما لا تقوله بياناتك (تربص، دفع على أقساط…) لا يُخمَّن أبدا: تنتظرك الإجابة، مع ذكر النقطة. طلبات الاسترجاع والإلغاء والشكاوى تصلك دائما، دون مسودة. عندما تنفد الحصة المجانية لليوم، تنتظرك الإجابات حتى اليوم التالي."
+],
 "A candidate gets one payment reminder by itself, for everything they owe. After three days without payment or answer, you are offered to send it again, by email or on WhatsApp.": [
 "Un candidat reçoit un seul rappel de paiement tout seul, pour tout ce qu'il doit. Après trois jours sans paiement ni réponse, on vous propose de le renvoyer, par email ou sur WhatsApp.",
 "يستلم المترشح تذكير دفع واحدا تلقائيا لكل ما عليه. بعد ثلاثة أيام دون دفع أو رد، يُقترح عليك إعادة إرساله بالبريد أو على WhatsApp."
@@ -783,6 +795,10 @@
 "Une classe est créée quand un candidat paie, ou avec « Créer une classe ».",
 "يُنشأ قسم عندما يدفع مترشح، أو عبر «إنشاء قسم»."
 ],
+"A class is fully online, fully on site, or both. Three days before an online or mixed class starts, its professor is asked for the private meeting link (in the application, by email, WhatsApp and SMS). Once given, every session uses it and each online candidate gets their own link; those on site get none. Still none a day before: you are told.": [
+"Une classe est entièrement en ligne, entièrement sur place, ou les deux. Trois jours avant le début d'une classe en ligne ou mixte, son formateur est sollicité pour le lien privé de la réunion (dans l'application, par email, WhatsApp et SMS). Une fois donné, chaque séance l'utilise et chaque candidat en ligne reçoit son propre lien ; ceux sur place n'en reçoivent pas. Toujours rien la veille : vous êtes prévenu(e).",
+"القسم إما عن بعد بالكامل، أو حضوري بالكامل، أو الاثنان معا. قبل ثلاثة أيام من بداية قسم عن بعد أو مختلط، يُطلب من أستاذه الرابط الخاص للاجتماع (في التطبيق، وبالبريد، وواتساب والرسائل القصيرة). بمجرد تقديمه، تستعمله كل حصة ويتلقى كل مترشح عن بعد رابطه الخاص؛ ولا يتلقى الحاضرون شيئا. وإن لم يُقدَّم قبل يوم: يتم إعلامك."
+],
 "A class is made for the candidates who paid and have no class yet: they are placed in it at once.": [
 "Une classe est faite pour les candidats qui ont payé et n'ont pas encore de classe : ils y sont placés tout de suite.",
 "يُنشأ قسم للمترشحين الذين دفعوا وليس لهم قسم بعد: يوضعون فيه فورا."
@@ -807,9 +823,17 @@
 "Une classe qui n'existe plus",
 "قسم لم يعد موجودا"
 ],
+"A class the moment they pay": [
+"Une classe dès qu'ils paient",
+"قسم بمجرد الدفع"
+],
 "A class took its professor by itself": [
 "Une classe a pris son formateur d'elle-même",
 "قسم أخذ مكوّنه تلقائيا"
+],
+"A class waiting for a professor takes the first one who teaches its program and is free on its start day: no other class at its hours, not away that day. They are told at once in the application, by email, WhatsApp and SMS, with the class's code, its hours and their space.": [
+"Une classe qui attend un formateur prend le premier qui enseigne sa formation et qui est libre le jour où elle démarre : pas d'autre classe à ses horaires, pas absent ce jour-là. Il est prévenu aussitôt dans l'application, par email, WhatsApp et SMS, avec le code de la classe, ses horaires et son espace.",
+"القسم الذي ينتظر أستاذا يأخذ أول من يدرّس برنامجه ويكون متاحا في يوم انطلاقه: لا قسم آخر في مواعيده، وغير غائب ذلك اليوم. ويُخبَر فورا في التطبيق وبالبريد وواتساب والرسائل القصيرة، مع رمز القسم ومواعيده وفضائه."
 ],
 "A class's professor and hours, in its parameters": [
 "Le formateur et les heures d'une classe, dans ses paramètres",
@@ -899,6 +923,10 @@
 "Un ancien candidat qui a trouvé un emploi vient en parler.",
 "مترشح سابق وجد عملا يأتي ليتحدث."
 ],
+"A free professor takes the class, and is told": [
+"Un formateur libre prend la classe, et il est prévenu",
+"أستاذ متاح يأخذ القسم، ويُخبَر بذلك"
+],
 "A good name, with one point to watch.": [
 "Un bon nom, avec un point à surveiller.",
 "اسم جيد، مع نقطة يجب الانتباه إليها."
@@ -955,6 +983,10 @@
 "Un petit coup de main pour vos publications, rien de plus : quand vos gens sont là, un plan pour la semaine, et ce dont on parle. Chaque idée ouvre la publication prête à faire.",
 "مساعدة صغيرة لمنشوراتك، لا أكثر: متى يكون جمهورك حاضرا، وخطة للأسبوع، وما يُتحدث عنه. كل فكرة تفتح المنشور جاهزا للإعداد."
 ],
+"A long answer shows its first lines, or for a list its first names and how many more; “More” opens the whole of it. Her voice reads the short one.": [
+"Une longue réponse montre ses premières lignes, ou pour une liste ses premiers noms et combien d'autres ; « Plus » ouvre le tout. Sa voix lit la version courte.",
+"الجواب الطويل يُظهر أسطره الأولى، أو للقائمة أسماءها الأولى وكم بقي؛ «المزيد» يفتحه كاملا. صوتها يقرأ النسخة القصيرة."
+],
 "A man's voice": [
 "Une voix d'homme",
 "صوت رجل"
@@ -994,6 +1026,10 @@
 "A moment to catch up": [
 "Un moment pour rattraper",
 "وقت للاستدراك"
+],
+"A moving picture with each answer": [
+"Une image animée avec chaque réponse",
+"صورة متحركة مع كل جواب"
 ],
 "A music file already added": [
 "Un fichier de musique déjà ajouté",
@@ -1115,6 +1151,18 @@
 "Un professeur",
 "أستاذ"
 ],
+"A professor absent, a candidate who has not paid, a class without a professor, an unhappy candidate, a refund, a missing meeting link, a message that did not arrive: ask “what do I do?” and she says what the application already does by itself, what is left to you, and how things stand now.": [
+"Un formateur absent, un candidat qui n'a pas payé, une classe sans formateur, un candidat mécontent, un remboursement, un lien de réunion qui manque, un message qui n'est pas arrivé : demandez « je fais quoi ? » et elle dit ce que l'application fait déjà d'elle-même, ce qui vous reste à faire, et où en sont les choses.",
+"مكوّن غائب، مترشح لم يدفع، قسم دون مكوّن، مترشح غير راضٍ، استرجاع مبلغ، رابط اجتماع ناقص، رسالة لم تصل: اسأل «ما العمل؟» وتقول ما يقوم به التطبيق من تلقاء نفسه، وما يبقى عليك، وأين وصلت الأمور."
+],
+"A professor absent, a candidate who has not paid, a missing link…: what the application does by itself, what is left to you.": [
+"Un formateur absent, un candidat qui n'a pas payé, un lien qui manque… : ce que l'application fait d'elle-même, ce qui vous reste à faire.",
+"مكوّن غائب، مترشح لم يدفع، رابط ناقص…: ما يقوم به التطبيق من تلقاء نفسه، وما يبقى عليك."
+],
+"A professor away: a replacement for that day only": [
+"Un formateur absent : un remplaçant pour ce jour seulement",
+"أستاذ غائب: بديل لذلك اليوم فقط"
+],
 "A professor who already works with you": [
 "Un formateur qui travaille déjà avec vous",
 "مكوّن يعمل معك مسبقا"
@@ -1122,6 +1170,10 @@
 "A professor who is no longer here": [
 "Un professeur qui n'est plus là",
 "أستاذ لم يعد هنا"
+],
+"A professor whose class still runs is never given another class at the same hours until the whole class is over, even when it runs past its planned end.": [
+"Un formateur dont la classe tourne encore ne reçoit jamais une autre classe aux mêmes horaires avant que toute la classe soit terminée, même quand elle dépasse sa fin prévue.",
+"الأستاذ الذي لا يزال قسمه جاريا لا يُعطى أبدا قسما آخر في نفس المواعيد قبل انتهاء القسم بأكمله، حتى إن تجاوز نهايته المبرمجة."
 ],
 "A professor's assistant": [
 "L'assistant d'un formateur",
@@ -1175,6 +1227,10 @@
 "Une question qui nomme un programme va à son propre agent.",
 "السؤال الذي يذكر برنامجًا يذهب إلى وكيله الخاص."
 ],
+"A question to Yasmine or a candidate's email is now understood by a cloud model, in French, English, Arabic or Tunisian: it picks what to look up in your records (classes, sessions, payments, professors, programs, the centre, what you taught) and writes the answer from that only. Every figure, date, link and phone number is checked against your records; an answer with something they do not show is never given.": [
+"Une question à Yasmine ou l'email d'un candidat est maintenant compris par un modèle en ligne, en français, anglais, arabe ou tunisien : il choisit quoi consulter dans vos données (classes, séances, paiements, formateurs, formations, le centre, ce que vous avez appris à l'assistant) et n'écrit la réponse qu'à partir de cela. Chaque chiffre, date, lien et numéro de téléphone est vérifié dans vos données ; une réponse avec quelque chose qu'elles ne montrent pas n'est jamais donnée.",
+"أصبح سؤال يُطرح على ياسمين أو بريد مترشح يُفهم بواسطة نموذج عبر الإنترنت، بالفرنسية أو الإنجليزية أو العربية أو التونسية: يختار ما يستشيره في بياناتك (الأقسام، الحصص، الدفوعات، المكوّنون، البرامج، المركز، ما علّمته للمساعد) ولا يكتب الإجابة إلا انطلاقا منه. يُتحقق من كل رقم وتاريخ ورابط ورقم هاتف في بياناتك؛ ولا تُقدَّم أبدا إجابة فيها شيء لا تُظهره."
+],
 "A question, read as an opinion": [
 "Une question, lue comme un avis",
 "سؤال قُرئ كرأي"
@@ -1214,6 +1270,10 @@
 "A request comes": [
 "Une demande arrive",
 "يصل طلب"
+],
+"A review of 1 to 3 stars stays private: they are thanked, and you are told to call them.": [
+"Un avis de 1 à 3 étoiles reste privé : il est remercié, et on vous dit de l'appeler.",
+"التقييم من 1 إلى 3 نجوم يبقى خاصا: يُشكر صاحبه، ويُطلب منك الاتصال به."
 ],
 "A review of the month": [
 "Une révision du mois",
@@ -1443,6 +1503,10 @@
 "Absent deux fois de suite",
 "غائب مرتين متتاليتين"
 ],
+"Absent: send “We missed you” before their next session, or call them.": [
+"Absent : envoyez « Vous nous avez manqué » avant sa prochaine séance, ou appelez-le.",
+"غائب: أرسل «افتقدناك» قبل حصته القادمة، أو اتصل به."
+],
 "Accent colour": [
 "Couleur d'accent",
 "لون التمييز"
@@ -1494,6 +1558,10 @@
 "Achievable and relevant": [
 "Atteignable et pertinent",
 "قابل للتحقيق وملائم"
+],
+"Act on why, without waiting: absent, “We missed you” or a call; questions waiting, a reminder; low results, a catch-up; wants to stop, a call and a later class.": [
+"Agissez sur la raison, sans attendre : absent, « Vous nous avez manqué » ou un appel ; questions en attente, un rappel ; résultats faibles, un rattrapage ; veut arrêter, un appel et une classe plus tard.",
+"تصرّف حسب السبب، دون انتظار: غائب، «افتقدناك» أو مكالمة؛ أسئلة تنتظر، تذكير؛ نتائج ضعيفة، استدراك؛ يريد التوقف، مكالمة وقسم لاحق."
 ],
 "Actions": [
 "Actions",
@@ -1867,6 +1935,10 @@
 "Après un jour, puis vous après deux",
 "بعد يوم، ثم أنت بعد يومين"
 ],
+"After that, call them, or send it again yourself: their file › Payment reminder.": [
+"Ensuite, appelez-le, ou renvoyez-le vous-même : sa fiche › Rappel de paiement.",
+"بعد ذلك، اتصل به، أو أعد إرساله بنفسك: ملفه › تذكير بالدفع."
+],
 "After the session": [
 "Après la séance",
 "بعد الحصة"
@@ -2123,6 +2195,10 @@
 "Un email a besoin d'un objet et d'un texte.",
 "البريد يحتاج موضوعا ونصا."
 ],
+"An email that failed is tried again once by itself, within 48 hours.": [
+"Un email qui a échoué est réessayé une fois de lui-même, dans les 48 heures.",
+"البريد الذي فشل يُعاد إرساله مرة واحدة من تلقاء نفسه، خلال 48 ساعة."
+],
 "An empty line starts a new paragraph, lines starting with “-” become a list, **two stars** make bold, and a paragraph that starts with [box] becomes a coloured square. Your signature is added automatically.": [
 "Une ligne vide commence un nouveau paragraphe, les lignes qui commencent par « - » deviennent une liste, **deux étoiles** mettent en gras, et un paragraphe qui commence par [box] devient un carré coloré. Votre signature est ajoutée automatiquement.",
 "السطر الفارغ يبدأ فقرة جديدة، الأسطر التي تبدأ بـ «-» تصبح قائمة، **نجمتان** للخط الغليظ، والفقرة التي تبدأ بـ [box] تصبح مربّعا ملوّنا. يُضاف توقيعك تلقائيا."
@@ -2259,6 +2335,10 @@
 "Leur répondre",
 "الإجابة عليهم"
 ],
+"Answer them yourself, soon; a call often does better than a message.": [
+"Répondez-lui vous-même, vite ; un appel fait souvent mieux qu'un message.",
+"أجبه بنفسك، سريعا؛ فالمكالمة غالبا أنجع من الرسالة."
+],
 "Answer them: we listen": [
 "Leur répondre : nous écoutons",
 "الرد عليهم: نحن نسمع"
@@ -2378,6 +2458,18 @@
 "Any other colour": [
 "Toute autre couleur",
 "أي لون آخر"
+],
+"Any question, in any wording or language": [
+"Toute question, dans n'importe quelle formulation ou langue",
+"أي سؤال، بأي صياغة أو لغة"
+],
+"Any question, in any wording or language: understood by the cloud model, answered only from the application's records, every figure checked.": [
+"Toute question, dans n'importe quelle formulation ou langue : comprise par le modèle en ligne, répondue uniquement à partir des données de l'application, chaque chiffre vérifié.",
+"أي سؤال، بأي صياغة أو لغة: يفهمه النموذج عبر الإنترنت، ويُجاب عنه انطلاقا من بيانات التطبيق فقط، مع التحقق من كل رقم."
+],
+"Any question, in any wording: the cloud model picks what to look up and writes from it, every figure checked; otherwise the subject's agent answers.": [
+"Toute question, dans n'importe quelle formulation : le modèle en ligne choisit quoi consulter et écrit à partir de cela, chaque chiffre vérifié ; sinon l'agent du sujet répond.",
+"أي سؤال، بأي صياغة: يختار النموذج عبر الإنترنت ما يستشيره ويكتب انطلاقا منه، مع التحقق من كل رقم؛ وإلا يجيب وكيل الموضوع."
 ],
 "Any text as a PDF": [
 "N'importe quel texte en PDF",
@@ -2550,6 +2642,14 @@
 "Ask Yasmine for this week's plan": [
 "Demander à Yasmine le plan de la semaine",
 "اسأل ياسمين عن خطة الأسبوع"
+],
+"Ask Yasmine to sum up a candidate, their discussion, a class, a program, the day, the week, the page you are on, a text pasted after the word, or her last answer, in any language. From the records, in a few lines, with the place to open.": [
+"Demandez à Yasmine de résumer un candidat, sa discussion, une classe, une formation, la journée, la semaine, la page où vous êtes, un texte collé après le mot, ou sa dernière réponse, dans n'importe quelle langue. À partir des fiches, en quelques lignes, avec l'endroit à ouvrir.",
+"اطلب من ياسمين تلخيص مترشح، أو محادثته، أو قسم، أو برنامج، أو اليوم، أو الأسبوع، أو الصفحة التي أنت فيها، أو نص ملصوق بعد الكلمة، أو ردّها الأخير، بأي لغة. من السجلات، في بضعة أسطر، مع المكان الذي يُفتح."
+],
+"Ask Yasmine “someone is about to drop out, what can I do?” in any language: she says what to do for each reason (absences, questions not answered, results, money owed, what they wrote, wanting to stop), then who may drop out right now, with the message already prepared for each and when to send it. Name someone and she answers for them.": [
+"Demandez à Yasmine « quelqu'un va abandonner, je fais quoi ? » dans n'importe quelle langue : elle dit quoi faire pour chaque raison (absences, questions sans réponse, résultats, argent dû, ce qu'il a écrit, l'envie d'arrêter), puis qui risque d'abandonner en ce moment, avec le message déjà préparé pour chacun et quand l'envoyer. Nommez quelqu'un et elle répond pour lui.",
+"اسأل ياسمين «أحدهم على وشك الانقطاع، ما العمل؟» بأي لغة: تقول ما العمل لكل سبب (الغيابات، الأسئلة دون إجابة، النتائج، المبلغ المستحق، ما كتبه، الرغبة في التوقف)، ثم من قد ينقطع حاليا، مع الرسالة المعدّة مسبقا لكل واحد ومتى تُرسل. سمِّ أحدا وتجيب عنه."
 ],
 "Ask a question": [
 "Poser une question",
@@ -2975,6 +3075,18 @@
 "Avant qu'une semaine soit enseignée, si elle n'a encore aucune ressource (diapositives, exercices, une vidéo), son formateur reçoit un message : dans l'application, par email et sur WhatsApp. Une fois par classe et par semaine.",
 "قبل تدريس أسبوع لا يحتوي بعد على أي مورد (شرائح، تمارين، فيديو)، يستلم مكوّنه رسالة واحدة: في التطبيق وبالبريد وعلى WhatsApp. مرة واحدة لكل قسم ولكل أسبوع."
 ],
+"Before each of their sessions": [
+"Avant chacune de leurs séances",
+"قبل كل حصة من حصصهم"
+],
+"Before each session: from 1 to 168 hours before.": [
+"Avant chaque séance : de 1 à 168 heures avant.",
+"قبل كل حصة: من 1 إلى 168 ساعة قبلها."
+],
+"Before each session: write how many hours before (1 to 168).": [
+"Avant chaque séance : écrivez combien d'heures avant (1 à 168).",
+"قبل كل حصة: اكتب كم ساعة قبلها (من 1 إلى 168)."
+],
 "Before it can start": [
 "Avant qu'elle puisse démarrer",
 "قبل أن يتمكن من البدء"
@@ -3230,6 +3342,10 @@
 "Call them": [
 "L'appeler",
 "الاتصال به"
+],
+"Call them and ask how it is going.": [
+"Appelez-le et demandez-lui comment ça va.",
+"اتصل به واسأله كيف تسير الأمور."
 ],
 "Callback URL": [
 "URL de rappel",
@@ -4190,6 +4306,10 @@
 "Class started.": [
 "Classe démarrée.",
 "بدأ القسم."
+],
+"Classe": [
+"Classe",
+"القسم"
 ],
 "Classes and candidates": [
 "Classes et candidats",
@@ -5543,6 +5663,10 @@
 "Chaque lundi, un seul message avec les séances de la semaine et les questions encore en attente. Un candidat reçoit au plus 4 messages automatiques en sept jours ; au-delà, ce qui peut attendre va dans la lettre.",
 "كل يوم اثنين، رسالة واحدة فيها حصص الأسبوع والأسئلة التي ما زالت تنتظر. يتلقى المترشح 4 رسائل تلقائية على الأكثر في سبعة أيام؛ وما يزيد وما يمكنه الانتظار يذهب في الرسالة."
 ],
+"Each answer comes with the animated picture of its subject (payments, sessions, candidates…), and the news with a real photo from the journal that slowly moves.": [
+"Chaque réponse vient avec l'image animée de son sujet (paiements, séances, candidats…), et l'actualité avec une vraie photo du journal qui bouge doucement.",
+"يأتي كل جواب مع الصورة المتحركة لموضوعه (المدفوعات، الحصص، المترشحون…)، والأخبار مع صورة حقيقية من الجريدة تتحرك ببطء."
+],
 "Each answer one by one, the level and how they behaved.": [
 "Chaque réponse une à une, le niveau et le comportement.",
 "كل إجابة على حدة، والمستوى والسلوك."
@@ -5666,6 +5790,14 @@
 "Each novelty, and the place to find it.": [
 "Chaque nouveauté, et l'endroit où la trouver.",
 "كل جديد، والمكان الذي تجده فيه."
+],
+"Each of their sessions on those days asks a professor of the program who is free to replace them, one at a time, by a private link to confirm; you are told if nobody can.": [
+"Chacune de ses séances ces jours-là sollicite un formateur de la formation libre pour le remplacer, un à la fois, avec un lien privé pour confirmer ; vous êtes prévenu(e) si personne ne peut.",
+"تطلب كل حصة من حصصه في تلك الأيام من مكوّن متاح من البرنامج أن يعوّضه، واحدا تلو الآخر، برابط خاص للتأكيد؛ ويتم إعلامك إن لم يستطع أحد."
+],
+"Each of their sessions on those days then asks a professor of the program who is free then, one at a time, by a private link to confirm.": [
+"Chacune de ses séances ces jours-là sollicite alors un formateur de la formation libre à ce moment, un à la fois, avec un lien privé pour confirmer.",
+"تطلب حينها كل حصة من حصصه في تلك الأيام من مكوّن من البرنامج متاح وقتها، واحدا تلو الآخر، برابط خاص للتأكيد."
 ],
 "Each of them then": [
 "Chacun ensuite",
@@ -6235,6 +6367,10 @@
 "Chaque jour",
 "كل يوم"
 ],
+"Every day, week or month: it goes again at the same hour, until the last day you choose (or until you stop it). Before each of their sessions: it goes to each candidate the number of hours you choose before each of their sessions; the buttons below write that session's day, hour and topic. Each time a candidate is marked absent: it waits, and goes to that candidate the moment their absence is marked.": [
+"Chaque jour, semaine ou mois : il repart à la même heure, jusqu'au dernier jour choisi (ou jusqu'à ce que vous l'arrêtiez). Avant chacune de leurs séances : il va à chaque candidat le nombre d'heures choisi avant chacune de ses séances ; les boutons ci-dessous écrivent le jour, l'heure et le sujet de cette séance. À chaque absence d'un candidat : il attend, et part vers ce candidat au moment où son absence est notée.",
+"كل يوم أو أسبوع أو شهر: يُرسل من جديد في الساعة نفسها، حتى آخر يوم تختاره (أو حتى توقفه). قبل كل حصة من حصصهم: يُرسل إلى كل مترشح بعدد الساعات الذي تختاره قبل كل حصة من حصصه؛ الأزرار أدناه تكتب يوم تلك الحصة وساعتها وموضوعها. عند كل غياب لمترشح: ينتظر، ثم يُرسل إليه لحظة تسجيل غيابه."
+],
 "Every email a candidate sends, and everything the system or you answered, is kept here.": [
 "Chaque email envoyé par un candidat, et tout ce que le système ou vous avez répondu, est gardé ici.",
 "كل بريد يرسله مترشح، وكل ما أجاب به النظام أو أنت، محفوظ هنا."
@@ -6651,6 +6787,14 @@
 "Tout ce qui a été lu est encore sur le site",
 "كل ما قُرئ ما زال على الموقع"
 ],
+"Everything that did not reach someone is in Inbox › Didn't reach them, with why; an email that failed is tried again once by itself.": [
+"Tout ce qui n'est pas parvenu à quelqu'un est dans Boîte de réception › Ne leur est pas parvenu, avec la raison ; un email qui a échoué est réessayé une fois de lui-même.",
+"كل ما لم يصل إلى أحد موجود في البريد الوارد › لم يصلهم، مع السبب؛ والبريد الذي فشل يُعاد إرساله مرة واحدة من تلقاء نفسه."
+],
+"Everything that did not reach someone is in one list, with why in plain words: Inbox › Didn't reach them.": [
+"Tout ce qui n'est pas parvenu à quelqu'un est dans une seule liste, avec la raison en mots simples : Boîte de réception › Ne leur est pas parvenu.",
+"كل ما لم يصل إلى أحد موجود في قائمة واحدة، مع السبب بكلمات بسيطة: البريد الوارد › لم يصلهم."
+],
 "Everything that matches what you typed: people, pages, settings and actions.": [
 "Tout ce qui correspond à ce que vous avez tapé : personnes, pages, réglages et actions.",
 "كل ما يطابق ما كتبته: أشخاص وصفحات وإعدادات وإجراءات."
@@ -7043,6 +7187,10 @@
 "Suivez le point : c'est le chemin de chaque candidat. À chaque étape, l'application fait toute seule la partie répétitive et ne vous apporte que ce qui demande une personne.",
 "اتبع النقطة: إنها الطريق الذي يسلكه كل مترشح. في كل محطة، يقوم التطبيق تلقائيا بالجزء المتكرر ولا يعرض عليك إلا ما يحتاج إلى شخص."
 ],
+"Follow-up agent": [
+"Agent du suivi",
+"وكيل المتابعة"
+],
 "Follow-up: nothing lost, less noise": [
 "Suivi : rien de perdu, moins de bruit",
 "المتابعة: لا شيء يضيع، وضجيج أقل"
@@ -7319,6 +7467,10 @@
 "À partir de chaque message qu'il a envoyé (email, WhatsApp, SMS), lu avec des listes de mots en français, anglais, tunisien et arabe.",
 "من كل رسالة أرسلها (بريد، WhatsApp، SMS)، مقروءة بقوائم كلمات بالفرنسية والإنجليزية والتونسية والعربية."
 ],
+"From its candidates' choices": [
+"D'après les choix de ses candidats",
+"حسب اختيارات مترشحيه"
+],
 "From now on, a reply to the opinion email like this one is read as a question, not as an opinion.": [
 "Désormais, une réponse à l'email d'avis comme celle-ci est lue comme une question, pas comme un avis.",
 "من الآن، يُقرأ الرد على رسالة طلب الرأي المماثل لهذا كسؤال، لا كرأي."
@@ -7342,6 +7494,10 @@
 "From the course": [
 "D'après le cours",
 "من الدرس"
+],
+"From the list: send it again, open WhatsApp, call, or mark it “not needed any more”.": [
+"Depuis la liste : renvoyez-le, ouvrez WhatsApp, appelez, ou marquez-le « plus nécessaire ».",
+"من القائمة: أعد إرساله، أو افتح واتساب، أو اتصل، أو علّمه «لم يعد ضروريا»."
 ],
 "From the program": [
 "De la formation",
@@ -7398,6 +7554,14 @@
 "Full name": [
 "Nom complet",
 "الاسم الكامل"
+],
+"Fully on site": [
+"Entièrement sur place",
+"حضوريا بالكامل"
+],
+"Fully online": [
+"Entièrement en ligne",
+"عن بعد بالكامل"
 ],
 "Gave their week a": [
 "A donné à sa semaine un",
@@ -7839,6 +8003,10 @@
 "Heure",
 "الساعة"
 ],
+"Hour of the session": [
+"Heure de la séance",
+"ساعة الحصة"
+],
 "Hours / Week": [
 "Heures / semaine",
 "ساعات / أسبوع"
@@ -7858,6 +8026,10 @@
 "Hours and duration come from your other programs; the description and weekly plan are written by the assistant. Nothing is saved until you accept.": [
 "Les heures et la durée viennent de vos autres formations ; la description et le plan hebdomadaire sont écrits par l'assistant. Rien n'est enregistré avant que vous acceptiez.",
 "الساعات والمدة تأتي من برامجك الأخرى؛ الوصف والخطة الأسبوعية يكتبهما المساعد. لا يُحفظ شيء قبل أن تقبل."
+],
+"Hours before each session": [
+"Heures avant chaque séance",
+"ساعات قبل كل حصة"
 ],
 "Hours not set": [
 "Heures non fixées",
@@ -7930,6 +8102,10 @@
 "How it is doing": [
 "Comment ça va",
 "كيف تسير الأمور"
+],
+"How it is followed": [
+"Comment elle est suivie",
+"كيف يُتابَع"
 ],
 "How it is working › Everything it does for you, by itself: each one, when, whether it is on, and where to change it.": [
 "État du système › Tout ce qu'il fait pour vous, tout seul : chaque chose, quand, si elle est activée, et où la changer.",
@@ -8159,6 +8335,10 @@
 "Comment marchent vos publications",
 "كيف تنجح منشوراتك"
 ],
+"However the payment arrives (recorded, a proof confirmed, the form, the quick confirm), a fully paid candidate joins an open class of their program, or a new class is made for them. Someone already in a class is placed at once in a class that starts some days after it ends (one program at a time), instead of waiting for your decision. You get one notification with the class's code.": [
+"Quelle que soit l'arrivée du paiement (enregistré, une preuve confirmée, le formulaire, la confirmation rapide), un candidat qui a tout payé rejoint une classe ouverte de sa formation, ou une nouvelle classe est créée pour lui. Quelqu'un qui suit déjà une classe est placé aussitôt dans une classe qui démarre quelques jours après sa fin (une formation à la fois), au lieu d'attendre votre décision. Vous recevez une seule notification avec le code de la classe.",
+"مهما كانت طريقة وصول الدفع (مسجّل، إثبات مؤكَّد، الاستمارة، التأكيد السريع)، ينضم المترشح الذي دفع كامل المبلغ إلى قسم مفتوح لبرنامجه، أو يُنشأ له قسم جديد. ومن يتابع قسما بالفعل يُوضع فورا في قسم يبدأ بعد بضعة أيام من نهايته (برنامج واحد في كل مرة)، بدل انتظار قرارك. تتلقى إشعارا واحدا برمز القسم."
+],
 "Hugging Face": [
 "Hugging Face",
 "Hugging Face"
@@ -8283,6 +8463,10 @@
 "Si la vidéo reste noire, elle n'est pas partagée publiquement sur Google Drive : « Ouvrir à l'extérieur », ou demandez qu'elle soit partagée avec « tous ceux qui ont le lien ».",
 "إذا بقي الفيديو أسود، فهو غير مشارك علنا على Google Drive: «فتح خارجيا»، أو اطلب مشاركته مع «كل من لديه الرابط»."
 ],
+"If they wrote they are frustrated or worried, they also appear under “Who may drop out” on the dashboard.": [
+"S'il a écrit être frustré ou inquiet, il apparaît aussi dans « Qui risque d'abandonner » sur le tableau de bord.",
+"إن كتب أنه محبط أو قلق، يظهر أيضا في «من قد ينقطع» في لوحة القيادة."
+],
 "If this address has an account, an email is on its way with a link to choose a new password. It is valid for one hour and works once. Nothing came? Look in the spam folder, or ask the admin.": [
 "Si cette adresse a un compte, un email arrive avec un lien pour choisir un nouveau mot de passe. Il est valable une heure et ne sert qu'une fois. Rien reçu ? Regardez dans les spams, ou demandez à l'admin.",
 "إن كان لهذا العنوان حساب، فرسالة في الطريق برابط لاختيار كلمة مرور جديدة. صالح لمدة ساعة ويعمل مرة واحدة. لم يصلك شيء؟ انظر في البريد غير المرغوب، أو اسأل المسؤول."
@@ -8398,6 +8582,10 @@
 "In the project folder, run “pip install reportlab”, then restart the application.": [
 "Dans le dossier du projet, lancez « pip install reportlab », puis redémarrez l'application.",
 "في مجلد المشروع، شغّل «pip install reportlab»، ثم أعد تشغيل التطبيق."
+],
+"In the room": [
+"En salle",
+"في القاعة"
 ],
 "In the session": [
 "Dans la séance",
@@ -8683,6 +8871,10 @@
 "C'est celle-ci",
 "إنه هذا"
 ],
+"It is used for every session. Your online candidates never see it: each gets their own link, which opens it around the session's hours and notes when they arrived.": [
+"Il sert à chaque séance. Vos candidats en ligne ne le voient jamais : chacun reçoit son propre lien, qui l'ouvre autour des horaires de la séance et note son arrivée.",
+"يُستعمل في كل حصة. لا يراه مترشحوك عن بعد أبدا: كل واحد يتلقى رابطه الخاص، الذي يفتحه حول مواعيد الحصة ويسجّل وقت وصوله."
+],
 "It leaves this list; it stays in the discussion": [
 "Il quitte cette liste ; il reste dans la discussion",
 "تخرج من هذه القائمة؛ وتبقى في المحادثة"
@@ -8747,6 +8939,14 @@
 "Il attend votre téléphone (WhatsApp ou SMS).",
 "ينتظر هاتفك (WhatsApp أو SMS)."
 ],
+"It waits: a class does not start without a professor of its program.": [
+"Elle attend : une classe ne commence pas sans un formateur de sa formation.",
+"ينتظر: لا يبدأ قسم دون مكوّن من برنامجه."
+],
+"It waits: a class does not start without a professor. Choose one in the class's parameters, or add a professor to its program.": [
+"Elle attend : une classe ne commence pas sans formateur. Choisissez-en un dans les paramètres de la classe, ou ajoutez un formateur à sa formation.",
+"ينتظر: لا يبدأ قسم دون مكوّن. اختر واحدا في إعدادات القسم، أو أضف مكوّنا إلى برنامجه."
+],
 "It was marked by hand as not needing an answer.": [
 "Il a été marqué à la main comme n'ayant pas besoin de réponse.",
 "تم تعليمه يدويا على أنه لا يحتاج ردا."
@@ -8766,6 +8966,10 @@
 "It was waiting for a professor: this one teaches its program and is free at its hours. Its candidates are told how to reach them.": [
 "Elle attendait un formateur : celui-ci enseigne sa formation et est libre à ses heures. Ses candidats apprennent comment le joindre.",
 "كان ينتظر مكوّنا: هذا المكوّن يدرّس برنامجه ومتفرّغ في ساعاته. يُعلَم مترشحوه بكيفية التواصل معه."
+],
+"It was waiting for a professor: this one teaches its program, is free at its hours and not away on its first day. They were told in the application, by email, WhatsApp and SMS; its candidates are told how to reach them.": [
+"Elle attendait un formateur : celui-ci enseigne sa formation, est libre à ses horaires et n'est pas absent le premier jour. Il a été prévenu dans l'application, par email, WhatsApp et SMS ; ses candidats apprennent comment le joindre.",
+"كان ينتظر أستاذا: هذا الأستاذ يدرّس برنامجه، ومتاح في مواعيده وغير غائب في يومه الأول. تم إخباره في التطبيق وبالبريد وواتساب والرسائل القصيرة؛ ويُخبَر مترشحوه بكيفية التواصل معه."
 ],
 "It watches": [
 "Il surveille",
@@ -8847,6 +9051,10 @@
 "Son lien (facultatif",
 "رابطه (اختياري"
 ],
+"Its meeting link": [
+"Son lien de réunion",
+"رابط اجتماعه"
+],
 "Its music, or your own": [
 "Sa musique, ou la vôtre",
 "موسيقاه، أو موسيقاك"
@@ -8874,6 +9082,22 @@
 "Its posts, read and learnt by the assistant.": [
 "Ses publications, lues et apprises par l'assistant.",
 "منشوراتها، يقرؤها المساعد ويتعلّمها."
+],
+"Its professor is asked for it 3 days before the start": [
+"Son formateur le donne 3 jours avant le début",
+"يُطلب من أستاذه قبل 3 أيام من البداية"
+],
+"Its professor is asked for it 3 days before the start; you can also paste it in the class's parameters. Still none the day before: you are told.": [
+"Son formateur est sollicité 3 jours avant le début ; vous pouvez aussi le coller dans les paramètres de la classe. Toujours rien la veille : vous êtes prévenu(e).",
+"يُطلب من مكوّنه قبل 3 أيام من البداية؛ ويمكنك أيضا لصقه في إعدادات القسم. وإن لم يُقدَّم قبل يوم: يتم إعلامك."
+],
+"Its professor is asked for the meeting link 3 days before the start; it then goes to the online candidates.": [
+"Son formateur est sollicité pour le lien de réunion 3 jours avant le début ; il part ensuite vers les candidats en ligne.",
+"يُطلب من أستاذه رابط الاجتماع قبل 3 أيام من البداية؛ ثم يُرسل إلى المترشحين عن بعد."
+],
+"Its professor was asked for the meeting link": [
+"Son formateur a été sollicité pour le lien de réunion le",
+"طُلب من أستاذه رابط الاجتماع في"
 ],
 "Its program": [
 "Sa formation",
@@ -8906,6 +9130,10 @@
 "Its timing": [
 "Son moment",
 "توقيتها"
+],
+"Its topic": [
+"Son sujet",
+"موضوعها"
 ],
 "Its values": [
 "Ses valeurs",
@@ -8950,6 +9178,10 @@
 "Java Spring Boot Angular developer": [
 "Développeur Java Spring Boot Angular",
 "مطوّر Java Spring Boot Angular"
+],
+"Je confirme": [
+"Je confirme",
+"أؤكد"
 ],
 "Je serai absent samedi": [
 "Je serai absent samedi",
@@ -9078,6 +9310,10 @@
 "Keep yours or take the website's": [
 "Garder le vôtre ou prendre celui du site",
 "الإبقاء على نسختك أو أخذ نسخة الموقع"
+],
+"Keep “refund” in Settings › Assistant's rules so that it never talks about one by itself.": [
+"Gardez « remboursement » dans Paramètres › Règles de l'assistant pour qu'il n'en parle jamais de lui-même.",
+"أبقِ «استرجاع المبلغ» في الإعدادات › قواعد المساعد حتى لا يتحدث عنه أبدا من تلقاء نفسه."
 ],
 "Keeps the classes in order": [
 "Garde les classes en ordre",
@@ -9294,6 +9530,10 @@
 "Left unassigned for now.": [
 "Laissé sans affectation pour l'instant.",
 "تُرك دون إسناد حاليا."
+],
+"Less": [
+"Moins",
+"أقل"
 ],
 "Let it answer alone": [
 "Le laisser répondre seul",
@@ -9575,6 +9815,10 @@
 "Résultat faible et confiance faible : il a besoin d'aide maintenant, avant la prochaine séance.",
 "نتيجة ضعيفة وثقة ضعيفة: يحتاج مساعدة الآن، قبل الحصة القادمة."
 ],
+"Low results: offer them a moment to catch up on the week.": [
+"Résultats faibles : proposez-lui un moment pour rattraper la semaine.",
+"نتائج ضعيفة: اقترح عليه وقتا لاستدراك الأسبوع."
+],
 "Loyal": [
 "Fidèle",
 "وفيّ"
@@ -9854,6 +10098,18 @@
 "Meet them": [
 "Les découvrir",
 "تعرّف عليهم"
+],
+"Meeting link (online": [
+"Lien de la réunion (en ligne",
+"رابط الاجتماع (عن بعد"
+],
+"Meeting link given: every session uses it, and each online candidate gets their own link.": [
+"Lien de réunion donné : chaque séance l'utilise, et chaque candidat en ligne reçoit son propre lien.",
+"تم تقديم رابط الاجتماع: كل حصة تستعمله، وكل مترشح عن بعد يتلقى رابطه الخاص."
+],
+"Meeting links before the start, and a replacement for the day": [
+"Les liens de réunion avant le début, et un remplaçant pour la journée",
+"روابط الاجتماع قبل البداية، وبديل لليوم"
 ],
 "Meeting links used": [
 "Liens de réunion utilisés",
@@ -10779,6 +11035,10 @@
 "N'est plus sur le site",
 "لم يعد على الموقع"
 ],
+"No meeting link yet": [
+"Pas encore de lien de réunion",
+"لا رابط اجتماع بعد"
+],
 "No message and no session yet": [
 "Pas encore de message ni de séance",
 "لا رسالة ولا حصة بعد"
@@ -10910,6 +11170,10 @@
 "No professor profile": [
 "Pas de profil de formateur",
 "لا يوجد ملف مكوّن"
+],
+"No professor teaches its program yet: add one to it in Classes › Professors › Who teaches each program.": [
+"Aucun formateur n'enseigne encore sa formation : ajoutez-en un dans Classes › Formateurs › Qui enseigne chaque formation.",
+"لا مكوّن يدرّس برنامجه بعد: أضف واحدا في الأقسام › المكوّنون › من يدرّس كل برنامج."
 ],
 "No professor yet": [
 "Pas encore de formateur",
@@ -11207,9 +11471,17 @@
 "Personne n'attend de classe",
 "لا أحد ينتظر قسما"
 ],
+"Nobody left: you are told, and the class page shows it; then find someone or move the session.": [
+"Plus personne : vous êtes prévenu(e), et la page de la classe l'indique ; trouvez alors quelqu'un ou déplacez la séance.",
+"لم يبق أحد: يتم إعلامك، وتظهر ذلك صفحة القسم؛ فابحث عن أحد أو انقل الحصة."
+],
 "Nobody said yet.": [
 "Personne ne l'a encore dit.",
 "لم يقل أحد بعد."
+],
+"Nobody seems about to drop out right now.": [
+"Personne ne semble sur le point d'abandonner en ce moment.",
+"لا يبدو أن أحدا على وشك الانقطاع حاليا."
 ],
 "Nobody seems about to drop out.": [
 "Personne ne semble sur le point d'abandonner.",
@@ -11514,6 +11786,10 @@
 "Nothing changed: emails are sent from": [
 "Rien n'a changé : les emails partent de",
 "لم يتغيّر شيء: تُرسل الرسائل من"
+],
+"Nothing else: it never answers from memory": [
+"Rien d'autre : il ne répond jamais de mémoire",
+"لا شيء غير ذلك: لا يجيب أبدا من ذاكرته"
 ],
 "Nothing found for “": [
 "Rien trouvé pour «",
@@ -11947,6 +12223,10 @@
 "Prix en présentiel (DT",
 "السعر الحضوري (د.ت"
 ],
+"On: any question is understood, then answered only from your records": [
+"Activé : chaque question est comprise, puis répondue uniquement à partir de vos données",
+"مفعّل: كل سؤال يُفهم، ثم يُجاب عنه انطلاقا من بياناتك فقط"
+],
 "On: click to switch it off": [
 "Activé : cliquez pour le désactiver",
 "مفعّل: انقر لإيقافه"
@@ -11962,6 +12242,10 @@
 "Once a day": [
 "Une fois par jour",
 "مرة في اليوم"
+],
+"Once given, every session uses it and each online candidate gets their own link; those on site get none.": [
+"Une fois donné, chaque séance l'utilise et chaque candidat en ligne reçoit son propre lien ; ceux sur place n'en reçoivent pas.",
+"بمجرد تقديمه، تستعمله كل حصة ويتلقى كل مترشح عن بعد رابطه الخاص؛ ولا يتلقى الحاضرون شيئا."
 ],
 "Once your WhatsApp Business number is connected, WhatsApp messages go by themselves.": [
 "Dès que votre numéro WhatsApp Business est connecté, les messages WhatsApp partent tout seuls.",
@@ -12002,6 +12286,10 @@
 "One card each: programs, payment and the next thing to do.": [
 "Une carte chacun : formations, paiement et la prochaine chose à faire.",
 "بطاقة لكل واحد: البرامج والدفع والخطوة التالية."
+],
+"One class at a time at the same hours": [
+"Une classe à la fois aux mêmes horaires",
+"قسم واحد في كل مرة في نفس المواعيد"
 ],
 "One class: its candidates, its course, its presence and its settings.": [
 "Une classe : ses candidats, son cours, sa présence et ses réglages.",
@@ -12087,6 +12375,10 @@
 "Un seul rappel de paiement",
 "تذكير دفع واحد"
 ],
+"One payment reminder goes by itself, 24 hours after registering; the application never sends a second one by itself.": [
+"Un rappel de paiement part de lui-même, 24 heures après l'inscription ; l'application n'en envoie jamais un deuxième d'elle-même.",
+"يُرسل تذكير واحد بالدفع من تلقاء نفسه، بعد 24 ساعة من التسجيل؛ ولا يرسل التطبيق أبدا تذكيرا ثانيا من تلقاء نفسه."
+],
 "One person, a class, everyone of a program, those who still owe something, or everybody.": [
 "Une personne, une classe, tous les inscrits d'une formation, ceux qui doivent encore quelque chose, ou tout le monde.",
 "شخص، قسم، كل مسجّلي برنامج، من بقي عليهم شيء، أو الجميع."
@@ -12142,6 +12434,10 @@
 "One reminder for everything the candidate owes": [
 "Un seul rappel pour tout ce que doit le candidat",
 "تذكير واحد لكل ما على المترشح"
+],
+"One reminder goes by itself 24 hours after registering; after that, call them or send it again from their file. No class until they have paid in full.": [
+"Un rappel part de lui-même 24 heures après l'inscription ; ensuite, appelez-le ou renvoyez-le depuis sa fiche. Pas de classe tant qu'il n'a pas tout payé.",
+"يُرسل تذكير واحد من تلقاء نفسه بعد 24 ساعة من التسجيل؛ بعد ذلك، اتصل به أو أعد إرساله من ملفه. لا قسم حتى يدفع كامل المبلغ."
 ],
 "One reminder goes if they do not answer.": [
 "Un rappel part s'ils ne répondent pas.",
@@ -12222,6 +12518,10 @@
 "Only an ongoing class can be marked completed.": [
 "Seule une classe en cours peut être marquée comme terminée.",
 "لا يمكن تعليم قسم كمكتمل إلا إذا كان جاريا."
+],
+"Only checked answers go alone": [
+"Seules les réponses vérifiées partent seules",
+"لا تُرسل وحدها إلا الإجابات المتحقق منها"
 ],
 "Only emails from your candidates' addresses are tracked, and only those arriving after the mailbox was connected.": [
 "Seuls les emails des adresses de vos candidats sont suivis, et seulement ceux arrivés après la connexion de la boîte mail.",
@@ -12927,6 +13227,10 @@
 "Collez l'offre ici : en quoi consiste le poste et ce qu'il demande.",
 "ألصق العرض هنا: ما هي الوظيفة وما تتطلبه."
 ],
+"Paste the private link of the meeting (Google Meet, Zoom, Teams…": [
+"Collez le lien privé de la réunion (Google Meet, Zoom, Teams…",
+"الصق الرابط الخاص للاجتماع (Google Meet، Zoom، Teams…"
+],
 "Paste the text of the offer: its title, what the job is and what it asks for.": [
 "Collez le texte de l'offre : son titre, en quoi consiste le poste et ce qu'il demande.",
 "ألصق نص العرض: عنوانه، ما هي الوظيفة وما تتطلبه."
@@ -12970,6 +13274,10 @@
 "Payment confirmed · new class created": [
 "Paiement confirmé · nouvelle classe créée",
 "تم تأكيد الدفع · أُنشئ قسم جديد"
+],
+"Payment confirmed · placed after their current class": [
+"Paiement confirmé · placé(e) après sa classe en cours",
+"تم تأكيد الدفع · وُضع بعد قسمه الحالي"
 ],
 "Payment exceeds remaining balance": [
 "Le paiement dépasse le solde restant",
@@ -13238,6 +13546,10 @@
 "Placed in a class": [
 "Placés dans une classe",
 "وُضعوا في قسم"
+],
+"Placed the moment they pay, you are only told": [
+"Placé(e) dès le paiement, vous êtes seulement prévenu(e)",
+"يُوضع بمجرد الدفع، وأنت تُخبَر فقط"
 ],
 "Places": [
 "Places",
@@ -13599,6 +13911,10 @@
 "Formateurs par formation",
 "المكوّنون حسب البرنامج"
 ],
+"Professors take their class by themselves; reminders before each session": [
+"Les formateurs prennent leur classe d'eux-mêmes ; des rappels avant chaque séance",
+"الأساتذة يأخذون قسمهم بأنفسهم؛ تذكيرات قبل كل حصة"
+],
 "Professors' access": [
 "Accès des formateurs",
 "دخول المكوّنين"
@@ -13931,6 +14247,10 @@
 "QR code pour la salle",
 "رمز QR للقاعة"
 ],
+"Quand": [
+"Quand",
+"متى"
+],
 "Question": [
 "Question",
 "السؤال"
@@ -13967,6 +14287,10 @@
 "Questions après la séance",
 "أسئلة بعد الحصة"
 ],
+"Questions agent": [
+"Agent des questions",
+"وكيل الأسئلة"
+],
 "Questions answered": [
 "Questions répondues",
 "أسئلة مُجاب عنها"
@@ -13998,6 +14322,10 @@
 "Questions can be sent as soon as at least one is ready.": [
 "Les questions peuvent être envoyées dès qu'au moins une est prête.",
 "يمكن إرسال الأسئلة بمجرد أن يكون واحد منها جاهزا على الأقل."
+],
+"Questions not answered: remind them their questions are waiting.": [
+"Questions sans réponse : rappelez-lui que ses questions l'attendent.",
+"أسئلة دون إجابة: ذكّره بأن أسئلته في انتظاره."
 ],
 "Questions per candidate": [
 "Questions par candidat",
@@ -14427,6 +14755,14 @@
 "Enregistrer le paiement complet de",
 "تسجيل الدفع الكامل لـ"
 ],
+"Record their absence (Classes › Professors › their card › Absence): each of their sessions that day then asks a free professor of the program to replace them, by a private link.": [
+"Notez son absence (Classes › Formateurs › sa carte › Absence) : chacune de ses séances ce jour-là sollicite alors un formateur libre de la formation pour le remplacer, par un lien privé.",
+"سجّل غيابه (الأقسام › المكوّنون › بطاقته › غياب): تطلب حينها كل حصة من حصصه في ذلك اليوم من مكوّن متاح من البرنامج أن يعوّضه، برابط خاص."
+],
+"Record their absence: Classes › Professors › their card › Absence (the dates, the hours if not the whole day, the reason).": [
+"Notez son absence : Classes › Formateurs › sa carte › Absence (les dates, les heures si ce n'est pas toute la journée, la raison).",
+"سجّل غيابه: الأقسام › المكوّنون › بطاقته › غياب (التواريخ، والساعات إن لم يكن اليوم كله، والسبب)."
+],
 "Records from the website": [
 "Fiches venant du site",
 "سجلات من الموقع"
@@ -14647,6 +14983,10 @@
 "Rappels avant la première séance",
 "التذكيرات قبل الحصة الأولى"
 ],
+"Reminders every day, or before each session": [
+"Des rappels chaque jour, ou avant chaque séance",
+"تذكيرات كل يوم، أو قبل كل حصة"
+],
 "Reminders sent": [
 "Rappels envoyés",
 "تذكيرات مرسلة"
@@ -14783,6 +15123,10 @@
 "Retiré : il ne sera pas envoyé.",
 "أُزيل: لن يُرسل."
 ],
+"Remplacement": [
+"Remplacement",
+"الاستبدال"
+],
 "Renewed every 24 hours · last": [
 "Renouvelées toutes les 24 heures · dernière",
 "تتجدد كل 24 ساعة · آخرها"
@@ -14823,6 +15167,10 @@
 "Remplacé pour chaque candidat",
 "يُستبدل لكل مترشح"
 ],
+"Replacement for": [
+"Remplacement de",
+"استبدال"
+],
 "Replay the tour": [
 "Revoir la visite",
 "إعادة الجولة"
@@ -14850,6 +15198,10 @@
 "Requests in the period": [
 "Demandes de la période",
 "طلبات الفترة"
+],
+"Reset": [
+"Réinitialiser",
+"إعادة الضبط"
 ],
 "Reset: “": [
 "Réinitialisé : «",
@@ -14951,13 +15303,37 @@
 "Bonne réponse",
 "الإجابة الصحيحة"
 ],
+"Right now": [
+"En ce moment",
+"حاليا"
+],
+"Right now every class has its professor.": [
+"En ce moment, chaque classe a son formateur.",
+"حاليا، لكل قسم مكوّنه."
+],
+"Right now every message reached its candidate.": [
+"En ce moment, chaque message est parvenu à son candidat.",
+"حاليا، وصلت كل رسالة إلى مترشحها."
+],
+"Right now everybody has paid in full.": [
+"En ce moment, tout le monde a tout payé.",
+"حاليا، دفع الجميع كامل المبلغ."
+],
 "Right now links start with": [
 "Pour l'instant les liens commencent par",
 "حاليا تبدأ الروابط بـ"
 ],
+"Right now nobody seems about to drop out: absences, questions, results and payments are watched for each candidate.": [
+"En ce moment, personne ne semble sur le point d'abandonner : les absences, les questions, les résultats et les paiements sont suivis pour chaque candidat.",
+"حاليا، لا يبدو أن أحدا على وشك الانقطاع: الغيابات والأسئلة والنتائج والدفوعات متابَعة لكل مترشح."
+],
 "Right pace": [
 "Bon rythme",
 "نسق مناسب"
+],
+"Room": [
+"Salle",
+"القاعة"
 ],
 "Room 2, or the meeting link": [
 "Salle 2, ou le lien de la réunion",
@@ -15099,6 +15475,10 @@
 "Enregistrer et envoyer ceux qui sont dus maintenant",
 "حفظ وإرسال المستحقة الآن"
 ],
+"Save and send to my online candidates": [
+"Enregistrer et envoyer à mes candidats en ligne",
+"حفظ وإرسال إلى مترشحيّ عن بعد"
+],
 "Save changes": [
 "Enregistrer les modifications",
 "حفظ التغييرات"
@@ -15203,6 +15583,10 @@
 "Enregistrez : le message de bienvenue part tout de suite, et le rappel de paiement 24 heures après si rien n'est payé.",
 "احفظ: تُرسل رسالة الترحيب فورا، وتذكير الدفع بعد 24 ساعة إن لم يُدفع شيء."
 ],
+"Saved": [
+"Enregistré",
+"تم الحفظ"
+],
 "Saved from an answer you sent": [
 "Gardée d'une réponse que vous avez envoyée",
 "محفوظة من إجابة أرسلتها"
@@ -15278,6 +15662,10 @@
 "Say “whatsapp” or “sms” to choose the way; “tel quel” keeps your words.": [
 "Dites « whatsapp » ou « sms » pour choisir le moyen ; « tel quel » garde vos mots.",
 "قل «whatsapp» أو «sms» لاختيار الوسيلة؛ «tel quel» يُبقي كلماتك كما هي."
+],
+"Says they want to stop: call them, listen to why, and offer a later class of the same program rather than stopping.": [
+"Dit vouloir arrêter : appelez-le, écoutez pourquoi, et proposez-lui une classe plus tard de la même formation plutôt que d'arrêter.",
+"يقول إنه يريد التوقف: اتصل به، استمع إلى السبب، واقترح عليه قسما لاحقا من نفس البرنامج بدل التوقف."
 ],
 "Says when they do not know": [
 "Dit quand il ne sait pas",
@@ -16239,6 +16627,10 @@
 "Sept jours avant le début de la classe, ou dès qu'ils ont payé.",
 "قبل سبعة أيام من بداية القسم، أو بمجرد الدفع."
 ],
+"Several messages without an answer: a call does better than one more message.": [
+"Plusieurs messages sans réponse : un appel fait mieux qu'un message de plus.",
+"عدة رسائل دون رد: المكالمة أنجع من رسالة أخرى."
+],
 "Shape it": [
 "La mettre en forme",
 "تنسيقها"
@@ -16282,6 +16674,10 @@
 "Shop systems": [
 "Systèmes de boutique",
 "أنظمة المتاجر"
+],
+"Short answers first": [
+"Des réponses courtes d'abord",
+"أجوبة قصيرة أولا"
 ],
 "Short certifying workshops (one skill, one weekend": [
 "Des ateliers certifiants courts (une compétence, un week-end",
@@ -16555,6 +16951,10 @@
 "Quelqu'un",
 "شخص ما"
 ],
+"Someone may drop out: who, why, and what to do": [
+"Quelqu'un risque d'abandonner : qui, pourquoi, et que faire",
+"أحدهم مهدد بالانقطاع: من، ولماذا، وما العمل"
+],
 "Someone pays in full: placed in a class (or a new class is made); classes start and finish on their dates.": [
 "Quelqu'un paie en totalité : placé dans une classe (ou une nouvelle classe est créée) ; les classes démarrent et se terminent à leurs dates.",
 "يدفع شخص بالكامل: يوضع في قسم (أو يُنشأ قسم جديد)؛ تبدأ الأقسام وتنتهي في تواريخها."
@@ -16671,6 +17071,10 @@
 "Partir d'un modèle",
 "الانطلاق من نموذج"
 ],
+"Start it again": [
+"Le relancer",
+"أعد تشغيله"
+],
 "Start now": [
 "Démarrer maintenant",
 "ابدأ الآن"
@@ -16695,6 +17099,14 @@
 "Les démarrer maintenant quand même",
 "ابدأ معهم الآن رغم ذلك"
 ],
+"Start this reminder again from now, as if just written?": [
+"Relancer ce rappel à partir de maintenant, comme s'il venait d'être écrit ?",
+"إعادة تشغيل هذا التذكير من الآن، كأنه كُتب للتو؟"
+],
+"Start this reminder again, as if just written?": [
+"Relancer ce rappel, comme s'il venait d'être écrit ?",
+"إعادة تشغيل هذا التذكير، كأنه كُتب للتو؟"
+],
 "Start time": [
 "Heure de début",
 "ساعة البداية"
@@ -16706,6 +17118,10 @@
 "Start with": [
 "Commencer par",
 "ابدأ بـ"
+],
+"Started again: it waits from now on.": [
+"Relancé : il attend à partir de maintenant.",
+"أُعيد تشغيله: ينتظر من الآن."
 ],
 "Starts": [
 "Commence",
@@ -16759,6 +17175,10 @@
 "Il manque encore",
 "لا يزال ينقص"
 ],
+"Still none the day before: you are told; at the start, a private room is created.": [
+"Toujours rien la veille : vous êtes prévenu(e) ; au début, une salle privée est créée.",
+"وإن لم يُقدَّم قبل يوم: يتم إعلامك؛ وعند البداية، تُنشأ قاعة خاصة."
+],
 "Still not delivered. Check the email settings (SMTP_EMAIL and SMTP_PASSWORD in the .env file).": [
 "Toujours pas livré. Vérifiez les réglages email (SMTP_EMAIL et SMTP_PASSWORD dans le fichier .env).",
 "ما زال لم يصل. تحقّق من إعدادات البريد (SMTP_EMAIL وSMTP_PASSWORD في ملف .env)."
@@ -16766,6 +17186,10 @@
 "Still owes": [
 "Reste à payer",
 "المتبقي للدفع"
+],
+"Still owes money: the one payment reminder has gone, so call rather than write again.": [
+"Doit encore de l'argent : l'unique rappel de paiement est parti, alors appelez plutôt que d'écrire encore.",
+"لا يزال مدينا: أُرسل التذكير الوحيد بالدفع، فاتصل بدل أن تكتب مرة أخرى."
 ],
 "Still present at every session next month.": [
 "Toujours présent à chaque séance le mois prochain.",
@@ -16878,6 +17302,22 @@
 "Suggestions come once a field's articles of the last weeks speak of the same thing several times.": [
 "Les suggestions viennent quand les articles des dernières semaines d'un domaine parlent plusieurs fois de la même chose.",
 "تأتي الاقتراحات عندما تتحدث مقالات الأسابيع الأخيرة لمجال ما عن الشيء نفسه عدة مرات."
+],
+"Sum it up": [
+"Résumer",
+"التلخيص"
+],
+"Summary agent": [
+"Agent des résumés",
+"وكيل التلخيص"
+],
+"Sums up a candidate, their discussion, a class, a program, the day, the week, the page, a text you paste, or her last answer.": [
+"Résume un candidat, sa discussion, une classe, une formation, la journée, la semaine, la page, un texte que vous collez, ou sa dernière réponse.",
+"يلخّص مترشحا، أو محادثته، أو قسما، أو برنامجا، أو اليوم، أو الأسبوع، أو الصفحة، أو نصا تلصقه، أو ردّها الأخير."
+],
+"Sums up what you name (a candidate, a class, the day, the page…) in a few lines.": [
+"Résume ce que vous nommez (un candidat, une classe, la journée, la page…) en quelques lignes.",
+"يلخّص ما تسمّيه (مترشح، قسم، اليوم، الصفحة…) في بضعة أسطر."
 ],
 "Sun": [
 "Dim",
@@ -17503,6 +17943,10 @@
 "L'icône de l'application",
 "أيقونة التطبيق"
 ],
+"The application's records": [
+"Les données de l'application",
+"بيانات التطبيق"
+],
 "The application's records and settings": [
 "Les fiches et les réglages de l'application",
 "سجلات التطبيق وإعداداته"
@@ -17602,6 +18046,14 @@
 "The assistant is reading this email and looking for the answer. This page updates by itself.": [
 "L'assistant lit cet email et cherche la réponse. Cette page se met à jour toute seule.",
 "المساعد يقرأ هذا البريد ويبحث عن الإجابة. تتحدّث هذه الصفحة تلقائيا."
+],
+"The assistant never answers a refund alone: it comes to you in the inbox. You decide, then answer them yourself.": [
+"L'assistant ne répond jamais seul à un remboursement : il vous arrive dans la boîte de réception. Vous décidez, puis vous lui répondez vous-même.",
+"لا يجيب المساعد أبدا وحده عن استرجاع مبلغ: يصلك في البريد الوارد. أنت تقرر، ثم تجيبه بنفسك."
+],
+"The assistant never answers a refund alone: the message comes to you in the inbox.": [
+"L'assistant ne répond jamais seul à un remboursement : le message vous arrive dans la boîte de réception.",
+"لا يجيب المساعد أبدا وحده عن استرجاع مبلغ: تصلك الرسالة في البريد الوارد."
 ],
 "The assistant now answers the team alone when you taught the answer.": [
 "L'assistant répond maintenant seul à l'équipe quand vous avez appris la réponse.",
@@ -17767,6 +18219,10 @@
 "Les emails des candidats qui attendent votre réponse.",
 "رسائل المترشحين التي تنتظر إجابتك."
 ],
+"The candidates, classes and programs": [
+"Les candidats, les classes et les formations",
+"المترشحون والأقسام والبرامج"
+],
 "The categories of the requests of the period": [
 "Les catégories des demandes de la période",
 "فئات طلبات الفترة"
@@ -17890,6 +18346,10 @@
 "The closing words": [
 "Les mots de la fin",
 "كلمات الختام"
+],
+"The cloud reader failed": [
+"La lecture en ligne a échoué",
+"فشلت القراءة عبر الإنترنت"
 ],
 "The cluster follows what the repository says. Practice: a change merged in Git arrives in the cluster by itself.": [
 "Le cluster suit ce que dit le dépôt. Pratique : un changement fusionné dans Git arrive tout seul dans le cluster.",
@@ -18499,6 +18959,14 @@
 "La réunion est réglée. Chaque candidat a son propre lien.",
 "تم ضبط الاجتماع. لكل مترشح رابطه الخاص."
 ],
+"The meeting link of": [
+"Le lien de réunion de",
+"رابط اجتماع"
+],
+"The meeting link, 3 days before the start": [
+"Le lien de réunion, 3 jours avant le début",
+"رابط الاجتماع، قبل 3 أيام من البداية"
+],
 "The meeting links": [
 "Les liens de réunion",
 "روابط الاجتماع"
@@ -18538,6 +19006,10 @@
 "The method: scope, reconnaissance, exploitation, report. Practice: test a training machine and write the report.": [
 "La méthode : périmètre, reconnaissance, exploitation, rapport. Pratique : tester une machine d'entraînement et écrire le rapport.",
 "المنهجية: النطاق، الاستطلاع، الاستغلال، التقرير. تطبيق: اختبار آلة تدريب وكتابة التقرير."
+],
+"The moment a professor of its program is free at its hours from its start date (no other class then, not absent), they take it by themselves and are told in the app, by email, WhatsApp and SMS.": [
+"Dès qu'un formateur de sa formation est libre à ses horaires à partir de sa date de début (aucune autre classe à ce moment, pas absent), il la prend de lui-même et en est prévenu dans l'application, par email, WhatsApp et SMS.",
+"بمجرد أن يكون مكوّن من برنامجه متاحا في مواعيده ابتداء من تاريخ بدايته (لا قسم آخر في ذلك الوقت، وغير غائب)، يتولاه من تلقاء نفسه ويُعلَم في التطبيق، وبالبريد، وواتساب والرسائل القصيرة."
 ],
 "The moments most of your people can interact, from when they write, answer and register, and how your posts did.": [
 "Les moments où la plupart de vos gens peuvent réagir, d'après quand ils écrivent, répondent et s'inscrivent, et comment vos publications ont marché.",
@@ -18678,6 +19150,10 @@
 "The page tours": [
 "Les visites guidées des pages",
 "جولات الصفحات"
+],
+"The page's guide": [
+"Le guide de la page",
+"دليل الصفحة"
 ],
 "The page's number is the digits at the end of urn:li:organization:12345678.": [
 "Le numéro de la page, ce sont les chiffres à la fin de urn:li:organization:12345678.",
@@ -19079,6 +19555,10 @@
 "Les rappels que vous avez écrits vous-même, chacun à l'heure que vous avez choisie. Il n'envoie rien que vous n'ayez prévu.",
 "التذكيرات التي كتبتها بنفسك، كل واحد في الوقت الذي اخترته. لا يرسل شيئا لم تبرمجه."
 ],
+"The replacement": [
+"Le remplacement",
+"الاستبدال"
+],
 "The report by email": [
 "Le rapport par email",
 "التقرير بالبريد"
@@ -19170,6 +19650,10 @@
 "The session of": [
 "La séance du",
 "حصة يوم"
+],
+"The session's day and hour": [
+"Le jour et l'heure de la séance",
+"يوم الحصة وساعتها"
 ],
 "The sessions of the next seven days.": [
 "Les séances des sept prochains jours.",
@@ -19555,6 +20039,10 @@
 "Les questions de la semaine et celles après une séance s'ouvrent sur leur propre page : le temps sur chaque question et le nombre de fois où le candidat a quitté la page s'affichent avec ses réponses.",
 "أسئلة الأسبوع وأسئلة ما بعد الحصة تُفتح في صفحتها الخاصة: الوقت على كل سؤال وعدد مرات مغادرة المترشح للصفحة يظهران مع أجوبته."
 ],
+"The weekly questions and their results": [
+"Les questions de la semaine et leurs résultats",
+"أسئلة الأسبوع ونتائجها"
+],
 "The weekly questions of the last weeks average": [
 "Les questions hebdomadaires des dernières semaines ont une moyenne de",
 "معدّل الأسئلة الأسبوعية في الأسابيع الأخيرة"
@@ -19706,6 +20194,14 @@
 "Their file, in tabs": [
 "Leur dossier, en onglets",
 "ملفهم في علامات تبويب"
+],
+"Their message comes to you, never answered alone: answer them yourself soon, a call often does better. A review of 1 to 3 stars stays private and you are told to call them.": [
+"Son message vous arrive, jamais répondu seul : répondez-lui vous-même vite, un appel fait souvent mieux. Un avis de 1 à 3 étoiles reste privé et on vous dit de l'appeler.",
+"تصلك رسالته، ولا يُجاب عنها أبدا آليا: أجبه بنفسك سريعا، فالمكالمة غالبا أنجع. التقييم من 1 إلى 3 نجوم يبقى خاصا ويُطلب منك الاتصال به."
+],
+"Their message is never answered alone: it comes to you in the inbox, with what was read in it.": [
+"Son message n'est jamais répondu seul : il vous arrive dans la boîte de réception, avec ce qui y a été lu.",
+"لا يُجاب عن رسالته أبدا آليا: تصلك في البريد الوارد، مع ما قُرئ فيها."
 ],
 "Their messages (emotions read with word lists": [
 "Ses messages (émotions lues avec des listes de mots",
@@ -19939,6 +20435,10 @@
 "Ils rejoignent une classe",
 "ينضمون إلى قسم"
 ],
+"They may drop out, the likeliest first": [
+"Ils risquent d'abandonner, le plus probable d'abord",
+"قد ينقطعون، الأرجح أولا"
+],
 "They owe nothing: no reminder was needed.": [
 "Il ne doit rien : aucun rappel n'était nécessaire.",
 "لا يدين بشيء: لم يكن التذكير ضروريا."
@@ -20050,6 +20550,10 @@
 "This class has no start date yet, so there is nothing to remind about.": [
 "Cette classe n'a pas encore de date de début, donc il n'y a rien à rappeler.",
 "هذا القسم ليس له تاريخ بداية بعد، لذا لا يوجد ما يُذكَّر به."
+],
+"This class is fully on site: no meeting link is needed.": [
+"Cette classe est entièrement sur place : aucun lien de réunion n'est nécessaire.",
+"هذا القسم حضوري بالكامل: لا حاجة إلى رابط اجتماع."
 ],
 "This class was reminded": [
 "Cette classe a reçu un rappel",
@@ -20407,6 +20911,10 @@
 "Trois jours",
 "ثلاثة أيام"
 ],
+"Three days before an online or mixed class starts, its professor is asked for the private meeting link, in the app, by email, WhatsApp and SMS.": [
+"Trois jours avant le début d'une classe en ligne ou mixte, son formateur est sollicité pour le lien privé de la réunion, dans l'application, par email, WhatsApp et SMS.",
+"قبل ثلاثة أيام من بداية قسم عن بعد أو مختلط، يُطلب من مكوّنه الرابط الخاص للاجتماع، في التطبيق، وبالبريد، وواتساب والرسائل القصيرة."
+],
 "Three looks in the 9antra colours. The colour and the signature are set in": [
 "Trois styles aux couleurs de 9antra. La couleur et la signature se règlent dans",
 "ثلاثة مظاهر بألوان 9antra. اللون والتوقيع يُضبطان في"
@@ -20530,6 +21038,10 @@
 "To check in the first session, they describe themselves as more advanced than their answers show": [
 "À vérifier à la première séance, ils se décrivent comme plus avancés que ne le montrent leurs réponses",
 "للتحقّق في الحصة الأولى، يصفون أنفسهم بأنهم أكثر تقدّما مما تُظهره إجاباتهم"
+],
+"To choose one yourself: open the class › Class parameters › Professor.": [
+"Pour en choisir un vous-même : ouvrez la classe › Paramètres de la classe › Formateur.",
+"لتختار واحدا بنفسك: افتح القسم › إعدادات القسم › المكوّن."
 ],
 "To do today": [
 "À faire aujourd'hui",
@@ -20843,6 +21355,10 @@
 "Compréhension",
 "الفهم"
 ],
+"Understanding any question": [
+"Comprendre toutes les questions",
+"فهم كل الأسئلة"
+],
 "Understood": [
 "Compris",
 "فهموا"
@@ -20870,6 +21386,10 @@
 "Unhappy": [
 "Mécontent",
 "غير راضٍ"
+],
+"Unhappy in what they wrote: ask what would help, by phone rather than by message.": [
+"Mécontent dans ce qu'il a écrit : demandez-lui ce qui l'aiderait, par téléphone plutôt que par message.",
+"غير راضٍ فيما كتب: اسأله عما سيساعده، بالهاتف بدل الرسالة."
 ],
 "Unit tests, integration tests, mocks, coverage. Practice: test the three most important functions of the project.": [
 "Tests unitaires, tests d'intégration, mocks, couverture. Pratique : tester les trois fonctions les plus importantes du projet.",
@@ -20938,6 +21458,10 @@
 "Until then the class does not start.": [
 "D'ici là la classe ne démarre pas.",
 "إلى ذلك الحين لا يبدأ القسم."
+],
+"Until they have paid in full they are placed in no class; once they have, a class is found or created for them at once.": [
+"Tant qu'il n'a pas tout payé, il n'est placé dans aucune classe ; dès que c'est fait, une classe lui est trouvée ou créée aussitôt.",
+"ما لم يدفع كامل المبلغ لا يوضع في أي قسم؛ وبمجرد أن يدفع، يُعثر له على قسم أو يُنشأ فورا."
 ],
 "Until when": [
 "Jusqu'à quand",
@@ -21583,6 +22107,10 @@
 "Ce qui est arrivé",
 "ما وصل"
 ],
+"What came in and went out": [
+"Ce qui est arrivé et ce qui est parti",
+"ما وصل وما أُرسل"
+],
 "What came of it": [
 "Ce qu'il en est sorti",
 "ما نتج عنه"
@@ -21787,6 +22315,10 @@
 "Ce qui manque encore",
 "ما ينقص بعد"
 ],
+"What is still owed": [
+"Ce qui reste dû",
+"ما بقي مستحقا"
+],
 "What is studied?": [
 "Qu'est-ce qui est étudié ?",
 "ماذا يُدرس؟"
@@ -21935,6 +22467,10 @@
 "Que doit dire l'email ?",
 "ماذا يجب أن يقول البريد؟"
 ],
+"What the application does by itself": [
+"Ce que l'application fait d'elle-même",
+"ما يقوم به التطبيق من تلقاء نفسه"
+],
 "What the application does now, as it is set. Each part says where to change it.": [
 "Ce que fait l'application maintenant, telle qu'elle est réglée. Chaque partie dit où la changer.",
 "ما يفعله التطبيق الآن حسب ضبطه. كل جزء يقول أين يُغيَّر."
@@ -22038,6 +22574,10 @@
 "What the opinions talk about": [
 "De quoi parlent les avis",
 "عمّ تتحدث الآراء"
+],
+"What the other agents read, through fixed lookups": [
+"Ce que lisent les autres agents, par des consultations fixes",
+"ما يقرؤه الوكلاء الآخرون، عبر استشارات محددة"
 ],
 "What the professor noted on the presence sheet: quiet 30, takes part 65, very active 100.": [
 "Ce que le formateur a noté sur la feuille de présence : discret 30, participe 65, très actif 100.",
@@ -22155,6 +22695,10 @@
 "Ce qu'ils ont compris",
 "ما فهموه"
 ],
+"What they wrote": [
+"Ce qu'ils ont écrit",
+"ما كتبوه"
+],
 "What this answer is based on": [
 "Sur quoi s'appuie cette réponse",
 "على ماذا تستند هذه الإجابة"
@@ -22166,6 +22710,10 @@
 "What to do": [
 "Que faire",
 "ماذا تفعل"
+],
+"What to do when…": [
+"Que faire quand…",
+"ما العمل عندما…"
 ],
 "What to go over again": [
 "Ce qu'il faut revoir",
@@ -22403,9 +22951,21 @@
 "Quand j'appuie sur Envoyer",
 "عندما أضغط على إرسال"
 ],
+"When a candidate asks for a refund": [
+"Quand un candidat demande un remboursement",
+"عندما يطلب مترشح استرجاع المبلغ"
+],
 "When a candidate asks one of these, the system answers alone: it writes your answer again as a full, friendly email, and sends it only if nothing was added or lost. When a question only looks like one of these, it prepares the answer and asks you to check it.": [
 "Quand un candidat pose l'une de ces questions, le système répond seul : il réécrit votre réponse en un email complet et chaleureux, et ne l'envoie que si rien n'a été ajouté ni perdu. Quand une question ressemble seulement à l'une d'elles, il prépare la réponse et vous demande de la vérifier.",
 "عندما يطرح مترشح أحد هذه الأسئلة، يجيب النظام وحده: يعيد كتابة إجابتك كبريد كامل ولطيف، ولا يرسله إلا إذا لم يُضف شيء ولم يضع شيء. وعندما يشبه السؤال أحدها فقط، يحضّر الإجابة ويطلب منك مراجعتها."
+],
+"When a candidate has not paid": [
+"Quand un candidat n'a pas payé",
+"عندما لا يدفع مترشح"
+],
+"When a candidate is unhappy": [
+"Quand un candidat est mécontent",
+"عندما يكون مترشح غير راضٍ"
 ],
 "When a candidate pays": [
 "Quand un candidat paie",
@@ -22419,9 +22979,25 @@
 "Quand un candidat écrit, l'assistant répond seul quand il est sûr à au moins",
 "عندما يكتب مترشح، يجيب المساعد وحده عندما يكون متأكدا على الأقل بنسبة"
 ],
+"When a class has no meeting link": [
+"Quand une classe n'a pas de lien de réunion",
+"عندما لا يكون للقسم رابط اجتماع"
+],
+"When a class has no professor": [
+"Quand une classe n'a pas de formateur",
+"عندما لا يكون للقسم مكوّن"
+],
+"When a message did not reach a candidate": [
+"Quand un message n'est pas parvenu à un candidat",
+"عندما لا تصل رسالة إلى مترشح"
+],
 "When a new class starts": [
 "Quand une nouvelle classe démarre",
 "متى يبدأ قسم جديد"
+],
+"When a professor is absent": [
+"Quand un formateur est absent",
+"عندما يغيب مكوّن"
 ],
 "When a review or a feedback asks for something, it shows here.": [
 "Quand un avis demande quelque chose, il apparaît ici.",
@@ -22503,6 +23079,10 @@
 "Quand quelqu'un demande comment s'inscrire, par email, WhatsApp ou SMS, ce lien lui est envoyé.",
 "عندما يسأل شخص كيف يسجّل، بالبريد أو WhatsApp أو SMS، يُرسل إليه هذا الرابط."
 ],
+"When someone may drop out, act on why, without waiting": [
+"Quand quelqu'un risque d'abandonner, agissez sur la raison, sans attendre",
+"عندما يكون أحدهم مهددا بالانقطاع، تصرّف حسب السبب، دون انتظار"
+],
 "When someone of the team asks something, the assistant shows the answer it found. You send it with one click, or change it.": [
 "Quand quelqu'un de l'équipe demande quelque chose, l'assistant montre la réponse qu'il a trouvée. Vous l'envoyez en un clic, ou la modifiez.",
 "عندما يسأل أحد من الفريق شيئا، يعرض المساعد الإجابة التي وجدها. ترسلها بنقرة، أو تعدّلها."
@@ -22539,6 +23119,10 @@
 "Quand le premier ne sait pas : l'agent du programme, puis l'agent des connaissances.",
 "عندما لا يعرف الأول: وكيل البرنامج، ثم وكيل المعرفة."
 ],
+"When the free daily quota is used up, the answers wait for you until it comes back the next day.": [
+"Quand le quota gratuit du jour est épuisé, les réponses vous attendent jusqu'à son retour le lendemain.",
+"عندما تنفد الحصة المجانية لليوم، تنتظرك الإجابات حتى عودتها في اليوم التالي."
+],
 "When the level check goes": [
 "Quand le test de niveau part",
 "متى يُرسل اختبار المستوى"
@@ -22546,6 +23130,10 @@
 "When the mail server cuts the connection, the check tries again at once; it is shown as a problem only if it keeps happening.": [
 "Quand le serveur mail coupe la connexion, la vérification réessaie aussitôt ; c'est signalé comme un problème seulement si cela continue.",
 "حين يقطع خادم البريد الاتصال، يعيد الفحص المحاولة فورا؛ ولا يُعرض كمشكل إلا إذا استمر."
+],
+"When the reason is a wrong address or number, correct it in their file.": [
+"Quand la raison est une adresse ou un numéro erroné, corrigez-le dans sa fiche.",
+"عندما يكون السبب عنوانا أو رقما خاطئا، صحّحه في ملفه."
 ],
 "When they are sent": [
 "Quand ils sont envoyés",
@@ -22562,6 +23150,10 @@
 "When to post": [
 "Quand publier",
 "متى تنشر"
+],
+"When you note an absence, each of their sessions that day asks a professor who teaches it and is free then to confirm, with a private link. Yes: they replace for that session only. No, or no answer in time: the next one is asked. You get one notification until it is settled.": [
+"Quand vous notez une absence, chacune de ses séances ce jour-là sollicite un formateur qui l'enseigne et qui est libre à ce moment, avec un lien privé pour confirmer. Oui : il remplace pour cette séance seulement. Non, ou pas de réponse à temps : le suivant est sollicité. Vous avez une notification jusqu'à ce que ce soit réglé.",
+"عندما تسجّل غيابا، تطلب كل حصة من حصصه ذلك اليوم من أستاذ يدرّسها ومتاح وقتها أن يؤكد، برابط خاص. نعم: يعوّض في تلك الحصة فقط. لا، أو لا رد في الوقت: يُطلب من التالي. لديك إشعار واحد حتى تتم التسوية."
 ],
 "When you post a video on TikTok or Instagram, add the week's trending sound in the app.": [
 "Quand vous publiez une vidéo sur TikTok ou Instagram, ajoutez le son tendance de la semaine dans l'application.",
@@ -22859,9 +23451,17 @@
 "Qui risque d'abandonner",
 "من قد ينقطع"
 ],
+"Who may drop out and why, and what to do for each: the message already prepared, the way and the hour, or a call.": [
+"Qui risque d'abandonner et pourquoi, et que faire pour chacun : le message déjà préparé, le moyen et l'heure, ou un appel.",
+"من قد ينقطع ولماذا، وما العمل مع كل واحد: الرسالة المعدّة مسبقا، والوسيلة والساعة، أو مكالمة."
+],
 "Who may drop out and why, what people say wherever they said it, and ideas to keep them engaged.": [
 "Qui risque d'abandonner et pourquoi, ce que les gens disent où qu'ils l'aient dit, et des idées pour les garder motivés.",
 "من قد ينقطع ولماذا، وما يقوله الناس أينما قالوه، وأفكار لإبقائهم متحمسين."
+],
+"Who may drop out, why, and what to do for each.": [
+"Qui risque d'abandonner, pourquoi, et que faire pour chacun.",
+"من قد ينقطع، ولماذا، وما العمل مع كل واحد."
 ],
 "Who needs you first": [
 "Qui a besoin de vous d'abord",
@@ -23034,6 +23634,10 @@
 "Without a WhatsApp Business number, WhatsApp messages wait in the inbox, each with a button that opens WhatsApp with the message written. Someone without a usable number gets the email.": [
 "Sans numéro WhatsApp Business, les messages WhatsApp attendent dans la boîte de réception, chacun avec un bouton qui ouvre WhatsApp avec le message écrit. Quelqu'un sans numéro utilisable reçoit l'email.",
 "دون رقم WhatsApp Business، تنتظر رسائل WhatsApp في البريد الوارد، كل واحدة بزرّ يفتح WhatsApp والرسالة مكتوبة. من ليس لديه رقم صالح يستلم البريد."
+],
+"Without a cloud model key (GEMINI_API_KEY in .env), questions are read with word rules only.": [
+"Sans clé de modèle en ligne (GEMINI_API_KEY dans .env), les questions sont lues avec des règles de mots seulement.",
+"دون مفتاح نموذج عبر الإنترنت (GEMINI_API_KEY في .env)، تُقرأ الأسئلة بقواعد الكلمات فقط."
 ],
 "Woman or man": [
 "Femme ou homme",
@@ -23451,6 +24055,14 @@
 "Yasmine et ses agents : un par programme, et un assistant qu'on peut interroger",
 "ياسمين ووكلاؤها: وكيل لكل برنامج، ومساعد يمكن سؤاله"
 ],
+"Yasmine and the email assistant understand any question": [
+"Yasmine et l'assistant email comprennent toutes les questions",
+"ياسمين ومساعد البريد يفهمان كل الأسئلة"
+],
+"Yasmine and this assistant send the question and only the facts it needs (for a candidate, their own trainings) to the cloud model, which writes the answer. Every figure, date, link and phone number is checked against your records, and only an answer that passed every check goes alone. Refunds, cancellations and complaints still come to you.": [
+"Yasmine et cet assistant envoient la question et seulement les faits nécessaires (pour un candidat, ses propres formations) au modèle en ligne, qui écrit la réponse. Chaque chiffre, date, lien et numéro de téléphone est vérifié dans vos données, et seule une réponse qui a passé toutes les vérifications part seule. Les remboursements, annulations et réclamations vous arrivent toujours.",
+"ترسل ياسمين وهذا المساعد السؤال والمعلومات اللازمة فقط (بالنسبة لمترشح: تكويناته هو) إلى النموذج عبر الإنترنت، الذي يكتب الإجابة. يُتحقق من كل رقم وتاريخ ورابط ورقم هاتف في بياناتك، ولا تُرسل وحدها إلا الإجابة التي اجتازت كل عمليات التحقق. طلبات الاسترجاع والإلغاء والشكاوى تصلك دائما."
+],
 "Yasmine answers a greeting, “how are you”, thanks, “who are you”, how you feel and a goodbye like a person, in the language you wrote in (French, English, Arabic or Tunisian), with your first name, and tells you what waits today.": [
 "Yasmine répond à un bonjour, à « ça va », à un merci, à « qui es-tu », à ce que vous ressentez et à un au revoir comme une personne, dans la langue où vous avez écrit (français, anglais, arabe ou tunisien), avec votre prénom, et vous dit ce qui vous attend aujourd'hui.",
 "ياسمين تردّ على التحية، و«كيف الحال»، والشكر، و«من أنتِ»، وما تشعر به، والوداع كإنسان، باللغة التي كتبت بها (الفرنسية أو الإنجليزية أو العربية أو التونسية)، باسمك الأول، وتخبرك بما ينتظرك اليوم."
@@ -23463,6 +24075,10 @@
 "Yasmine est l'assistant",
 "ياسمين هي المساعد"
 ],
+"Yasmine knows what to do when someone may drop out, and in other cases": [
+"Yasmine sait quoi faire quand quelqu'un risque d'abandonner, et dans d'autres cas",
+"ياسمين تعرف ما العمل عندما يكون أحدهم مهددا بالانقطاع، وفي حالات أخرى"
+],
 "Yasmine says hi": [
 "Yasmine dit bonjour",
 "ياسمين تقول مرحبا"
@@ -23470,6 +24086,10 @@
 "Yasmine says whom she asked": [
 "Yasmine dit à qui elle a demandé",
 "ياسمين تقول من سألت"
+],
+"Yasmine sums up, answers short, with moving pictures": [
+"Yasmine résume, répond court, avec des images animées",
+"ياسمين تلخّص، وتجيب باختصار، مع صور متحركة"
 ],
 "Yasmine talks like a person": [
 "Yasmine parle comme une personne",
@@ -23502,6 +24122,10 @@
 "Yes: registered again after finishing": [
 "Oui : réinscrit après avoir terminé",
 "نعم: سجّل مجددا بعد الإنهاء"
+],
+"Yes: they replace them for that session only. No, or no answer within 6 hours (1 hour when it is close): the next one is asked.": [
+"Oui : il le remplace pour cette séance seulement. Non, ou pas de réponse dans les 6 heures (1 heure quand elle est proche) : le suivant est sollicité.",
+"نعم: يعوّضه في تلك الحصة فقط. لا، أو لا رد خلال 6 ساعات (1 ساعة عندما تكون قريبة): يُطلب من التالي."
 ],
 "Yesterday": [
 "Hier",
@@ -23579,6 +24203,10 @@
 "Vous pouvez regarder, pas modifier",
 "يمكنك الاطلاع، لا التعديل"
 ],
+"You can paste it yourself: open the class › Class parameters › Meeting link (online).": [
+"Vous pouvez le coller vous-même : ouvrez la classe › Paramètres de la classe › Lien de la réunion (en ligne).",
+"يمكنك لصقه بنفسك: افتح القسم › إعدادات القسم › رابط الاجتماع (عن بعد)."
+],
 "You cannot change your own role.": [
 "Vous ne pouvez pas changer votre propre rôle.",
 "لا يمكنك تغيير دورك."
@@ -23602,6 +24230,10 @@
 "You decide": [
 "Vous décidez",
 "أنت تقرّر"
+],
+"You decide; then answer them yourself, from the inbox or by phone.": [
+"Vous décidez ; puis répondez-lui vous-même, depuis la boîte de réception ou par téléphone.",
+"أنت تقرر؛ ثم أجبه بنفسك، من البريد الوارد أو بالهاتف."
 ],
 "You forgot the current one?": [
 "Vous avez oublié l'actuel ?",
@@ -23927,6 +24559,10 @@
 "Votre propre image",
 "صورتك الخاصة"
 ],
+"Your own reminders can now go every day, or a number of hours before each of the candidates' sessions, naming that session's day, hour and topic. “Reset” starts a reminder again, as if just written, even a stopped one.": [
+"Vos propres rappels peuvent maintenant partir chaque jour, ou quelques heures avant chacune des séances des candidats, en nommant le jour, l'heure et le sujet de cette séance. « Réinitialiser » relance un rappel comme s'il venait d'être écrit, même un rappel arrêté.",
+"يمكن لتذكيراتك الآن أن تُرسل كل يوم، أو قبل بضع ساعات من كل حصة من حصص المترشحين، مع ذكر يوم تلك الحصة وساعتها وموضوعها. «إعادة الضبط» تعيد تشغيل التذكير كأنه كُتب للتو، حتى لو كان متوقفا."
+],
 "Your own reminders to a candidate, a class or everyone, now or later.": [
 "Vos propres rappels à un candidat, une classe ou tout le monde, maintenant ou plus tard.",
 "تذكيراتك الخاصة لمترشح أو قسم أو الجميع، الآن أو لاحقا."
@@ -24086,6 +24722,10 @@
 "a name, a number, a date": [
 "un nom, un numéro, une date",
 "اسم، رقم، تاريخ"
+],
+"a new class": [
+"une nouvelle classe",
+"قسم جديد"
 ],
 "a new class, a new date or a new schedule.": [
 "une nouvelle classe, une nouvelle date ou un nouvel horaire.",
@@ -24607,6 +25247,10 @@
 "note moyenne",
 "التقييم المتوسط"
 ],
+"away": [
+"absent",
+"غائب"
+],
 "based on an answer you taught": [
 "d'après une réponse que vous avez apprise",
 "حسب إجابة علّمتها"
@@ -24995,6 +25639,10 @@
 "corrigé par vous",
 "صحّحته أنت"
 ],
+"could drop out": [
+"pourrait abandonner",
+"قد ينقطع"
+],
 "could not be asked about: add the week's plan or a course file.": [
 "n'a pas pu donner lieu à des questions : ajoutez le plan de la semaine ou un support de cours.",
 "تعذّر طرح أسئلة حولها: أضف خطة الأسبوع أو ملف درس."
@@ -25070,6 +25718,10 @@
 "days after it ends, with a professor free then. They were told by email.": [
 "jours après la fin, avec un formateur libre à ce moment-là. On le lui a dit par email.",
 "أيام من النهاية، مع مكوّن متاح حينها. أُعلم بذلك بالبريد."
+],
+"days after it ends. Professor": [
+"jours après sa fin. Formateur",
+"يوما من نهايته. الأستاذ"
 ],
 "days after it is created, on its first session day.": [
 "jours après sa création, à son premier jour de séance.",
@@ -25655,6 +26307,10 @@
 "n'a pas été utilisé",
 "لم يُستعمل"
 ],
+"has not given the meeting link yet. Paste it in the class's parameters, or a private room is made at the start.": [
+"n'a pas encore donné le lien de réunion. Collez-le dans les paramètres de la classe, sinon une salle privée est créée au début.",
+"لم يقدّم رابط الاجتماع بعد. الصقه في إعدادات القسم، وإلا تُنشأ قاعة خاصة عند البداية."
+],
 "has their own space: their classes and their messages. Changes apply at once.": [
 "a son propre espace : ses classes et ses messages. Les changements s'appliquent tout de suite.",
 "لديه فضاؤه الخاص: أقسامه ورسائله. التغييرات تُطبّق فورا."
@@ -25931,6 +26587,10 @@
 "de le demander",
 "لطرحه"
 ],
+"it goes to the online candidates once given.": [
+"il part vers les candidats en ligne dès qu'il est donné.",
+"يُرسل إلى المترشحين عن بعد فور تقديمه."
+],
 "it is kept": [
 "c'est gardé",
 "يُحفظ"
@@ -25959,6 +26619,10 @@
 "son propre mot : facile à trouver en ligne",
 "كلمته الخاصة: سهل إيجاده على الإنترنت"
 ],
+"its professor": [
+"son formateur",
+"أستاذه"
+],
 "its program": [
 "sa formation",
 "برنامجه"
@@ -25986,6 +26650,10 @@
 "kept · the database weighs": [
 "gardées · la base de données pèse",
 "محفوظة · حجم قاعدة البيانات"
+],
+"keys still usable": [
+"clés encore utilisables",
+"مفاتيح لا تزال صالحة"
 ],
 "known to all": [
 "connu de tous",
@@ -26046,6 +26714,10 @@
 "level check(s) were sent and not answered yet.": [
 "test(s) de niveau envoyé(s) sans réponse pour l'instant.",
 "اختبار(ات) مستوى أُرسلت ولم يُجب عنها بعد."
+],
+"likely to drop out": [
+"risque fort d'abandonner",
+"مرجّح أن ينقطع"
 ],
 "link(s) sent.": [
 "lien(s) envoyé(s).",
@@ -26374,6 +27046,14 @@
 "no professor is assigned": [
 "aucun formateur n'est affecté",
 "لا يوجد مكوّن مُسند"
+],
+"no professor who teaches it is free that day.": [
+"aucun formateur qui l'enseigne n'est libre ce jour-là.",
+"لا أستاذ يدرّسه متاح ذلك اليوم."
+],
+"no professor who teaches it is free that day. Find one, or move the session.": [
+"aucun formateur qui l'enseigne n'est libre ce jour-là. Trouvez-en un, ou déplacez la séance.",
+"لا أستاذ يدرّسه متاح ذلك اليوم. ابحث عن أستاذ، أو انقل الحصة."
 ],
 "no professor yet": [
 "pas encore de formateur",
@@ -26738,6 +27418,14 @@
 "one reminder, then you decide": [
 "un rappel, puis vous décidez",
 "تذكير واحد، ثم تقرّر أنت"
+],
+"online": [
+"en ligne",
+"عن بعد"
+],
+"online, and": [
+"en ligne, et",
+"عن بعد، و"
 ],
 "only common words: easy to confuse with other centres": [
 "uniquement des mots courants : facile à confondre avec d'autres centres",
@@ -27211,6 +27899,14 @@
 "retiré de la classe.",
 "أُخرج من القسم."
 ],
+"replaces them that day (confirmed).": [
+"le remplace ce jour-là (confirmé).",
+"يعوّضه ذلك اليوم (مؤكَّد)."
+],
+"replaces them that day.": [
+"le remplace ce jour-là.",
+"يعوّضه ذلك اليوم."
+],
 "research and many teams moved to PyTorch": [
 "la recherche et beaucoup d'équipes sont passées à PyTorch",
 "البحث العلمي وفرق كثيرة انتقلت إلى PyTorch"
@@ -27266,6 +27962,10 @@
 "same Wi-Fi? app open on “Local server”?": [
 "même Wi-Fi ? application ouverte sur « Local server » ?",
 "نفس شبكة Wi-Fi؟ التطبيق مفتوح على «Local server»؟"
+],
+"samedi 14 novembre": [
+"samedi 14 novembre",
+"السبت 14 نوفمبر"
 ],
 "saved from your answer": [
 "gardée de votre réponse",
@@ -27430,6 +28130,10 @@
 "so far…": [
 "jusqu'ici…",
 "حتى الآن…"
+],
+"so they joined": [
+"donc il ou elle a rejoint",
+"لذلك انضم إلى"
 ],
 "solves it from here": [
 "le règle d'ici",
@@ -27610,6 +28314,10 @@
 "the same pages, made for a small screen": [
 "les mêmes pages, faites pour un petit écran",
 "نفس الصفحات، مهيّأة لشاشة صغيرة"
+],
+"the session has passed.": [
+"la séance est passée.",
+"انقضت الحصة."
 ],
 "the share of offers that ask for each": [
 "la part des offres qui demandent chacune",
@@ -27975,6 +28683,14 @@
 "en attente d'écriture",
 "في انتظار الكتابة"
 ],
+"was asked to replace them that day; waiting for the answer.": [
+"a été sollicité pour le remplacer ce jour-là ; réponse attendue.",
+"طُلب منه تعويضه ذلك اليوم؛ في انتظار الرد."
+],
+"was asked, waiting for the answer.": [
+"a été sollicité, réponse attendue.",
+"طُلب منه، في انتظار الرد."
+],
 "was assigned to": [
 "a été affecté à",
 "أُسند إلى"
@@ -28142,6 +28858,10 @@
 "which only works on this computer.": [
 "qui ne fonctionne que sur cet ordinateur.",
 "الذي لا يعمل إلا على هذا الحاسوب."
+],
+"which starts about": [
+"qui démarre environ",
+"الذي يبدأ بعد حوالي"
 ],
 "who": [
 "qui",
@@ -28383,9 +29103,17 @@
 "« L'enseigne aussi » pour quelqu'un qui travaille déjà avec vous, ou « Un nouveau formateur » (nom, email, téléphone) : autant que vous voulez.",
 "«يدرّسه أيضا» لمن يعمل معك مسبقا، أو «مكوّن جديد» (الاسم، البريد، الهاتف): بقدر ما تشاء."
 ],
+"“Assign an available professor to new classes” is off (Settings › Classes): nobody takes it by themselves, so choose one.": [
+"« Attribuer un formateur disponible aux nouvelles classes » est désactivé (Paramètres › Classes) : personne ne la prend de lui-même, choisissez-en un.",
+"«إسناد مكوّن متاح للأقسام الجديدة» معطّل (الإعدادات › الأقسام): لا أحد يتولاه من تلقاء نفسه، فاختر واحدا."
+],
 "“Available until” is before “available from”.": [
 "« Disponible jusqu'au » est avant « disponible à partir du ».",
 "«متاح حتى» قبل «متاح ابتداء من»."
+],
+"“Before each of their sessions” goes to the candidates of each session: choose candidates (a class, a program, everyone).": [
+"« Avant chacune de leurs séances » va aux candidats de chaque séance : choisissez des candidats (une classe, une formation, tout le monde).",
+"«قبل كل حصة من حصصهم» يُرسل إلى مترشحي كل حصة: اختر مترشحين (قسما، برنامجا، الجميع)."
 ],
 "“Bridge”: from learning to a job, a clear promise.": [
 "« Bridge » : de l'apprentissage à l'emploi, une promesse claire.",

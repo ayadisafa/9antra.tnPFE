@@ -242,6 +242,8 @@ NO_CLASS_WORDS = r"(programs?|formations?) (that )?(have |has |with |without |sa
 TODAY_WORDS = (r"what (should|must|do|have|can) i (to )?do|what to do|to ?do (list|today)|todo|que dois je faire|quoi faire|qu est ce que je dois faire|"
                r"summary of (the day|today)|today s (summary|plan|agenda|priorities)|resume (du jour|de la journee|d aujourd hui)|my day|ma journee|"
                r"priorit\w*|what needs me|what is urgent|qu est ce qui est urgent|urgences?|plan (for|of) (the day|today)|programme du jour")
+# A case put before or after "what can I do" ("when someone…", "si un candidat…", "ken wa7ed…"): not the day's list.
+CASE_WORDS = r"when|whenever|if|in case|quand|lorsqu\w*|si|au cas|en cas|ki|ken|kan"
 
 
 def candidates_list(db: Session) -> dict:

@@ -35,7 +35,8 @@ def ask_the_guide(payload: Conversation, request: Request, db: Session = Depends
     found = orchestrator.dispatch_chat(db, payload.message.strip(), payload.history, user=auth.current(request), lang=payload.lang, limited=True)
     return {"reply": found["reply"], "links": found.get("links") or [], "sources": found.get("sources") or [], "resources": found.get("resources") or [],
             "schema": found.get("schema"), "suggestions": found.get("suggestions") or [], "understood": found.get("understood") or [],
-            "agent": found["agent"], "category": {key: found["category"][key] for key in ("key", "label", "icon", "colour")}}
+            "agent": found["agent"], "category": {key: found["category"][key] for key in ("key", "label", "icon", "colour")},
+            "short": found.get("short"), "picture": found.get("picture")}
 
 
 @router.get("/account/guide/suggestions")

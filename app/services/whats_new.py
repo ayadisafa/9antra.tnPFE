@@ -13,6 +13,90 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-08b", "day": date(2026, 11, 8), "title": "Yasmine and the email assistant understand any question",
+        "items": [
+            {"icon": "bi-stars", "title": "Any question, in any wording or language",
+             "text": "A question to Yasmine or a candidate's email is now understood by a cloud model, in French, English, Arabic or "
+                     "Tunisian: it picks what to look up in your records (classes, sessions, payments, professors, programs, the "
+                     "centre, what you taught) and writes the answer from that only. Every figure, date, link and phone number is "
+                     "checked against your records; an answer with something they do not show is never given.", "url": "/settings#cloud-reader"},
+            {"icon": "bi-shield-check", "title": "Only checked answers go alone",
+             "text": "A candidate gets an answer alone only when every point of their message was answered from checked facts. "
+                     "Something your records do not say (an internship, paying in instalments…) is never guessed: the answer "
+                     "waits for you, saying which point. Refunds, cancellations and complaints always come to you, with no draft. "
+                     "When the free daily quota is used up, answers wait for you until the next day.", "url": "/inbox"},
+        ],
+    },
+    {
+        "key": "2026-11-08", "day": date(2026, 11, 8), "title": "Yasmine knows what to do when someone may drop out, and in other cases",
+        "items": [
+            {"icon": "bi-person-heart", "title": "Someone may drop out: who, why, and what to do",
+             "text": "Ask Yasmine “someone is about to drop out, what can I do?” in any language: she says what to do for each reason "
+                     "(absences, questions not answered, results, money owed, what they wrote, wanting to stop), then who may drop out "
+                     "right now, with the message already prepared for each and when to send it. Name someone and she answers for them.",
+             "url": "/#live-dashboard-risk"},
+            {"icon": "bi-signpost-split", "title": "What to do when…",
+             "text": "A professor absent, a candidate who has not paid, a class without a professor, an unhappy candidate, a refund, a "
+                     "missing meeting link, a message that did not arrive: ask “what do I do?” and she says what the application "
+                     "already does by itself, what is left to you, and how things stand now.", "url": "/"},
+        ],
+    },
+    {
+        "key": "2026-11-07e", "day": date(2026, 11, 7), "title": "Meeting links before the start, and a replacement for the day",
+        "items": [
+            {"icon": "bi-camera-video", "title": "The meeting link, 3 days before the start",
+             "text": "A class is fully online, fully on site, or both. Three days before an online or mixed class starts, its professor "
+                     "is asked for the private meeting link (in the application, by email, WhatsApp and SMS). Once given, every "
+                     "session uses it and each online candidate gets their own link; those on site get none. Still none a day "
+                     "before: you are told.", "url": "/classes/"},
+            {"icon": "bi-arrow-left-right", "title": "A professor away: a replacement for that day only",
+             "text": "When you note an absence, each of their sessions that day asks a professor who teaches it and is free then to "
+                     "confirm, with a private link. Yes: they replace for that session only. No, or no answer in time: the next one "
+                     "is asked. You get one notification until it is settled.", "url": "/classes/?tab=professors"},
+            {"icon": "bi-lock", "title": "One class at a time at the same hours",
+             "text": "A professor whose class still runs is never given another class at the same hours until the whole class is "
+                     "over, even when it runs past its planned end.", "url": "/classes/?tab=professors"},
+        ],
+    },
+    {
+        "key": "2026-11-07d", "day": date(2026, 11, 7), "title": "Professors take their class by themselves; reminders before each session",
+        "items": [
+            {"icon": "bi-person-check", "title": "A free professor takes the class, and is told",
+             "text": "A class waiting for a professor takes the first one who teaches its program and is free on its start day: no other "
+                     "class at its hours, not away that day. They are told at once in the application, by email, WhatsApp and SMS, "
+                     "with the class's code, its hours and their space.", "url": "/classes/?tab=professors"},
+            {"icon": "bi-easel", "title": "Reminders every day, or before each session",
+             "text": "Your own reminders can now go every day, or a number of hours before each of the candidates' sessions, naming "
+                     "that session's day, hour and topic. “Reset” starts a reminder again, as if just written, even a stopped one.",
+             "url": "/reminders#new"},
+        ],
+    },
+    {
+        "key": "2026-11-07c", "day": date(2026, 11, 7), "title": "A class the moment they pay",
+        "items": [
+            {"icon": "bi-calendar-plus", "title": "Placed the moment they pay, you are only told",
+             "text": "However the payment arrives (recorded, a proof confirmed, the form, the quick confirm), a fully paid candidate joins "
+                     "an open class of their program, or a new class is made for them. Someone already in a class is placed at once "
+                     "in a class that starts some days after it ends (one program at a time), instead of waiting for your decision. "
+                     "You get one notification with the class's code.", "url": "/classes/"},
+        ],
+    },
+    {
+        "key": "2026-11-07b", "day": date(2026, 11, 7), "title": "Yasmine sums up, answers short, with moving pictures",
+        "items": [
+            {"icon": "bi-text-paragraph", "title": "Sum it up",
+             "text": "Ask Yasmine to sum up a candidate, their discussion, a class, a program, the day, the week, the page you are on, a text "
+                     "pasted after the word, or her last answer, in any language. From the records, in a few lines, with the place to open.",
+             "url": "/assistant/agents#graph"},
+            {"icon": "bi-chat-left-dots", "title": "Short answers first",
+             "text": "A long answer shows its first lines, or for a list its first names and how many more; “More” opens the whole of it. "
+                     "Her voice reads the short one.", "url": "/"},
+            {"icon": "bi-images", "title": "A moving picture with each answer",
+             "text": "Each answer comes with the animated picture of its subject (payments, sessions, candidates…), and the news with a "
+                     "real photo from the journal that slowly moves.", "url": "/"},
+        ],
+    },
+    {
         "key": "2026-11-07", "day": date(2026, 11, 7), "title": "Reviews in ten seconds, a simpler inbox, the journal and the stories",
         "items": [
             {"icon": "bi-star-fill", "title": "Reviews in ten seconds",

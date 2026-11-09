@@ -319,7 +319,8 @@ check("what the admin sends by hand is never kept", by_hand.status == "sent" and
 under = tp.send(db, "weekly_questions", registration=bilel_reg, candidate=bilel, values={
     "week_number": "2", "week_topic": "Docker", "questions_count": "5", "questions_link": "https://9antra.example/learn/def", "program_name": program.name})
 check("under the limit it goes as before", under.status == "sent")
-db.add(ClassSession(class_group_id=group.id, week_number=3, session_date=(now + timedelta(days=1)).date(), start_time=dtime(18, 0),
+# Today: the letter covers today to Sunday, so "tomorrow" is next week when the suite runs on a Sunday.
+db.add(ClassSession(class_group_id=group.id, week_number=3, session_date=now.date(), start_time=dtime(18, 0),
                     end_time=dtime(21, 0), topic="Kubernetes"))
 db.commit()
 before = len(sent)

@@ -26,9 +26,9 @@ EVERY = 60                       # seconds between two tidy-ups from the pages
 # What needs the admin until it is handled.
 NEEDS_YOU = {"EMAIL_QUESTION", "CANDIDATE_EMAIL", "NEW_REGISTRATION", "REGISTRATION_REQUEST", "ASSIGNMENT_PENDING",
              "PROGRAM_PROPOSAL", "PROGRAM_APPROVAL", "TEAM_MESSAGE", "EMAIL_CONFIG", "EMAIL_FAILED", "PAYMENT_PROOF", "BIAS_ALERT",
-             "REVIEW_LOW"}
+             "REVIEW_LOW", "MEETING_LINK", "REPLACEMENT"}
 # What opening its page does not close: it waits for the thing to be done (someone not happy waits for a call).
-STAYS_OPEN = {"REVIEW_LOW"}
+STAYS_OPEN = {"REVIEW_LOW", "MEETING_LINK", "REPLACEMENT"}
 # Words of a CANDIDATE_EMAIL notification that only reports what the system did by itself.
 _REPORTS = ("corrected itself",)
 
@@ -106,6 +106,16 @@ def settled(db: Session, notification: Notification) -> bool:
 
         row = program_feedback.of_registration(db, notification.registration_id) if notification.registration_id else None
         return row is None or row.status != "received" or not program_feedback.is_low(row) or program_feedback.was_contacted(db, row)
+    if category == "MEETING_LINK":
+        from app.models.classgroup import ClassGroup, ClassStatus
+
+        group = db.get(ClassGroup, _path.rsplit("/", 1)[-1]) if _path.startswith("/classes/") else None
+        return group is None or bool(group.meeting_url) or group.status != ClassStatus.NOT_STARTED
+    if category == "REPLACEMENT":
+        from app.services.replacements import SessionReplacement
+
+        row = db.get(SessionReplacement, query.get("replacement") or "")
+        return row is None or row.status in ("accepted", "past")
     if category == "EMAIL_FAILED":
         from app.services import reach
 

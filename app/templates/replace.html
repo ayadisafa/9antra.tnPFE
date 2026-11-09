@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Remplacement · {{ app_name or '9antra' }}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:520px; margin:0 auto; padding:22px 16px 48px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:18px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:24px; padding:28px clamp(18px, 5vw, 32px); box-shadow:0 22px 44px -30px rgba(36,26,56,.35); text-align:center; animation:rise .35s ease both; }
+    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 11px; border-radius:999px; }
+    h1 { font-size:1.4rem; line-height:1.25; margin:14px 0 6px; }
+    .lead { color:var(--muted); font-size:.95rem; margin:0 auto; max-width:420px; }
+    .facts { text-align:left; background:#faf8fd; border-radius:16px; padding:14px 16px; margin:18px 0 0; display:grid; gap:6px; font-size:.92rem; }
+    .facts b { color:var(--ink); }
+    .row { display:flex; gap:10px; margin-top:22px; }
+    .row form { flex:1; margin:0; }
+    button { width:100%; border:0; border-radius:14px; padding:14px 16px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; }
+    .yes { background:var(--berry); color:#fff; } .yes:hover { background:var(--berry-dark); }
+    .no { background:#fff; color:var(--ink); border:1.5px solid var(--line); } .no:hover { border-color:var(--berry); }
+    .done { margin-top:16px; background:var(--mint-soft); color:#14532d; border-radius:16px; padding:14px 16px; font-size:.95rem; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">{{ app_name or '9antra' }}</div>
+  {% if done == "yes" %}
+  <div class="card">
+    <span class="eyebrow">Remplacement confirmé</span>
+    <h1>Merci {{ (professor.name.split() or [''])[0] if professor else '' }} !</h1>
+    <p class="lead">Vous remplacez le {{ when }} pour {{ group.name }}. L'équipe est prévenue, et la feuille de présence de cette séance vous attend dans votre espace.</p>
+  </div>
+  {% elif done in ("no", "taken") %}
+  <div class="card">
+    <span class="eyebrow">C'est noté</span>
+    <h1>Merci pour votre réponse</h1>
+    <p class="lead">{{ "Un autre formateur est sollicité." if done == "no" else "Cette séance ne peut plus vous être confiée : un autre formateur est sollicité." }}</p>
+  </div>
+  {% elif row and session and group %}
+  <div class="card">
+    <span class="eyebrow">Pour ce jour seulement</span>
+    <h1>Pouvez-vous remplacer un collègue ?</h1>
+    <p class="lead">Un formateur est absent ce jour-là. Vous enseignez cette formation et vous êtes libre à ces horaires.</p>
+    <div class="facts">
+      <div>Classe : <b>{{ group.name }}</b>{% if group.program %} · {{ group.program.name }}{% endif %}</div>
+      <div>Quand : <b>{{ when }}</b></div>
+      {% if session.topic %}<div>Séance : <b>{{ session.topic }}</b></div>{% endif %}
+      {% if group.room %}<div>Où : <b>{{ group.room }}</b></div>{% endif %}
+    </div>
+    <div class="row">
+      <form method="post"><input type="hidden" name="answer" value="yes"><button class="yes">Je confirme</button></form>
+      <form method="post"><input type="hidden" name="answer" value="no"><button class="no">Je ne peux pas</button></form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card">
+    <span class="eyebrow">Lien expiré</span>
+    <h1>Cette demande n'est plus ouverte</h1>
+    <p class="lead">Un autre formateur a peut-être déjà répondu, ou la séance est passée. Merci !</p>
+  </div>
+  {% endif %}
+  <p class="foot">{{ app_name or '9antra' }} · ce lien est à vous seul(e).</p>
+</div>
+</body>
+</html>

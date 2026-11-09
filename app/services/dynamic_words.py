@@ -169,7 +169,7 @@ _BY_CATEGORY = {
     "CANDIDATE_EMAIL": "/inbox", "WEEK_QUESTIONS": "/quiz/weekly", "LEVEL": "/quiz/all", "PROGRAM_APPROVAL": "/programs/all",
     "PROGRAM_PROPOSAL": "/programs/all", "PROGRAM_MATCH": "/programs/all", "WEBSITE": "/website", "TEAM_MESSAGE": "/team",
     "PAYMENT": "/payments", "PAYMENT_PROOF": "/payments#proofs", "REMINDER": "/reminders", "CLASS": "/classes/",
-    "ASSIGNMENT": "/classes/", "ASSIGNMENT_PENDING": "/classes/", "FEEDBACK": "/quiz/all", "REVIEW_LOW": "/website#feedback", "COURSE_FILE": "/classes/",
+    "ASSIGNMENT": "/classes/", "ASSIGNMENT_PENDING": "/classes/", "FEEDBACK": "/quiz/all", "REVIEW_LOW": "/website#feedback", "MEETING_LINK": "/classes/", "REPLACEMENT": "/classes/", "COURSE_FILE": "/classes/",
     "PROGRAM_FILE": "/programs/expertise",
 }
 

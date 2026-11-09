@@ -285,11 +285,21 @@ def _listed(items: list[str]) -> str:
 
 
 def _weeks_of(group: ClassGroup) -> tuple[date | None, date | None]:
-    """The first and the last day a class runs (None when its date is not known yet)."""
+    """The first and the last day a class runs (None when its date is not known yet). A class not finished holds its
+    professor's hours until it really is: its end as set, and while it runs, at least until tomorrow (one class at a time
+    at the same hours, until the whole class is over)."""
     start = class_start_dt(group)
     if start is None:
         return None, None
-    return start.date(), start.date() + timedelta(weeks=max(1, group.total_weeks or 1))
+    last = start.date() + timedelta(weeks=max(1, group.total_weeks or 1))
+    if group.status != ClassStatus.COMPLETED:
+        ends = class_end_dt(group)
+        if ends is not None:
+            last = max(last, ends.date())
+        if group.status == ClassStatus.ONGOING:
+            # Still running past its planned end: it holds these hours until it is marked finished.
+            last = date.max if last <= local_now().date() else max(last, local_now().date() + timedelta(days=1))
+    return start.date(), last
 
 
 def professor_clash(db: Session, professor_id: str | None, days: list[int], start_time: time | None, end_time: time | None,
@@ -333,10 +343,48 @@ def able_to_take(db: Session, class_group: ClassGroup, exclude_id: str | None = 
         if professor_clash(db, professor.id, days, class_group.start_time, class_group.end_time, first, class_group.total_weeks,
                            exclude_id=class_group.id) is not None:
             continue
+        if absent_on(db, professor.id, start.date() if start else on_date, class_group.start_time, class_group.end_time):
+            continue                    # away on the class's first day: not them
         load = db.query(ClassGroup).filter(ClassGroup.professor_id == professor.id, ClassGroup.status != ClassStatus.COMPLETED).count()
         ranked.append((rank, load, professor.name.lower(), professor))
     ranked.sort(key=lambda item: item[:3])
     return [item[3] for item in ranked]
+
+
+def absent_on(db: Session, professor_id: str, day: date | None, start: time | None = None, end: time | None = None) -> bool:
+    """Whether a professor is away that day (the whole day, or hours that cross the class's)."""
+    from app.models.professor_absence import ProfessorAbsence
+
+    if day is None:
+        return False
+    for absence in db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == professor_id, ProfessorAbsence.absence_date == day).all():
+        if not (absence.start_time and absence.end_time and start and end):
+            return True
+        if max(start, absence.start_time) < min(end, absence.end_time):
+            return True
+    return False
+
+
+def tell_professor(db: Session, class_group: ClassGroup, professor: Professor) -> int:
+    """The professor who takes a class is told at once, every way they can be reached: in the application (their
+    messages), by email, WhatsApp and SMS. Returns how many ways it went."""
+    from app.services import team_messages
+    from app.services.schedule_utils import describe_schedule_fr, format_date_fr
+    from app.services.settings_service import public_base_url
+
+    first = ((professor.name or "").replace("Pr ", "").replace("Dr ", "").split() or [""])[0]
+    start = class_start_dt(class_group)
+    program = class_group.program.name if class_group.program else class_group.name
+    count = enrolled_count(db, class_group.id)
+    text = (f"Bonjour {first}, vous prenez la classe {class_group.name} ({program}) : {describe_schedule_fr(class_group)}"
+            + (f", première séance le {format_date_fr(start)} à {start:%H:%M}" if start else "") + ". "
+            + f"{count} candidat(s) inscrit(s) pour l'instant. Tout est dans votre espace : {public_base_url(db)}/teacher")
+    try:
+        return len(team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant"))
+    except Exception:
+        db.rollback()
+        logger.exception("The professor %s could not be told of class %s.", professor.id, class_group.id)
+        return 0
 
 
 def assign_waiting_professors(db: Session) -> list[tuple[ClassGroup, Professor]]:
@@ -363,8 +411,9 @@ def assign_waiting_professors(db: Session) -> list[tuple[ClassGroup, Professor]]
         group.professor_id, group.professor_name = professor.id, professor.name
         db.flush()                         # the next class sees this professor busy at these hours
         db.add(Notification(recipient_role="admin", category="CLASS", title="A class took its professor by itself",
-                            message=f"{group.name} · {professor.name}. " + "It was waiting for a professor: this one teaches its program "
-                                    "and is free at its hours. Its candidates are told how to reach them.",
+                            message=f"{group.name} · {professor.name}. " + "It was waiting for a professor: this one teaches its program, "
+                                    "is free at its hours and not away on its first day. They were told in the application, by email, "
+                                    "WhatsApp and SMS; its candidates are told how to reach them.",
                             action_url=f"/classes/{group.id}"))
         given.append((group, professor))
     return given
@@ -407,6 +456,8 @@ def find_available_professor(db: Session, program: Program | None, days: list[in
             continue
         if professor.available_until and professor.available_until < on_date:
             continue
+        if absent_on(db, professor.id, on_date, start_time, end_time):
+            continue                    # away on the first day
         own_classes = [item for item in active_classes if item.professor_id == professor.id]
         busy = any(
             set(days) & set(parse_days(item.days_of_week))
@@ -814,6 +865,8 @@ def sync_class_lifecycle(db: Session) -> int:
         for registration in class_members(db, class_id):
             run_in_background(class_emails.send_class_update_email_task, registration.id, "scheduled")
     tell_class_of_professor(db, [group.id for group, _ in given])
+    for group, professor in given:
+        tell_professor(db, group, professor)
     return changed
 
 
@@ -925,19 +978,18 @@ def not_before(db: Session, registration: Registration) -> date | None:
 def class_in_the_way(db: Session, registration: Registration, days: list[int] | None = None,
                      start_time: time | None = None, end_time: time | None = None) -> ClassGroup | None:
     """The class the candidate already follows (running, or about to start), if any: one program at a time,
-    whatever the hours. The next one starts in a class some days after it ends (Settings, Classes)."""
+    whatever the hours. With several (a program already placed after the current one), the one that ends last: the
+    next one starts in a class some days after it ends (Settings, Classes)."""
     others = (
         db.query(Registration)
         .filter(Registration.candidate_id == registration.candidate_id, Registration.id != registration.id,
                 Registration.class_group_id.is_not(None), Registration.status == RegistrationStatus.ASSIGNED)
         .all()
     )
-    for other in others:
-        current = other.class_group
-        if current is None or current.status == ClassStatus.COMPLETED:
-            continue
-        return current
-    return None
+    found = [other.class_group for other in others if other.class_group is not None and other.class_group.status != ClassStatus.COMPLETED]
+    if not found:
+        return None
+    return max(found, key=lambda group: class_end_dt(group) or datetime.max)
 
 
 def ask_to_wait_task(registration_id: str, current_class_id: str) -> None:
@@ -1007,6 +1059,19 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
         else:
             slot = default_schedule(db, db.get(Program, registration.program_id), settings)
         current = class_in_the_way(db, registration, *slot)
+        waits_for = None
+        if current is not None and settings.auto_create_class_on_payment:
+            # One program at a time: they are placed now in a class of this program that starts some days after the
+            # one they follow ends (an open one, or a new one), and the admin is only told.
+            ends = class_end_dt(current)
+            after = max((ends.date() if ends else now.date()) + timedelta(days=gap_days(settings)), now.date() + timedelta(days=1))
+            class_group = find_open_class(db, registration, now, starts_from=after)
+            if class_group is None:
+                program = db.get(Program, registration.program_id)
+                class_group = create_class(db, program, settings=settings, auto_created=True,
+                                           start_date=first_session_on_or_after(after, default_schedule(db, program, settings)[0]))
+                created = True
+            waits_for, current = current, None
         if current is not None:
             if not waiting:
                 ends = class_end_dt(current)
@@ -1023,7 +1088,7 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
                 db.commit()
                 run_in_background(ask_to_wait_task, registration.id, current.id)
             return EnrollmentResult(registration, reason="busy")
-        if class_group is None:
+        if class_group is None and waits_for is None:
             if not settings.auto_create_class_on_payment:
                 if not waiting:
                     _notify(
@@ -1039,6 +1104,7 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
             created = True
 
         _attach(db, registration, class_group, now)
+        new_professor = db.get(Professor, class_group.professor_id) if created and class_group.professor_id else None
         if schedule_by_enrollment(db, class_group, now):
             others_to_notify = [
                 member.id for member in class_members(db, class_group.id)
@@ -1051,7 +1117,16 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
             details=f"Enrolled in {class_group.name} ({registration.program_name}). First session: {_when(class_group)}.",
         ))
         professor = class_group.professor_name or "no professor available yet"
-        if created:
+        if waits_for is not None:
+            ends = class_end_dt(waits_for)
+            title = "Payment confirmed · placed after their current class"
+            message = (
+                f"{_who(registration)} paid for {registration.program_name}. One program at a time: they follow {waits_for.name}"
+                f"{' until ' + format_date_en(ends) if ends else ''}, so they joined {class_group.name}"
+                f"{' (a new class)' if created else ''}, which starts about {gap_days(settings)} days after it ends. "
+                f"Professor: {professor}. First session: {_when(class_group)}."
+            )
+        elif created:
             title = "Payment confirmed · new class created"
             message = (
                 f"{_who(registration)} paid for {registration.program_name}. No open class existed, so "
@@ -1071,6 +1146,8 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
         db.commit()
         db.refresh(registration)
 
+    if new_professor is not None:
+        tell_professor(db, class_group, new_professor)
     if notify_candidate:
         run_in_background(class_emails.send_enrollment_email_task, registration.id)
     for registration_id in others_to_notify:

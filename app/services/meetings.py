@@ -9,6 +9,12 @@ meeting this application can observe by itself: who came, and when.
 
 What happens inside the meeting (speaking, camera) is not visible from here;
 the professor notes it on the presence sheet (see attendance).
+
+A class is fully online, fully on site, or both (mixed): only its online
+candidates get links. Three days before an online or mixed class starts, its
+professor is asked for the private meeting link (in the application, by email,
+WhatsApp and SMS); once given, every session uses it and each online candidate
+gets their own link at once.
 """
 from __future__ import annotations
 
@@ -31,6 +37,28 @@ STAYS_AFTER = timedelta(minutes=30)         # and closes this long after its end
 LATE_AFTER = 10                             # minutes after the start from which an arrival is "late"
 SEND_BEFORE = timedelta(minutes=60)         # links are emailed this long before the session
 ROOMS = "https://meet.jit.si/"
+MODES = {"online": "Fully online", "onsite": "Fully on site", "mixed": "Online and on site"}
+LINK_ASK_DAYS = 3                           # the professor is asked for the meeting link this many days before the start
+LINK_LATE = timedelta(days=1)               # still none this close to the start: the admin is told
+
+
+def mode_of(db: Session, class_group: ClassGroup) -> str:
+    """online | onsite | mixed: as set on the class, else from its candidates' choices (online when nobody chose yet)."""
+    if class_group.delivery_mode in MODES:
+        return class_group.delivery_mode
+    chosen = {("onsite" if (registration.delivery_mode or "online") == "onsite" else "online")
+              for registration in attendance.members(db, class_group.id)}
+    if chosen == {"onsite"}:
+        return "onsite"
+    return "mixed" if len(chosen) > 1 else "online"
+
+
+def follows_online(db: Session, class_group: ClassGroup, registration: Registration, mode: str | None = None) -> bool:
+    """Whether this candidate follows the class online (and so gets its links)."""
+    mode = mode or mode_of(db, class_group)
+    if mode == "onsite":
+        return False
+    return mode == "online" or (registration.delivery_mode or "online") != "onsite"
 
 
 def clean_url(value: str | None) -> str | None:
@@ -52,19 +80,20 @@ def new_room(class_group: ClassGroup) -> str:
 
 
 def room_of(db: Session, session: ClassSession, class_group: ClassGroup, *, create: bool = True) -> str | None:
-    """The session's meeting room, created now if it has none."""
-    if not session.meeting_url and create:
-        session.meeting_url = new_room(class_group)
+    """The session's meeting room: the class's link from its professor, else one created now if it has none."""
+    if not session.meeting_url and (class_group.meeting_url or create):
+        session.meeting_url = class_group.meeting_url or new_room(class_group)
         db.commit()
     return session.meeting_url
 
 
 def links_for(db: Session, class_group: ClassGroup, session: ClassSession) -> dict[str, SessionJoin]:
-    """Each candidate's own link to this session, created for those who have none yet."""
+    """Each online candidate's own link to this session, created for those who have none yet."""
     existing = {row.registration_id: row for row in db.query(SessionJoin).filter(SessionJoin.session_id == session.id).all()}
     made = False
+    mode = mode_of(db, class_group)
     for registration in attendance.members(db, class_group.id):
-        if registration.id not in existing:
+        if registration.id not in existing and follows_online(db, class_group, registration, mode):
             row = SessionJoin(
                 session_id=session.id, registration_id=registration.id, candidate_id=registration.candidate_id,
                 token=secrets.token_urlsafe(18),
@@ -189,6 +218,8 @@ def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
             continue
         if not (session.start_time or class_group.start_time):
             continue                        # no hour: nothing to be on time for
+        if mode_of(db, class_group) == "onsite":
+            continue                        # in the room: no link
         start, end = hours_of(session, class_group)
         if not (start - SEND_BEFORE <= now <= end):
             continue
@@ -198,6 +229,70 @@ def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
             continue                        # a class on hold has no session to join
         sent += send_links(db, class_group, session, base_url, manual=False)["sent"]
     return sent
+
+
+def set_class_link(db: Session, class_group: ClassGroup, address: str, base_url: str) -> int:
+    """The class's meeting link (from its professor or the admin): every session to come uses it, and each online
+    candidate gets their own link to the next session at once. Returns how many were sent. Raises ValueError for an
+    address that is not one."""
+    from app.services import weekly_questions
+
+    url = clean_url(address)
+    if url is None:
+        raise ValueError("Paste the meeting's address, starting with https://")
+    class_group.meeting_url = url
+    today = local_now().date()
+    coming = (db.query(ClassSession).filter(ClassSession.class_group_id == class_group.id, ClassSession.session_date >= today)
+              .order_by(ClassSession.session_date.asc()).all())
+    for session in coming:
+        if not session.meeting_url or session.meeting_url.startswith(ROOMS):
+            session.meeting_url = url
+    db.commit()
+    if not coming or weekly_questions.is_local_address(base_url):
+        return 0
+    return send_links(db, class_group, coming[0], base_url)["sent"]
+
+
+def ask_links_due(db: Session, base_url: str, now: datetime | None = None) -> dict:
+    """Three days before an online or mixed class starts, its professor is asked for the private meeting link, once;
+    a day before, still none: the admin is told, once. Returns {"asked", "late"}."""
+    from app.models.notification import Notification
+    from app.models.professor import Professor
+    from app.services import team_messages
+    from app.services.schedule_utils import class_start_dt, describe_schedule_fr, format_date_fr
+
+    now = now or local_now()
+    done = {"asked": 0, "late": 0}
+    for class_group in db.query(ClassGroup).filter(ClassGroup.status == ClassStatus.NOT_STARTED, ClassGroup.meeting_url.is_(None)).all():
+        start = class_start_dt(class_group)
+        if start is None or start <= now or start - now > timedelta(days=LINK_ASK_DAYS):
+            continue
+        if not attendance.members(db, class_group.id) or mode_of(db, class_group) == "onsite":
+            continue
+        professor = db.get(Professor, class_group.professor_id) if class_group.professor_id else None
+        if class_group.link_asked_at is None and professor is not None:
+            first = ((professor.name or "").replace("Pr ", "").replace("Dr ", "").split() or [""])[0]
+            text = (f"Bonjour {first}, votre classe {class_group.name} commence le {format_date_fr(start)} à {start:%H:%M} "
+                    f"({describe_schedule_fr(class_group)}). Collez ici le lien privé de la réunion (Google Meet, Zoom, Teams…) : "
+                    f"{base_url.rstrip('/')}/teacher/classes/{class_group.id}/link · il sera envoyé à vos candidats en ligne, "
+                    "chacun avec son propre lien.")
+            class_group.link_asked_at = datetime.utcnow()
+            db.commit()                     # kept first: never asked twice
+            try:
+                team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant")
+            except Exception:
+                db.rollback()
+            done["asked"] += 1
+        if start - now <= LINK_LATE and not db.query(Notification.id).filter(Notification.category == "MEETING_LINK",
+                                                                             Notification.action_url == f"/classes/{class_group.id}").first():
+            db.add(Notification(recipient_role="admin", category="MEETING_LINK", title="No meeting link yet",
+                                message=(f"{class_group.name} starts {format_date_fr(start)} at {start:%H:%M} online, and "
+                                         f"{professor.name if professor else 'its professor'} has not given the meeting link yet. "
+                                         "Paste it in the class's parameters, or a private room is made at the start."),
+                                action_url=f"/classes/{class_group.id}"))
+            db.commit()
+            done["late"] += 1
+    return done
 
 
 SHEET_TEXT = (

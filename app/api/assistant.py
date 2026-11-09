@@ -23,6 +23,7 @@ class AssistantMessage(BaseModel):
     history: list[dict[str, str]] = Field(default_factory=list)
     candidate_id: str | None = None
     lang: str | None = None          # chosen in the window: en, fr, ar, tn (none: the language of the question)
+    path: str | None = None          # the page the window is open on ("résume cette page")
 
 
 @router.post("/chat")
@@ -105,12 +106,14 @@ def chat_with_assistant(payload: AssistantMessage, request: Request, db: Session
     # application's own data, its guides and what it knows (see chatbot); the language model is only its last resort.
     from app.services import auth, orchestrator
 
-    found = orchestrator.dispatch_chat(db, message, payload.history, user=auth.current(request), lang=payload.lang)
+    page = payload.path if payload.path and payload.path.startswith("/") and not payload.path.startswith("//") else None
+    found = orchestrator.dispatch_chat(db, message, payload.history, user=auth.current(request), lang=payload.lang, path=(page or "")[:200] or None)
     return {"reply": found["reply"], "links": found.get("links") or [], "source": found.get("source"),
             "sources": found.get("sources") or [], "resources": found.get("resources") or [],
             "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations,
             "schema": found.get("schema"), "agent": found.get("agent"), "category": found.get("category"),
-            "consulted": found.get("consulted") or [], "understood": found.get("understood") or [], "path": found.get("path") or []}
+            "consulted": found.get("consulted") or [], "understood": found.get("understood") or [], "path": found.get("path") or [],
+            "short": found.get("short"), "picture": found.get("picture")}
 
 
 @router.post("/auto-send")

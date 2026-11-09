@@ -43,7 +43,7 @@ ADMIN, PROFESSOR, STAFF = "admin", "professor", "staff"
 # "/level/" the one where they say where they stand before it starts.
 # "/app.webmanifest" lets a phone put the application on its home screen.
 # "/whatsapp/webhook" is Meta's: it proves each message with the app's secret (see api/whatsapp.py).
-_OPEN_PREFIXES = ("/login", "/logout", "/setup", "/static/", "/learn/", "/opinion/", "/level/", "/join/", "/favicon", "/app.webmanifest",
+_OPEN_PREFIXES = ("/login", "/logout", "/setup", "/static/", "/learn/", "/opinion/", "/level/", "/join/", "/replace/", "/favicon", "/app.webmanifest",
                   "/whatsapp/webhook", "/sms/webhook")
 # What a professor may open besides the pages of their own classes.
 _PROFESSOR_PREFIXES = ("/teacher", "/account", "/guide", "/language", "/i18n/", "/events/stream")
@@ -398,7 +398,13 @@ def professor_may_open(db: Session, user: CurrentUser, path: str) -> bool:
     match = _CLASS_PAGE.match(path)
     if match:
         class_group = db.get(ClassGroup, match.group(1))
-        return class_group is not None and class_group.professor_id == user.professor_id
+        if class_group is not None and class_group.professor_id == user.professor_id:
+            return True
+        # Replacing the usual professor one day: that class's presence sheet and course too.
+        from app.models.classsession import ClassSession
+
+        return class_group is not None and user.professor_id is not None and db.query(ClassSession.id).filter(
+            ClassSession.class_group_id == class_group.id, ClassSession.substitute_professor_id == user.professor_id).first() is not None
     match = _CLASS_FILE.match(path)
     if match:
         material = db.get(ClassMaterial, match.group(1))

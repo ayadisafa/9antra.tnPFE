@@ -38,6 +38,7 @@ from app.api.auth import router as auth_router
 from app.api.teacher import router as teacher_router
 from app.api.website import router as website_router
 from app.api.opinion import router as opinion_router
+from app.api.replace import router as replace_router
 from app.api.system import router as system_router
 from app.api.meeting import router as meeting_router
 from app.api.market import router as market_router
@@ -205,6 +206,7 @@ app.include_router(inbox_router)
 app.include_router(course_router)
 app.include_router(website_router)
 app.include_router(opinion_router)
+app.include_router(replace_router)          # /replace: a professor confirms they replace a colleague that day
 app.include_router(system_router)      # /system, and what a phone needs to keep the application on its home screen
 app.include_router(meeting_router)     # a session's meeting: before teacher_router's /classes/{id}/attendance/{session}
 app.include_router(videos_router)      # /programs/videos: before program_router's /programs/{program_id}

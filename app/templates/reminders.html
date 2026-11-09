@@ -265,10 +265,16 @@
       <div class="rm-repeat" role="radiogroup" aria-label="How often">
         {% for key, name in repeats.items() %}
         <label class="rm-rep"><input type="radio" name="repeat" value="{{ key }}" {{ 'checked' if key == 'once' }}>
-          <span><i class="bi {{ {'once': 'bi-1-circle', 'weekly': 'bi-calendar-week', 'monthly': 'bi-calendar-month', 'absence': 'bi-person-x'}[key] }}"></i>{{ name }}</span></label>
+          <span><i class="bi {{ {'once': 'bi-1-circle', 'daily': 'bi-sun', 'weekly': 'bi-calendar-week', 'monthly': 'bi-calendar-month', 'session': 'bi-easel', 'absence': 'bi-person-x'}[key] }}"></i>{{ name }}</span></label>
         {% endfor %}
       </div>
-      <div class="form-text" id="rm-repeat-help">Every week or every month: it goes again at the same hour, until the last day you choose (or until you stop it). Each time a candidate is marked absent: it waits, and goes to that candidate the moment their absence is marked.</div>
+      <div class="form-text" id="rm-repeat-help">Every day, week or month: it goes again at the same hour, until the last day you choose (or until you stop it). Before each of their sessions: it goes to each candidate the number of hours you choose before each of their sessions; the buttons below write that session's day, hour and topic. Each time a candidate is marked absent: it waits, and goes to that candidate the moment their absence is marked.</div>
+      <div class="rm-when mt-2" id="rm-hours" hidden>
+        <input class="form-control" type="number" name="hours_before" value="24" min="1" max="168" style="max-width:100px;" aria-label="Hours before each session">
+        <span style="font-size:.84rem;">hours before each session</span>
+        <button type="button" class="rm-idea" data-insert="{session_date} à {session_time}"><i class="bi bi-calendar-event"></i>The session's day and hour</button>
+        <button type="button" class="rm-idea" data-insert="{session_topic}"><i class="bi bi-journal-text"></i>Its topic</button>
+      </div>
       <div class="rm-label" id="rm-when-label">When</div>
       <div class="rm-when" id="rm-when">
         <label style="font-size:.84rem;"><input type="radio" name="when" value="later" checked> On</label>
@@ -308,8 +314,9 @@
     {% for row in upcoming %}
     <div class="rm-row">
       <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b>{% if (row.reminder.repeat or 'once') != 'once' %}<span class="rm-chip-rep"><i class="bi bi-arrow-repeat"></i>{{ repeats.get(row.reminder.repeat, '') }}</span>{% endif %}
-        <span class="meta">{% if row.reminder.status == 'watching' %}<span>Waiting for an absence</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% else %}{{ row.when.strftime('%a %d %b, %H:%M') }}{% endif %} · {{ row.reminder.audience_label }}{% if row.reminder.status != 'watching' %} · {{ row.people }}{% endif %}</span></div>
+        <span class="meta">{% if row.reminder.status == 'watching' and row.reminder.repeat == 'session' %}<span>{{ row.reminder.hours_before }} h before each session</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% elif row.reminder.status == 'watching' %}<span>Waiting for an absence</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% else %}{{ row.when.strftime('%a %d %b, %H:%M') }}{% endif %} · {{ row.reminder.audience_label }}{% if row.reminder.status != 'watching' %} · {{ row.people }}{% endif %}</span></div>
       {% if row.reminder.status != 'watching' %}<form method="post" action="/reminders/{{ row.reminder.id }}/send-now" data-confirm="Send this reminder now?"><button class="ui-btn sm">Send now</button></form>{% endif %}
+      {% if row.reminder.times %}<form method="post" action="/reminders/{{ row.reminder.id }}/reset" data-confirm="Start this reminder again from now, as if just written?"><button class="ui-btn ghost sm icon" aria-label="Start it again" title="Start it again"><i class="bi bi-arrow-counterclockwise"></i></button></form>{% endif %}
       <form method="post" action="/reminders/{{ row.reminder.id }}/cancel" data-confirm="Stop this reminder? Nothing more will be sent."><button class="ui-btn ghost sm icon danger" aria-label="Stop this reminder"><i class="bi bi-x-lg"></i></button></form>
     </div>
     {% else %}
@@ -322,6 +329,7 @@
     <div class="rm-row">
       <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b><span class="meta">{{ row.reminder.audience_label }} · {% if row.reminder.status == 'cancelled' %}cancelled, nothing sent{% else %}{{ (row.sent or row.when).strftime('%a %d %b, %H:%M') }} · delivered to {{ row.reminder.sent_count }}{% if row.reminder.failed_count %}, not delivered to {{ row.reminder.failed_count }}{% endif %}{% endif %}</span></div>
       <span class="ui-chip {{ 'muted' if row.reminder.status == 'cancelled' else 'warn' if row.reminder.failed_count else 'ok' }}">{{ 'Cancelled' if row.reminder.status == 'cancelled' else 'Sent' }}</span>
+      <form method="post" action="/reminders/{{ row.reminder.id }}/reset" data-confirm="Start this reminder again, as if just written?"><button class="ui-btn sm" title="Start it again"><i class="bi bi-arrow-counterclockwise"></i>Reset</button></form>
     </div>
     {% else %}
     <div class="ui-empty" style="border:0;"><i class="bi bi-check2-all"></i><strong>Nothing sent yet</strong>Reminders that went, or that you cancelled, are listed here.</div>
@@ -376,8 +384,9 @@
   function showRepeat() {
     const chosen = (form.querySelector('input[name="repeat"]:checked') || {}).value || "once";
     document.getElementById("rm-until").hidden = chosen === "once";
-    document.getElementById("rm-when").hidden = chosen === "absence";
-    document.getElementById("rm-when-label").hidden = chosen === "absence";
+    document.getElementById("rm-when").hidden = chosen === "absence" || chosen === "session";
+    document.getElementById("rm-when-label").hidden = chosen === "absence" || chosen === "session";
+    document.getElementById("rm-hours").hidden = chosen !== "session";
   }
   form.addEventListener("change", function () { showTarget(); showRepeat(); preview(); });
   showRepeat();

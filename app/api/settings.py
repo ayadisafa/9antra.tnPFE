@@ -65,6 +65,7 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "assistant_rewrites": email_assistant.rewrites_taught(settings),
             "assistant_model": email_assistant.MODEL,
             "model_ready": email_assistant.model_available(),
+            "cloud": _cloud_state(),
             "brand": branding(settings),
             "default_signature": DEFAULT_SIGNATURE,
             "mailbox_ready": mailbox_service.configured(),
@@ -95,6 +96,15 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "error": request.query_params.get("error"),
         },
     )
+
+
+def _cloud_state() -> dict:
+    """The cloud reader: on or off, its calls today, and how many keys may still be used (the best model's count)."""
+    from app.services import cloud_model
+
+    ready = cloud_model.resting()
+    return {"on": cloud_model.available(), "used": cloud_model.used_today(), "keys": len(cloud_model.keys()),
+            "keys_ready": max(ready.values()) if ready else 0}
 
 
 def _centre_banks(settings) -> list[dict]:

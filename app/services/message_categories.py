@@ -52,7 +52,7 @@ _WORDS = {
     "programs": r"programme|formation|contenu|module|semaine \d|support|cours|chapitre|niveau|prerequis|certificat|attestation|"
                 r"diplome|syllabus|exercice|projet|curriculum|course|lesson|content|certificate|level|prerequisite|"
                 r"dars|el cours|الدرس|البرنامج|الشهادة|التكوين",
-    "trends": r"tendance|trend|trending|nouveaute|nouveautes|actualite|news|marche du travail|market|offres? d'emploi|jobs?|"
+    "trends": r"tendance|trend|trending|nouveaute|nouveautes|actualite|news|marche du travail|market|offres? d'emploi|jobs?\b|"
               r"quoi de neuf|what'?s new|inspir|quel nom|nom de|name for|service a ajouter|services a ajouter|ajouter comme service|"
               r"what (?:service|program)s? (?:to|should|could)|idee|idees|ideas?|innov|futur|avenir|journal|linkedin|recommand|"
               r"(?:services?|programmes?|formations?|offres?)\W+(?:\w+\W+){0,3}(?:ajouter|add|proposer|offrir|lancer|creer)|"

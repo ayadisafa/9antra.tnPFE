@@ -434,6 +434,18 @@ SMTP_PASSWORD=your-app-password</div>
           <div class="opt-help">Emails are only stored in the inbox. You write every answer yourself.</div>
         </label>
 
+        <div class="st-section">Understanding any question</div>
+        <div class="st-option" id="cloud-reader" style="cursor:default;">
+          {% if cloud.on %}
+          <span class="opt-title"><i class="bi bi-stars" style="color:#2563eb;"></i> On: any question is understood, then answered only from your records</span>
+          <div class="opt-help">Yasmine and this assistant send the question and only the facts it needs (for a candidate, their own trainings) to the cloud model, which writes the answer. Every figure, date, link and phone number is checked against your records, and only an answer that passed every check goes alone. Refunds, cancellations and complaints still come to you.</div>
+          <div class="form-text"><span>Today</span>: <b data-no-i18n>{{ cloud.used }}</b> · <span>keys still usable</span>: <b data-no-i18n>{{ cloud.keys_ready }}/{{ cloud.keys }}</b>. <span>When the free daily quota is used up, the answers wait for you until it comes back the next day.</span></div>
+          {% else %}
+          <span class="opt-title"><i class="bi bi-stars"></i> Off</span>
+          <div class="opt-help">Without a cloud model key (GEMINI_API_KEY in .env), questions are read with word rules only.</div>
+          {% endif %}
+        </div>
+
         <div class="st-section">The answers you taught</div>
         <label class="st-option">
           <input class="form-check-input me-2" type="checkbox" name="email_rewrite_taught" value="true" {% if assistant_rewrites %}checked{% endif %}>

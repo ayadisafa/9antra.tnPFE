@@ -47,10 +47,10 @@ _WENT = {
         "ar": ("رسالة واحدة لم تُرسل", "{n} رسائل لم تُرسل"), "tn": ("message wa7ed ma tba3athch", "{n} messages ma tba3thouch")}),
 }
 WORDS = {
-    "fr": {"came": "Arrivé", "went": "Parti", "away": "Pendant votre absence", "today": "Aujourd'hui", "nothing": "Rien de nouveau depuis."},
-    "en": {"came": "Came in", "went": "Went out", "away": "While you were away", "today": "Today", "nothing": "Nothing new since."},
-    "ar": {"came": "ما وصل", "went": "ما أُرسل", "away": "خلال غيابك", "today": "اليوم", "nothing": "لا جديد منذ ذلك الوقت."},
-    "tn": {"came": "Chnowa wsel", "went": "Chnowa tba3ath", "away": "Wa9t elli ma kontech lehna", "today": "Lyoum", "nothing": "Ma famma chay jdid."},
+    "fr": {"came": "Arrivé", "went": "Parti", "away": "Pendant votre absence", "today": "Aujourd'hui", "nothing": "Rien de nouveau depuis.", "quiet": "Rien n'est encore arrivé ni parti."},
+    "en": {"came": "Came in", "went": "Went out", "away": "While you were away", "today": "Today", "nothing": "Nothing new since.", "quiet": "Nothing came in or went out yet."},
+    "ar": {"came": "ما وصل", "went": "ما أُرسل", "away": "خلال غيابك", "today": "اليوم", "nothing": "لا جديد منذ ذلك الوقت.", "quiet": "لم يصل ولم يُرسل شيء بعد."},
+    "tn": {"came": "Chnowa wsel", "went": "Chnowa tba3ath", "away": "Wa9t elli ma kontech lehna", "today": "Lyoum", "nothing": "Ma famma chay jdid.", "quiet": "Mazal ma wsel chay w ma tba3ath chay."},
 }
 
 
@@ -106,7 +106,8 @@ def sentence(db: Session, moment: datetime, lang: str = "fr", heading: str = "aw
     words = WORDS[lang]
     found = lines(db, moment, lang)
     if not found:
-        return f"{words[heading]} : {words['nothing']}" if lang == "fr" else f"{words[heading]}: {words['nothing']}"
+        nothing = words["quiet"] if heading == "today" else words["nothing"]
+        return f"{words[heading]} : {nothing}" if lang == "fr" else f"{words[heading]}: {nothing}"
     parts = []
     for side in ("came", "went"):
         items = [item["text"] for item in found if item["side"] == side]

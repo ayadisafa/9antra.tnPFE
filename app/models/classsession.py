@@ -20,6 +20,7 @@ class ClassSession(Base):
     meeting_url = Column(String, nullable=True)
     # When its professor was asked to confirm who came, once the session ended (meetings.after_sessions).
     sheet_asked_at = Column(DateTime, nullable=True)
+    substitute_professor_id = Column(String, nullable=True)     # the professor who replaces the usual one that day
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     class_group = relationship("ClassGroup", back_populates="sessions")

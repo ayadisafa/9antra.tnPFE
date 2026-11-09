@@ -110,7 +110,7 @@ _SAY = {
     "fr": {
         "how_are_you": ["Je vais très bien, merci{, name} ! {Et toi ?|Et vous ?}",
                         "Ça va super bien, merci de demander{, name} 😊 {Et toi, ça va ?|Et vous, comment allez-vous ?}",
-                        "Très bien, merci ! {Ça fait plaisir de te voir.|Ça fait plaisir de vous voir.} {Et toi ?|Et vous ?}"],
+                        "Très bien, merci{, name} ! {Ça fait plaisir de te voir.|Ça fait plaisir de vous voir.} {Et toi ?|Et vous ?}"],
         "me_too": ["Moi aussi, très bien, merci 😊 {Qu'est-ce que je peux faire pour toi ?|Que puis-je faire pour vous ?}",
                    "Ça va bien de mon côté aussi, merci{, name} !"],
         "im_fine": ["Tant mieux, ça fait plaisir 😊 {Qu'est-ce que je peux faire pour toi ?|Que puis-je faire pour vous ?}",
@@ -136,8 +136,8 @@ _SAY = {
                    "feeling_bad": "Courage 💛", "feeling_good": "Ça fait plaisir !", "compliment": "Merci 😊", "sorry": "Pas de souci."},
     },
     "en": {
-        "how_are_you": ["I'm doing really well, thanks{, name}! And you?", "All good here, thanks for asking 😊 How are you?",
-                        "Great, thanks! Happy to see you. How about you?"],
+        "how_are_you": ["I'm doing really well, thanks{, name}! And you?", "All good here, thanks for asking{, name} 😊 How are you?",
+                        "Great, thanks{, name}! Happy to see you. How about you?"],
         "me_too": ["I'm good too, thanks 😊 What can I do for you?", "All good on my side too, thanks{, name}!"],
         "im_fine": ["Glad to hear it 😊 What can I do for you?", "Great! Tell me if you need anything."],
         "greeting": ["{hello}{, name}! 😊 What can I do for you?", "{hello}{, name}! Good to see you."],
@@ -159,7 +159,7 @@ _SAY = {
                    "feeling_bad": "Hang in there 💛", "feeling_good": "Love to hear it!", "compliment": "Thank you 😊", "sorry": "No worries."},
     },
     "ar": {
-        "how_are_you": ["أنا بخير، شكرًا{ name}! وأنت؟", "الحمد لله، كل شيء على ما يرام 😊 وأنت، كيف حالك؟"],
+        "how_are_you": ["أنا بخير، شكرًا{ name}! وأنت؟", "الحمد لله، كل شيء على ما يرام{ name} 😊 وأنت، كيف حالك؟"],
         "me_too": ["وأنا أيضًا بخير، شكرًا 😊 كيف أستطيع مساعدتك؟"],
         "im_fine": ["الحمد لله، يسعدني ذلك 😊 كيف أستطيع مساعدتك؟", "رائع! أنا هنا إن احتجت شيئًا."],
         "greeting": ["{hello}{ name}! 😊 كيف أستطيع مساعدتك؟", "{hello}{ name}! يسعدني أن أراك."],
@@ -180,7 +180,7 @@ _SAY = {
                    "feeling_bad": "شجاعة 💛", "feeling_good": "يسعدني ذلك!", "compliment": "شكرًا 😊", "sorry": "لا عليك."},
     },
     "tn": {
-        "how_are_you": ["Labes, el 7amdoulillah{ name}! W enti, chniya a7welek?", "Ena behya barcha, y3aychek 😊 W enti labes?"],
+        "how_are_you": ["Labes, el 7amdoulillah{ name}! W enti, chniya a7welek?", "Ena behya barcha, y3aychek{ name} 😊 W enti labes?"],
         "me_too": ["W ena zeda labes, y3aychek 😊 Chnowa najem na3mellek?"],
         "im_fine": ["El 7amdoulillah, ferr7tni 😊 Chnowa najem na3mellek?", "Behi barcha! Ken t7eb 7aja 9olli."],
         "greeting": ["{hello}{ name}! 😊 Chnowa najem na3mellek?", "{hello}{ name}! Yefra7 bik."],

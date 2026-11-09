@@ -109,6 +109,9 @@ class ClassGroup(Base):
     symbol = Column(String, nullable=True)
     color = Column(String, nullable=True)
     opinion_token = Column(String, nullable=True)      # the class's QR code at its last session: candidates find their review there
+    delivery_mode = Column(String, nullable=True)      # online | onsite | mixed (empty: read from its candidates' choices)
+    meeting_url = Column(String, nullable=True)        # the private meeting its professor gives before it starts (online, mixed)
+    link_asked_at = Column(DateTime, nullable=True)    # when its professor was asked for that link
 
     created_at = Column(
         DateTime, 

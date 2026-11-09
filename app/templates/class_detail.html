@@ -649,6 +649,26 @@
       </div>
     </section>
 
+    <section class="cd-card mb-4" id="follow" data-tab-of="class" data-tab-panel="life">
+      <div class="cd-card-title"><i class="bi bi-camera-video me-1"></i>How it is followed · {{ follow.modes[follow.mode] }}</div>
+      <div class="cd-card-sub">
+        {% if follow.mode == 'onsite' %}In the room{% if cls.room %}: {{ cls.room }}{% endif %}. No meeting link is needed.
+        {% elif cls.meeting_url %}<i class="bi bi-check-circle-fill" style="color:#15803d;"></i> Meeting link given: every session uses it, and each online candidate gets their own link.
+        {% elif cls.link_asked_at %}<i class="bi bi-hourglass-split"></i> Its professor was asked for the meeting link {{ cls.link_asked_at.strftime('%d/%m') }}; it goes to the online candidates once given.
+        {% else %}Its professor is asked for the meeting link 3 days before the start; it then goes to the online candidates.{% endif %}
+      </div>
+      {% for item in follow.replacements %}
+      <div class="d-flex gap-2 align-items-center flex-wrap mt-2 small">
+        <span class="ui-chip {{ 'ok' if item.row.status == 'accepted' else 'warn' if item.row.status == 'asked' else 'bad' if item.row.status == 'none' else 'muted' }}">
+          <i class="bi bi-arrow-left-right"></i>{% if item.session %}{{ item.session.session_date.strftime('%d/%m') }}{% endif %}</span>
+        <span>{{ item.absent.name if item.absent else '' }} away:
+          {% if item.row.status == 'accepted' %}{{ item.asked.name if item.asked else '' }} replaces them that day.
+          {% elif item.row.status == 'asked' %}{{ item.asked.name if item.asked else '' }} was asked, waiting for the answer.
+          {% elif item.row.status == 'none' %}no professor who teaches it is free that day.
+          {% else %}the session has passed.{% endif %}</span>
+      </div>
+      {% endfor %}
+    </section>
     <section class="cd-card mb-4" id="opinions" data-tab-of="class" data-tab-panel="life">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">
         <div>

@@ -243,34 +243,41 @@ sent_mail.clear()
 payment_service.confirm_payment(db, second.id, 390)
 db.expire_all()
 second = db.get(Registration, second.id)
-check("somebody already in a class on the same hours is not put in a second one", second.class_group_id is None and second.status == RegistrationStatus.PENDING and db.query(ClassGroup).count() == classes_before)
-note = db.query(Notification).filter(Notification.registration_id == second.id, Notification.category == "ASSIGNMENT_PENDING").all()
-check("the admin is told once, with the reason", len(note) == 1 and note[0].title == "Waits for their current class to end" and "BEHAVE-DEVOPS-1" in note[0].message, [n.title for n in note])
-asked = [m for m in sent_mail if "après DevOps" in str(m.get("subject"))]
-check("the candidate is asked whether starting after the first one suits them", len(asked) == 1 and "karim.b@example.com" in all_text(asked[0]) and "Cela vous convient-il" in all_text(asked[0]), subjects())
+first_ends = es.class_end_dt(db.get(ClassGroup, group.id))
+gap = es.gap_days(get_settings(db))
+check("paid while in a class: placed at once in a class of the new program, created for it (one program at a time)",
+      second.class_group_id is not None and second.status == RegistrationStatus.ASSIGNED and second.class_group.program_id == marketing.id
+      and db.query(ClassGroup).count() == classes_before + 1, (second.status, second.class_group_id))
+check("...that starts after their current class ends, with the gap", second.class_group.start_date.date() >= first_ends.date() + timedelta(days=gap),
+      (second.class_group.start_date, first_ends))
+note = db.query(Notification).filter(Notification.registration_id == second.id).all()
+told = [n for n in note if n.category == "ASSIGNMENT"]
+check("the admin is only told, once, with the new class's code and why it starts later", len(told) == 1 and told[0].title == "Payment confirmed · placed after their current class"
+      and second.class_group.name in told[0].message and "BEHAVE-DEVOPS-1" in told[0].message
+      and not any(n.category in ("ASSIGNMENT_PENDING", "PAYMENT") for n in note), [(n.category, n.title) for n in note])
+check("nothing waits for a decision", not any(n.category == "ASSIGNMENT_PENDING" for n in note))
+check("the candidate gets their class, not a question", not any("après DevOps" in s for s in subjects()) and any("karim.b@example.com" in all_text(m) for m in sent_mail), subjects())
 sent_mail.clear()
 es.assign_pending_paid_registrations(db); es.assign_pending_paid_registrations(db)
 db.expire_all()
-check("they are not asked again every minute", not any("après DevOps" in s for s in subjects()) and db.query(Notification).filter(Notification.registration_id == second.id, Notification.category == "ASSIGNMENT_PENDING").count() == 1)
-answer = admin.post(f"/classes/registration/{second.id}/decision", data={"decision": "auto"})
-check("“place automatically” explains why it waits", "one program at a time" in where(answer), where(answer))
-fix = nf.fix_for(db, note[0])
-check("the notification offers to start them now anyway", fix and fix["label"] == "Start them now anyway" and fix["fields"] == {"decision": "create_new"} and fix["confirm"])
-group = db.get(ClassGroup, group.id)
-es.complete_class(db, group)
-sent_mail.clear()
-es.assign_pending_paid_registrations(db)
-db.expire_all()
-second = db.get(Registration, second.id)
-check("when their class ends they start the next program by themselves", second.class_group_id is not None and second.status == RegistrationStatus.ASSIGNED and second.class_group.program_id == marketing.id, second.status)
-check("then the notification has nothing left to offer", nf.fix_for(db, db.get(Notification, note[0].id)) is None)
+check("nothing more every minute", not any("karim.b@example.com" in all_text(m) for m in sent_mail) and db.query(Notification).filter(Notification.registration_id == second.id, Notification.category == "ASSIGNMENT").count() == 1)
 evening = klass("EVENING-PY-1", python, (now_local + timedelta(days=5)).replace(hour=18, minute=0, second=0, microsecond=0), status=ClassStatus.NOT_STARTED, days="tue", hours=(18, 20))
 five, reg5 = person("Lina Soir", "lina.b@example.com", marketing, db.get(ClassGroup, second.class_group_id))
 other = Registration(candidate_id=five.id, program_id=python.id, program_name=python.name, delivery_mode="online", total_amount=390, total_price=390, paid_amount=390,
                      payment_status=PaymentStatus.PAID, status=RegistrationStatus.PENDING, registration_date=datetime.utcnow())
 db.add(other); db.commit()
 placed = es.enroll_paid_registration(db, other)
-check("a second program waits too, even on other hours (one program at a time)", placed.class_group is None and placed.reason == "busy", placed.reason)
+ends = es.class_end_dt(db.get(ClassGroup, second.class_group_id))
+check("a second program, even on other hours: placed in a class that starts after the first one ends (one program at a time)",
+      placed.class_group is not None and placed.class_group.id != evening.id and placed.class_group.start_date.date() >= ends.date() + timedelta(days=gap),
+      (placed.reason, placed.class_group.name if placed.class_group else None))
+settings = get_settings(db); settings.auto_create_class_on_payment = False; db.commit()
+third = Registration(candidate_id=five.id, program_id=devops.id, program_name=devops.name, delivery_mode="online", total_amount=390, total_price=390, paid_amount=390,
+                     payment_status=PaymentStatus.PAID, status=RegistrationStatus.PENDING, registration_date=datetime.utcnow())
+db.add(third); db.commit()
+waits = es.enroll_paid_registration(db, third)
+check("with automatic classes switched off, it waits and the admin decides", waits.class_group is None and waits.reason == "busy", waits.reason)
+settings.auto_create_class_on_payment = True; db.commit()
 
 # ======================================================================
 # E. Notifications that carry their remedy

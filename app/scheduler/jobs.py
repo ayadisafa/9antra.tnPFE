@@ -341,6 +341,12 @@ def weekly_questions_tick():
             level_check.remind_due(db, settings_service.public_base_url(db))
             # A session starts within the hour: each candidate gets their own link to its meeting, once.
             meetings.send_due(db, settings_service.public_base_url(db))
+        # Three days before an online class starts: its professor is asked for the meeting link (also without email).
+        meetings.ask_links_due(db, settings_service.public_base_url(db))
+        # A professor asked to replace a colleague who did not answer in time: the next one is asked.
+        from app.services import replacements
+
+        replacements.tick(db, settings_service.public_base_url(db))
     except Exception as exc:
         db.rollback()
         logger.exception("Weekly questions tick failed.")

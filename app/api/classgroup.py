@@ -447,11 +447,16 @@ async def delete_professor(professor_id: str, request: Request, db: Session = De
         done = professor_removal.remove(db, professor, handover, who=user.name if user else None)
     except ValueError as exc:
         return _redirect("/classes/?tab=professors", error=str(exc))
-    for group, taker in assign_waiting_professors(db):        # left waiting: the first professor who can takes it
+    taken = assign_waiting_professors(db)
+    for group, taker in taken:        # left waiting: the first professor who can takes it
         done["waiting"] = [name for name in done["waiting"] if name != group.name]
         done["given"].append({"id": group.id, "class": group.name, "to": taker.name})
     db.commit()
     tell_class_of_professor(db, [item["id"] for item in done["given"]])
+    from app.services.enrollment_service import tell_professor
+
+    for group, taker in taken:
+        tell_professor(db, group, taker)
     sync_class_lifecycle(db)          # a class still without a professor is held until it has one
     return _redirect("/classes/?tab=professors", notice=professor_removal.notice(done))
 
@@ -468,15 +473,26 @@ def add_professor_absence(
     professor = db.get(Professor, professor_id)
     if not professor:
         raise HTTPException(status_code=404, detail="Professor not found")
-    db.add(ProfessorAbsence(
+    absence = ProfessorAbsence(
         professor_id=professor_id,
         absence_date=date.fromisoformat(absence_date),
         start_time=time.fromisoformat(start_time) if start_time else None,
         end_time=time.fromisoformat(end_time) if end_time else None,
         reason=reason.strip() or None,
-    ))
+    )
+    db.add(absence)
     db.commit()
-    return _redirect("/classes/?tab=professors", notice=f"Absence saved for {professor.name}.")
+    # Their sessions that day look for a replacement, for that day only: a free professor is asked to confirm.
+    from app.services import replacements
+    from app.services.settings_service import public_base_url
+
+    opened = replacements.open_for_absence(db, absence, public_base_url(db))
+    notice = f"Absence saved for {professor.name}."
+    if opened:
+        asked = sum(1 for row in opened if row.status == "asked")
+        notice += (f" {len(opened)} session(s) that day need a replacement: {asked} professor(s) asked to confirm"
+                   + (f", {len(opened) - asked} with nobody free (see the notifications)." if len(opened) - asked else "."))
+    return _redirect("/classes/?tab=professors", notice=notice)
 
 
 # ------------------------------------------------------------------
@@ -486,6 +502,7 @@ def add_professor_absence(
 @router.post("/{class_id}/parameters")
 def save_class_parameters(
     class_id: str,
+    request: Request,
     name: str = Form(""),
     professor_id: str = Form(""),
     capacity: int = Form(...),
@@ -504,9 +521,12 @@ def save_class_parameters(
     symbol: str = Form(""),
     color: str = Form(""),
     back: str = Form(""),
+    delivery_mode: str | None = Form(None),
+    meeting_url: str | None = Form(None),
     db: Session = Depends(get_db),
 ):
-    """The class's parameters: symbol, start rule, schedule, capacity, professor, reminders."""
+    """The class's parameters: symbol, start rule, schedule, capacity, professor, reminders, how it is followed (online,
+    on site, both) and its meeting link."""
     class_group = _get_class(db, class_id)
     # Saved from the list of classes, the admin returns to the list.
     target = "/classes/?tab=classes" if back == "list" else f"/classes/{class_id}"
@@ -535,9 +555,26 @@ def save_class_parameters(
 
     class_group.symbol = class_looks.clean_symbol(symbol)
     class_group.color = class_looks.clean_colour(color)
+    from app.services import meetings
+    from app.services.settings_service import public_base_url
+
+    if delivery_mode is not None:
+        class_group.delivery_mode = delivery_mode if delivery_mode in meetings.MODES else None
     db.commit()
+    link_sent = None
+    if meeting_url is not None and (meeting_url or "").strip() and (meeting_url or "").strip() != (class_group.meeting_url or ""):
+        try:
+            link_sent = meetings.set_class_link(db, class_group, meeting_url, public_base_url(db, request))
+        except ValueError as exc:
+            db.rollback()
+            return _redirect(target, error=f"{class_group.name}: {exc}")
+    elif meeting_url is not None and not (meeting_url or "").strip() and class_group.meeting_url:
+        class_group.meeting_url = None
+        db.commit()
 
     notice = f"{class_group.name}: parameters saved."
+    if link_sent is not None:
+        notice += f" Meeting link kept for every session; {link_sent} online candidate(s) received their own link."
     if result["emails"]:
         notice += f" {result['emails']} candidate(s) are being emailed the new schedule."
     return _redirect(target, notice=notice)
@@ -928,6 +965,9 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
             "needs": needs,
             "levels": level_check.class_overview(db, class_group),
             "opinions": program_feedback.of_class(db, class_group.id),
+            "follow": {"mode": __import__("app.services.meetings", fromlist=["mode_of"]).mode_of(db, class_group),
+                       "modes": __import__("app.services.meetings", fromlist=["MODES"]).MODES,
+                       "replacements": __import__("app.services.replacements", fromlist=["of_class"]).of_class(db, class_group.id)},
             "day_options": list(zip(DAY_KEYS, DAY_SHORT_EN)),
             "selected_days": [DAY_KEYS[index] for index in parse_days(class_group.days_of_week)],
             "course": weekly_questions.class_overview(db, class_group),

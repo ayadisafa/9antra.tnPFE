@@ -142,6 +142,21 @@ def _unpaid(db: Session, fr: bool) -> dict:
     return {"reply": reply, "links": [_link("Payments", "/payments")], "source": "system"}
 
 
+# Words that leave "what can I do…" about the day ("what should I do first today?").
+_JUST_TODAY = set("today now first next then please right here this week semaine cette maintenant aujourd lyoum tawa youm moment yasmine still again".split())
+
+
+def _asks_today(text: str) -> bool:
+    """"What can I do?" is the day's list; "a candidate is unhappy, what can I do?" or "what can I do if…" asks about a case."""
+    from app.services import chatbot_data as data
+
+    if not _has(text, data.TODAY_WORDS):
+        return False
+    rest = re.sub(r"(?<![a-z0-9])(?:" + data.TODAY_WORDS + r")(?![a-z0-9])", " ", text)
+    other = [word for word in rest.split() if len(word) >= 4 and word not in _JUST_TODAY]
+    return not other or _has(text, "today|aujourd hui|lyoum|el youm")
+
+
 def _paid(db: Session, fr: bool) -> dict:
     """Who has paid in full, how many paid a part, and what was received."""
     rows = [row for row in db.query(Registration).all() if row.status != RegistrationStatus.CANCELLED]
@@ -691,10 +706,16 @@ def _answer_now(db: Session, message: str, history: list[dict] | None = None, *,
         # “How does someone register?”, “the registration link”: the form (not “I want to register Ali…”, an order).
         if registration_form.asks_how(understood) and not re.search(r"\b(je veux|je voudrais|i want|i would like)\b", _plain(message)):
             found = howto.answer(db, message, user, lang=_CHOSEN.get())
-    asked = r"\s*(how|comment|where|ou|can i|puis je|je veux|i want|what do i do|que faire|kifech|kifeh|kifach|kif|win|chnowa|chnoua)\b"
+    asked = (r"\s*(how|comment|where|ou|can i|puis je|je veux|i want|what do i do|what (should|can|could|must|do) (i|we) do|what to do|que faire|"
+             r"que (dois|peux) je faire|qu est ce que (je|on) (dois|doit|peux|peut) faire|kifech|kifeh|kifach|kif|win|chnowa|chnoua|chna3mel)\b")
     from app.services import derja
 
-    if found is None and (re.match(asked, _plain(understood)) or re.match(asked, _plain(derja.to_french(message)))):
+    from app.services import chatbot_data
+
+    # "If a professor is absent, what do I do?": the case first, the question after.
+    case = (_has(_plain(understood), chatbot_data.CASE_WORDS)
+            and re.search(r"\bwhat (should|can|could|must|do) (i|we) do\b|\bje fais quoi\b|\bon fait quoi\b|\bque faire\b|\bchna3mel\b|\bna3mel chnowa\b", _plain(understood)))
+    if found is None and (re.match(asked, _plain(understood)) or re.match(asked, _plain(derja.to_french(message))) or case):
         if howto.task_for(message, user, by_meaning=False) is not None:      # the word rules: “how much …” is about the records
             found = howto.answer(db, message, user, lang=_CHOSEN.get())       # the steps, for what this person may do, in the language asked
     if found is None:
@@ -754,7 +775,7 @@ def _answer(db: Session, message: str, history: list[dict] | None = None, user=N
             return data.balance(db, named)
     if _has(text, data.OVERVIEW_WORDS):
         return data.overview(db)
-    if _has(text, data.TODAY_WORDS):
+    if _asks_today(text):
         return data.today(db)
     if _has(text, data.REGISTERED_WORDS):
         return data.registered(db, text)

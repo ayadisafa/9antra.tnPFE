@@ -158,7 +158,7 @@ TN: dict[str, tuple[str, list[str]]] = {
     "professor-absence": ("Sajjel ghiyeb formateur", [
         "Classes › Formateurs › carte el formateur › Absence.",
         "Ikhtar el dates (w les heures ken mouch nhar kemel) w el sabab, ba3d Enregistrer.",
-        "Les classes mte3ou fi les ayyem hedhom yban fihom, w tnajem tikhtar 7add yo93ed blastou."]),
+        "Kol séance mte3ou fi les ayyem hedhom tes2el formateur mte3 nafs el formation far8 bech yo93ed blastou, wa7ed wa7ed, b lien privé bech y2akked; ken 7atta 7ad ma ynajjem, yjik notification."]),
     "professor-delete": ("Fasa5 formateur", [
         "Classes › Formateurs › carte el formateur › bouton el poubelle.",
         "Kol classe mte3ou, ikhtar chkoun y9arriha tawa (ken les formateurs elli y9arriw el formation mte3ha w far8in fi wa9tha), wala khalliha testanna formateur.",

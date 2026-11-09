@@ -396,12 +396,13 @@
     queue = [{ text: data.words.thinking }]; say(0);
     history.push({ role: "user", content: question });
     fetch(data.ask_url || "/account/guide", { method: "POST", headers: { "Content-Type": "application/json" },
-                               body: JSON.stringify({ message: question, history: history.slice(-8), lang: chosen() || null }) })
+                               body: JSON.stringify({ message: question, history: history.slice(-8), lang: chosen() || null, path: location.pathname }) })
       .then(function (response) { return response.ok ? response.json() : null; })
       .then(function (answer) {
         var reply = answer && answer.reply ? answer.reply : data.words.sorry;
         history.push({ role: "assistant", content: reply });
-        queue = [{ text: reply, links: answer && answer.links ? answer.links : [], schema: answer && answer.schema ? answer.schema : null }];
+        // Short first in her bubble too; the whole answer is in her window.
+        queue = [{ text: answer && answer.short ? answer.short : reply, links: answer && answer.links ? answer.links : [], schema: answer && answer.schema ? answer.schema : null }];
         say(0);
       })
       .catch(function () { queue = [{ text: data.words.sorry }]; say(0); });

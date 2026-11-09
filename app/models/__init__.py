@@ -43,6 +43,7 @@ from app.services.professor_announcements import ProfessorAnnouncement  # noqa: 
 from app.services.session_check import SessionCheck  # noqa: F401  (its table is made at start)
 from app.services.resends import PlannedResend  # noqa: F401  (its table is made at start)
 from app.services.session_reminders import SessionReminderSent  # noqa: F401  (its table is made at start)
+from app.services.replacements import SessionReplacement  # noqa: F401  (its table is made at start)
 
 __all__ = [
     "MarketOffer",

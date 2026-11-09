@@ -3118,5 +3118,365 @@
 "Tell it in a post": [
 "Le raconter dans une publication",
 "احكِه في منشور"
+],
+"Saved: each candidate of {0} receives it {1} hours before each of their sessions.": [
+"Enregistré : chaque candidat de {0} le reçoit {1} heures avant chacune de ses séances.",
+"تم الحفظ: يتلقاه كل مترشح من {0} قبل {1} ساعة من كل حصة من حصصه."
+],
+"then every day": [
+"puis chaque jour",
+"ثم كل يوم"
+],
+"Started again: it goes {0}.": [
+"Relancé : il part le {0}.",
+"أُعيد تشغيله: يُرسل في {0}."
+],
+"Right now everybody has paid in full.": [
+"En ce moment, tout le monde a tout payé.",
+"حاليا، دفع الجميع كامل المبلغ."
+],
+"Right now {0} still owe {1} DT in all: {2}.": [
+"En ce moment, {0} doivent encore {1} DT au total : {2}.",
+"حاليا، لا يزال {0} مدينين بـ {1} د.ت في المجموع: {2}."
+],
+"Right now every class has its professor.": [
+"En ce moment, chaque classe a son formateur.",
+"حاليا، لكل قسم مكوّنه."
+],
+"Right now waiting for a professor: {0}.": [
+"En attente d'un formateur en ce moment : {0}.",
+"في انتظار مكوّن حاليا: {0}."
+],
+"Right now {0} replacement(s) are not settled yet: open the class to see who was asked.": [
+"En ce moment, {0} remplacement(s) ne sont pas encore réglés : ouvrez la classe pour voir qui a été sollicité.",
+"حاليا، {0} استبدال لم تتم تسويته بعد: افتح القسم لترى من طُلب منه."
+],
+"Right now every message reached its candidate.": [
+"En ce moment, chaque message est parvenu à son candidat.",
+"حاليا، وصلت كل رسالة إلى مترشحها."
+],
+"Right now {0} message(s) did not reach {1} candidate(s).": [
+"En ce moment, {0} message(s) ne sont pas parvenus à {1} candidat(s).",
+"حاليا، {0} رسالة لم تصل إلى {1} مترشح."
+],
+"Starting within a week without a meeting link: {0}.": [
+"Commencent dans la semaine sans lien de réunion : {0}.",
+"تبدأ خلال أسبوع دون رابط اجتماع: {0}."
+],
+"What the application does by itself": [
+"Ce que l'application fait d'elle-même",
+"ما يقوم به التطبيق من تلقاء نفسه"
+],
+"Who may drop out": [
+"Qui risque d'abandonner",
+"من قد ينقطع"
+],
+"{0}, by {1}, {2}.": [
+"{0}, par {1}, {2}.",
+"{0}، عبر {1}، {2}."
+],
+"Call them and ask how it is going.": [
+"Appelez-le et demandez-lui comment ça va.",
+"اتصل به واسأله كيف تسير الأمور."
+],
+"likely to drop out": [
+"risque fort d'abandonner",
+"مرجّح أن ينقطع"
+],
+"could drop out": [
+"pourrait abandonner",
+"قد ينقطع"
+],
+"The message for {0}": [
+"Le message pour {0}",
+"الرسالة إلى {0}"
+],
+"The file of {0}": [
+"La fiche de {0}",
+"ملف {0}"
+],
+"Right now nobody seems about to drop out: absences, questions, results and payments are watched for each candidate.": [
+"En ce moment, personne ne semble sur le point d'abandonner : les absences, les questions, les résultats et les paiements sont suivis pour chaque candidat.",
+"حاليا، لا يبدو أن أحدا على وشك الانقطاع: الغيابات والأسئلة والنتائج والدفوعات متابَعة لكل مترشح."
+],
+"When someone may drop out, act on why, without waiting:": [
+"Quand quelqu'un risque d'abandonner, agissez sur la raison, sans attendre :",
+"عندما يكون أحدهم مهددا بالانقطاع، تصرّف حسب السبب، دون انتظار:"
+],
+"Right now:": [
+"En ce moment :",
+"حاليا:"
+],
+"And {0} more on the dashboard.": [
+"Et {0} de plus sur le tableau de bord.",
+"و{0} آخرون في لوحة القيادة."
+],
+"Right now: {0}.": [
+"En ce moment : {0}.",
+"حاليا: {0}."
+],
+"Nobody seems about to drop out right now.": [
+"Personne ne semble sur le point d'abandonner en ce moment.",
+"لا يبدو أن أحدا على وشك الانقطاع حاليا."
+],
+"They may drop out, the likeliest first:": [
+"Ils risquent d'abandonner, le plus probable d'abord :",
+"قد ينقطعون، الأرجح أولا:"
+],
+"May drop out: {0}.": [
+"Risquent d'abandonner : {0}.",
+"قد ينقطع: {0}."
+],
+"First, {0}: {1}": [
+"D'abord, {0} : {1}",
+"أولا، {0}: {1}"
+],
+"{0} follows no class right now.": [
+"{0} ne suit aucune classe en ce moment.",
+"{0} لا يتابع أي قسم حاليا."
+],
+"{0} ({1}) is likely to drop out ({2}/100):": [
+"{0} ({1}) risque fort d'abandonner ({2}/100) :",
+"{0} ({1}) مرجّح أن ينقطع ({2}/100):"
+],
+"{0} ({1}) could drop out ({2}/100):": [
+"{0} ({1}) pourrait abandonner ({2}/100) :",
+"{0} ({1}) قد ينقطع ({2}/100):"
+],
+"{0} ({1}) shows a few signs ({2}/100):": [
+"{0} ({1}) montre quelques signes ({2}/100) :",
+"{0} ({1}) تظهر عليه بعض العلامات ({2}/100):"
+],
+"Nothing recorded says {0} is about to drop out: present, answering their questions and paid.": [
+"Rien de ce qui est noté ne dit que {0} va abandonner : présent(e), répond à ses questions et a payé.",
+"لا شيء مما سُجّل يقول إن {0} على وشك الانقطاع: حاضر، يجيب عن أسئلته وقد دفع."
+],
+"The message: {0}": [
+"Le message : {0}",
+"الرسالة: {0}"
+],
+"What to do:": [
+"Que faire :",
+"ما العمل:"
+],
+"Absent: send “We missed you” before their next session, or call them.": [
+"Absent : envoyez « Vous nous avez manqué » avant sa prochaine séance, ou appelez-le.",
+"غائب: أرسل «افتقدناك» قبل حصته القادمة، أو اتصل به."
+],
+"Questions not answered: remind them their questions are waiting.": [
+"Questions sans réponse : rappelez-lui que ses questions l'attendent.",
+"أسئلة دون إجابة: ذكّره بأن أسئلته في انتظاره."
+],
+"Low results: offer them a moment to catch up on the week.": [
+"Résultats faibles : proposez-lui un moment pour rattraper la semaine.",
+"نتائج ضعيفة: اقترح عليه وقتا لاستدراك الأسبوع."
+],
+"Unhappy in what they wrote: ask what would help, by phone rather than by message.": [
+"Mécontent dans ce qu'il a écrit : demandez-lui ce qui l'aiderait, par téléphone plutôt que par message.",
+"غير راضٍ فيما كتب: اسأله عما سيساعده، بالهاتف بدل الرسالة."
+],
+"Still owes money: the one payment reminder has gone, so call rather than write again.": [
+"Doit encore de l'argent : l'unique rappel de paiement est parti, alors appelez plutôt que d'écrire encore.",
+"لا يزال مدينا: أُرسل التذكير الوحيد بالدفع، فاتصل بدل أن تكتب مرة أخرى."
+],
+"Says they want to stop: call them, listen to why, and offer a later class of the same program rather than stopping.": [
+"Dit vouloir arrêter : appelez-le, écoutez pourquoi, et proposez-lui une classe plus tard de la même formation plutôt que d'arrêter.",
+"يقول إنه يريد التوقف: اتصل به، استمع إلى السبب، واقترح عليه قسما لاحقا من نفس البرنامج بدل التوقف."
+],
+"Several messages without an answer: a call does better than one more message.": [
+"Plusieurs messages sans réponse : un appel fait mieux qu'un message de plus.",
+"عدة رسائل دون رد: المكالمة أنجع من رسالة أخرى."
+],
+"Act on why, without waiting: absent, “We missed you” or a call; questions waiting, a reminder; low results, a catch-up; wants to stop, a call and a later class.": [
+"Agissez sur la raison, sans attendre : absent, « Vous nous avez manqué » ou un appel ; questions en attente, un rappel ; résultats faibles, un rattrapage ; veut arrêter, un appel et une classe plus tard.",
+"تصرّف حسب السبب، دون انتظار: غائب، «افتقدناك» أو مكالمة؛ أسئلة تنتظر، تذكير؛ نتائج ضعيفة، استدراك؛ يريد التوقف، مكالمة وقسم لاحق."
+],
+"The moment a professor of its program is free at its hours from its start date (no other class then, not absent), they take it by themselves and are told in the app, by email, WhatsApp and SMS.": [
+"Dès qu'un formateur de sa formation est libre à ses horaires à partir de sa date de début (aucune autre classe à ce moment, pas absent), il la prend de lui-même et en est prévenu dans l'application, par email, WhatsApp et SMS.",
+"بمجرد أن يكون مكوّن من برنامجه متاحا في مواعيده ابتداء من تاريخ بدايته (لا قسم آخر في ذلك الوقت، وغير غائب)، يتولاه من تلقاء نفسه ويُعلَم في التطبيق، وبالبريد، وواتساب والرسائل القصيرة."
+],
+"“Assign an available professor to new classes” is off (Settings › Classes): nobody takes it by themselves, so choose one.": [
+"« Attribuer un formateur disponible aux nouvelles classes » est désactivé (Paramètres › Classes) : personne ne la prend de lui-même, choisissez-en un.",
+"«إسناد مكوّن متاح للأقسام الجديدة» معطّل (الإعدادات › الأقسام): لا أحد يتولاه من تلقاء نفسه، فاختر واحدا."
+],
+"When a professor is absent": [
+"Quand un formateur est absent",
+"عندما يغيب مكوّن"
+],
+"Record their absence (Classes › Professors › their card › Absence): each of their sessions that day then asks a free professor of the program to replace them, by a private link.": [
+"Notez son absence (Classes › Formateurs › sa carte › Absence) : chacune de ses séances ce jour-là sollicite alors un formateur libre de la formation pour le remplacer, par un lien privé.",
+"سجّل غيابه (الأقسام › المكوّنون › بطاقته › غياب): تطلب حينها كل حصة من حصصه في ذلك اليوم من مكوّن متاح من البرنامج أن يعوّضه، برابط خاص."
+],
+"Record their absence: Classes › Professors › their card › Absence (the dates, the hours if not the whole day, the reason).": [
+"Notez son absence : Classes › Formateurs › sa carte › Absence (les dates, les heures si ce n'est pas toute la journée, la raison).",
+"سجّل غيابه: الأقسام › المكوّنون › بطاقته › غياب (التواريخ، والساعات إن لم يكن اليوم كله، والسبب)."
+],
+"Each of their sessions on those days then asks a professor of the program who is free then, one at a time, by a private link to confirm.": [
+"Chacune de ses séances ces jours-là sollicite alors un formateur de la formation libre à ce moment, un à la fois, avec un lien privé pour confirmer.",
+"تطلب حينها كل حصة من حصصه في تلك الأيام من مكوّن من البرنامج متاح وقتها، واحدا تلو الآخر، برابط خاص للتأكيد."
+],
+"Yes: they replace them for that session only. No, or no answer within 6 hours (1 hour when it is close): the next one is asked.": [
+"Oui : il le remplace pour cette séance seulement. Non, ou pas de réponse dans les 6 heures (1 heure quand elle est proche) : le suivant est sollicité.",
+"نعم: يعوّضه في تلك الحصة فقط. لا، أو لا رد خلال 6 ساعات (1 ساعة عندما تكون قريبة): يُطلب من التالي."
+],
+"Nobody left: you are told, and the class page shows it; then find someone or move the session.": [
+"Plus personne : vous êtes prévenu(e), et la page de la classe l'indique ; trouvez alors quelqu'un ou déplacez la séance.",
+"لم يبق أحد: يتم إعلامك، وتظهر ذلك صفحة القسم؛ فابحث عن أحد أو انقل الحصة."
+],
+"When a candidate has not paid": [
+"Quand un candidat n'a pas payé",
+"عندما لا يدفع مترشح"
+],
+"One reminder goes by itself 24 hours after registering; after that, call them or send it again from their file. No class until they have paid in full.": [
+"Un rappel part de lui-même 24 heures après l'inscription ; ensuite, appelez-le ou renvoyez-le depuis sa fiche. Pas de classe tant qu'il n'a pas tout payé.",
+"يُرسل تذكير واحد من تلقاء نفسه بعد 24 ساعة من التسجيل؛ بعد ذلك، اتصل به أو أعد إرساله من ملفه. لا قسم حتى يدفع كامل المبلغ."
+],
+"One payment reminder goes by itself, 24 hours after registering; the application never sends a second one by itself.": [
+"Un rappel de paiement part de lui-même, 24 heures après l'inscription ; l'application n'en envoie jamais un deuxième d'elle-même.",
+"يُرسل تذكير واحد بالدفع من تلقاء نفسه، بعد 24 ساعة من التسجيل؛ ولا يرسل التطبيق أبدا تذكيرا ثانيا من تلقاء نفسه."
+],
+"After that, call them, or send it again yourself: their file › Payment reminder.": [
+"Ensuite, appelez-le, ou renvoyez-le vous-même : sa fiche › Rappel de paiement.",
+"بعد ذلك، اتصل به، أو أعد إرساله بنفسك: ملفه › تذكير بالدفع."
+],
+"Until they have paid in full they are placed in no class; once they have, a class is found or created for them at once.": [
+"Tant qu'il n'a pas tout payé, il n'est placé dans aucune classe ; dès que c'est fait, une classe lui est trouvée ou créée aussitôt.",
+"ما لم يدفع كامل المبلغ لا يوضع في أي قسم؛ وبمجرد أن يدفع، يُعثر له على قسم أو يُنشأ فورا."
+],
+"Payments": [
+"Paiements",
+"الدفوعات"
+],
+"When a class has no professor": [
+"Quand une classe n'a pas de formateur",
+"عندما لا يكون للقسم مكوّن"
+],
+"It waits: a class does not start without a professor. Choose one in the class's parameters, or add a professor to its program.": [
+"Elle attend : une classe ne commence pas sans formateur. Choisissez-en un dans les paramètres de la classe, ou ajoutez un formateur à sa formation.",
+"ينتظر: لا يبدأ قسم دون مكوّن. اختر واحدا في إعدادات القسم، أو أضف مكوّنا إلى برنامجه."
+],
+"It waits: a class does not start without a professor of its program.": [
+"Elle attend : une classe ne commence pas sans un formateur de sa formation.",
+"ينتظر: لا يبدأ قسم دون مكوّن من برنامجه."
+],
+"To choose one yourself: open the class › Class parameters › Professor.": [
+"Pour en choisir un vous-même : ouvrez la classe › Paramètres de la classe › Formateur.",
+"لتختار واحدا بنفسك: افتح القسم › إعدادات القسم › المكوّن."
+],
+"No professor teaches its program yet: add one to it in Classes › Professors › Who teaches each program.": [
+"Aucun formateur n'enseigne encore sa formation : ajoutez-en un dans Classes › Formateurs › Qui enseigne chaque formation.",
+"لا مكوّن يدرّس برنامجه بعد: أضف واحدا في الأقسام › المكوّنون › من يدرّس كل برنامج."
+],
+"Who teaches each program": [
+"Qui enseigne chaque formation",
+"من يدرّس كل برنامج"
+],
+"When a candidate is unhappy": [
+"Quand un candidat est mécontent",
+"عندما يكون مترشح غير راضٍ"
+],
+"Their message comes to you, never answered alone: answer them yourself soon, a call often does better. A review of 1 to 3 stars stays private and you are told to call them.": [
+"Son message vous arrive, jamais répondu seul : répondez-lui vous-même vite, un appel fait souvent mieux. Un avis de 1 à 3 étoiles reste privé et on vous dit de l'appeler.",
+"تصلك رسالته، ولا يُجاب عنها أبدا آليا: أجبه بنفسك سريعا، فالمكالمة غالبا أنجع. التقييم من 1 إلى 3 نجوم يبقى خاصا ويُطلب منك الاتصال به."
+],
+"Their message is never answered alone: it comes to you in the inbox, with what was read in it.": [
+"Son message n'est jamais répondu seul : il vous arrive dans la boîte de réception, avec ce qui y a été lu.",
+"لا يُجاب عن رسالته أبدا آليا: تصلك في البريد الوارد، مع ما قُرئ فيها."
+],
+"Answer them yourself, soon; a call often does better than a message.": [
+"Répondez-lui vous-même, vite ; un appel fait souvent mieux qu'un message.",
+"أجبه بنفسك، سريعا؛ فالمكالمة غالبا أنجع من الرسالة."
+],
+"A review of 1 to 3 stars stays private: they are thanked, and you are told to call them.": [
+"Un avis de 1 à 3 étoiles reste privé : il est remercié, et on vous dit de l'appeler.",
+"التقييم من 1 إلى 3 نجوم يبقى خاصا: يُشكر صاحبه، ويُطلب منك الاتصال به."
+],
+"If they wrote they are frustrated or worried, they also appear under “Who may drop out” on the dashboard.": [
+"S'il a écrit être frustré ou inquiet, il apparaît aussi dans « Qui risque d'abandonner » sur le tableau de bord.",
+"إن كتب أنه محبط أو قلق، يظهر أيضا في «من قد ينقطع» في لوحة القيادة."
+],
+"Inbox": [
+"Boîte de réception",
+"البريد الوارد"
+],
+"When a candidate asks for a refund": [
+"Quand un candidat demande un remboursement",
+"عندما يطلب مترشح استرجاع المبلغ"
+],
+"The assistant never answers a refund alone: it comes to you in the inbox. You decide, then answer them yourself.": [
+"L'assistant ne répond jamais seul à un remboursement : il vous arrive dans la boîte de réception. Vous décidez, puis vous lui répondez vous-même.",
+"لا يجيب المساعد أبدا وحده عن استرجاع مبلغ: يصلك في البريد الوارد. أنت تقرر، ثم تجيبه بنفسك."
+],
+"The assistant never answers a refund alone: the message comes to you in the inbox.": [
+"L'assistant ne répond jamais seul à un remboursement : le message vous arrive dans la boîte de réception.",
+"لا يجيب المساعد أبدا وحده عن استرجاع مبلغ: تصلك الرسالة في البريد الوارد."
+],
+"You decide; then answer them yourself, from the inbox or by phone.": [
+"Vous décidez ; puis répondez-lui vous-même, depuis la boîte de réception ou par téléphone.",
+"أنت تقرر؛ ثم أجبه بنفسك، من البريد الوارد أو بالهاتف."
+],
+"Keep “refund” in Settings › Assistant's rules so that it never talks about one by itself.": [
+"Gardez « remboursement » dans Paramètres › Règles de l'assistant pour qu'il n'en parle jamais de lui-même.",
+"أبقِ «استرجاع المبلغ» في الإعدادات › قواعد المساعد حتى لا يتحدث عنه أبدا من تلقاء نفسه."
+],
+"When a class has no meeting link": [
+"Quand une classe n'a pas de lien de réunion",
+"عندما لا يكون للقسم رابط اجتماع"
+],
+"Its professor is asked for it 3 days before the start; you can also paste it in the class's parameters. Still none the day before: you are told.": [
+"Son formateur est sollicité 3 jours avant le début ; vous pouvez aussi le coller dans les paramètres de la classe. Toujours rien la veille : vous êtes prévenu(e).",
+"يُطلب من مكوّنه قبل 3 أيام من البداية؛ ويمكنك أيضا لصقه في إعدادات القسم. وإن لم يُقدَّم قبل يوم: يتم إعلامك."
+],
+"Three days before an online or mixed class starts, its professor is asked for the private meeting link, in the app, by email, WhatsApp and SMS.": [
+"Trois jours avant le début d'une classe en ligne ou mixte, son formateur est sollicité pour le lien privé de la réunion, dans l'application, par email, WhatsApp et SMS.",
+"قبل ثلاثة أيام من بداية قسم عن بعد أو مختلط، يُطلب من مكوّنه الرابط الخاص للاجتماع، في التطبيق، وبالبريد، وواتساب والرسائل القصيرة."
+],
+"You can paste it yourself: open the class › Class parameters › Meeting link (online).": [
+"Vous pouvez le coller vous-même : ouvrez la classe › Paramètres de la classe › Lien de la réunion (en ligne).",
+"يمكنك لصقه بنفسك: افتح القسم › إعدادات القسم › رابط الاجتماع (عن بعد)."
+],
+"Once given, every session uses it and each online candidate gets their own link; those on site get none.": [
+"Une fois donné, chaque séance l'utilise et chaque candidat en ligne reçoit son propre lien ; ceux sur place n'en reçoivent pas.",
+"بمجرد تقديمه، تستعمله كل حصة ويتلقى كل مترشح عن بعد رابطه الخاص؛ ولا يتلقى الحاضرون شيئا."
+],
+"Still none the day before: you are told; at the start, a private room is created.": [
+"Toujours rien la veille : vous êtes prévenu(e) ; au début, une salle privée est créée.",
+"وإن لم يُقدَّم قبل يوم: يتم إعلامك؛ وعند البداية، تُنشأ قاعة خاصة."
+],
+"When a message did not reach a candidate": [
+"Quand un message n'est pas parvenu à un candidat",
+"عندما لا تصل رسالة إلى مترشح"
+],
+"Everything that did not reach someone is in Inbox › Didn't reach them, with why; an email that failed is tried again once by itself.": [
+"Tout ce qui n'est pas parvenu à quelqu'un est dans Boîte de réception › Ne leur est pas parvenu, avec la raison ; un email qui a échoué est réessayé une fois de lui-même.",
+"كل ما لم يصل إلى أحد موجود في البريد الوارد › لم يصلهم، مع السبب؛ والبريد الذي فشل يُعاد إرساله مرة واحدة من تلقاء نفسه."
+],
+"Everything that did not reach someone is in one list, with why in plain words: Inbox › Didn't reach them.": [
+"Tout ce qui n'est pas parvenu à quelqu'un est dans une seule liste, avec la raison en mots simples : Boîte de réception › Ne leur est pas parvenu.",
+"كل ما لم يصل إلى أحد موجود في قائمة واحدة، مع السبب بكلمات بسيطة: البريد الوارد › لم يصلهم."
+],
+"An email that failed is tried again once by itself, within 48 hours.": [
+"Un email qui a échoué est réessayé une fois de lui-même, dans les 48 heures.",
+"البريد الذي فشل يُعاد إرساله مرة واحدة من تلقاء نفسه، خلال 48 ساعة."
+],
+"From the list: send it again, open WhatsApp, call, or mark it “not needed any more”.": [
+"Depuis la liste : renvoyez-le, ouvrez WhatsApp, appelez, ou marquez-le « plus nécessaire ».",
+"من القائمة: أعد إرساله، أو افتح واتساب، أو اتصل، أو علّمه «لم يعد ضروريا»."
+],
+"When the reason is a wrong address or number, correct it in their file.": [
+"Quand la raison est une adresse ou un numéro erroné, corrigez-le dans sa fiche.",
+"عندما يكون السبب عنوانا أو رقما خاطئا، صحّحه في ملفه."
+],
+"Didn't reach them": [
+"Ne leur est pas parvenu",
+"لم يصلهم"
+],
+"{0} ({1}), {2}: {3}.": [
+"{0} ({1}), {2} : {3}.",
+"{0} ({1})، {2}: {3}."
+],
+"The application's records": [
+"Les données de l'application",
+"بيانات التطبيق"
 ]
 }

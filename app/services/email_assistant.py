@@ -1285,6 +1285,8 @@ def source_line(found: dict, language: str = "fr") -> str:
         return "Source: 9antra's information about its programs." if english else "Source : les informations de 9antra sur ses formations."
     if method == "material":
         return "Source: your class's course files." if english else "Source : les fichiers du cours de votre classe."
+    if method == "cloud":
+        return "Source: your file and 9antra's information." if english else "Source : votre dossier et les informations de 9antra."
     if method == "taught":
         return "Source: the 9antra team." if english else "Source : l'équipe 9antra."
     if method == "composed":
@@ -1474,10 +1476,27 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         message.analysis = f"Answers to the weekly questions ({handled['quiz'].course_name})" + (": complete, graded." if handled["done"] else ": some still missing.")
         thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
         return "replied"
-    from app.services import course_requests
+    from app.services import cloud_reply, course_requests
+
+    # Any question, understood by the cloud model and answered only from this candidate's facts (None: as before).
+    read = cloud_reply.read(db, candidate, message, subject)
+    if read is not None:
+        if read["sensitive"] != "none":
+            label = {"refund": "a refund", "cancellation": "a cancellation", "complaint": "a complaint"}[read["sensitive"]]
+            return _ask_admin(db, thread, message, candidate, f"The message asks for {label}: these always come to you, with no draft.", None)
+        if read["route"] == "no_reply":
+            message.status, message.requires_admin = "no_reply", False
+            reply_rules.mark(message, "thanks", word=None)
+            thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
+            _notify(db, thread, "CANDIDATE_EMAIL", f"New email from {name}", analysis["summary"] or message.subject or "")
+            return "no_reply"
+        if read["route"] in ("course_files", "course_question"):
+            read = None                     # the files of a week, or a question for the professor: their own ways below
+        elif read["language"] in ("fr", "en"):
+            reply_language = read["language"]
 
     # The course of a program they are not registered in: “register first”, answered alone (it is not the admin's to give).
-    elsewhere = course_requests.other_program_asked(db, candidate, f"{subject}\n{asked_text}")
+    elsewhere = course_requests.other_program_asked(db, candidate, f"{subject}\n{asked_text}") if read is None else None
     if elsewhere is not None and not is_test(message):
         told = f"{greeting_for(candidate, reply_language)}\n\n{course_requests.register_first_text(db, elsewhere, reply_language)}"
         text, html_body = compose_reply(db, candidate, told, language=reply_language, quote=message.body)
@@ -1489,7 +1508,8 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
             _notify(db, thread, "CANDIDATE_EMAIL", f"{name} asked the course of {elsewhere.name}",
                     "They are not registered in it: they were told to register first. The course of a program is only for its candidates.")
             return "replied"
-    wanted = course_requests.lookup(db, candidate, f"{subject}\n{asked_text}") if course_requests.asks_for_material(f"{subject}\n{asked_text}") else None
+    wanted = (course_requests.lookup(db, candidate, f"{subject}\n{asked_text}")
+              if read is None and course_requests.asks_for_material(f"{subject}\n{asked_text}") else None)
     if wanted is not None and wanted["state"] != "ready":
         # The course of a week not added yet (or not taught yet): the professor and the admin are asked, the candidate told.
         professor = course_questions.professor_of(db, wanted["class"])
@@ -1517,7 +1537,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                 + "it goes to them by itself as soon as its files are added on the course page.")
         return "replied"
     material_ready = wanted is not None
-    if not material_ready and course_questions.is_learning_question(f"{subject}\n{asked_text}"):
+    if read is None and not material_ready and course_questions.is_learning_question(f"{subject}\n{asked_text}"):
         # About the learning itself: only for a candidate who paid that program, and their professor answers.
         registration, class_group = course_questions.class_of(db, candidate, asked_text)
         if registration is None:
@@ -1553,9 +1573,11 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         _notify(db, thread, "CANDIDATE_EMAIL", f"{name}'s question went to {professor.name}", message.question or "")
         return "no_reply"
 
-    found = find_answer(db, candidate, thread, message, analysis)
-    # Every request of the message must be answered: one left out, and the answer waits for the admin, saying which.
-    missed = [] if found.get("language") in ("ar", "tn") else missed_requests(analysis.get("requests") or [], found.get("answer"))
+    found = cloud_reply.as_found(read) if read is not None else find_answer(db, candidate, thread, message, analysis)
+    # Every request of the message must be answered: one left out, and the answer waits for the admin, saying which
+    # (the cloud reader says it itself, point by point, each checked against the facts).
+    missed = ([] if found.get("language") in ("ar", "tn") or found["method"] == "cloud"
+              else missed_requests(analysis.get("requests") or [], found.get("answer")))
     if found.get("answer") and missed and not found.get("blocker"):
         said = "; ".join(f"“{item['request']}” ({', '.join(item['subjects'])})" for item in missed[:3])
         found["blocker"] = (f"The message asks {len(analysis.get('requests') or [])} thing(s); the answer does not cover: {said}. "
@@ -1627,7 +1649,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         reason = ("The candidate seems frustrated (" + ", ".join(feelings["emotions"][0]["words"][:3])
                   + "): a person should answer. The draft is ready.")
     if reason is None:
-        if found.get("language") in ("ar", "tn") and found["method"] in ("facts", "register"):
+        if found.get("language") in ("ar", "tn") and found["method"] in ("facts", "register", "cloud"):
             pass        # built from facts and written in their own language (Arabic or Tunisian): it goes as it is
         elif analysis["language"] == "ar" and analysis.get("derja") and found["method"] in ("record", "taught", "document", "register", "facts", "material"):
             pass        # written in Arabic letters, read with the list, and the answer is a sure one: it goes, in French
@@ -1638,6 +1660,10 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
             )
         elif mode == "review":
             reason = "You chose to review every answer before it is sent."
+        elif found["method"] != "cloud" and __import__("app.services.cloud_model", fromlist=["available"]).available():
+            # With the cloud reader on, only an answer it read and checked goes alone: without it (its daily quota used
+            # up, no connection), the word rules may misread the message, so the answer waits.
+            reason = "The cloud reader could not read this message just now (its daily quota may be used up), so the answer waits for you."
         elif found["confidence"] < threshold:
             reason = f"Confidence {percent}% is below the {round(threshold * 100)}% needed to answer alone."
         elif in_thread >= MAX_AUTO_REPLIES_PER_THREAD or today >= MAX_AUTO_REPLIES_PER_DAY:

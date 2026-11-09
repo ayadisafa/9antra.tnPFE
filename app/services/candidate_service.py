@@ -770,15 +770,9 @@ def settle_registration_payment(
     amount_paid: float | None = None,
 ) -> Registration:
     """
-    Update payment without automatically assigning a class.
-
-    A registration may become fully paid while still remaining pending:
-
-        payment_status = PAID
-        status = PENDING
-        class_group_id = NULL
-
-    The class-assignment workflow must assign a staffed class separately.
+    Update a registration's payment. Once it is fully paid, the candidate joins a class at once: an open class of the
+    program, or a new one (one program at a time: one that starts after their current class ends). The admin is only
+    told (enrollment_service.enroll_paid_registration).
     """
     if isinstance(payment_status, str):
         try:
@@ -836,8 +830,7 @@ def settle_registration_payment(
     else:
         registration.payment_status = payment_status
 
-    # Payment alone must not assign the candidate to a class.
-    # Preserve COMPLETED/CANCELLED states.
+    # Not placed yet: pending until the class below. Preserve COMPLETED/CANCELLED states.
     if registration.status not in {
         RegistrationStatus.COMPLETED,
         RegistrationStatus.CANCELLED,
@@ -845,29 +838,30 @@ def settle_registration_payment(
     }:
         registration.status = RegistrationStatus.PENDING
 
-    db.add(
-        Notification(
-            recipient_role="admin",
-            candidate_id=registration.candidate_id,
-            registration_id=registration.id,
-            program_id=registration.program_id,
-            category="PAYMENT",
-            title="Payment status updated",
-            message=(
-                f"Payment for {registration.program_name} is now "
-                f"{registration.payment_status.value}. "
-                "Class assignment remains pending until a staffed "
-                "class is selected."
-            ),
-            action_url=(
-                f"/candidate/{registration.candidate_id}"
-            ),
-            is_read=False,
-            status="unread",
+    fully_paid = registration.payment_status == PaymentStatus.PAID and not registration.class_group_id
+    if not fully_paid:
+        db.add(
+            Notification(
+                recipient_role="admin",
+                candidate_id=registration.candidate_id,
+                registration_id=registration.id,
+                program_id=registration.program_id,
+                category="PAYMENT",
+                title="Payment status updated",
+                message=f"Payment for {registration.program_name} is now {registration.payment_status.value}.",
+                action_url=(
+                    f"/candidate/{registration.candidate_id}"
+                ),
+                is_read=False,
+                status="unread",
+            )
         )
-    )
 
     db.commit()
+    if fully_paid:
+        # Fully paid: they join a class at once (an open one, or a new one); the admin is told by the enrollment.
+        enroll_paid_registration(db, registration)
+        db.refresh(registration)
     db.refresh(registration)
 
     return registration

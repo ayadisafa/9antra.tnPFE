@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import json
 import operator
+import re
 import threading
 import time
 from dataclasses import dataclass
@@ -53,6 +54,12 @@ AGENTS = {
     "system": {"name": "System agent", "icon": "bi-sliders2", "colour": "#0f766e",
                "does": "Changes the system when you ask (assistant, reminders, classes, prices, look…), says what it was, and undoes it.",
                "reads": ["The settings", "The automatic reminders", "What it changed"]},
+    "summary": {"name": "Summary agent", "icon": "bi-text-paragraph", "colour": "#9333ea",
+                "does": "Sums up a candidate, their discussion, a class, a program, the day, the week, the page, a text you paste, or her last answer.",
+                "reads": ["The candidates, classes and programs", "The messages", "What came in and went out", "The page's guide"]},
+    "keep": {"name": "Follow-up agent", "icon": "bi-person-heart", "colour": "#be123c",
+             "does": "Who may drop out and why, and what to do for each: the message already prepared, the way and the hour, or a call.",
+             "reads": ["The absences", "The weekly questions and their results", "What is still owed", "What they wrote"]},
     "marketing": {"name": "Marketing agent", "icon": "bi-megaphone", "colour": "#ea580c",
                   "does": "What is trendy in posts, when to post, this week's plan, and advice.",
                   "reads": ["The journal's marketing articles", "When your people are active"]},
@@ -74,6 +81,9 @@ AGENTS = {
     "talk": {"name": "Conversation", "icon": "bi-chat-heart", "colour": "#ec4899",
              "does": "How are you, a greeting, thanks, who she is, how you feel, a goodbye: answered like a person, in your language.",
              "reads": ["What waits for you today", "Her name and look"]},
+    "reader": {"name": "Questions agent", "icon": "bi-stars", "colour": "#2563eb",
+               "does": "Any question, in any wording or language: understood by the cloud model, answered only from the application's records, every figure checked.",
+               "reads": ["What the other agents read, through fixed lookups", "Nothing else: it never answers from memory"]},
     "general": {"name": "General agent", "icon": "bi-chat-dots", "colour": "#6b7280",
                 "does": "Everything else.",
                 "reads": ["What you taught the assistants"]},
@@ -153,6 +163,8 @@ class _Asker:
     lang: str | None = None
     history: list[dict] | None = None
     limited: bool = False                     # the guide window: a professor's agent or the guide, nothing more
+    path: str | None = None                   # the page the window is open on ("résume cette page")
+    chosen: str | None = None                 # the language chosen in the window (None: the one of the question)
 
 
 class _Request(TypedDict, total=False):
@@ -179,6 +191,9 @@ STEPS = {
     "professor": ("bi-mortarboard", "Professors' agent", "Their classes, their candidates and the course, nothing else."),
     "guide": ("bi-signpost-split", "Guide agent", "For a team member without the whole assistant: how to do things here, for what they may do."),
     "system": ("bi-sliders2", "System agent", "Changes a setting when you ask, and undoes it."),
+    "summary": ("bi-text-paragraph", "Summary agent", "Sums up what you name (a candidate, a class, the day, the page…) in a few lines."),
+    "keep": ("bi-person-heart", "Follow-up agent", "Who may drop out, why, and what to do for each."),
+    "cases": ("bi-signpost-split", "What to do when…", "A professor absent, a candidate who has not paid, a missing link…: what the application does by itself, what is left to you."),
     "review": ("bi-question-circle", "Why it answered", "Why the email assistant answered someone that way, and putting it right."),
     "set_aside": ("bi-sliders", "Set-aside messages", "Why a message was set aside, and bringing it back."),
     "marketing": ("bi-megaphone", "Marketing agent", "What is trendy in posts, when to post, this week's plan."),
@@ -186,6 +201,7 @@ STEPS = {
     "program": ("bi-journal-code", "The program's agent", "A question naming a program goes to its own agent."),
     "tools": ("bi-tools", "The subject's agent", "The figures, the guide and what was taught, for the subject read."),
     "consult": ("bi-people", "Ask the others", "When the first one does not know: the program's agent, then the knowledge agent."),
+    "cloud": ("bi-stars", "Questions agent", "Any question, in any wording: the cloud model picks what to look up and writes from it, every figure checked; otherwise the subject's agent answers."),
     "finish": ("bi-check2-circle", "Answer", "Says who answered, whom it asked and the words it read, then writes it down."),
 }
 
@@ -201,14 +217,22 @@ def first_step(db: Session, message: str, user, agent: str, *, limited: bool = F
     if limited:
         return "guide"
     if _role(user) in ("admin", "staff"):
-        from app.services import answer_review, marketing, reply_rules, system_actions, trends_agent
+        from app.services import answer_review, cases, keep_them, marketing, reply_rules, summarize, system_actions, trends_agent
 
+        if summarize.wants(message):              # "résume…": a candidate, a class, the day, the page, a text, her last answer
+            return "summary"
+        if keep_them.wants(message):              # someone may drop out: who, why, and what to do
+            return "keep"
+        if cases.wants(message):                  # "a professor is absent, what do I do?": what is done by itself, what is left
+            return "cases"
         if system_actions.wants(db, message):     # change a setting, a reminder, the look… (or undo it)
             return "system"
         if answer_review.wants(message):          # why the email assistant answered someone that way; putting it right
             return "review"
         if reply_rules.wants(message):            # the messages set aside without an answer, and their rules
             return "set_aside"
+        if _role(user) == "admin" and _for_the_reader(message):
+            return "cloud"                        # any other question: read by the cloud model, answered from the records
         if marketing.wants(message):              # posts: what is trendy, when, this week's plan
             return "marketing"
         if trends_agent.wants(message):           # what is new, services to add, what a name says
@@ -249,6 +273,76 @@ def _talk(state: _Request, runtime) -> dict:
 
     asker = runtime.context
     return {"agent": "talk", "found": small_talk.answer(asker.db, state["social"], user=asker.user, lang=asker.lang), "path": ["talk"]}
+
+
+def _summary(state: _Request, runtime) -> dict:
+    """Sums up what was named, from the records (or the text given), in a few lines."""
+    from app.services import summarize
+
+    asker = runtime.context
+    return {"agent": "summary", "found": summarize.answer(asker.db, state["message"], asker.history, lang=asker.lang, path=asker.path),
+            "path": ["summary"]}
+
+
+# Asking the application to do something (send, remind, write, register, export, a PDF, remember…): its own rules do it.
+_ACTION = re.compile(r"^\s*(?:please\s+|svp\s+|stp\s+|yasmine\s*,?\s*)?(?:send|envoie|envoyez|envoyer|renvoie|ab3ath|ab3th|abath|3awed|remind|rappelle|"
+                     r"write|[ée]cris|register|inscris|export|exporte|retiens|remember|mail|email|whatsapp|sms)\b|\bpdf\b|"
+                     r"\b(?:nheb|nhib|n7eb|bghit|je veux|i want to)\s+(?:n(?:eb3ath|ab3ath|eb3th)|envoyer|send|[ée]crire|write)\b", re.IGNORECASE)
+
+
+def _for_the_reader(message: str) -> bool:
+    from app.services import cloud_model
+
+    return cloud_model.available() and not _ACTION.search(message or "")
+
+
+# Where to look after the reader's answer, and its picture, by the lookups it used.
+_LOOKED_AT = {"money_received": ("Payments", "/payments", "payments"), "not_paid": ("Payments", "/payments", "payments"),
+              "registrations": ("Candidates", "/candidate/all", "candidates"), "candidate": ("Candidates", "/candidate/all", "candidates"),
+              "best_candidates": ("Candidates", "/candidate/all", "candidates"), "classes": ("Classes", "/classes/", "classes"),
+              "class_detail": ("Classes", "/classes/", "classes"), "sessions": ("Classes", "/classes/", "sessions"),
+              "professors": ("Professors", "/classes/?tab=professors", "classes"), "may_drop_out": ("Who may drop out", "/#live-dashboard-risk", "feelings"),
+              "messages": ("Inbox", "/inbox", "inbox"), "reviews": ("Programs", "/programs/all", "feelings"), "programs": ("Programs", "/programs/all", "programs"),
+              "automatic": ("What the application does by itself", "/system#automatic", "settings"), "marketing": ("Social media", "/social", "posts"),
+              "trends": ("The journal", "/journal", "news"), "overview": ("Dashboard", "/", "data")}
+
+
+def _cloud(state: _Request, runtime) -> dict:
+    """Any other question: the cloud model picks the lookups and writes from what they return; an answer with a figure
+    the records do not show is not given (the subject's agent answers instead, as before)."""
+    from app.services import cloud_answer, lookups
+
+    asker = runtime.context
+    try:
+        found = cloud_answer.answer(state["message"], lookups.for_admin(asker.db, asker.user), "admin", history=asker.history, lang=asker.chosen)
+    except Exception:
+        import logging
+
+        logging.getLogger(__name__).exception("The cloud reader failed")
+        found = None
+    if found is None or not found["ok"] or not found["reply"]:
+        return {"path": ["cloud"]}
+    places = [_LOOKED_AT[name] for name in dict.fromkeys(found["used"]) if name in _LOOKED_AT]
+    links = [{"label": _t(label), "url": url} for label, url, _ in dict.fromkeys(places)][:3]
+    return {"agent": "reader", "path": ["cloud"],
+            "found": {"reply": found["reply"], "links": links, "source": "cloud", "resources": [], "scene": places[0][2] if places else "data",
+                      "sources": [{"label": _t("The application's records")}]}}
+
+
+def _keep(state: _Request, runtime) -> dict:
+    """Someone may drop out: who, why (what was recorded), and what to do for each."""
+    from app.services import keep_them
+
+    asker = runtime.context
+    return {"agent": "keep", "found": keep_them.answer(asker.db, state["message"], asker.history, lang=asker.lang), "path": ["keep"]}
+
+
+def _cases(state: _Request, runtime) -> dict:
+    """What to do when something happens (a professor absent, a candidate who has not paid…), and how it stands now."""
+    from app.services import cases
+
+    asker = runtime.context
+    return {"agent": "guide", "found": cases.answer(asker.db, state["message"], lang=asker.lang), "path": ["cases"]}
 
 
 def _professor(state: _Request, runtime) -> dict:
@@ -372,6 +466,15 @@ def _finish(state: _Request, runtime) -> dict:
     if agent == "trends" and category["key"] == "general":
         category = {**message_categories.label_of("trends"), "why": [], "by": "agent"}
     found["category"] = {key: category[key] for key in ("key", "label", "icon", "colour", "why", "by")}
+    # Short first (the whole answer one tap away), and the moving picture of its subject.
+    from app.services import brief, pictures
+
+    # An agent may give its own short version (it knows what matters); it is kept only for an answer long enough.
+    given = found.get("short")
+    reply = found.get("reply") or ""
+    found["short"] = given if given and len(reply) > brief.LONG and len(given) < len(reply) else brief.shorten(reply)
+    found["picture"] = pictures.for_answer(runtime.context.db, found, agent, category["key"])
+    found.pop("scene", None)
     return {"found": found, "routed": {**routed, "category": category}, "path": ["finish"]}
 
 
@@ -398,19 +501,22 @@ def graph():
             from langgraph.graph import END, START, StateGraph
 
             builder = StateGraph(_Request, context_schema=_Asker)
-            for name, step in (("read", _read), ("talk", _talk), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
+            for name, step in (("read", _read), ("talk", _talk), ("summary", _summary), ("keep", _keep), ("cases", _cases), ("cloud", _cloud), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
                                ("set_aside", _set_aside), ("marketing", _marketing), ("trends", _trends),
                                ("program", _program), ("tools", _tools), ("consult", _consult), ("finish", _finish)):
                 builder.add_node(name, step)
             builder.add_edge(START, "read")
             builder.add_conditional_edges("read", lambda state: state["to"],
-                                          ["talk", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
-            for name in ("professor", "system", "review", "set_aside", "marketing", "trends"):
+                                          ["talk", "summary", "keep", "cases", "cloud", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
+            for name in ("professor", "system", "review", "set_aside", "cloud", "marketing", "trends"):
                 builder.add_conditional_edges(name, _after, ["program", "tools", "consult", "finish"])
             builder.add_conditional_edges("program", _after, ["tools", "consult", "finish"])
             builder.add_conditional_edges("tools", _after, ["consult", "finish"])
             builder.add_edge("guide", "finish")
             builder.add_edge("talk", "finish")
+            builder.add_edge("summary", "finish")
+            builder.add_edge("keep", "finish")
+            builder.add_edge("cases", "finish")
             builder.add_edge("consult", "finish")
             builder.add_edge("finish", END)
             _GRAPH = builder.compile()
@@ -444,12 +550,13 @@ def drawing() -> list[dict]:
 
 
 def dispatch_chat(db: Session, message: str, history: list[dict] | None = None, *, user=None, lang: str | None = None,
-                  limited: bool = False) -> dict:
+                  limited: bool = False, path: str | None = None) -> dict:
     """The answer to a question asked in the assistant's window (by the admin or a team member), or in the guide window
     (limited: a professor, or a team member without the whole assistant), with the agent that gave it and the steps it
     went through."""
     started = time.monotonic()
-    done = graph().invoke({"message": message}, context=_Asker(db=db, user=user, lang=lang, history=history, limited=limited))
+    done = graph().invoke({"message": message}, context=_Asker(db=db, user=user, lang=lang, history=history, limited=limited, path=path,
+                                                                     chosen=lang if lang in ("fr", "en", "ar", "tn") else None))
     found = {**done["found"], "path": done["path"]}
     note(db, agent=done["agent"], category=done["routed"]["category"], channel="professor" if done["agent"] == "professor" else "chat",
          outcome=_outcome_of(found), asked=done["message"], user_id=getattr(user, "id", None),

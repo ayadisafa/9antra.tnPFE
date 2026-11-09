@@ -47,8 +47,23 @@
         <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who can take it are offered: they teach its program, are available and free at its hours. <a href="/classes/?tab=professors" class="ui-link">Professors</a></div>
       </div>
       <div class="col-sm-5">
-        <label class="cp-label" for="param-room-{{ cls.id }}">Room or link</label>
-        <input name="room" id="param-room-{{ cls.id }}" value="{{ cls.room or '' }}" class="form-control form-control-sm" placeholder="Room 2, or the meeting link">
+        <label class="cp-label" for="param-room-{{ cls.id }}">Room</label>
+        <input name="room" id="param-room-{{ cls.id }}" value="{{ cls.room or '' }}" class="form-control form-control-sm" placeholder="Room 2, Les Berges du Lac">
+      </div>
+    </div>
+    <div class="row g-2 mt-1">
+      <div class="col-sm-5">
+        <label class="cp-label" for="param-mode-{{ cls.id }}">How it is followed</label>
+        <select name="delivery_mode" id="param-mode-{{ cls.id }}" class="form-select form-select-sm">
+          <option value="" {{ 'selected' if not cls.delivery_mode }}>From its candidates' choices</option>
+          <option value="online" {{ 'selected' if cls.delivery_mode == 'online' }}>Fully online</option>
+          <option value="onsite" {{ 'selected' if cls.delivery_mode == 'onsite' }}>Fully on site</option>
+          <option value="mixed" {{ 'selected' if cls.delivery_mode == 'mixed' }}>Online and on site</option>
+        </select>
+      </div>
+      <div class="col-sm-7">
+        <label class="cp-label" for="param-link-{{ cls.id }}">Meeting link (online)</label>
+        <input name="meeting_url" id="param-link-{{ cls.id }}" value="{{ cls.meeting_url or '' }}" class="form-control form-control-sm" inputmode="url" placeholder="Its professor is asked for it 3 days before the start">
       </div>
     </div>
   </div>

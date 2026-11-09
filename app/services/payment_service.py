@@ -251,7 +251,8 @@ def confirm_payment(
         result = enroll_paid_registration(db, registration)
         if result.class_group is not None and result.reason is None:
             send_payment_email = False
-        else:
+        elif result.reason not in ("no_program", "busy", "no_open_class"):
+            # (Those already told the admin what is missing, in one notification.)
             _create_payment_notification(db=db, registration=registration)
             db.commit()
         db.refresh(payment)

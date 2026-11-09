@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Meeting link · {{ class_group.name }}{% endblock %}
+{% block page_title %}My classes{% endblock %}
+
+{% block content %}
+{% include "_ui.html" %}
+<style>
+  .tl-card { max-width:640px; margin:0 auto; background:#fff; border:1px solid var(--border-color); border-radius:24px; padding:26px; }
+  .tl-head { display:flex; gap:14px; align-items:center; margin-bottom:14px; }
+  .tl-ico { width:52px; height:52px; border-radius:18px; display:grid; place-items:center; background:var(--berry-subtle); color:var(--primary-berry); font-size:1.5rem; flex:none; }
+  .tl-head h2 { font-size:1.15rem; font-weight:800; margin:0; } .tl-head p { margin:2px 0 0; color:var(--muted); font-size:.86rem; }
+  .tl-facts { display:flex; gap:8px; flex-wrap:wrap; margin:6px 0 16px; }
+  .tl-now { margin-top:14px; font-size:.84rem; color:var(--muted); }
+  .tl-now a { word-break:break-all; }
+</style>
+{% include "_flash.html" %}
+<section class="tl-card">
+  <div class="tl-head">
+    <span class="tl-ico"><i class="bi bi-camera-video"></i></span>
+    <div><h2>The meeting link of {{ class_group.name }}</h2>
+      <p>{% if start %}First session {{ start.strftime('%d/%m/%Y %H:%M') }} · {% endif %}{{ modes[mode] }}</p></div>
+  </div>
+  <div class="tl-facts">
+    <span class="ui-chip"><i class="bi bi-people"></i><span data-no-i18n>{{ online }}/{{ members }}</span> online</span>
+    {% if class_group.room %}<span class="ui-chip"><i class="bi bi-geo-alt"></i><span data-no-i18n>{{ class_group.room }}</span></span>{% endif %}
+  </div>
+  {% if mode == "onsite" %}
+  <p class="text-muted">This class is fully on site: no meeting link is needed.</p>
+  {% else %}
+  <form method="post" class="d-grid gap-2">
+    <label class="fw-semibold small" for="tl-url">Paste the private link of the meeting (Google Meet, Zoom, Teams…)</label>
+    <input class="form-control" id="tl-url" name="meeting_url" required inputmode="url" placeholder="https://meet.google.com/…" value="{{ class_group.meeting_url or '' }}">
+    <div class="form-text">It is used for every session. Your online candidates never see it: each gets their own link, which opens it around the session's hours and notes when they arrived.</div>
+    <button class="ui-btn primary mt-2"><i class="bi bi-send"></i>Save and send to my online candidates</button>
+  </form>
+  {% if class_group.meeting_url %}<div class="tl-now"><i class="bi bi-check-circle-fill" style="color:#15803d;"></i> Saved: <a href="{{ class_group.meeting_url }}" target="_blank" rel="noopener" data-no-i18n>{{ class_group.meeting_url }}</a></div>{% endif %}
+  {% endif %}
+</section>
+{% endblock %}

@@ -290,3 +290,50 @@ async def save_attendance(class_id: str, session_id: str, request: Request, db: 
     notice = f"Presence saved for {saved['marked']} candidate{'s' if saved['marked'] != 1 else ''}"
     notice += f": {saved['absent']} absent." if saved["absent"] else ": everyone was there."
     return _back(class_id, session_id, notice=notice)
+
+
+# ------------------------------------------------------------------
+# The meeting link of a class, asked three days before it starts (services/meetings.ask_links_due)
+# ------------------------------------------------------------------
+
+def _my_class(request: Request, db: Session, class_id: str) -> tuple[Professor | None, ClassGroup]:
+    professor = _my_professor(request, db)
+    class_group = db.get(ClassGroup, class_id)
+    user = auth.current(request)
+    if class_group is None or (professor is None and not getattr(user, "is_admin", False)) or \
+            (professor is not None and class_group.professor_id != professor.id):
+        raise HTTPException(status_code=404, detail="Class not found")
+    return professor, class_group
+
+
+@router.get("/teacher/classes/{class_id}/link", response_class=HTMLResponse)
+def class_link_page(class_id: str, request: Request, db: Session = Depends(get_db)):
+    """Where the professor pastes the private meeting link of their class."""
+    from app.services import meetings
+    from app.services.schedule_utils import class_start_dt
+
+    professor, class_group = _my_class(request, db, class_id)
+    members = attendance.members(db, class_group.id)
+    mode = meetings.mode_of(db, class_group)
+    return templates.TemplateResponse(request=request, name="teacher_link.html", context={
+        "active_page": "teacher", "class_group": class_group, "start": class_start_dt(class_group), "mode": mode, "modes": meetings.MODES,
+        "online": sum(1 for item in members if meetings.follows_online(db, class_group, item, mode)), "members": len(members),
+        "notice": request.query_params.get("notice"), "error": request.query_params.get("error"),
+    })
+
+
+@router.post("/teacher/classes/{class_id}/link")
+def save_class_link(class_id: str, request: Request, meeting_url: str = Form(""), db: Session = Depends(get_db)):
+    """The professor's link is kept for every session, and each online candidate gets their own link at once."""
+    from app.services import meetings
+    from app.services.settings_service import public_base_url
+
+    _, class_group = _my_class(request, db, class_id)
+    try:
+        sent = meetings.set_class_link(db, class_group, meeting_url, public_base_url(db, request))
+    except ValueError as problem:
+        db.rollback()
+        return RedirectResponse(f"/teacher/classes/{class_id}/link?" + urlencode({"error": str(problem)}), status_code=303)
+    notice = (f"Saved. {sent} online candidate(s) received their own link." if sent
+              else "Saved. Each online candidate gets their own link before each session.")
+    return RedirectResponse(f"/teacher/classes/{class_id}/link?" + urlencode({"notice": notice}), status_code=303)

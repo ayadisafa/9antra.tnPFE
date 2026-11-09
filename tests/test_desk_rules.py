@@ -241,31 +241,15 @@ sent.clear()
 payment_service.confirm_payment(db, second.id, 800)
 db.expire_all()
 second = db.get(Registration, second.id)
-check("one program: paid while in a class (other hours): not placed yet", second.class_group_id is None, second.class_group_id)
-note = db.query(Notification).filter(Notification.registration_id == second.id, Notification.category == "ASSIGNMENT_PENDING").all()
-check("one program: the admin is told, with the gap", len(note) == 1 and "One program at a time" in note[0].message and "14 days" in note[0].message,
-      [n.message for n in note])
-asked = [item for item in sent if "nour.busy@example.com" in mail_text(item) and "environ 14 jours" in mail_text(item)]
-check("one program: the candidate is told by email, with the gap", len(asked) == 1 and "Cela vous convient-il" in mail_text(asked[0])
-      and "au même horaire" not in mail_text(asked[0]), [mail_text(item)[:160] for item in sent])
-out = ea.ingest_inbound(db, sender=nour.email, subject="Ma classe", body=f"Bonjour, quand commence ma classe de {other.name} ?",
-                        message_id=f"<busy-{datetime.utcnow().timestamp()}@example.com>")
-db.expire_all()
-inbound = db.get(CandidateEmail, out["email_id"])
-reply = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == inbound.thread_id, CandidateEmail.direction == "outbound")
-         .order_by(CandidateEmail.received_at.desc()).first())
-check("one program: asked when their class starts, the assistant says they cannot be placed yet, and when they will be",
-      reply is not None and "vous ne pouvez pas encore être placé(e) dans une classe" in reply.body and "14 jours" in reply.body,
-      (inbound.status, inbound.escalation_reason, reply.body[:300] if reply else None))
-answer = admin.post(f"/classes/registration/{second.id}/decision", data={"decision": "auto"})
-check("one program: “place automatically” says why", "one program at a time" in where(answer), where(answer))
 ends = class_end_dt(db.get(ClassGroup, running.id))
-es.complete_class(db, db.get(ClassGroup, running.id))
-db.commit()
-es.assign_pending_paid_registrations(db)
-db.expire_all()
-second = db.get(Registration, second.id)
 placed = second.class_group
+note = db.query(Notification).filter(Notification.registration_id == second.id).all()
+check("one program: paid while in a class (other hours): placed at once in a class of the new program", placed is not None, second.class_group_id)
+check("one program: the admin is only told, with the class's code and the gap", any(n.category == "ASSIGNMENT" and "One program at a time" in n.message
+      and "14 days" in n.message and placed.name in n.message for n in note) and not any(n.category == "ASSIGNMENT_PENDING" for n in note),
+      [(n.category, n.message) for n in note])
+check("one program: the candidate gets their class (not a question)", any("nour.busy@example.com" in mail_text(item) for item in sent)
+      and not any("Cela vous convient-il" in mail_text(item) for item in sent), [mail_text(item)[:160] for item in sent])
 starts = placed.start_date.date() if placed and placed.start_date else None
 check("one program: once the first is over, placed in a class of the new program", placed is not None and placed.program_id == other.id
       and second.status == RegistrationStatus.ASSIGNED, second.status)
