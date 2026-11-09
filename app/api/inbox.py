@@ -954,6 +954,11 @@ def compose_page(request: Request, db: Session = Depends(get_db)):
         elif db.get(Program, about) is not None:
             template = SimpleNamespace(id="", name="", style="brand", **program_pdf.message_for(db.get(Program, about)))
         extras = dict(extras, files=[email_files.describe(file) for file in carried])
+    # Yasmine prepared it ("prépare un email pour Fares : …"): the words given, ready to read and send.
+    written = (request.query_params.get("body") or "").strip()
+    if written and template is None:
+        subject = (request.query_params.get("subject") or "").strip() or written.splitlines()[0][:70]
+        template = SimpleNamespace(id="", name="", style="brand", subject=subject[:200], title="", body=written[:4000])
     # The preview is there as soon as the page opens; the script then keeps it current.
     initial = email_composer.render(
         db,

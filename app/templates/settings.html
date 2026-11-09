@@ -228,6 +228,15 @@
           <b>One program at a time.</b> A candidate who already follows a class waits for it to end: their next program starts in a class
           <input name="next_class_gap_days" type="number" min="0" max="120" value="{{ settings.next_class_gap_days if settings.next_class_gap_days is not none else 10 }}" class="form-control form-control-sm d-inline-block" style="width:72px" aria-label="Days after the end of their class">
           days (or more) after the end of the first, with a professor free at those hours. They are told so, and the assistant answers it.
+          When their first class ends later than planned (a session put a week later), they move by themselves to the next class of their next program.
+        </div>
+        <div class="st-switch-help mt-2" id="replacement-fallback">
+          <b>A professor away, and nobody can replace them.</b> The professors who teach the program and are free are asked one by one first. If none can:
+          <select name="replacement_fallback" class="form-select form-select-sm d-inline-block w-auto" aria-label="When nobody can replace them">
+            <option value="ask" {{ 'selected' if (settings.replacement_fallback or 'ask') == 'ask' }}>I choose: another professor, another day or a week later</option>
+            <option value="postpone" {{ 'selected' if settings.replacement_fallback == 'postpone' }}>The session goes a week later by itself</option>
+          </select>
+          The candidates are told in both cases.
         </div>
         <div class="st-switch-help mt-2" id="session-check">
           <label class="d-inline-flex align-items-center gap-2 m-0"><input type="checkbox" name="session_check_on" value="1" {{ 'checked' if session_check.on }}>

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+
+{% block title %}Professors · 9antra{% endblock %}
+{% block page_title %}Professors{% endblock %}
+{% block live_topics %}classes,dashboard{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .pf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:14px; }
+  .pf-card { position:relative; display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:22px; background:#fff; border:1px solid var(--border-color);
+             text-decoration:none; color:inherit; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+  .pf-card:hover { transform:translateY(-3px); border-color:var(--primary-berry); box-shadow:0 18px 30px -24px rgba(164,44,103,.6); color:inherit; }
+  .pf-top { display:flex; gap:12px; align-items:center; }
+  .pf-face { width:50px; height:50px; flex:none; border-radius:16px; display:grid; place-items:center; font-weight:800; color:#fff; font-size:1.05rem;
+             background:linear-gradient(135deg, var(--primary-berry), #7c3aed); box-shadow:0 10px 20px -14px #7c3aed; }
+  .pf-name { font-weight:800; font-size:1rem; color:var(--ink-text); line-height:1.2; }
+  .pf-sub { font-size:.74rem; color:var(--muted); }
+  .pf-chips { display:flex; flex-wrap:wrap; gap:5px; }
+  .pf-figs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
+  .pf-fig { background:#faf8fd; border-radius:12px; padding:7px 6px; text-align:center; }
+  .pf-fig b { display:block; font-size:.98rem; color:var(--ink-text); } .pf-fig span { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#9b95b0; }
+  .pf-issue { display:flex; gap:7px; align-items:flex-start; font-size:.76rem; line-height:1.35; }
+  .pf-issue i { margin-top:2px; } .pf-issue.bad i { color:#e11d48; } .pf-issue.warn i { color:#d97706; } .pf-issue.info i { color:#6366f1; }
+  .pf-ok { font-size:.76rem; color:#15803d; font-weight:700; display:flex; gap:6px; align-items:center; }
+  .pf-flag { position:absolute; top:12px; right:12px; }
+  @media (prefers-reduced-motion: no-preference) { .pf-card { animation:pfIn .4s ease both; animation-delay:calc(var(--i) * 50ms); } }
+  @keyframes pfIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+<div class="ui-head">
+  <div>
+    <h2>Professors</h2>
+    <p>Each professor has their own space: who they are, their classes, what candidates thought of them, the messages, and what waits for them.</p>
+  </div>
+  <div class="ui-actions"><a class="ui-btn" href="/classes/?tab=professors"><i class="bi bi-person-plus"></i>Add or change a professor</a></div>
+</div>
+
+<div class="ui-stats mb-3" id="pf-stats">
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-video3"></i></div><div><div class="ui-stat-num">{{ totals.professors }}</div><div class="ui-stat-label">Professors</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-easel2-fill"></i></div><div><div class="ui-stat-num">{{ totals.teaching }}</div><div class="ui-stat-label">Teaching now</div></div></div>
+  <div class="ui-stat {{ 't-gold' if totals.problems else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-exclamation-triangle-fill"></i></div><div><div class="ui-stat-num">{{ totals.problems }}</div><div class="ui-stat-label">Things to look at</div></div></div>
+  <div class="ui-stat {{ 't-rose' if totals.urgent else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-lightning-charge-fill"></i></div><div><div class="ui-stat-num">{{ totals.urgent }}</div><div class="ui-stat-label">Urgent</div></div></div>
+</div>
+
+<div class="pf-grid" id="pf-list">
+  {% for row in rows %}
+  {% set person = row.professor %}
+  <a class="pf-card" href="/professors/{{ person.id }}" style="--i:{{ loop.index0 }};">
+    {% if row.bad %}<span class="ui-chip bad pf-flag"><i class="bi bi-lightning-charge-fill"></i>{{ row.bad }}</span>{% endif %}
+    <div class="pf-top">
+      <div class="pf-face" data-no-i18n>{{ (person.name or '?').split()[:2] | map('first') | join('') | upper }}</div>
+      <div style="min-width:0;">
+        <div class="pf-name" data-no-i18n>{{ person.name }}</div>
+        <div class="pf-sub">{% if person.is_available %}<i class="bi bi-circle-fill" style="color:#16a34a; font-size:.5rem;"></i> Available{% else %}<i class="bi bi-circle-fill" style="color:#9ca3af; font-size:.5rem;"></i> Not available{% endif %}</div>
+      </div>
+    </div>
+    {% if row.specialties %}<div class="pf-chips">{% for item in row.specialties %}<span class="ui-chip muted" data-no-i18n>{{ item }}</span>{% endfor %}</div>{% endif %}
+    <div class="pf-figs">
+      <div class="pf-fig"><b>{{ row.figures.classes }}</b><span>Classes</span></div>
+      <div class="pf-fig"><b>{{ row.figures.candidates }}</b><span>Candidates</span></div>
+      <div class="pf-fig"><b>{{ (row.figures.presence ~ '%') if row.figures.presence is not none else '—' }}</b><span>Presence</span></div>
+      <div class="pf-fig"><b>{{ ('★ ' ~ row.figures.stars) if row.figures.stars else '—' }}</b><span>Stars</span></div>
+    </div>
+    {% if row.problems %}
+    <div>{% for item in row.problems[:2] %}<div class="pf-issue {{ item.tone }}"><i class="bi {{ item.icon }}"></i><span data-no-i18n>{{ item.text }}</span></div>{% endfor %}
+      {% if row.problems | length > 2 %}<div class="pf-sub mt-1">+{{ row.problems | length - 2 }} more</div>{% endif %}</div>
+    {% else %}
+    <div class="pf-ok"><i class="bi bi-check-circle-fill"></i>Nothing waits for them.</div>
+    {% endif %}
+  </a>
+  {% else %}
+  <div class="ui-empty"><i class="bi bi-person-video3"></i><strong>No professor yet</strong>Add your professors in Classes, Professors.</div>
+  {% endfor %}
+</div>
+{% endblock %}

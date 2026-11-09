@@ -330,7 +330,13 @@ def _person(db: Session, name: str) -> dict:
     from app.models.user import Attendance
     from app.services import chatbot, dropout
 
-    person = chatbot._candidate_in(db, chatbot._plain(name))
+    # A name that fits several people ("Fares": Fares, Fares Benali, Fares Trabelsi) is asked, never guessed.
+    asked = set(chatbot._plain(name).split())
+    fitting = [row for row in db.query(Candidate).all() if asked and asked <= set(chatbot._plain(row.full_name or "").split())]
+    if len(fitting) > 1:
+        return {"several_candidates": [row.full_name or row.email for row in fitting[:6]], "count": len(fitting),
+                "note": "several candidates have this name: ask which one"}
+    person = fitting[0] if fitting else chatbot._candidate_in(db, chatbot._plain(name))
     if person is None:
         found = [row for row in db.query(Candidate).all() if (name or "").lower().strip() and (name or "").lower().strip() in (row.full_name or "").lower()]
         person = found[0] if len(found) == 1 else None
@@ -507,10 +513,197 @@ def _trends(db: Session, question: str) -> dict:
     return {"trends": trends_agent.answer(db, question, lang="en")["reply"]}
 
 
+def _search(db: Session, user, words: str = "") -> dict:
+    """The application's own search (people, programs, classes, professors, reminders, emails) and the journal."""
+    from app.models.news_item import NewsItem
+    from app.services import finder
+
+    words = (words or "").strip()[:80]
+    if len(words) < 2:
+        return {"error": "Nothing to search for."}
+    who = user if hasattr(user, "is_admin") else None          # the signed-in person (what they may open), else the admin's view
+    found = [{"kind": group["group"], "title": item["title"], "detail": item["detail"], "url": item["url"]}
+             for group in finder.find(db, words, who, most=5) for item in group["items"]][:15]
+    like = f"%{words}%"
+    articles = (db.query(NewsItem).filter((NewsItem.title.ilike(like)) | (NewsItem.summary.ilike(like)))
+                .order_by(NewsItem.published_at.desc()).limit(4).all())
+    return {"searched": words, "count": len(found), "found": found,
+            "articles": [{"title": row.title, "source": row.source, "on": _day(row.published_at), "url": row.url} for row in articles]}
+
+
+def _job_market(db: Session, field: str = "") -> dict:
+    """What the job offers read every day ask: per field, its share of the offers, the skills most asked, and whether it is taught here."""
+    from app.services import market
+
+    offers = market.all_offers(db)
+    rows = market.trends(db, offers)
+    wanted = (field or "").lower().strip()
+    if wanted:
+        chosen = [row for row in rows if wanted in row["name"].lower() or wanted in row["key"].lower()
+                  or any(wanted in skill["label"].lower() for skill in row["skills"])]
+        rows = chosen or rows
+    read = market.last_read(db)
+    return {"offers_read": len(offers), "last_read": _day(read) if read else None,
+            "where_they_come_from": "public job boards (Remotive, Arbeitnow, Jobicy, Himalayas): remote and European offers, not Tunisian ones; and offers you pasted",
+            "count": len(rows[:10]),
+            "fields": [{"field": row["name"], "offers": row["offers"], "share_of_offers": f"{row['pct']}%", "taught_here": row["taught"],
+                        "programs_here": row["programs"], "most_asked_skills": [f"{skill['label']} {skill['pct']}%" for skill in row["skills"][:5]],
+                        "advice": row["advice"]} for row in rows[:10]]}
+
+
+def _news(db: Session, topic: str = "") -> dict:
+    """The journal: the latest articles of the fields taught, read every six hours from public feeds."""
+    from app.models.news_item import NewsItem
+
+    query = db.query(NewsItem)
+    topic = (topic or "").strip()[:60]
+    if topic:
+        like = f"%{topic}%"
+        query = query.filter((NewsItem.title.ilike(like)) | (NewsItem.summary.ilike(like)) | (NewsItem.domain == topic.lower()))
+    rows = query.order_by(NewsItem.published_at.desc()).limit(8).all()
+    return {"topic": topic or "all", "count": len(rows),
+            "articles": [{"title": row.title, "source": row.source, "field": row.domain, "on": _day(row.published_at), "url": row.url,
+                          "summary": " ".join((row.summary or "").split())[:240]} for row in rows]}
+
+
+def _advice(db: Session, program: str = "") -> dict:
+    """What to add, change, strengthen or reduce in a program, from the job offers and the developers' communities."""
+    from app.models import Program
+    from app.services import chatbot, recommender
+
+    chosen = chatbot._program_in(db, chatbot._plain(program or ""))
+    if chosen is None and program:
+        found = [row for row in db.query(Program).all() if program.lower() in (row.name or "").lower()]
+        chosen = found[0] if len(found) == 1 else None
+    if chosen is None:
+        return {"error": f"No program is called “{program}”.", "programs": [row.name for row in db.query(Program).order_by(Program.name).all()]}
+    result = recommender.recommend(db, chosen)
+    return {"program": chosen.name, "field": result.get("field"), "read_on": _day(result["day"]) if result.get("day") else None,
+            "count": len(result["items"][:8]), "advice": [{"what": item["title"], "why": item["why"], "kind": item["kind"]} for item in result["items"][:8]]}
+
+
+def _waiting_today(db: Session) -> dict:
+    """What waits for the admin today, the most pressing first (the dashboard's list)."""
+    from app.services import friend, ui_words
+    from app.services.schedule_utils import local_now
+
+    token = ui_words.use("en")
+    try:
+        lines = friend.lines_for_admin(db, friend._WORDS["en"], datetime.utcnow(), local_now())
+    finally:
+        ui_words.current.reset(token)
+    return {"count": len(lines), "waiting_today": [line["text"] for line in lines][:10]}
+
+
+def _happened(db: Session, since: str = "today") -> dict:
+    """What came in and went out since a moment: messages, registrations, payments, proofs, reviews; answers sent."""
+    from app.services import digest
+    from app.services.reminders import to_utc
+    from app.services.schedule_utils import local_now
+
+    now = local_now()
+    start = {"last_hour": now - timedelta(hours=1), "yesterday": (now - timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0),
+             "this_week": (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+             }.get(since, now.replace(hour=0, minute=0, second=0, microsecond=0))
+    moment = to_utc(start)
+    return {"since": f"{_day(start)} {_hour(start)}", "what_happened": [line["text"] for line in digest.lines(db, moment, "en")] or ["nothing"]}
+
+
+def _connected(db: Session) -> dict:
+    from app.services import presence
+
+    rows = presence.connected(db)
+    summary = presence.summary(rows)
+    others = {row["name"] for row in rows if row["state"] != "online"} - {row["name"] for row in summary["online"]}
+    return {"online_now": summary["people"], "online": [{"name": row["name"], "role": row["role"], "page": row["page"], "device": row["device"]}
+                                                       for row in summary["online"]],
+            "signed_in_but_away": sorted(others)}
+
+
+def _reminders_now(db: Session) -> dict:
+    from app.services import reminder_board, reminders
+    from app.services.schedule_utils import utc_to_local
+
+    planned = []
+    for row in reminders.upcoming(db)[:10]:
+        when = utc_to_local(row.send_at) if row.send_at else None
+        planned.append({"subject": row.subject, "to": row.audience_label, "when": f"{_day(when)} {_hour(when)}" if when else None,
+                        "repeat": row.repeat or "once", "state": row.status})
+    return {"automatic": [{"name": item["name"], "on": item["on"], "when": item["when"], "to": item["who"]} for item in reminder_board.items(db)],
+            "planned_by_you": planned, "planned_count": len(planned)}
+
+
+_EMAIL_OR_PHONE = re.compile(r"[\w.+-]+@[\w-]+\.\w+|\+?\d[\d ]{7,}\d")
+
+
+def private_in(db: Session, words: str) -> bool:
+    """Whether a web search would carry someone's name, email or phone: then it is not sent."""
+    from app.models import Candidate, Professor, User
+    from app.services import chatbot
+
+    if _EMAIL_OR_PHONE.search(words or ""):
+        return True
+    said = f" {chatbot._plain(words)} "
+    names = [name for (name,) in db.query(Candidate.full_name).all()] + [name for (name,) in db.query(Professor.name).all()] + \
+            [name for (name,) in db.query(User.name).all()]
+    for name in names:
+        parts = [part for part in chatbot._plain(name or "").split() if len(part) >= 3]
+        if len(parts) >= 2 and all(f" {part} " in said for part in parts):
+            return True
+        if len(parts) >= 2 and len(parts[-1]) >= 4 and f" {parts[-1]} " in said:
+            return True                                   # the family name alone
+    return False
+
+
+def _web(db: Session, query: str = "") -> dict:
+    """Google, through the cloud model: for what the application cannot know (the job market in Tunisia, salaries, a
+    technology). Never sent with a person's name, email or phone."""
+    from app.services import cloud_model
+
+    query = " ".join((query or "").split())[:200]
+    if not query:
+        return {"error": "Nothing to search for."}
+    if private_in(db, query):
+        return {"error": "Not searched: the words name someone of the centre, and their data never goes to a web search."}
+    found = cloud_model.search(query)
+    if not found or not found.get("text"):
+        return {"error": "The web search is not available just now."}
+    return {"searched_on_the_web": query, "note": "from the internet (Google), not the centre's records", "found": found["text"][:3000],
+            "sources": found["sources"][:6]}
+
+
 PERIODS = ["today", "this_week", "last_week", "this_month", "last_month", "all"]
+ASK_BACK = {"type": "OBJECT", "properties": {
+    "question": {"type": "STRING", "description": "One short question back, in the admin's language"},
+    "options": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "2 to 4 short answers to tap, in the admin's language"}},
+    "required": ["question"]}
 
 
-def for_admin(db: Session, user=None) -> dict[str, Tool]:
+def _page_guide(db: Session, user, page: str = "", path: str | None = None) -> dict:
+    """A page's tour: what it is for and every part (what it shows, what can be done and changed)."""
+    from app.services import navigate, page_help
+
+    named = navigate._page(navigate._fold(page), "en") if page else None
+    address = named[0] if named and navigate.may_open(db, user, named[0]) else (page if page.startswith("/") else (path or "/"))
+    found = page_help.guide(db, address, "en")
+    if found is None:
+        return {"error": "No guide for that page."}
+    return {"page": found["title"], "address": address, "purpose": found["purpose"], "parts": found["parts"]}
+
+
+def _pages(db: Session, user) -> dict:
+    """Every page of the application this person may open, with its address and what it is for."""
+    from app.services import navigate, page_tours
+
+    found = []
+    for url, names, _ in navigate.PAGES:
+        if navigate.may_open(db, user, url):
+            tour = page_tours.for_path(url.split("?", 1)[0].split("#", 1)[0])
+            found.append({"page": names["en"], "address": url, "for": tour["purpose"] if tour else None})
+    return {"count": len(found), "pages": found}
+
+
+def for_admin(db: Session, user=None, path: str | None = None) -> dict[str, Tool]:
     text = ("The question, as asked", "STRING", None)
     found = [
         Tool("overview", "The centre at a glance: candidates, registrations, money received and due, classes, professors, programs, emails waiting.",
@@ -563,6 +756,34 @@ def for_admin(db: Session, user=None) -> dict[str, Tool]:
              _params(question=text), lambda question="": _marketing(db, question)),
         Tool("trends", "What is new in each field taught (the journal) and what job offers ask.",
              _params(question=text), lambda question="": _trends(db, question)),
+        Tool("search", "Search the application for words: candidates, programs, classes, professors, reminders, emails (and the journal's articles). "
+                       "For a name or words when no other lookup fits.",
+             _params(words=("The words to look for (a name, a subject…)", "STRING", None)), lambda words="": _search(db, user, words)),
+        Tool("job_market", "The job market, from the offers read every day: per field, its share of the offers, the skills most asked, "
+                           "and whether a program here teaches it.", _params(field=("Only this field or skill (data, AI, DevOps, Python…)", "STRING", None)),
+             lambda field="": _job_market(db, field)),
+        Tool("news", "The journal: the latest articles of the fields taught (title, source, date, link).",
+             _params(topic=("Only about this (a field or a word)", "STRING", None)), lambda topic="": _news(db, topic)),
+        Tool("program_advice", "What to add, change, strengthen or reduce in one program, from the job offers and the developers' communities.",
+             _params(program=("The program's name", "STRING", None)), lambda program="": _advice(db, program)),
+        Tool("waiting_today", "What waits for the admin today, the most pressing first.", None, lambda: _waiting_today(db)),
+        Tool("what_happened", "What came in (messages, registrations, payments, proofs, reviews) and went out (answers, emails) since a moment.",
+             _params(since=("Since when", "STRING", ["last_hour", "today", "yesterday", "this_week"])), lambda since="today": _happened(db, since)),
+        Tool("connected", "Who is signed in to the application now, on which page.", None, lambda: _connected(db)),
+        Tool("reminders", "The reminders: the automatic ones (on or off, when) and the ones the admin planned (to whom, when).",
+             None, lambda: _reminders_now(db)),
+        Tool("web_search", "Search the web (Google) for what the application cannot know: the job market in Tunisia, salaries, a technology, "
+                           "news outside the journal. Never put a person's name, email or phone in it.",
+             _params(query=("The search, in the words a person would type in Google", "STRING", None)), lambda query="": _web(db, query)),
+        Tool("page_guide", "What a page of the application is for and every part of it: what it shows, what can be done and changed "
+                           "there. For “how does this page work?”, “what can I do on the payments page?”.",
+             _params(page=("The page's name or address (empty: the page open now)", "STRING", None)),
+             lambda page="": _page_guide(db, user, page, path)),
+        Tool("pages", "Every page of the application, its address and what it is for: to say where something is done.", None,
+             lambda: _pages(db, user)),
+        Tool("ask_back", "ONLY when the message is too vague to know what to look up (no subject, or several meanings): one short question "
+                         "back to the admin, with 2 to 4 short options to tap. Never for a clear question.",
+             ASK_BACK, lambda question="", options=None: {"asked_back": question, "options": list(options or [])[:4]}),
     ]
     return {tool.name: tool for tool in found}
 

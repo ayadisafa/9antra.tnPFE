@@ -115,7 +115,7 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
            to_professor: str = Form(""), subject: str = Form(""), title: str = Form(""), body: str = Form(""), style: str = Form("brand"),
            when: str = Form("later"), date: str = Form(""), time: str = Form(""), channel: str = Form("email"),
            repeat: str = Form("once"), until: str = Form(""), design: str = Form(""), hours_before: str = Form(""),
-           db: Session = Depends(get_db)):
+           more_date: list[str] = Form(default=[]), more_time: list[str] = Form(default=[]), db: Session = Depends(get_db)):
     target = {"candidate": to_candidate, "class": to_class, "program": to_program, "professor": to_professor}.get(audience, "")
     stop = None
     if until.strip() and repeat != "once":
@@ -139,6 +139,19 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
         if local < local_now() - timedelta(minutes=2):
             return _back(error="That time is already past. Choose a later one, or “Now”.", anchor="#new")
         send_at = reminders.to_utc(local)
+    # The same reminder at other times too (each goes on its own, and repeats the same way).
+    others = []
+    if repeat not in reminders.WATCHING:
+        for day, hour in zip(more_date, more_time):
+            if not day.strip():
+                continue
+            try:
+                local = datetime.strptime(f"{day.strip()} {hour.strip() or '09:00'}", "%Y-%m-%d %H:%M")
+            except ValueError:
+                return _back(error="One of the other times cannot be read: choose its day and hour.", anchor="#new")
+            if local < local_now() - timedelta(minutes=2):
+                return _back(error="One of the other times is already past.", anchor="#new")
+            others.append(reminders.to_utc(local))
     user = auth.current(request)
     try:
         reminder = reminders.create(db, audience=audience, audience_id=target or None, subject=subject, title=title, body=body,
@@ -146,6 +159,11 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
                                     design=design or None, hours_before=hours)
     except ValueError as problem:
         return _back(error=str(problem), anchor="#new")
+    for moment in dict.fromkeys(others):
+        if moment != send_at:
+            reminders.create(db, audience=audience, audience_id=target or None, subject=subject, title=title, body=body, style=style,
+                             send_at=moment, by=getattr(user, "name", None), channel=channel, repeat=repeat, until=stop,
+                             design=design or None, hours_before=hours)
     if reminder.repeat == "absence":
         return _back(notice=_t("Saved: each candidate of {0} marked absent from now on receives it, once per absence.", reminder.audience_label))
     if reminder.repeat == "session":
@@ -154,7 +172,25 @@ def create(request: Request, audience: str = Form(""), to_candidate: str = Form(
     people = len(reminders.recipients(db, reminder.audience, reminder.audience_id))
     moment = _t("within a minute") if send_at is None else utc_to_local(reminder.send_at).strftime("%d/%m %H:%M")
     rhythm = {"daily": _t("then every day"), "weekly": _t("then every week"), "monthly": _t("then every month")}.get(reminder.repeat, "")
-    return _back(notice=_t("The reminder goes {0} {1} to {2} ({3}).", moment, rhythm, people, reminder.audience_label).replace("  ", " "))
+    notice = _t("The reminder goes {0} {1} to {2} ({3}).", moment, rhythm, people, reminder.audience_label).replace("  ", " ")
+    extra = len([moment for moment in dict.fromkeys(others) if moment != send_at])
+    if extra:
+        notice += " " + _t("It also goes at {0} other times.", extra)
+    return _back(notice=notice)
+
+
+class WriteRequest(BaseModel):
+    topic: str = ""
+    audience: str = "class"
+    repeat: str = "once"
+
+
+@router.post("/reminders/write")
+def write_for_me(payload: WriteRequest, db: Session = Depends(get_db)):
+    """“Write it for me”: the subject and the message from the topic (only the topic goes to the online writer)."""
+    from app.services import reminder_writer
+
+    return reminder_writer.write(db, payload.topic, audience=payload.audience, repeat=payload.repeat)
 
 
 @router.post("/reminders/auto/{key}/switch")

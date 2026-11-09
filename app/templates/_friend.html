@@ -47,6 +47,11 @@
   .fr-actions a, .fr-actions button { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:5px 12px; font-size:.75rem; font-weight:800; text-decoration:none;
                                       border:1px solid var(--border-color); background:#fff; color:var(--ink-text); cursor:pointer; }
   .fr-actions a.is-main { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  /* The visit by herself: the button to the next page fills while she waits. */
+  .fr-actions button.is-counting { position:relative; overflow:hidden; }
+  .fr-actions button.is-counting::after { content:""; position:absolute; left:0; bottom:0; height:3px; width:100%; background:var(--primary-berry);
+                                          transform-origin:left; animation:frCount 7s linear both; }
+  @keyframes frCount { from { transform:scaleX(0); } to { transform:scaleX(1); } }
   .fr-actions a:hover, .fr-actions button:hover { border-color:var(--primary-berry); }
   .fr-ask { display:flex; gap:6px; margin-top:10px; }
   .fr-ask input { flex:1; min-width:0; border:1px solid var(--border-color); border-radius:999px; padding:7px 12px; font-size:.82rem; }
@@ -254,9 +259,11 @@
   // ---------- The visit: page after page (services/grand_tour.py) ----------
   function tourAt() { var at = parseInt(store.get("grand-tour", "-1"), 10); return isNaN(at) ? -1 : at; }
   function samePage(path) { return location.pathname.replace(/\/+$/, "") === path.replace(/\/+$/, ""); }
+  var autoTimer = null;
   function tourGo(at) {
+    clearTimeout(autoTimer);
     if (!data.tour || at >= data.tour.length) {
-      store.set("grand-tour", "-1");
+      store.set("grand-tour", "-1"); store.set("grand-tour-auto", "0");
       queue = [{ text: data.words.tour_done }]; wave(); say(0);
       return;
     }
@@ -267,9 +274,14 @@
   function tourButtons(at) {
     var next = data.tour[at + 1];
     if (window.PageTour) button(data.words.tour_show, function () { close(); window.PageTour.open(); }, true);
-    button(next ? data.words.tour_next.replace("{name}", next.name) : data.words.tour_stop, function () { tourGo(at + 1); }, !window.PageTour);
+    var going = button(next ? data.words.tour_next.replace("{name}", next.name) : data.words.tour_stop, function () { tourGo(at + 1); }, !window.PageTour);
+    if (next && store.get("grand-tour-auto", "0") === "1") {
+      // The visit by herself: the next page after a few seconds (the button fills meanwhile); stopping the visit ends it.
+      going.classList.add("is-counting");
+      autoTimer = setTimeout(function () { tourGo(at + 1); }, 7000);
+    }
     if (next) {
-      button(data.words.tour_stop, function () { store.set("grand-tour", "-1"); close(); });
+      button(data.words.tour_stop, function () { clearTimeout(autoTimer); store.set("grand-tour", "-1"); store.set("grand-tour-auto", "0"); close(); });
       // Where the visit goes next: its link in the menu pulses.
       document.querySelectorAll("aside.sidebar a[href]").forEach(function (link) {
         link.classList.toggle("fr-next", link.getAttribute("href").replace(/\/+$/, "") === next.path.replace(/\/+$/, ""));
@@ -343,6 +355,11 @@
       .then(function (answer) { if (answer) { store.set("friend-last", String(Date.now())); data = answer; window.friendData = answer; then(); } })
       .catch(function () {});
   }
+  // The visit asked in her window (fais-moi visiter, or by herself): it starts from the first page.
+  window.startGrandTour = function (auto) {
+    store.set("grand-tour-auto", auto ? "1" : "0");
+    if (data) tourGo(0); else load(function () { tourGo(0); });
+  };
   // The assistant's window reads its answers aloud through her (when her voice is on), and she reacts when it opens.
   window.friendSpeak = function (text) { if (text) speak(String(text).slice(0, 600)); };
   document.addEventListener("assistant:open", function () { close(); wave(); root.classList.add("is-listening"); });

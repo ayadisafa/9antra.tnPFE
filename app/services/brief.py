@@ -28,6 +28,14 @@ def _cut(text: str, most: int) -> str:
     return cut + "…"
 
 
+def head(reply: str | None) -> str | None:
+    """The first line of an answer that is not a list line, cut to its first sentence: what shows above its cards."""
+    lines = [line.strip() for line in (reply or "").split("\n") if line.strip() and not _ITEM.match(line)]
+    if not lines:
+        return None
+    return _cut(_SENTENCE.split(lines[0])[0], SHORT)
+
+
 def shorten(reply: str | None) -> str | None:
     """The short version of a long answer, or None when it is short already."""
     text = (reply or "").strip()

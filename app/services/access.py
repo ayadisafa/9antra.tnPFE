@@ -13,7 +13,7 @@ SECTIONS = [
     # key, name shown, icon, where it starts, the addresses that belong to it
     ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard", "/whats-new")),
     ("candidates", "Candidates", "bi-people-fill", "/candidate/all", ("/candidate",)),
-    ("classes", "Classes", "bi-easel2-fill", "/classes/", ("/classes",)),
+    ("classes", "Classes", "bi-easel2-fill", "/classes/", ("/classes", "/professors")),
     ("programs", "Programs", "bi-journal-bookmark-fill", "/programs/all", ("/programs",)),
     ("levels", "Level checks", "bi-signpost-split-fill", "/quiz/all", ("/quiz",)),
     ("inbox", "Inbox", "bi-envelope-paper-fill", "/inbox", ("/inbox",)),

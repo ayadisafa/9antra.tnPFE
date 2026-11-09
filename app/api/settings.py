@@ -347,6 +347,7 @@ def save_class_settings(
     enable_automated_reminders: bool = Form(False),
     apply_to_open_classes: bool = Form(False),
     next_class_gap_days: int = Form(10),
+    replacement_fallback: str = Form("ask"),
     session_check_on: str = Form(""),
     session_check_hours: int = Form(24),
     db: Session = Depends(get_db),
@@ -377,6 +378,7 @@ def save_class_settings(
     settings = get_settings(db)
     settings.auto_create_class_on_payment = auto_create_class_on_payment
     settings.next_class_gap_days = next_class_gap_days
+    settings.replacement_fallback = replacement_fallback if replacement_fallback in ("ask", "postpone") else "ask"
     settings.session_check_on = bool(session_check_on)
     settings.session_check_hours = max(1, min(72, session_check_hours))
     settings.auto_assign_professor = auto_assign_professor

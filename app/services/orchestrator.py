@@ -202,6 +202,10 @@ STEPS = {
     "tools": ("bi-tools", "The subject's agent", "The figures, the guide and what was taught, for the subject read."),
     "consult": ("bi-people", "Ask the others", "When the first one does not know: the program's agent, then the knowledge agent."),
     "cloud": ("bi-stars", "Questions agent", "Any question, in any wording: the cloud model picks what to look up and writes from it, every figure checked; otherwise the subject's agent answers."),
+    "page": ("bi-map", "Page guide", "What the page is for and every part of it, from its tour, with a walk through it on the page."),
+    "go": ("bi-signpost-2", "Take you there", "Opens the page or the file you name, goes back, visits every page (by herself when asked), prepares an email in its page."),
+    "abilities": ("bi-stars", "What she can do", "Every ability as a card to try, and a plain yes or not yet to “can you…?”."),
+    "recall": ("bi-chat-left-heart", "Where were we", "What you were talking about, from the conversation she keeps."),
     "finish": ("bi-check2-circle", "Answer", "Says who answered, whom it asked and the words it read, then writes it down."),
 }
 
@@ -231,7 +235,7 @@ def first_step(db: Session, message: str, user, agent: str, *, limited: bool = F
             return "review"
         if reply_rules.wants(message):            # the messages set aside without an answer, and their rules
             return "set_aside"
-        if _role(user) == "admin" and _for_the_reader(message):
+        if _for_the_reader(message):
             return "cloud"                        # any other question: read by the cloud model, answered from the records
         if marketing.wants(message):              # posts: what is trendy, when, this week's plan
             return "marketing"
@@ -252,6 +256,14 @@ def _read(state: _Request, runtime) -> dict:
     social = small_talk.read(state["message"], name=friend.look(asker.db).get("name"))
     if asker.lang not in ("fr", "en", "ar", "tn"):
         asker.lang = social["lang"]               # no language chosen: she answers in the one the message is written in
+    direct = _direct(state["message"])
+    if direct:
+        # A move to a page, what she can do, where we were: read whole, before the small talk in it ("what are you able to do?").
+        routed = {"category": {**message_categories.label_of("general"), "why": [], "by": "rules"}, "agent": agent_of("guide")}
+        return {"message": state["message"], "fixes": [], "routed": routed, "agent": "guide", "limited": asker.limited, "to": direct,
+                "social": {}, "found": None, "program": None, "consulted": [], "path": ["read"]}
+    if small_talk.another_joke(state["message"], asker.history):
+        social = {**social, "kinds": ["joke"], "only": True, "question": ""}       # "une autre !" right after a joke
     if social["only"]:
         routed = {"category": {**message_categories.label_of("general"), "why": [], "by": "rules"}, "agent": agent_of("talk")}
         return {"message": state["message"], "fixes": [], "routed": routed, "agent": "talk", "limited": asker.limited, "to": "talk",
@@ -267,12 +279,65 @@ def _read(state: _Request, runtime) -> dict:
             "found": None, "program": None, "consulted": [], "path": ["read"]}
 
 
+def _direct(message: str) -> str | None:
+    """The steps a message goes to whole, whoever asks: a move ("ouvre les paiements"), what she can do, where we were."""
+    from app.services import abilities, conversation, navigate, page_help
+
+    if page_help.wants(message):
+        return "page"                             # "explique cette page", "what can I do here?"
+    if navigate.wants(message):
+        return "go"
+    if abilities.wants(message) or abilities.can_you(message):
+        return "abilities"
+    if conversation.wants_recall(message):
+        return "recall"
+    return None
+
+
 def _talk(state: _Request, runtime) -> dict:
     """Nothing but small talk: she answers like a person, in the language it was written in."""
     from app.services import small_talk
 
     asker = runtime.context
-    return {"agent": "talk", "found": small_talk.answer(asker.db, state["social"], user=asker.user, lang=asker.lang), "path": ["talk"]}
+    return {"agent": "talk", "found": small_talk.answer(asker.db, state["social"], user=asker.user, lang=asker.lang, history=asker.history),
+            "path": ["talk"]}
+
+
+def _go(state: _Request, runtime) -> dict:
+    """She takes you where you ask (a page, someone's file, back, the visit), or prepares an email in its page."""
+    from app.services import navigate
+
+    asker = runtime.context
+    return {"agent": "guide", "found": navigate.answer(asker.db, state["message"], user=asker.user, lang=asker.lang), "path": ["go"]}
+
+
+def _page(state: _Request, runtime) -> dict:
+    """The page named (else the one her window is open on): what it is for and every part of it, and a walk through it."""
+    from app.services import page_help
+
+    asker = runtime.context
+    return {"agent": "guide", "found": page_help.answer(asker.db, state["message"], user=asker.user, lang=asker.lang, path=asker.path),
+            "path": ["page"]}
+
+
+def _abilities(state: _Request, runtime) -> dict:
+    """What she can do, as cards to try; or a plain yes / not yet to "can you…?"."""
+    from app.services import abilities
+
+    asker = runtime.context
+    if abilities.can_you(state["message"]) and not abilities.wants(state["message"]):
+        found = abilities.answer_can_you(asker.db, state["message"], user=asker.user, lang=asker.lang)
+    else:
+        found = abilities.answer(asker.db, state["message"], user=asker.user, lang=asker.lang)
+    return {"agent": "guide", "found": found, "path": ["abilities"]}
+
+
+def _recall(state: _Request, runtime) -> dict:
+    """Where we were: the last question before this one, and her answer."""
+    from app.services import conversation
+
+    asker = runtime.context
+    return {"agent": "talk", "found": conversation.recall(asker.db, asker.user, asker.lang), "path": ["recall"]}
 
 
 def _summary(state: _Request, runtime) -> dict:
@@ -304,7 +369,10 @@ _LOOKED_AT = {"money_received": ("Payments", "/payments", "payments"), "not_paid
               "professors": ("Professors", "/classes/?tab=professors", "classes"), "may_drop_out": ("Who may drop out", "/#live-dashboard-risk", "feelings"),
               "messages": ("Inbox", "/inbox", "inbox"), "reviews": ("Programs", "/programs/all", "feelings"), "programs": ("Programs", "/programs/all", "programs"),
               "automatic": ("What the application does by itself", "/system#automatic", "settings"), "marketing": ("Social media", "/social", "posts"),
-              "trends": ("The journal", "/journal", "news"), "overview": ("Dashboard", "/", "data")}
+              "trends": ("The journal", "/journal", "news"), "overview": ("Dashboard", "/", "data"),
+              "job_market": ("What the market asks", "/programs/market", "data"), "news": ("The journal", "/journal", "news"),
+              "program_advice": ("Programs", "/programs/all", "programs"), "connected": ("Who is connected", "/settings/team#connected", "team"),
+              "reminders": ("Reminders", "/reminders", "sessions"), "waiting_today": ("Dashboard", "/", "dashboard")}
 
 
 def _cloud(state: _Request, runtime) -> dict:
@@ -314,7 +382,7 @@ def _cloud(state: _Request, runtime) -> dict:
 
     asker = runtime.context
     try:
-        found = cloud_answer.answer(state["message"], lookups.for_admin(asker.db, asker.user), "admin", history=asker.history, lang=asker.chosen)
+        found = cloud_answer.answer(state["message"], lookups.for_admin(asker.db, asker.user, path=asker.path), "admin", history=asker.history, lang=asker.chosen)
     except Exception:
         import logging
 
@@ -323,10 +391,16 @@ def _cloud(state: _Request, runtime) -> dict:
     if found is None or not found["ok"] or not found["reply"]:
         return {"path": ["cloud"]}
     places = [_LOOKED_AT[name] for name in dict.fromkeys(found["used"]) if name in _LOOKED_AT]
-    links = [{"label": _t(label), "url": url} for label, url, _ in dict.fromkeys(places)][:3]
+    links = [] if found.get("clarify") else [{"label": _t(label), "url": url} for label, url, _ in dict.fromkeys(places)][:3]
+    sources = []
+    if any(name not in ("web_search", "ask_back") for name in found["used"]):
+        sources.append({"label": _t("The application's records")})
+    if "web_search" in found["used"]:
+        sources.append({"label": _t("The web (Google)")})
     return {"agent": "reader", "path": ["cloud"],
             "found": {"reply": found["reply"], "links": links, "source": "cloud", "resources": [], "scene": places[0][2] if places else "data",
-                      "sources": [{"label": _t("The application's records")}]}}
+                      "sources": sources, "facts": found.get("facts") or {}, "language": found.get("language"),
+                      "options": found.get("options") or []}}
 
 
 def _keep(state: _Request, runtime) -> dict:
@@ -467,12 +541,23 @@ def _finish(state: _Request, runtime) -> dict:
         category = {**message_categories.label_of("trends"), "why": [], "by": "agent"}
     found["category"] = {key: category[key] for key in ("key", "label", "icon", "colour", "why", "by")}
     # Short first (the whole answer one tap away), and the moving picture of its subject.
-    from app.services import brief, pictures
+    from app.services import brief, cards, pictures
 
     # An agent may give its own short version (it knows what matters); it is kept only for an answer long enough.
     given = found.get("short")
     reply = found.get("reply") or ""
     found["short"] = given if given and len(reply) > brief.LONG and len(given) < len(reply) else brief.shorten(reply)
+    # What the answer says, drawn as moving cards (only what it says); a list drawn is not written twice: its first line
+    # shows, the whole text one tap away.
+    facts, language = found.pop("facts", None), found.pop("language", None) or runtime.context.lang
+    if not found.get("cards") and agent != "talk":
+        drawn = cards.from_facts(facts, reply, language) if facts else cards.from_reply(reply, language)
+        if drawn:
+            found["cards"] = drawn
+    if found.get("cards") and cards.lists_drawn(found["cards"]) and not given:
+        head = brief.head(reply)
+        if head and len(head) < len(reply):
+            found["short"] = head
     found["picture"] = pictures.for_answer(runtime.context.db, found, agent, category["key"])
     found.pop("scene", None)
     return {"found": found, "routed": {**routed, "category": category}, "path": ["finish"]}
@@ -501,19 +586,23 @@ def graph():
             from langgraph.graph import END, START, StateGraph
 
             builder = StateGraph(_Request, context_schema=_Asker)
-            for name, step in (("read", _read), ("talk", _talk), ("summary", _summary), ("keep", _keep), ("cases", _cases), ("cloud", _cloud), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
+            for name, step in (("read", _read), ("talk", _talk), ("page", _page), ("go", _go), ("abilities", _abilities), ("recall", _recall), ("summary", _summary), ("keep", _keep), ("cases", _cases), ("cloud", _cloud), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
                                ("set_aside", _set_aside), ("marketing", _marketing), ("trends", _trends),
                                ("program", _program), ("tools", _tools), ("consult", _consult), ("finish", _finish)):
                 builder.add_node(name, step)
             builder.add_edge(START, "read")
             builder.add_conditional_edges("read", lambda state: state["to"],
-                                          ["talk", "summary", "keep", "cases", "cloud", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
+                                          ["talk", "page", "go", "abilities", "recall", "summary", "keep", "cases", "cloud", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
             for name in ("professor", "system", "review", "set_aside", "cloud", "marketing", "trends"):
                 builder.add_conditional_edges(name, _after, ["program", "tools", "consult", "finish"])
             builder.add_conditional_edges("program", _after, ["tools", "consult", "finish"])
             builder.add_conditional_edges("tools", _after, ["consult", "finish"])
             builder.add_edge("guide", "finish")
             builder.add_edge("talk", "finish")
+            builder.add_edge("page", "finish")
+            builder.add_edge("go", "finish")
+            builder.add_edge("abilities", "finish")
+            builder.add_edge("recall", "finish")
             builder.add_edge("summary", "finish")
             builder.add_edge("keep", "finish")
             builder.add_edge("cases", "finish")

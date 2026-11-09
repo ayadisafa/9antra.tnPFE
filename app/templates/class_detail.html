@@ -665,9 +665,46 @@
           {% if item.row.status == 'accepted' %}{{ item.asked.name if item.asked else '' }} replaces them that day.
           {% elif item.row.status == 'asked' %}{{ item.asked.name if item.asked else '' }} was asked, waiting for the answer.
           {% elif item.row.status == 'none' %}no professor who teaches it is free that day.
+          {% elif item.row.status == 'moved' %}the session moved to another day.
+          {% elif item.row.status == 'postponed' %}the session went a week later, with the ones after it.
           {% else %}the session has passed.{% endif %}</span>
       </div>
+      {% if item.open and item.session %}
+      {# Nobody yet: the admin chooses another professor, another day, or a week later. #}
+      <div class="cd-replace mt-2" id="replace-{{ item.row.id }}">
+        {% if item.choices %}
+        <form method="post" action="/classes/{{ cls.id }}/replacements/{{ item.row.id }}/professor" class="cd-replace-way">
+          <div class="cd-replace-head"><i class="bi bi-person-check"></i>Another professor</div>
+          <select name="professor_id" class="form-select form-select-sm" aria-label="Who replaces them">
+            {% for person in item.choices %}<option value="{{ person.id }}" data-no-i18n>{{ person.name }}</option>{% endfor %}
+          </select>
+          <button class="btn btn-sm btn-primary">They replace them</button>
+        </form>
+        {% endif %}
+        <form method="post" action="/classes/{{ cls.id }}/replacements/{{ item.row.id }}/move" class="cd-replace-way">
+          <div class="cd-replace-head"><i class="bi bi-calendar2-week"></i>Another day</div>
+          <div class="d-flex gap-1 flex-wrap">
+            <input type="date" name="day" class="form-control form-control-sm" style="max-width:150px" required aria-label="The new day">
+            <input type="time" name="start" class="form-control form-control-sm" style="max-width:110px" value="{{ item.session.start_time.strftime('%H:%M') if item.session.start_time else (cls.start_time.strftime('%H:%M') if cls.start_time else '') }}" aria-label="From">
+            <input type="time" name="end" class="form-control form-control-sm" style="max-width:110px" value="{{ item.session.end_time.strftime('%H:%M') if item.session.end_time else (cls.end_time.strftime('%H:%M') if cls.end_time else '') }}" aria-label="To">
+          </div>
+          <button class="btn btn-sm btn-light border">Move it there</button>
+        </form>
+        <form method="post" action="/classes/{{ cls.id }}/replacements/{{ item.row.id }}/postpone" class="cd-replace-way"
+              data-confirm="This session and every session after it go one week later, so the class ends a week later. The candidates are told. Go on?">
+          <div class="cd-replace-head"><i class="bi bi-calendar-plus"></i>A week later</div>
+          <div class="small text-muted">Cancelled that day, given the week after; the sessions after it follow.</div>
+          <button class="btn btn-sm btn-light border">Put it a week later</button>
+        </form>
+      </div>
+      {% endif %}
       {% endfor %}
+      <style>
+        .cd-replace { display:grid; grid-template-columns:repeat(auto-fit, minmax(210px, 1fr)); gap:8px; }
+        .cd-replace-way { display:flex; flex-direction:column; gap:6px; padding:10px; border:1px solid var(--border-color); border-radius:14px; background:#fffafc; }
+        .cd-replace-head { font-weight:800; font-size:.8rem; display:flex; gap:6px; align-items:center; color:var(--ink-text); }
+        .cd-replace-head i { color:var(--primary-berry); }
+      </style>
     </section>
     <section class="cd-card mb-4" id="opinions" data-tab-of="class" data-tab-panel="life">
       <div class="d-flex justify-content-between align-items-start gap-3 flex-wrap">

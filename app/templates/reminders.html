@@ -231,6 +231,20 @@
       <div class="rm-label">Start from an idea</div>
       <div class="rm-ideas">{% for idea in ideas %}<button type="button" class="rm-idea {{ 'is-on' if chosen and chosen.key == idea.key }}" data-idea="{{ idea.key }}"><i class="bi {{ idea.icon }}"></i>{{ idea.name }}</button>{% endfor %}</div>
 
+      <div class="rm-label">Or say what it is about: I write it</div>
+      <div class="rm-ai">
+        <input class="form-control" id="rm-topic" maxlength="600" placeholder="The exam on Saturday at 10:00, bring your laptop" aria-label="What the reminder is about">
+        <button type="button" class="ui-btn" id="rm-write"><i class="bi bi-stars"></i><span>Write it for me</span></button>
+      </div>
+      <div class="form-text" id="rm-write-note" aria-live="polite"></div>
+      <span hidden id="rm-said-cloud">Written from your topic: read it and change what you want. A date or an hour you did not give is left as [ … ] for you to fill.</span>
+      <span hidden id="rm-said-idea">The online writer is not available just now: here is the closest idea to start from.</span>
+      <span hidden id="rm-said-writing">Writing…</span>
+      <style>
+        .rm-ai { display:flex; gap:8px; flex-wrap:wrap; } .rm-ai input { flex:1 1 240px; }
+        #rm-write.is-busy i { animation:rmSpin 1s linear infinite; } @keyframes rmSpin { to { transform:rotate(360deg); } }
+      </style>
+
       <div class="rm-label">Subject</div>
       <input class="form-control" name="subject" id="rm-subject" maxlength="200" required value="{{ chosen.subject if chosen else '' }}" placeholder="Une date à retenir">
       <div class="rm-label">Title inside the email</div>
@@ -282,6 +296,16 @@
         <input class="form-control" type="time" name="time" value="{{ default_time }}" style="max-width:120px;" aria-label="Hour">
         <label style="font-size:.84rem;"><input type="radio" name="when" value="now"> Now</label>
       </div>
+      <div id="rm-more"></div>
+      <button type="button" class="rm-idea mt-2" id="rm-more-add"><i class="bi bi-plus-circle"></i>Another time</button>
+      <template id="rm-more-row">
+        <div class="rm-when mt-2 rm-more-row">
+          <span style="font-size:.84rem;">Also on</span>
+          <input class="form-control" type="date" name="more_date" style="max-width:170px;" aria-label="Day" required>
+          <input class="form-control" type="time" name="more_time" value="{{ default_time }}" style="max-width:120px;" aria-label="Hour" required>
+          <button type="button" class="ui-btn ghost sm icon danger" data-more-remove aria-label="Remove this time"><i class="bi bi-x-lg"></i></button>
+        </div>
+      </template>
       <div class="rm-when mt-2" id="rm-until" hidden>
         <span style="font-size:.84rem;">Last day it goes (optional)</span>
         <input class="form-control" type="date" name="until" style="max-width:170px;" aria-label="Last day">
@@ -387,7 +411,34 @@
     document.getElementById("rm-when").hidden = chosen === "absence" || chosen === "session";
     document.getElementById("rm-when-label").hidden = chosen === "absence" || chosen === "session";
     document.getElementById("rm-hours").hidden = chosen !== "session";
+    document.getElementById("rm-more").hidden = document.getElementById("rm-more-add").hidden = chosen === "absence" || chosen === "session";
   }
+  // The same reminder at other times too: one row per time, each one goes on its own.
+  document.getElementById("rm-more-add").addEventListener("click", function () {
+    const row = document.getElementById("rm-more-row").content.firstElementChild.cloneNode(true);
+    row.querySelector("[data-more-remove]").addEventListener("click", function () { row.remove(); });
+    document.getElementById("rm-more").appendChild(row);
+    row.querySelector('input[type="date"]').focus();
+  });
+  // "Write it for me": the topic goes to the writer, the subject and the message come back, to read and change.
+  const said = function (id) { return (document.getElementById(id) || {}).textContent || ""; };
+  document.getElementById("rm-write").addEventListener("click", function () {
+    const topic = document.getElementById("rm-topic").value.trim(), note = document.getElementById("rm-write-note"), button = this;
+    if (!topic) { document.getElementById("rm-topic").focus(); return; }
+    button.disabled = true; button.classList.add("is-busy"); note.textContent = said("rm-said-writing");
+    fetch("/reminders/write", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ topic: topic, audience: audience.value, repeat: (form.querySelector('input[name="repeat"]:checked') || {}).value || "once" }) })
+      .then(function (answer) { return answer.ok ? answer.json() : null; })
+      .then(function (data) {
+        if (!data || data.error) { note.textContent = (data && data.error) || ""; return; }
+        form.subject.value = data.subject || ""; form.title.value = data.title || ""; body.value = data.body || "";
+        if (data.style) form.querySelectorAll('input[name="style"]').forEach(function (radio) { radio.checked = radio.value === data.style; });
+        note.textContent = said(data.how === "idea" ? "rm-said-idea" : "rm-said-cloud");
+        preview();
+      })
+      .catch(function () { note.textContent = ""; })
+      .finally(function () { button.disabled = false; button.classList.remove("is-busy"); });
+  });
   form.addEventListener("change", function () { showTarget(); showRepeat(); preview(); });
   showRepeat();
   document.querySelectorAll("[data-idea]").forEach(function (button) {

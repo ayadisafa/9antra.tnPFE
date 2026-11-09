@@ -115,6 +115,9 @@ class SystemSettings(Base):
     registration_form_url = Column(String, nullable=True)
     # A candidate follows one program at a time: the next one starts in a class at least this many days after the first ends.
     next_class_gap_days = Column(Integer, nullable=True, default=10)
+    # A professor away and nobody to replace them: "ask" (the admin chooses another professor, another day or a week
+    # later) or "postpone" (the session goes a week later by itself, with every session after it).
+    replacement_fallback = Column(String, nullable=True, default="ask")
     # After each session, its questions go this many hours after it ends (services/session_check.py).
     session_check_on = Column(Boolean, nullable=True, default=True)
     session_check_hours = Column(Integer, nullable=True, default=24)

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% import "_ui_macros.html" as ui %}
+{% import "_tabs.html" as tabs %}
+
+{% block title %}{{ professor.name }} · 9antra{% endblock %}
+{% block page_title %}{% if own %}My space{% else %}A professor's space{% endif %}{% endblock %}
+{% block live_topics %}classes,team:professor:{{ professor.id }}{% endblock %}
+
+{% block extra_head %}
+{% include "_ui.html" %}
+<style>
+  .ps-hero { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .ps-face { width:64px; height:64px; flex:none; border-radius:20px; display:grid; place-items:center; font-weight:800; color:#fff; font-size:1.3rem;
+             background:linear-gradient(135deg, var(--primary-berry), #7c3aed); box-shadow:0 14px 26px -16px #7c3aed; }
+  .ps-contact { display:flex; gap:12px; flex-wrap:wrap; font-size:.8rem; color:var(--muted); margin-top:4px; }
+  .ps-contact a { color:inherit; }
+  .ps-chips { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+  .ps-issues { display:grid; gap:8px; }
+  .ps-issue { display:flex; gap:10px; align-items:center; padding:10px 12px; border-radius:14px; border:1px solid var(--border-color); background:#fff; text-decoration:none; color:inherit;
+              transition:transform .15s ease, border-color .15s ease; }
+  .ps-issue:hover { transform:translateX(3px); border-color:var(--primary-berry); color:inherit; }
+  .ps-issue i.lead { width:34px; height:34px; flex:none; border-radius:11px; display:grid; place-items:center; color:#fff; }
+  .ps-issue.bad i.lead { background:#e11d48; } .ps-issue.warn i.lead { background:#d97706; } .ps-issue.info i.lead { background:#6366f1; }
+  .ps-issue b { display:block; font-size:.84rem; color:var(--ink-text); font-weight:700; } .ps-issue small { font-size:.72rem; color:var(--primary-berry); font-weight:800; }
+  .ps-classes { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:14px; }
+  .ps-class { border-radius:20px; overflow:hidden; border:1px solid var(--border-color); background:#fff; }
+  .ps-class-top { display:flex; gap:12px; align-items:center; padding:14px; background:var(--soft); border-bottom:3px solid var(--tone); }
+  .ps-symbol { width:44px; height:44px; flex:none; border-radius:14px; display:grid; place-items:center; background:#fff; font-size:1.3rem; }
+  .ps-class-body { padding:12px 14px; display:grid; gap:8px; font-size:.8rem; }
+  .ps-row { display:flex; justify-content:space-between; gap:8px; } .ps-row span { color:var(--muted); } .ps-row b { color:var(--ink-text); text-align:right; }
+  .ps-write summary { cursor:pointer; font-weight:800; color:var(--primary-berry); font-size:.8rem; list-style:none; }
+  .ps-write summary::-webkit-details-marker { display:none; }
+  .ps-write form { display:grid; gap:6px; margin-top:8px; }
+  .ps-review { border:1px solid var(--border-color); border-radius:16px; padding:10px 12px; background:#fff; }
+  .ps-review.is-low { border-color:#fecdd3; background:#fff7f8; }
+  .ps-stars { color:#f5b301; letter-spacing:1px; }
+  .ps-big { font-size:2.4rem; font-weight:800; color:var(--ink-text); line-height:1; }
+  .ps-msg { padding:8px 10px; border-radius:14px; background:#faf8fd; font-size:.8rem; margin-bottom:6px; white-space:pre-wrap; }
+  .ps-msg.out { background:var(--berry-subtle, #fdf2f7); }
+  .ps-msg small { display:block; color:var(--muted); font-size:.66rem; margin-bottom:2px; }
+  @media (prefers-reduced-motion: no-preference) { .ps-issue, .ps-class, .ps-review { animation:psIn .4s ease both; animation-delay:calc(var(--i, 0) * 60ms); } }
+  @keyframes psIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+</style>
+{% endblock %}
+
+{% block content %}
+{% include "_flash.html" %}
+{% set first = (professor.name or '').split()[0] if professor.name else '' %}
+<div class="ui-head">
+  <div class="ps-hero">
+    <div class="ps-face" data-no-i18n>{{ (professor.name or '?').split()[:2] | map('first') | join('') | upper }}</div>
+    <div>
+      <h2 class="mb-0" data-no-i18n>{{ professor.name }}</h2>
+      <div class="ps-contact">
+        {% if professor.email %}<span><i class="bi bi-envelope"></i> <a href="mailto:{{ professor.email }}" data-no-i18n>{{ professor.email }}</a></span>{% endif %}
+        {% if professor.phone %}<span><i class="bi bi-telephone"></i> <span data-no-i18n>{{ professor.phone }}</span></span>{% endif %}
+        <span>{% if professor.is_available %}<i class="bi bi-circle-fill" style="color:#16a34a; font-size:.55rem;"></i> Available{% else %}<i class="bi bi-circle-fill" style="color:#9ca3af; font-size:.55rem;"></i> Not available{% endif %}</span>
+      </div>
+      {% if specialties %}<div class="ps-chips">{% for item in specialties %}<span class="ui-chip muted" data-no-i18n>{{ item }}</span>{% endfor %}</div>{% endif %}
+    </div>
+  </div>
+  <div class="ui-actions">
+    {% if own %}<a class="ui-btn" href="/teacher/profile"><i class="bi bi-person-badge"></i>My profile</a>
+    <a class="ui-btn" href="/account/messages"><i class="bi bi-chat-heart"></i>Messages</a>
+    {% else %}<a class="ui-btn" href="{{ messages.url }}"><i class="bi bi-chat-dots"></i>Write to them</a>
+    <a class="ui-btn" href="/classes/?tab=professors"><i class="bi bi-pencil"></i>Change their details</a>
+    <a class="ui-btn ghost" href="/professors"><i class="bi bi-arrow-left"></i>Every professor</a>{% endif %}
+  </div>
+</div>
+
+<div class="ui-stats mb-3" id="ps-stats">
+  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-easel2-fill"></i></div><div><div class="ui-stat-num">{{ figures.classes }}</div><div class="ui-stat-label">Classes</div></div></div>
+  <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-people-fill"></i></div><div><div class="ui-stat-num">{{ figures.candidates }}</div><div class="ui-stat-label">Candidates</div></div></div>
+  <div class="ui-stat t-mint"><div class="ui-stat-ico"><i class="bi bi-person-check-fill"></i></div><div><div class="ui-stat-num">{{ (figures.presence ~ '%') if figures.presence is not none else '—' }}</div><div class="ui-stat-label">Presence</div></div></div>
+  <div class="ui-stat t-gold"><div class="ui-stat-ico"><i class="bi bi-star-fill"></i></div><div><div class="ui-stat-num">{{ figures.stars if figures.stars else '—' }}</div><div class="ui-stat-label">Stars from candidates</div></div></div>
+  <div class="ui-stat t-violet"><div class="ui-stat-ico"><i class="bi bi-patch-question-fill"></i></div><div><div class="ui-stat-num">{{ figures.answered }}/{{ figures.questions }}</div><div class="ui-stat-label">Questions answered{% if figures.answer_hours is not none %} · {{ figures.answer_hours }} h{% endif %}</div></div></div>
+</div>
+
+<section class="ui-card mb-3" id="problems">
+  <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-exclamation-triangle"></i>{% if own %}What waits for you{% else %}What waits for them{% endif %}</div>
+    <div class="ui-card-sub">Counted from the records; each one opens the place to solve it.</div></div></div>
+  <div class="ps-issues">
+    {% for item in problems %}
+    <a class="ps-issue {{ item.tone }}" href="{{ item.url }}" style="--i:{{ loop.index0 }};"><i class="bi {{ item.icon }} lead"></i>
+      <div><b data-no-i18n>{{ item.text }}</b><small data-no-i18n>{{ item.do }} →</small></div></a>
+    {% else %}
+    <div class="ui-empty py-3"><i class="bi bi-check-circle"></i><strong>Nothing waits</strong>No absence without a replacement, no sheet to fill, no question waiting.</div>
+    {% endfor %}
+  </div>
+</section>
+
+{{ tabs.tabs("space", [("classes", "bi-easel2", "Classes"), ("sessions", "bi-calendar-event", "Next sessions"), ("feedback", "bi-star-half", "What candidates think"),
+                       ("messages", "bi-chat-dots", "Messages"), ("absences", "bi-calendar-x", "Absences")]) }}
+
+<section class="mb-3" id="classes" data-tab-of="space" data-tab-panel="classes">
+  <div class="ps-classes">
+    {% for card in classes %}
+    {% set cls = card.class %}{% set info = card.summary %}
+    <article class="ps-class" style="--tone:{{ card.look.colour }}; --soft:{{ card.look.soft }}; --i:{{ loop.index0 }};">
+      <div class="ps-class-top">
+        <div class="ps-symbol" aria-hidden="true">{{ card.look.symbol }}</div>
+        <div style="min-width:0; flex:1;"><b data-no-i18n>{{ cls.name }}</b><div style="font-size:.74rem; color:#5b5670;" data-no-i18n>{{ cls.program.name if cls.program else '' }}</div></div>
+        {% if info.status == 'ongoing' %}<span class="ui-chip brand">Week {{ info.current_week }} of {{ info.total_weeks }}</span>
+        {% elif info.status == 'completed' %}<span class="ui-chip muted">Completed</span>
+        {% else %}<span class="ui-chip info">{{ ('Starts ' ~ info.countdown) if info.countdown else 'Not scheduled yet' }}</span>{% endif %}
+      </div>
+      <div class="ps-class-body">
+        <div class="ps-row"><span>When</span><b>{{ info.schedule_label }}</b></div>
+        <div class="ps-row"><span>Candidates</span><b>{{ info.enrolled }} of {{ info.capacity }}</b></div>
+        <div class="ps-row"><span>Attendance</span><b>{{ (card.presence.rate ~ '%') if card.presence.rate is not none else 'Not marked yet' }}</b></div>
+        <div class="d-flex gap-2 flex-wrap">
+          {% if own %}<a class="ui-btn sm" href="/classes/{{ cls.id }}/course"><i class="bi bi-folder2-open"></i>Course</a>
+          <a class="ui-btn sm" href="/classes/{{ cls.id }}/attendance"><i class="bi bi-person-check"></i>Presence</a>
+          {% else %}<a class="ui-btn sm" href="/classes/{{ cls.id }}"><i class="bi bi-box-arrow-up-right"></i>Open the class</a>{% endif %}
+        </div>
+        {% if info.status != 'completed' %}
+        <details class="ps-write" id="write-{{ cls.id }}">
+          <summary><i class="bi bi-send"></i> Write to the class</summary>
+          <form method="post" action="/teacher/classes/{{ cls.id }}/message">
+            {% if not own %}<input type="hidden" name="back" value="/professors/{{ professor.id }}">{% endif %}
+            <div class="d-flex gap-2 flex-wrap">
+              <input class="form-control form-control-sm" data-topic maxlength="600" style="flex:1 1 180px;" placeholder="What is it about? I write it" aria-label="What the message is about">
+              <button type="button" class="ui-btn sm" data-write-for-me><i class="bi bi-stars"></i>Write it for me</button>
+            </div>
+            <input class="form-control form-control-sm" name="subject" maxlength="200" required placeholder="Subject" aria-label="Subject">
+            <textarea class="form-control form-control-sm" name="body" rows="5" required placeholder="Bonjour {first_name}, …" aria-label="Message"></textarea>
+            <div class="d-flex gap-3 flex-wrap small">
+              <label><input type="radio" name="channel" value="email" checked> Email</label>
+              <label><input type="radio" name="channel" value="both"> Email and WhatsApp</label>
+            </div>
+            <div class="small text-muted" data-write-note aria-live="polite">Every candidate of this class receives it, with their first name, signed with your name.</div>
+            <button class="ui-btn primary sm"><i class="bi bi-send-fill"></i>Send to the class</button>
+          </form>
+        </details>
+        {% endif %}
+      </div>
+    </article>
+    {% else %}
+    <div class="ui-empty"><i class="bi bi-easel2"></i><strong>No class yet</strong>{% if own %}A class given to you appears here.{% else %}A class given to them appears here.{% endif %}</div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="ui-card mb-3" id="sessions" data-tab-of="space" data-tab-panel="sessions">
+  <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-event"></i>Next sessions</div><div class="ui-card-sub">The two weeks to come, the ones replacing a colleague too.</div></div></div>
+  {% for item in sessions %}
+  <div class="d-flex gap-3 align-items-center py-2 border-top">
+    <span class="ui-chip {{ 'brand' if item.is_today else 'muted' }}">{{ 'Today' if item.is_today else item.session.session_date.strftime('%a %d/%m') }}</span>
+    <div style="min-width:0; flex:1;"><b style="font-size:.86rem;" data-no-i18n>{{ item.session.topic }}</b>
+      <div style="font-size:.74rem; color:var(--muted);">{% if item.session.start_time %}{{ item.session.start_time.strftime('%H:%M') }}{% if item.session.end_time %}–{{ item.session.end_time.strftime('%H:%M') }}{% endif %} · {% endif %}<span data-no-i18n>{{ item.class.name if item.class else '' }}</span> · week {{ item.session.week_number }}{% if item.replacing %} · <b>replacing a colleague</b>{% endif %}</div></div>
+  </div>
+  {% else %}
+  <div class="ui-empty py-3"><i class="bi bi-calendar-x"></i>No session in the next two weeks.</div>
+  {% endfor %}
+</section>
+
+<section class="ui-card mb-3" id="feedback" data-tab-of="space" data-tab-panel="feedback">
+  <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-star-half"></i>What candidates think</div>
+    <div class="ui-card-sub">From the reviews at the end of each program: the stars for the professor and what was written about them.</div></div></div>
+  {% if feedback.reviews %}
+  <div class="d-flex gap-4 align-items-end flex-wrap mb-3">
+    <div><div class="ps-big">{{ feedback.stars if feedback.stars else '—' }}</div><div class="small text-muted">Stars, from the reviews: {{ feedback.rated }}</div></div>
+    {% if feedback.recommend_pct is not none %}<div><div class="ps-big">{{ feedback.recommend_pct }}%</div><div class="small text-muted">would recommend 9antra</div></div>{% endif %}
+    {% if feedback.to_improve %}<div><div class="small fw-bold mb-1">To improve</div><div class="ps-chips">{% for label, count in feedback.to_improve %}<span class="ui-chip warn">{{ label }} · {{ count }}</span>{% endfor %}</div></div>{% endif %}
+  </div>
+  <div class="d-grid gap-2">
+    {% for item in feedback.reviews %}
+    <div class="ps-review {{ 'is-low' if item.low }}" style="--i:{{ loop.index0 }};">
+      <div class="d-flex justify-content-between gap-2 flex-wrap"><b data-no-i18n>{{ item.name }}</b>
+        <span class="ps-stars" title="Stars for the professor">{% if item.stars %}{{ '★' * item.stars }}{{ '☆' * (5 - item.stars) }}{% endif %}</span></div>
+      {% if item.words %}<div style="font-size:.84rem;" data-no-i18n>“{{ item.words }}”</div>{% endif %}
+      <div class="small text-muted"><span data-no-i18n>{{ item.program or '' }}</span>{% if item.when %} · {{ item.when.strftime('%d/%m/%Y') }}{% endif %}</div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="ui-empty py-3"><i class="bi bi-star"></i><strong>No review yet</strong>Candidates are asked at the end of each program.</div>
+  {% endif %}
+</section>
+
+<section class="ui-card mb-3" id="messages" data-tab-of="space" data-tab-panel="messages">
+  <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-chat-dots"></i>Messages</div>
+    <div class="ui-card-sub">{% if own %}Your conversation with the centre, and the candidates' questions for you.{% else %}Your conversation with them: the latest messages.{% endif %}</div></div>
+    <a class="ui-btn sm" href="{{ '/account/messages' if own else messages.url }}"><i class="bi bi-box-arrow-up-right"></i>Open the conversation</a></div>
+  {% for line in messages.latest %}
+  <div class="ps-msg {{ 'out' if line.direction == 'out' }}"><small data-no-i18n>{{ line.author or '' }}{% if line.created_at %} · {{ line.created_at.strftime('%d/%m %H:%M') }}{% endif %}</small><span data-no-i18n>{{ line.body or '' }}</span></div>
+  {% else %}
+  <div class="ui-empty py-3"><i class="bi bi-chat"></i>No message yet.</div>
+  {% endfor %}
+</section>
+
+<section class="ui-card mb-3" id="absences" data-tab-of="space" data-tab-panel="absences">
+  <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-x"></i>Absences</div>
+    <div class="ui-card-sub">{% if own %}A day away: each session that day looks for a replacement (a professor who teaches it and is free). If nobody can, the admin chooses another day or a week later.{% else %}A day away: each session that day looks for a replacement (a professor who teaches it and is free). If nobody can, you choose another day or a week later.{% endif %}</div></div></div>
+  {% for item in absences %}
+  <div class="d-flex gap-2 align-items-center py-1"><span class="ui-chip warn"><i class="bi bi-calendar-x"></i>{{ item.absence_date.strftime('%a %d/%m/%Y') }}</span>
+    <span class="small">{% if item.start_time %}{{ item.start_time.strftime('%H:%M') }}–{{ item.end_time.strftime('%H:%M') if item.end_time else '' }}{% else %}All day{% endif %}{% if item.reason %} · <span data-no-i18n>{{ item.reason }}</span>{% endif %}</span></div>
+  {% else %}
+  <div class="small text-muted mb-2">No absence coming.</div>
+  {% endfor %}
+  <form method="post" action="{{ '/teacher/absence' if own else '/classes/professors/' ~ professor.id ~ '/absences' }}" class="d-flex gap-2 flex-wrap align-items-end mt-2">
+    {% if not own %}<input type="hidden" name="back" value="/professors/{{ professor.id }}#absences">{% endif %}
+    <label class="small">Day<input type="date" name="absence_date" class="form-control form-control-sm" required></label>
+    <label class="small">From<input type="time" name="start_time" class="form-control form-control-sm"></label>
+    <label class="small">To<input type="time" name="end_time" class="form-control form-control-sm"></label>
+    <label class="small" style="flex:1 1 160px;">Why, if you wish<input name="reason" maxlength="200" class="form-control form-control-sm"></label>
+    <button class="ui-btn sm"><i class="bi bi-calendar-plus"></i>{% if own %}I will be away{% else %}Note the absence{% endif %}</button>
+  </form>
+</section>
+
+<span hidden id="ps-said-cloud">Written from your topic: read it and change what you want. A date or an hour you did not give is left as [ … ] for you to fill.</span>
+<span hidden id="ps-said-idea">The online writer is not available just now: here is the closest idea to start from.</span>
+<span hidden id="ps-said-writing">Writing…</span>
+<script>
+/* "Write it for me" in a class's message: the topic goes to the writer, the subject and the message come back to read and change. */
+(function () {
+  var said = function (id) { return (document.getElementById(id) || {}).textContent || ""; };
+  document.querySelectorAll("[data-write-for-me]").forEach(function (button) {
+    button.addEventListener("click", function () {
+      var form = button.closest("form"), topic = form.querySelector("[data-topic]"), note = form.querySelector("[data-write-note]");
+      if (!topic.value.trim()) { topic.focus(); return; }
+      button.disabled = true; note.textContent = said("ps-said-writing");
+      fetch("{{ '/teacher/write' if own else '/reminders/write' }}", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ topic: topic.value.trim(), audience: "class" }) })
+        .then(function (answer) { return answer.ok ? answer.json() : null; })
+        .then(function (data) {
+          if (!data || data.error) { note.textContent = (data && data.error) || ""; return; }
+          form.subject.value = data.subject || ""; form.body.value = data.body || "";
+          note.textContent = said(data.how === "idea" ? "ps-said-idea" : "ps-said-cloud");
+        })
+        .catch(function () {})
+        .finally(function () { button.disabled = false; });
+    });
+  });
+})();
+</script>
+{% endblock %}

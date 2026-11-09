@@ -3478,5 +3478,237 @@
 "The application's records": [
 "Les données de l'application",
 "بيانات التطبيق"
+],
+"The replacement is chosen; they were told.": [
+"Le remplaçant est choisi ; il a été prévenu.",
+"تم اختيار البديل وتم إعلامه."
+],
+"Choose the day, and the hours if they change.": [
+"Choisissez le jour, et les heures si elles changent.",
+"اختر اليوم، والساعات إن تغيّرت."
+],
+"The session moved; the candidates are told.": [
+"La séance est déplacée ; les candidats sont prévenus.",
+"نُقلت الحصة وتم إعلام المترشحين."
+],
+"The session and the ones after it go a week later; the candidates are told.": [
+"La séance et les suivantes passent une semaine plus tard ; les candidats sont prévenus.",
+"الحصة والحصص التي تليها تؤجَّل أسبوعا، وتم إعلام المترشحين."
+],
+"It also goes at {0} other times.": [
+"Il part aussi à {0} autres moments.",
+"ويُرسل أيضا في {0} أوقات أخرى."
+],
+"Choose the day you will be away.": [
+"Choisissez le jour de votre absence.",
+"اختر يوم غيابك."
+],
+"Choose a day to come.": [
+"Choisissez un jour à venir.",
+"اختر يوما قادما."
+],
+"Noted. The admin is told; {0} of your sessions that day look for a replacement.": [
+"C'est noté. L'admin est prévenu ; {0} de vos séances ce jour-là cherchent un remplaçant.",
+"تم التسجيل وإعلام المسؤول؛ {0} من حصصك في ذلك اليوم تبحث عن بديل."
+],
+"Noted. The admin is told.": [
+"C'est noté. L'admin est prévenu.",
+"تم التسجيل وإعلام المسؤول."
+],
+"Sent to the candidates of {0}: {1}; not reached: {2}.": [
+"Envoyé aux candidats de {0} : {1} ; non joints : {2}.",
+"أُرسل إلى مترشحي {0}: {1}؛ لم يصلهم: {2}."
+],
+"Sent to the candidates of {0}: {1}.": [
+"Envoyé aux candidats de {0} : {1}.",
+"أُرسل إلى مترشحي {0}: {1}."
+],
+"The web (Google)": [
+"Le web (Google)",
+"الإنترنت (Google)"
+],
+"Away on {0}: nobody replaces them for {1} yet.": [
+"Absent le {0} : personne ne le remplace encore pour {1}.",
+"غائب يوم {0}: لا أحد يعوّضه بعد في {1}."
+],
+"Choose: another professor, another day, or a week later": [
+"Choisir : un autre formateur, un autre jour, ou une semaine plus tard",
+"اختر: أستاذا آخر، أو يوما آخر، أو بعد أسبوع"
+],
+"Away on {0}: a replacement was asked for {1}, waiting for the answer.": [
+"Absent le {0} : un remplaçant a été demandé pour {1}, en attente de la réponse.",
+"غائب يوم {0}: طُلب بديل لـ{1}، في انتظار الرد."
+],
+"See who was asked": [
+"Voir qui a été sollicité",
+"انظر من طُلب منه"
+],
+"Away on {0}: the session of {1} was moved to another day.": [
+"Absent le {0} : la séance de {1} a été déplacée à un autre jour.",
+"غائب يوم {0}: نُقلت حصة {1} إلى يوم آخر."
+],
+"Away on {0}: the session of {1} was put a week later.": [
+"Absent le {0} : la séance de {1} a été reportée d'une semaine.",
+"غائب يوم {0}: أُجّلت حصة {1} أسبوعا."
+],
+"See it": [
+"Voir",
+"اعرض"
+],
+"Presence sheets not filled: {0} (the first: {1}, {2}).": [
+"Feuilles de présence non remplies : {0} (la première : {1}, {2}).",
+"أوراق حضور لم تُملأ: {0} (الأولى: {1}، {2})."
+],
+"Fill it": [
+"La remplir",
+"املأها"
+],
+"Candidates' questions waiting for an answer: {0}, {1} of them for more than a day.": [
+"Questions de candidats en attente de réponse : {0}, dont {1} depuis plus d'un jour.",
+"أسئلة مترشحين تنتظر إجابة: {0}، منها {1} منذ أكثر من يوم."
+],
+"Candidates' questions waiting for an answer: {0}.": [
+"Questions de candidats en attente de réponse : {0}.",
+"أسئلة مترشحين تنتظر إجابة: {0}."
+],
+"Answer": [
+"Répondre",
+"أجب"
+],
+"No meeting link for {0} yet.": [
+"Pas encore de lien de réunion pour {0}.",
+"لا رابط اجتماع لـ{0} بعد."
+],
+"Give the link": [
+"Donner le lien",
+"أعطِ الرابط"
+],
+"{0} is not among the specialities written, yet {1} is taught.": [
+"{0} ne figure pas parmi les spécialités indiquées, pourtant {1} est enseignée.",
+"{0} ليست ضمن الاختصاصات المكتوبة، ومع ذلك يُدرَّس {1}."
+],
+"Add the speciality": [
+"Ajouter la spécialité",
+"أضف الاختصاص"
+],
+"Reviews with 2 stars or less for the professor: {0}.": [
+"Avis à 2 étoiles ou moins pour le formateur : {0}.",
+"آراء بنجمتين أو أقل للأستاذ: {0}."
+],
+"No email and no phone: they cannot be told anything.": [
+"Ni email ni téléphone : impossible de le prévenir de quoi que ce soit.",
+"لا بريد ولا هاتف: لا يمكن إعلامه بأي شيء."
+],
+"Add their email or phone": [
+"Ajouter son email ou son téléphone",
+"أضف بريده أو هاتفه"
+],
+"No account: they cannot fill presence or answer questions in the application.": [
+"Pas de compte : impossible de remplir la présence ou de répondre aux questions dans l'application.",
+"لا حساب: لا يمكنه ملء الحضور أو الإجابة عن الأسئلة في التطبيق."
+],
+"Give them an account": [
+"Lui donner un compte",
+"امنحه حسابا"
+],
+"Say in a few words what it is about.": [
+"Dites en quelques mots de quoi il s'agit.",
+"قل في كلمات قليلة عمّ يتعلق الأمر."
+],
+"The online writer is not available just now: start from an idea, or write it.": [
+"Le rédacteur en ligne n'est pas disponible pour l'instant : partez d'une idée, ou écrivez-le.",
+"الكاتب عبر الإنترنت غير متاح الآن: ابدأ من فكرة، أو اكتبه بنفسك."
+],
+"The online writer did not answer just now: try again in a moment, or start from an idea.": [
+"Le rédacteur en ligne n'a pas répondu : réessayez dans un instant, ou partez d'une idée.",
+"لم يُجب الكاتب عبر الإنترنت الآن: أعد المحاولة بعد لحظة، أو ابدأ من فكرة."
+],
+"What was written had {0}: add it to the topic, or write that part yourself.": [
+"Le texte écrit contenait {0} : ajoutez-le au sujet, ou écrivez cette partie vous-même.",
+"احتوى النص المكتوب على {0}: أضفه إلى الموضوع، أو اكتب هذا الجزء بنفسك."
+],
+"Choose a professor.": [
+"Choisissez un formateur.",
+"اختر أستاذا."
+],
+"That is the professor who is away.": [
+"C'est le formateur absent.",
+"هذا هو الأستاذ الغائب."
+],
+"{0} teaches another class at those hours that day.": [
+"{0} enseigne une autre classe à ces heures ce jour-là.",
+"{0} يدرّس قسما آخر في تلك الساعات ذلك اليوم."
+],
+"This session no longer exists.": [
+"Cette séance n'existe plus.",
+"هذه الحصة لم تعد موجودة."
+],
+"The end must be after the start.": [
+"La fin doit être après le début.",
+"يجب أن تكون النهاية بعد البداية."
+],
+"Its professor is not free then: choose another day or other hours.": [
+"Son formateur n'est pas libre à ce moment : choisissez un autre jour ou d'autres heures.",
+"أستاذه غير متفرغ حينها: اختر يوما آخر أو ساعات أخرى."
+],
+"What the market asks": [
+"Ce que demande le marché",
+"ما يطلبه السوق"
+],
+"Who is connected": [
+"Qui est connecté",
+"من متصل"
+],
+"Reminders": [
+"Rappels",
+"التذكيرات"
+],
+"Dashboard": [
+"Tableau de bord",
+"لوحة القيادة"
+],
+"Take you there": [
+"Vous emmener",
+"آخذك إلى هناك"
+],
+"Opens the page or the file you name, goes back, visits every page (by herself when asked), prepares an email in its page.": [
+"Ouvre la page ou la fiche que vous nommez, revient en arrière, visite chaque page (toute seule si vous le demandez), prépare un email dans sa page.",
+"تفتح الصفحة أو الملف الذي تسمّيه، وتعود إلى الخلف، وتزور كل صفحة (وحدها عند الطلب)، وتحضّر رسالة في صفحتها."
+],
+"What she can do": [
+"Ce qu'elle sait faire",
+"ما تستطيع فعله"
+],
+"Every ability as a card to try, and a plain yes or not yet to “can you…?”.": [
+"Chaque capacité en carte à essayer, et un oui clair ou un « pas encore » à « tu peux… ? ».",
+"كل قدرة في بطاقة للتجربة، و«نعم» واضحة أو «ليس بعد» لسؤال «هل تستطيعين…؟»."
+],
+"Where were we": [
+"Où en étions-nous",
+"أين كنا"
+],
+"What you were talking about, from the conversation she keeps.": [
+"Ce dont vous parliez, d'après la conversation qu'elle garde.",
+"ما كنتما تتحدثان عنه، من المحادثة التي تحتفظ بها."
+],
+"a figure or a date you did not give": [
+"un chiffre ou une date que vous n'avez pas donné",
+"رقما أو تاريخا لم تعطه"
+],
+"a link you did not give": [
+"un lien que vous n'avez pas donné",
+"رابطا لم تعطه"
+],
+"a variable the emails do not know": [
+"une variable que les emails ne connaissent pas",
+"متغيرا لا تعرفه الرسائل"
+],
+"Page guide": [
+"Guide de la page",
+"دليل الصفحة"
+],
+"What the page is for and every part of it, from its tour, with a walk through it on the page.": [
+"À quoi sert la page et chacune de ses parties, d'après sa visite, avec un parcours sur la page elle-même.",
+"ما فائدة الصفحة وكل جزء منها، من جولتها، مع جولة داخل الصفحة نفسها."
 ]
 }

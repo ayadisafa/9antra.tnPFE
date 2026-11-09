@@ -270,6 +270,8 @@
     openMap();
   });
   window.PageTour = { open: openMap };
+  // Yasmine brought you here to show the page (?tour=1): the walk through it starts by itself.
+  if (/[?&]tour=1(?:&|$)/.test(location.search)) setTimeout(openMap, 900);
 
   // 3. The first time on this page: a small offer, under the “?”.
   window.addEventListener("load", () => setTimeout(() => {

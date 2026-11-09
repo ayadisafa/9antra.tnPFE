@@ -23,6 +23,7 @@ class Question(BaseModel):
 
 class Conversation(Question):
     history: list[dict[str, str]] = Field(default_factory=list)
+    path: str | None = None          # the page the window is open on ("explique cette page")
 
 
 @router.post("/account/guide")
@@ -30,13 +31,33 @@ def ask_the_guide(payload: Conversation, request: Request, db: Session = Depends
     """The assistant for everyone who is not given the whole assistant: a professor gets the professors' agent (their
     classes, their candidates, the courses, the guide), a team member the guide agent (how to do things here, for what
     they may do, what the courses teach)."""
-    from app.services import orchestrator
+    from app.services import conversation, orchestrator
 
-    found = orchestrator.dispatch_chat(db, payload.message.strip(), payload.history, user=auth.current(request), lang=payload.lang, limited=True)
-    return {"reply": found["reply"], "links": found.get("links") or [], "sources": found.get("sources") or [], "resources": found.get("resources") or [],
-            "schema": found.get("schema"), "suggestions": found.get("suggestions") or [], "understood": found.get("understood") or [],
-            "agent": found["agent"], "category": {key: found["category"][key] for key in ("key", "label", "icon", "colour")},
-            "short": found.get("short"), "picture": found.get("picture")}
+    user = auth.current(request)
+    page = payload.path if payload.path and payload.path.startswith("/") and not payload.path.startswith("//") else None
+    found = orchestrator.dispatch_chat(db, payload.message.strip(), payload.history, user=user, lang=payload.lang, limited=True,
+                                       path=(page or "")[:200] or None)
+    conversation.save(db, user, payload.message, found, page)
+    shown = conversation.response(found)
+    shown["category"] = {key: found["category"][key] for key in ("key", "label", "icon", "colour")}
+    return shown
+
+
+@router.get("/account/conversation")
+def the_conversation(request: Request, db: Session = Depends(get_db)):
+    """The conversation going on with her (this person's only), to show again on any page."""
+    from app.services import conversation
+
+    return {"lines": conversation.lines(db, auth.current(request))}
+
+
+@router.post("/account/conversation/new")
+def new_conversation(request: Request, db: Session = Depends(get_db)):
+    """A fresh conversation: the earlier one stays for "where were we?", out of the window."""
+    from app.services import conversation
+
+    conversation.start_new(db, auth.current(request))
+    return {"ok": True}
 
 
 @router.get("/account/guide/suggestions")

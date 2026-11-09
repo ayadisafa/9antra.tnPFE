@@ -1234,6 +1234,56 @@ def move_registration(db: Session, registration_id: str, target_class_id: str, *
     return registration
 
 
+def keep_one_at_a_time(db: Session, candidate_ids=None, now: datetime | None = None) -> list[dict]:
+    """One class at a time, kept when dates move: a candidate's next class must start after the class they follow ends.
+    When the first one now ends later (a session put a week later, more weeks), a next class that would start before it
+    ends no longer fits: they leave it for the next class of that program that starts once they are free (found, or
+    created), and the admin is told. Only a class that has not started is changed. Returns [{"candidate", "from", "to"}]."""
+    now = now or local_now()
+    query = (db.query(Registration).filter(Registration.class_group_id.is_not(None), Registration.status == RegistrationStatus.ASSIGNED))
+    if candidate_ids is not None:
+        ids = [value for value in candidate_ids if value]
+        if not ids:
+            return []
+        query = query.filter(Registration.candidate_id.in_(ids))
+    by_person: dict[str, list[Registration]] = {}
+    for registration in query.all():
+        group = registration.class_group
+        if group is not None and group.status != ClassStatus.COMPLETED:
+            by_person.setdefault(registration.candidate_id, []).append(registration)
+    moved = []
+    for rows in by_person.values():
+        if len(rows) < 2:
+            continue
+        rows.sort(key=lambda row: class_start_dt(row.class_group) or datetime.max)
+        for index in range(1, len(rows)):
+            later = rows[index]
+            group = later.class_group
+            start = class_start_dt(group)
+            ends = max((class_end_dt(row.class_group) for row in rows[:index] if class_end_dt(row.class_group)), default=None)
+            if group.status != ClassStatus.NOT_STARTED or start is None or ends is None or start.date() > ends.date():
+                continue
+            # It would start while they still follow the first: out of it, then placed again after the first ends.
+            old = group
+            later.class_group_id, later.class_group, later.status = None, None, RegistrationStatus.PENDING
+            later.training_start_date = later.training_end_date = None
+            plan_reminders(db, later, None)
+            db.add(Activity(candidate_id=later.candidate_id, event_type="CLASS_MOVED",
+                            details=f"Moved out of {old.name}: their class before it now ends {format_date_en(ends)}."))
+            db.commit()
+            result = enroll_paid_registration(db, later)
+            target = result.class_group
+            _notify(db, category="ASSIGNMENT", title="Moved to a later class · one class at a time",
+                    message=(f"{_who(later)}'s class before now ends {format_date_en(ends)}, so {old.name} would have started too soon. "
+                             + (f"They now join {target.name} (first session: {_when(target)})." if target is not None
+                                else "They wait for a class of this program that starts once they are free.")),
+                    action_url=class_url(target, later) if target is not None else "/classes/?tab=decisions", registration=later,
+                    class_group=target)
+            db.commit()
+            moved.append({"candidate": _who(later), "from": old.name, "to": target.name if target is not None else None})
+    return moved
+
+
 def unassign_registration(db: Session, registration: Registration) -> None:
     """Take a registration out of its class; it returns to the pending decisions list."""
     class_group = registration.class_group
@@ -1373,6 +1423,9 @@ def update_class_parameters(db: Session, class_group: ClassGroup, *, name: str |
         for registration_id in member_ids:
             run_in_background(class_emails.send_class_update_email_task, registration_id, reason)
             emails += 1
+    if start_changed or schedule_changed:
+        # Its dates moved: a candidate whose next class would now start before this one ends moves to a later one.
+        keep_one_at_a_time(db, {registration.candidate_id for registration in class_members(db, class_group.id)})
     return {"start_changed": start_changed, "schedule_changed": schedule_changed, "emails": emails}
 
 

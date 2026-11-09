@@ -474,6 +474,12 @@
                         <span>Classes</span>
                     </a>
                 </li>
+                <li class="nav-item tone-violet">
+                    <a href="/professors" class="nav-link {% if active_page == 'professors' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-person-video3"></i></span>
+                        <span>Professors</span>
+                    </a>
+                </li>
 
                 <li class="nav-section-label">Learning</li>
                 <li class="nav-item tone-violet">
@@ -618,6 +624,12 @@
                     <a href="/teacher" class="nav-link {% if active_page == 'teacher' %}active{% endif %}">
                         <span class="nav-ico"><i class="bi bi-collection-play-fill"></i></span>
                         <span>My classes</span>
+                    </a>
+                </li>
+                <li class="nav-item tone-violet">
+                    <a href="/teacher/space" class="nav-link {% if active_page == 'teacher-space' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-person-workspace"></i></span>
+                        <span>My space</span>
                     </a>
                 </li>
                 <li class="nav-item tone-sky">
@@ -1225,6 +1237,93 @@
   @keyframes awBot { from { opacity:0; transform:translateY(8px) scale(.96); transform-origin:left bottom; } to { opacity:1; transform:none; } }
   @keyframes awUser { from { opacity:0; transform:translateX(10px) scale(.96); } to { opacity:1; transform:none; } }
   @keyframes awDot { 0%, 100% { transform:translateY(0); opacity:.35; } 40% { transform:translateY(-5px); opacity:1; } }
+  /* ---- Her answers drawn as cards (services/cards.py), choices to tap, a move to another page (8 November) ---- */
+  .aw-cards { display:grid; gap:8px; margin-top:8px; white-space:normal; }
+  .aw-card { border:1px solid #efe6f2; border-radius:16px; background:linear-gradient(180deg, #fff, #fcf8fd); padding:10px; }
+  .aw-card-title { font-size:.7rem; font-weight:800; letter-spacing:.02em; text-transform:uppercase; color:#8a7d97; margin-bottom:6px; }
+  .aw-tiles { display:grid; grid-template-columns:repeat(auto-fit, minmax(98px, 1fr)); gap:6px; }
+  .aw-tile { border-radius:14px; padding:8px 9px; background:#fff; border:1px solid #f1e9f4; display:flex; flex-direction:column; gap:2px; }
+  .aw-tile i { width:26px; height:26px; border-radius:9px; display:grid; place-items:center; color:#fff; background:var(--tone); font-size:.82rem; }
+  .aw-tile b { font-size:1.12rem; line-height:1.15; color:var(--ink-text); font-variant-numeric:tabular-nums; word-break:break-word; }
+  .aw-tile b.is-long { font-size:.82rem; }
+  .aw-tile span { font-size:.68rem; color:#6b6180; font-weight:700; }
+  .aw-ring { display:flex; gap:10px; align-items:center; }
+  .aw-ring svg { width:64px; height:64px; flex:none; transform:rotate(-90deg); }
+  .aw-ring circle { fill:none; stroke-width:7; }
+  .aw-ring .track { stroke:#f1e7f4; } .aw-ring .fill { stroke:var(--primary-berry); stroke-linecap:round; transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1); }
+  .aw-ring b { font-size:1.2rem; color:var(--ink-text); display:block; } .aw-ring span { font-size:.72rem; color:#6b6180; font-weight:700; }
+  .aw-bar { display:grid; grid-template-columns:minmax(0, 38%) minmax(0, 1fr) auto; gap:7px; align-items:center; font-size:.72rem; margin:5px 0; }
+  .aw-bar .name { font-weight:700; color:var(--ink-text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .aw-bar .track { height:9px; border-radius:999px; background:#f3ecf6; overflow:hidden; }
+  .aw-bar .fill { display:block; height:100%; width:0; border-radius:999px; background:var(--tone); transition:width .9s cubic-bezier(.2,.8,.2,1); }
+  .aw-bar .value { font-weight:800; color:#4d4863; font-variant-numeric:tabular-nums; }
+  .aw-people { display:flex; flex-wrap:wrap; gap:6px; }
+  .aw-person { display:flex; align-items:center; gap:7px; padding:4px 10px 4px 4px; border-radius:999px; background:#fff; border:1px solid #f0e6f3; max-width:100%; }
+  .aw-person .face { width:26px; height:26px; flex:none; border-radius:50%; display:grid; place-items:center; font-size:.62rem; font-weight:800; color:#fff;
+                     background:linear-gradient(135deg, var(--tone, var(--primary-berry)), color-mix(in srgb, var(--tone, var(--primary-berry)) 60%, #fff)); }
+  .aw-person b { font-size:.74rem; display:block; line-height:1.15; } .aw-person small { font-size:.64rem; color:#7a6f86; display:block; line-height:1.2; }
+  .aw-more { font-size:.7rem; font-weight:800; color:var(--primary-berry); align-self:center; }
+  .aw-line { position:relative; padding-left:16px; margin:0; list-style:none; }
+  .aw-line::before { content:""; position:absolute; left:5px; top:4px; bottom:4px; width:2px; border-radius:2px; background:linear-gradient(var(--primary-berry), #e6c3d6); }
+  .aw-line li { position:relative; margin:0 0 7px; font-size:.74rem; }
+  .aw-line li::before { content:""; position:absolute; left:-15px; top:4px; width:10px; height:10px; border-radius:50%; background:#fff; border:2px solid var(--primary-berry); }
+  .aw-line .when { font-weight:800; color:var(--primary-berry); font-size:.68rem; display:block; } .aw-line .what { font-weight:700; color:var(--ink-text); }
+  .aw-line .detail { color:#6b6180; display:block; font-size:.68rem; }
+  .aw-class { border-radius:12px; background:#fff; border:1px solid #f0e6f3; padding:7px 9px; margin-bottom:6px; font-size:.72rem; }
+  .aw-class .head { display:flex; justify-content:space-between; gap:6px; align-items:center; } .aw-class .head b { font-size:.8rem; }
+  .aw-class .chip { font-size:.62rem; font-weight:800; border-radius:999px; padding:1px 8px; color:var(--tone); background:color-mix(in srgb, var(--tone) 12%, #fff); }
+  .aw-class .detail { color:#6b6180; margin:2px 0 4px; } .aw-class .seats { display:flex; gap:6px; align-items:center; font-weight:700; color:#4d4863; }
+  .aw-class .seats .track { flex:1; height:6px; border-radius:999px; background:#f3ecf6; overflow:hidden; }
+  .aw-class .seats .fill { display:block; height:100%; width:0; background:var(--tone); transition:width .9s ease; }
+  .aw-links a { display:flex; gap:8px; align-items:flex-start; text-decoration:none; padding:6px 8px; border-radius:12px; color:var(--ink-text); font-size:.74rem; font-weight:700; }
+  .aw-links a:hover { background:#faf3fb; } .aw-links a i { color:var(--primary-berry); margin-top:2px; } .aw-links small { display:block; color:#7a6f86; font-weight:600; font-size:.66rem; }
+  .aw-abilities .grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:6px; }
+  .aw-ability { text-align:left; border:1px solid #f0e6f3; background:#fff; border-radius:14px; padding:8px; display:flex; flex-direction:column; gap:4px; cursor:pointer;
+                font:inherit; color:inherit; transition:transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+  .aw-ability:hover { transform:translateY(-2px); border-color:var(--tone); box-shadow:0 10px 18px -14px var(--tone); }
+  .aw-ability i { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; color:#fff; background:var(--tone); font-size:.95rem; }
+  .aw-ability b { font-size:.76rem; line-height:1.2; } .aw-ability small { font-size:.66rem; color:#6b6180; line-height:1.3; }
+  .aw-ability .try { font-size:.64rem; font-weight:800; color:var(--tone); margin-top:auto; }
+  .aw-steps ol { margin:0; padding:0; list-style:none; counter-reset:awstep; display:grid; gap:6px; }
+  .aw-steps li { counter-increment:awstep; display:grid; grid-template-columns:30px minmax(0, 1fr); gap:8px; align-items:start; background:#fff; border:1px solid #f0e6f3;
+                 border-radius:12px; padding:7px 8px; }
+  .aw-steps li i { width:30px; height:30px; border-radius:10px; display:grid; place-items:center; color:#fff; background:linear-gradient(135deg, #4f46e5, var(--primary-berry)); position:relative; }
+  .aw-steps li i::after { content:counter(awstep); position:absolute; right:-5px; top:-5px; width:15px; height:15px; border-radius:50%; background:#fff; color:#4f46e5;
+                          font:800 .55rem/15px system-ui; text-align:center; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+  .aw-steps b { font-size:.76rem; display:block; } .aw-steps small { font-size:.68rem; color:#6b6180; display:block; line-height:1.3; }
+  .aw-steps em { font-style:normal; font-size:.64rem; font-weight:800; color:#4f46e5; display:block; margin-top:2px; }
+  .assistant-walk { margin-top:8px; border:0; border-radius:999px; padding:6px 14px; font-size:.76rem; font-weight:800; color:#fff; cursor:pointer;
+                    background:linear-gradient(135deg, #4f46e5, var(--primary-berry)); box-shadow:0 8px 16px -10px #4f46e5; }
+  .aw-cannot { margin-top:8px; font-size:.7rem; color:#6b6180; } .aw-cannot summary { cursor:pointer; font-weight:800; color:#8a7d97; }
+  .aw-cannot li { margin:3px 0; }
+  .assistant-options { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .assistant-options button { border:1px solid var(--primary-berry); background:#fff; color:var(--primary-berry); border-radius:999px; padding:4px 12px; font-size:.74rem;
+                              font-weight:800; cursor:pointer; transition:background .15s ease, color .15s ease, transform .15s ease; }
+  .assistant-options button:hover { background:var(--primary-berry); color:#fff; transform:translateY(-1px); }
+  .assistant-going { display:flex; align-items:center; gap:8px; margin-top:8px; font-size:.72rem; font-weight:800; color:var(--primary-berry); }
+  .assistant-going .track { flex:1; height:4px; border-radius:999px; background:#f3e4ee; overflow:hidden; }
+  .assistant-going .track span { display:block; height:100%; width:100%; background:var(--primary-berry); transform-origin:left; animation:awGo 1.1s ease-in both; }
+  .assistant-divider { display:flex; align-items:center; gap:8px; margin:6px 0 12px; font-size:.66rem; font-weight:800; color:#a397ad; text-transform:uppercase; letter-spacing:.04em; }
+  .assistant-divider::before, .assistant-divider::after { content:""; flex:1; height:1px; background:#efe6f2; }
+  @keyframes awGo { from { transform:scaleX(0); } to { transform:scaleX(1); } }
+  @media (prefers-reduced-motion: no-preference) {
+    .aw-card { animation:awBot .45s cubic-bezier(.2,.9,.3,1.2) both; animation-delay:calc(var(--i, 0) * 90ms + 80ms); }
+    .aw-tile, .aw-person, .aw-ability { animation:awBot .4s ease both; animation-delay:calc(var(--j, 0) * 60ms + 120ms); }
+    .aw-m-rise { animation:awRise 2.4s ease-in-out infinite; } .aw-m-pop { animation:awPop 2.2s ease-in-out infinite; }
+    .aw-m-fly { animation:awFly 2.6s ease-in-out infinite; } .aw-m-swing { animation:awSwing 2.4s ease-in-out infinite; transform-origin:50% 10%; }
+    .aw-m-write { animation:awWrite 1.8s ease-in-out infinite; } .aw-m-beat { animation:awBeat 1.6s ease-in-out infinite; }
+    .aw-m-seek { animation:awSeek 3s ease-in-out infinite; } .aw-m-spin { animation:awSpin 6s linear infinite; }
+    .aw-m-wiggle { animation:awWiggle 2s ease-in-out infinite; }
+  }
+  @keyframes awRise { 0%, 100% { transform:translateY(0); } 50% { transform:translateY(-3px); } }
+  @keyframes awPop { 0%, 100% { transform:scale(1); } 50% { transform:scale(1.12); } }
+  @keyframes awFly { 0%, 100% { transform:translate(0, 0) rotate(0); } 50% { transform:translate(2px, -3px) rotate(-8deg); } }
+  @keyframes awSwing { 0%, 100% { transform:rotate(-7deg); } 50% { transform:rotate(7deg); } }
+  @keyframes awWrite { 0%, 100% { transform:translateX(0); } 50% { transform:translateX(3px) rotate(-6deg); } }
+  @keyframes awBeat { 0%, 100% { transform:scale(1); } 15% { transform:scale(1.16); } 30% { transform:scale(1); } 45% { transform:scale(1.1); } }
+  @keyframes awSeek { 0%, 100% { transform:translate(0, 0); } 33% { transform:translate(2px, -2px); } 66% { transform:translate(-2px, 1px); } }
+  @keyframes awSpin { to { transform:rotate(360deg); } }
+  @keyframes awWiggle { 0%, 100% { transform:rotate(0); } 25% { transform:rotate(-10deg); } 75% { transform:rotate(10deg); } }
 </style>
 {% if current_user and current_user.id %}
 {% import "_friend_figure.html" as figure %}
@@ -1241,12 +1340,13 @@
     <select class="assistant-lang" id="assistant-lang" data-no-i18n aria-label="Language of the answers" title="The language they guide you in. Automatic: the language of your question.">
       <option value="">Auto</option><option value="fr">Français</option><option value="en">English</option><option value="ar">العربية</option><option value="tn">Tounsi</option>
     </select>
+    <button class="assistant-me" id="assistant-new" type="button" title="New conversation" aria-label="New conversation"><i class="bi bi-plus-lg"></i></button>
     {% if is_admin %}<a class="assistant-me" href="/settings#character" title="Her settings: name, look, voice"><i class="bi bi-person-gear"></i></a>{% endif %}
     {% if whole_assistant %}<label class="assistant-auto" title="On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.">
       <input type="checkbox" id="assistant-auto" {{ 'checked' if assistant_auto_send }}> Send at once</label>{% endif %}
     </div>
   </header>
-  <span hidden id="aw-asked">I asked</span><span hidden id="aw-read">I read</span><span hidden id="aw-typing">is writing…</span><span hidden id="aw-more">More</span><span hidden id="aw-less">Less</span>
+  <span hidden id="aw-asked">I asked</span><span hidden id="aw-read">I read</span><span hidden id="aw-typing">is writing…</span><span hidden id="aw-more">More</span><span hidden id="aw-less">Less</span><span hidden id="aw-reading">is reading your records…</span><span hidden id="aw-checking">is checking the figures…</span><span hidden id="aw-earlier">Our conversation</span><span hidden id="aw-going">On the way…</span><span hidden id="aw-fresh">A new conversation starts here.</span>
   <div class="assistant-messages" id="assistant-messages">{% if whole_assistant %}<div class="assistant-hero">
     {{ art.scene("assistant") }}
     <div><b><span>Hi</span> <span data-no-i18n>{{ (current_user.name or '').split()[0] if current_user.name else '' }}</span> 👋</b><small>What can I do for you today?</small></div>
@@ -1858,14 +1958,27 @@ document.addEventListener("submit", event => {
 
     const history = [];
     const said = id => (document.getElementById(id) || {}).textContent || "";
+    const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const scrollDown = () => { try { messages.scrollTo({ top: messages.scrollHeight, behavior: reducedMotion ? "auto" : "smooth" }); } catch (error) { messages.scrollTop = messages.scrollHeight; } };
+    // Her words appear as she writes them (quickly); kept answers, shown again, appear at once.
+    const reveal = (node, words) => {
+        if (reducedMotion || !words || words.length > 900) { node.textContent = words; return; }
+        let shown = 0;
+        const step = Math.max(2, Math.ceil(words.length / 70));
+        const timer = setInterval(() => { shown += step; node.textContent = words.slice(0, shown); if (shown >= words.length) { clearInterval(timer); node.textContent = words; } }, 16);
+    };
+    const ask = question => { input.value = question; form.requestSubmit(); };
     const addMessage = (text, role, links, sources, resources, schema, agent, category, extra) => {
         const item = document.createElement("div");
         item.className = `assistant-msg ${role}`;
         // Short first: a long answer shows its first lines (cut from itself), the whole of it one tap away.
         const short = role === "bot" && extra && extra.short && !(schema && window.drawSchema) ? extra.short : null;
+        const drawn = role === "bot" && extra && extra.cards && extra.cards.length && window.drawCards ? extra.cards : null;
+        const covers = !!(drawn && drawn.some(card => card.covers));       // the cards say it all: no "More"
         const body = document.createElement("span");
         body.className = "assistant-text";
-        body.textContent = schema && window.drawSchema ? "" : (short || text);
+        const first = schema && window.drawSchema ? "" : (short || text);
+        if (role === "bot" && !(extra && extra.restored)) reveal(body, first); else body.textContent = first;
         // The moving picture of its subject (a photo of the journal for the news), beside her words.
         const picture = role === "bot" && extra && extra.picture ? extra.picture : null;
         if (picture && (picture.photo || picture.svg)) {
@@ -1888,7 +2001,7 @@ document.addEventListener("submit", event => {
             item.appendChild(pic);
         }
         item.appendChild(body);
-        if (short) {
+        if (short && !covers) {
             const more = document.createElement("button");
             more.type = "button"; more.className = "assistant-more-btn";
             more.textContent = said("aw-more") || "More";
@@ -1933,6 +2046,30 @@ document.addEventListener("submit", event => {
         }
         // A how-to, or what is still missing: drawn as a diagram.
         if (schema && window.drawSchema) item.appendChild(window.drawSchema(schema));
+        // The figures and lists of the answer, drawn as moving cards (only what it says).
+        if (drawn) item.appendChild(window.drawCards(drawn, ask));
+        // The page's guide: a walk through it, part by part, on the page itself (this one, or the one named).
+        if (role === "bot" && extra && extra.page_tour && !extra.restored) {
+            const walk = document.createElement("button");
+            walk.type = "button"; walk.className = "assistant-walk"; walk.textContent = "▶ " + (extra.page_tour.label || "");
+            walk.addEventListener("click", () => {
+                if (extra.page_tour.here && window.PageTour) { window.closeAssistant(); window.PageTour.open(); return; }
+                const url = extra.page_tour.url || "/";
+                window.location.href = url + (url.indexOf("?") >= 0 ? "&" : "?") + "tour=1";
+            });
+            item.appendChild(walk);
+        }
+        // Her question back, or another joke: the choices, one tap each.
+        if (role === "bot" && extra && extra.options && extra.options.length) {
+            const row = document.createElement("div");
+            row.className = "assistant-options";
+            extra.options.slice(0, 8).forEach(option => {
+                const b = document.createElement("button"); b.type = "button"; b.textContent = option;
+                b.addEventListener("click", () => ask(option));
+                row.appendChild(b);
+            });
+            item.appendChild(row);
+        }
         // What you typed, and the assistant's answer in the language you asked in: never swapped word by word.
         item.setAttribute("data-no-i18n", "");
         // What to read, watch or download about it: programs, videos, 9antra.tn pages, PDFs.
@@ -1964,8 +2101,9 @@ document.addEventListener("submit", event => {
             });
             item.appendChild(said);
         }
-        // Where the answer leads: the pages to open, as buttons under it.
-        if (links && links.length) {
+        // Where the answer leads: the pages to open, as buttons under it (a kept move to a page: its page, to open again).
+        if (extra && extra.restored && extra.went && extra.went.url) links = (links || []).concat([{ label: "→ " + extra.went.label, url: extra.went.url }]);
+        if (links && links.length && !(extra && extra.navigate)) {
             const row = document.createElement("div");
             row.className = "assistant-links";
             // Other sites and PDFs open in a new tab, so the conversation stays where it is.
@@ -1975,11 +2113,11 @@ document.addEventListener("submit", event => {
         if (role === "user" || role === "bot") {
             const time = document.createElement("time");
             time.className = "assistant-time";
-            time.textContent = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            time.textContent = (extra && extra.at ? new Date(extra.at) : new Date()).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
             item.appendChild(time);
         }
         messages.appendChild(item);
-        messages.scrollTop = messages.scrollHeight;
+        scrollDown();
         if (role !== "working") history.push({ role: role === "user" ? "user" : "assistant", content: text });
         return item;
     };
@@ -2014,10 +2152,34 @@ document.addEventListener("submit", event => {
         const hero = messages.querySelector(".assistant-hero");          // after the welcome card, before the rest
         messages.insertBefore(item, hero ? hero.nextSibling : messages.firstChild);
     };
+    // The conversation going on, shown again (from any page, any day), then what she said on arriving where she took you.
+    const remember = {
+        get: key => { try { return sessionStorage.getItem(key); } catch (error) { return null; } },
+        set: (key, value) => { try { if (value === null) sessionStorage.removeItem(key); else sessionStorage.setItem(key, value); } catch (error) {} }
+    };
+    const restore = () => fetch("/account/conversation", { headers: { accept: "application/json" } })
+        .then(r => r.ok ? r.json() : null)
+        .then(found => {
+            const lines = (found && found.lines) || [];
+            if (lines.length) {
+                const divider = document.createElement("div");
+                divider.className = "assistant-divider kept"; divider.textContent = said("aw-earlier") || "Our conversation";
+                messages.appendChild(divider);
+            }
+            lines.forEach(line => {
+                const extra = Object.assign({}, line, { restored: true });
+                if (line.role === "user") addMessage(line.text, "user", null, null, null, null, null, null, extra);
+                else addMessage(line.text, "bot", line.schema ? [] : line.links, line.sources, line.resources, line.schema, line.agent, line.category, extra);
+            });
+            const arrived = remember.get("assistant:arrived");
+            if (arrived) { remember.set("assistant:arrived", null); addMessage(arrived, "bot"); }
+        }).catch(() => {});
     // Yasmine opens it (the corner figure): window.openAssistant(question) also asks a question at once.
     window.openAssistant = (question) => {
+        remember.set("assistant:open", "1");               // it opens again on the next page, on the same conversation
         if (!greeted) {
             greeted = true;
+            restore();
             fetch(panel.dataset.suggestUrl).then(r => r.ok ? r.json() : null).then(d => { if (d && d.suggestions) showSuggestions(d.suggestions); }).catch(() => {});
             if (window.friendData) today(window.friendData);
             else fetch("/account/friend?path=" + encodeURIComponent(location.pathname) + "&lang=" + encodeURIComponent(guideLanguage()),
@@ -2028,7 +2190,20 @@ document.addEventListener("submit", event => {
         document.dispatchEvent(new CustomEvent("assistant:open"));
         if (question) { input.value = question; form.requestSubmit(); } else input.focus({ preventScroll: true });
     };
-    window.closeAssistant = () => { panel.classList.remove("open"); document.dispatchEvent(new CustomEvent("assistant:close")); };
+    window.closeAssistant = () => { remember.set("assistant:open", null); panel.classList.remove("open"); document.dispatchEvent(new CustomEvent("assistant:close")); };
+    // A new conversation: the window is cleared (the earlier one stays, for where-were-we).
+    const fresh = document.getElementById("assistant-new");
+    fresh?.addEventListener("click", () => {
+        fetch("/account/conversation/new", { method: "POST" }).catch(() => {});
+        Array.from(messages.children).forEach(node => {
+            if (!node.matches(".assistant-hero, #assistant-hello") && !(node.classList.contains("assistant-msg") && node.querySelector(".assistant-today"))) node.remove();
+        });
+        history.length = 0;
+        const divider = document.createElement("div");
+        divider.className = "assistant-divider"; divider.textContent = said("aw-fresh") || "A new conversation starts here.";
+        messages.appendChild(divider);
+        input.focus({ preventScroll: true });
+    });
     // "Ask Yasmine" on any page: the question is the button's hidden words (translated with the page), so she answers in its language.
     document.addEventListener("click", event => {
         const asking = event.target.closest("[data-ask-yasmine]");
@@ -2038,6 +2213,8 @@ document.addEventListener("submit", event => {
         window.openAssistant(((words && words.textContent) || asking.dataset.askYasmine || "").trim());
     });
     window.toggleAssistant = () => panel.classList.contains("open") ? window.closeAssistant() : window.openAssistant();
+    // Open on the page before (or she brought you here): open again, on the same conversation (beside the page, on a wide screen).
+    if (remember.get("assistant:open") === "1" && window.innerWidth >= 992) setTimeout(() => window.openAssistant(), 250);
     close?.addEventListener("click", () => window.closeAssistant());
     document.addEventListener("keydown", event => { if (event.key === "Escape" && panel.classList.contains("open")) window.closeAssistant(); });
     input.addEventListener("input", () => form.classList.toggle("has-text", !!input.value.trim()));
@@ -2060,23 +2237,46 @@ document.addEventListener("submit", event => {
         working.innerHTML = '<span class="assistant-typing" aria-hidden="true"><i></i><i></i><i></i></span>';
         const writing = document.createElement("span");
         writing.className = "small text-muted ms-2";
-        writing.textContent = `${panel.dataset.me || "Yasmine"} ${(document.getElementById("aw-typing") || {}).textContent || "is writing…"}`;
+        const me = panel.dataset.me || "Yasmine";
+        writing.textContent = `${me} ${said("aw-typing") || "is writing…"}`;
         working.appendChild(writing);
         messages.appendChild(working);
-        messages.scrollTop = messages.scrollHeight;
+        scrollDown();
+        // What she is doing, while she does it.
+        const busy = [setTimeout(() => { writing.textContent = `${me} ${said("aw-reading") || "is reading your records…"}`; }, 1400),
+                      setTimeout(() => { writing.textContent = `${me} ${said("aw-checking") || "is checking the figures…"}`; }, 3600)];
         try {
             const response = await fetch(panel.dataset.askUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: text, history, lang: guideLanguage() || null, path: location.pathname })
+                body: JSON.stringify({ message: text, history: history.slice(-16), lang: guideLanguage() || null, path: location.pathname })
             });
             const data = await response.json();
+            busy.forEach(clearTimeout);
             if (!response.ok) throw new Error(data.detail || "Assistant request failed");
             working.remove();
-            addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema, data.agent, data.category, data);
+            const item = addMessage(data.reply, "bot", data.schema ? [] : data.links, data.sources, data.resources, data.schema, data.agent, data.category, data);
             if (data.suggestions && data.suggestions.length) showSuggestions(data.suggestions);
             if (window.friendSpeak) window.friendSpeak(data.short || data.reply);       // Yasmine reads it aloud (the short version) when her voice is on
+            // She takes you there: a short moment on the way, then the page; her window opens again there, on the same conversation.
+            if (data.navigate && data.navigate.url) {
+                const going = document.createElement("div");
+                going.className = "assistant-going";
+                const label = document.createElement("span"); label.textContent = said("aw-going") || "On the way…";
+                const track = document.createElement("span"); track.className = "track"; track.appendChild(document.createElement("span"));
+                going.append(label, track);
+                item.appendChild(going);
+                scrollDown();
+                remember.set("assistant:arrived", data.navigate.arrived || "");
+                if (window.innerWidth < 992) remember.set("assistant:open", null);         // on a phone the page she opened stays in view
+                setTimeout(() => { window.location.href = data.navigate.url; }, reducedMotion ? 300 : 1100);
+            } else if (data.back) {
+                setTimeout(() => { window.history.back(); }, 700);
+            } else if (data.tour && window.startGrandTour) {
+                setTimeout(() => { window.closeAssistant(); window.startGrandTour(!!data.tour.auto); }, 1200);
+            }
         } catch (error) {
+            busy.forEach(clearTimeout);
             working.remove();
             addMessage("Something went wrong while looking that up. Try again in a moment.", "bot");
             console.error("Assistant error:", error);
@@ -2087,6 +2287,147 @@ document.addEventListener("submit", event => {
 </script>
 
 
+<script>
+/* Yasmine's cards (services/cards.py): tiles that count up, rings that fill, bars that grow, people, dates, classes, links,
+   and what she can do. Everything written through textContent. */
+(function () {
+  var tones = { blue: "#2563eb", berry: "#a42c67", green: "#16a34a", amber: "#d97706", red: "#e11d48", violet: "#7c3aed", teal: "#0d9488", grey: "#64748b" };
+  var reduced = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function el(tag, cls, words) { var node = document.createElement(tag); if (cls) node.className = cls; if (words != null) node.textContent = words; return node; }
+  function later(fn) { if (reduced) fn(); else requestAnimationFrame(function () { requestAnimationFrame(fn); }); }
+  function countUp(node, display, number) {
+    var match = /^(\D*)(\d[\d\s.,]*)(.*)$/.exec(display || "");
+    if (reduced || number == null || !match || number > 1e7) { node.textContent = display; return; }
+    var start = null, digits = match[2].replace(/\s/g, ""), decimals = (digits.split(/[.,]/)[1] || "").length;
+    function frame(moment) {
+      if (start === null) start = moment;
+      var share = Math.min(1, (moment - start) / 900), eased = 1 - Math.pow(1 - share, 3);
+      node.textContent = share >= 1 ? display : match[1] + (number * eased).toFixed(decimals) + match[3];
+      if (share < 1) requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  }
+  function tone(name) { return tones[name] || tones.berry; }
+  var draw = {
+    tiles: function (card, box) {
+      var grid = el("div", "aw-tiles");
+      card.items.forEach(function (item, n) {
+        var tile = el("div", "aw-tile"); tile.style.setProperty("--tone", tone(item.tone)); tile.style.setProperty("--j", n);
+        var icon = el("i", "bi " + (item.icon || "bi-hash")); var value = el("b", String(item.value || "").length > 12 ? "is-long" : "");
+        tile.append(icon, value, el("span", "", item.label)); grid.appendChild(tile);
+        countUp(value, String(item.value), item.number);
+      });
+      box.appendChild(grid);
+    },
+    ring: function (card, box) {
+      var row = el("div", "aw-ring"), ns = "http://www.w3.org/2000/svg", svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 64 64");
+      var length = 2 * Math.PI * 26;
+      ["track", "fill"].forEach(function (name) {
+        var circle = document.createElementNS(ns, "circle"); circle.setAttribute("cx", "32"); circle.setAttribute("cy", "32"); circle.setAttribute("r", "26");
+        circle.setAttribute("class", name);
+        if (name === "fill") { circle.style.strokeDasharray = String(length); circle.style.strokeDashoffset = String(length);
+          later(function () { circle.style.strokeDashoffset = String(length * (1 - Math.max(0, Math.min(100, card.value || 0)) / 100)); }); }
+        svg.appendChild(circle);
+      });
+      var words = el("div"); var big = el("b"); words.append(big, el("span", "", card.label)); countUp(big, card.display, card.value);
+      row.append(svg, words); box.appendChild(row);
+    },
+    bars: function (card, box) {
+      card.items.forEach(function (item, n) {
+        var row = el("div", "aw-bar"); row.style.setProperty("--tone", tone(card.tone));
+        var track = el("span", "track"), fill = el("span", "fill"); track.appendChild(fill);
+        row.append(el("span", "name", item.label), track, el("span", "value", item.display));
+        box.appendChild(row);
+        setTimeout(function () { later(function () { fill.style.width = Math.max(3, Math.round(100 * (item.value || 0) / (card.most || 1))) + "%"; }); }, n * 70);
+      });
+    },
+    people: function (card, box) {
+      var row = el("div", "aw-people");
+      card.items.forEach(function (item, n) {
+        var chip = el("div", "aw-person"); chip.style.setProperty("--j", n); if (item.tone) chip.style.setProperty("--tone", tone(item.tone));
+        var words = el("span"); words.appendChild(el("b", "", item.name)); if (item.detail) words.appendChild(el("small", "", item.detail));
+        chip.append(el("span", "face", item.initials), words); row.appendChild(chip);
+      });
+      if (card.more) row.appendChild(el("span", "aw-more", "+" + card.more));
+      box.appendChild(row);
+    },
+    timeline: function (card, box) {
+      var list = el("ul", "aw-line");
+      card.items.forEach(function (item) {
+        var line = el("li"); if (item.when) line.appendChild(el("span", "when", item.when));
+        line.appendChild(el("span", "what", item.title || "")); if (item.detail) line.appendChild(el("span", "detail", item.detail));
+        list.appendChild(line);
+      });
+      box.appendChild(list);
+      if (card.more) box.appendChild(el("span", "aw-more", "+" + card.more));
+    },
+    classes: function (card, box) {
+      card.items.forEach(function (item) {
+        var one = el("div", "aw-class"); one.style.setProperty("--tone", tone(item.tone));
+        var head = el("div", "head"); head.append(el("b", "", item.title), el("span", "chip", item.state || ""));
+        one.appendChild(head); if (item.detail) one.appendChild(el("div", "detail", item.detail));
+        if (item.capacity) {
+          var seats = el("div", "seats"), track = el("span", "track"), fill = el("span", "fill"); track.appendChild(fill);
+          seats.append(track, el("span", "", (item.enrolled || 0) + "/" + item.capacity));
+          one.appendChild(seats);
+          later(function () { fill.style.width = Math.min(100, Math.round(100 * (item.enrolled || 0) / item.capacity)) + "%"; });
+        }
+        if (item.when) one.appendChild(el("div", "detail", item.when));
+        box.appendChild(one);
+      });
+    },
+    links: function (card, box) {
+      var list = el("div", "aw-links");
+      card.items.forEach(function (item) {
+        var link = el("a"); link.href = item.url;
+        if (/^https?:/.test(item.url)) { link.target = "_blank"; link.rel = "noopener noreferrer"; }
+        var words = el("span", "", item.title || item.url); if (item.detail) words.appendChild(el("small", "", item.detail));
+        link.append(el("i", "bi bi-box-arrow-up-right"), words); list.appendChild(link);
+      });
+      box.appendChild(list);
+    },
+    steps: function (card, box) {
+      var list = el("ol");
+      card.items.forEach(function (item, n) {
+        var line = el("li"); line.style.setProperty("--j", n);
+        var words = el("span"); words.append(el("b", "", item.title), el("small", "", item.text));
+        if (item.do && item.do.length) words.appendChild(el("em", "", "→ " + item.do.join(" · ")));
+        line.append(el("i", "bi " + (item.icon || "bi-dot")), words);
+        list.appendChild(line);
+      });
+      box.appendChild(list);
+    },
+    abilities: function (card, box, ask) {
+      var grid = el("div", "grid");
+      card.items.forEach(function (item, n) {
+        var one = el("button", "aw-ability"); one.type = "button"; one.style.setProperty("--tone", item.colour || tones.berry); one.style.setProperty("--j", n);
+        one.append(el("i", "bi " + item.icon + " aw-m-" + (item.motion || "pop")), el("b", "", item.title), el("small", "", item.text), el("span", "try", "▶ " + (card.try || "Try it")));
+        one.title = item.ask || "";
+        one.addEventListener("click", function () { if (ask && item.ask) ask(item.ask); });
+        grid.appendChild(one);
+      });
+      box.appendChild(grid);
+      if (card.cannot && card.cannot.items && card.cannot.items.length) {
+        var fold = el("details", "aw-cannot"); fold.appendChild(el("summary", "", card.cannot.title));
+        var list = el("ul"); card.cannot.items.forEach(function (words) { list.appendChild(el("li", "", words)); });
+        fold.appendChild(list); box.appendChild(fold);
+      }
+    }
+  };
+  window.drawCards = function (cards, ask) {
+    var all = el("div", "aw-cards");
+    cards.forEach(function (card, n) {
+      if (!draw[card.kind] || !card.items && card.kind !== "ring") return;
+      var box = el("div", "aw-card aw-" + card.kind); box.style.setProperty("--i", n);
+      if (card.title) box.appendChild(el("div", "aw-card-title", card.title));
+      draw[card.kind](card, box, ask);
+      all.appendChild(box);
+    });
+    return all;
+  };
+})();
+</script>
 <script>
 /* Tabs on any page (_tabs.html): the one named by the address (a tab, or anything inside one), else the one chosen last
    on this browser for this page, else the first. Links to a part inside another tab open that tab. */

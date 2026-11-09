@@ -468,6 +468,7 @@ def add_professor_absence(
     start_time: str = Form(""),
     end_time: str = Form(""),
     reason: str = Form(""),
+    back: str = Form(""),
     db: Session = Depends(get_db),
 ):
     professor = db.get(Professor, professor_id)
@@ -492,7 +493,63 @@ def add_professor_absence(
         asked = sum(1 for row in opened if row.status == "asked")
         notice += (f" {len(opened)} session(s) that day need a replacement: {asked} professor(s) asked to confirm"
                    + (f", {len(opened) - asked} with nobody free (see the notifications)." if len(opened) - asked else "."))
-    return _redirect("/classes/?tab=professors", notice=notice)
+    # Noted from the professor's own space: back there.
+    return _redirect(back if back.startswith("/professors/") else "/classes/?tab=professors", notice=notice)
+
+
+# ------------------------------------------------------------------
+# A professor away and nobody replaces them: another professor, another day, a week later
+# ------------------------------------------------------------------
+
+from app.services.ui_words import t as _t
+
+
+def _replacement(db: Session, class_id: str, row_id: str):
+    from app.services.replacements import SessionReplacement
+
+    row = db.get(SessionReplacement, row_id)
+    if row is None or row.class_group_id != class_id:
+        raise HTTPException(status_code=404, detail="Replacement not found")
+    return row
+
+
+@router.post("/{class_id}/replacements/{row_id}/professor")
+def replacement_professor(class_id: str, row_id: str, request: Request, professor_id: str = Form(""), db: Session = Depends(get_db)):
+    from app.services import replacements
+    from app.services.settings_service import public_base_url
+
+    row = _replacement(db, class_id, row_id)
+    user = auth.current(request)
+    problem = replacements.give_to(db, row, professor_id, public_base_url(db, request), by=getattr(user, "name", None) or "Admin")
+    return _redirect(f"/classes/{class_id}#follow", error=problem, notice=None if problem else _t("The replacement is chosen; they were told."))
+
+
+@router.post("/{class_id}/replacements/{row_id}/move")
+def replacement_move(class_id: str, row_id: str, request: Request, day: str = Form(""), start: str = Form(""), end: str = Form(""),
+                     db: Session = Depends(get_db)):
+    from app.services import replacements
+
+    row = _replacement(db, class_id, row_id)
+    try:
+        chosen = date.fromisoformat(day)
+        begins = time.fromisoformat(start) if start else None
+        ends = time.fromisoformat(end) if end else None
+    except ValueError:
+        return _redirect(f"/classes/{class_id}#follow", error=_t("Choose the day, and the hours if they change."))
+    user = auth.current(request)
+    problem = replacements.move_session(db, row, chosen, begins, ends, by=getattr(user, "name", None) or "Admin")
+    return _redirect(f"/classes/{class_id}#follow", error=problem, notice=None if problem else _t("The session moved; the candidates are told."))
+
+
+@router.post("/{class_id}/replacements/{row_id}/postpone")
+def replacement_postpone(class_id: str, row_id: str, request: Request, db: Session = Depends(get_db)):
+    from app.services import replacements
+
+    row = _replacement(db, class_id, row_id)
+    user = auth.current(request)
+    problem = replacements.postpone_week(db, row, by=getattr(user, "name", None) or "Admin")
+    return _redirect(f"/classes/{class_id}#follow", error=problem,
+                     notice=None if problem else _t("The session and the ones after it go a week later; the candidates are told."))
 
 
 # ------------------------------------------------------------------

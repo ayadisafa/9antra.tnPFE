@@ -8,6 +8,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
+from pydantic import BaseModel
+
 from app.database import get_db
 from app.models import ClassGroup, ClassStatus, Professor
 from app.models.classsession import ClassSession
@@ -16,6 +18,7 @@ from app.services import attendance, auth, class_looks, weekly_questions
 from app.services.class_views import class_summary
 from app.services.schedule_utils import local_now
 from app.template_context import notification_context
+from app.services.ui_words import t as _t
 
 router = APIRouter(tags=["Professor space"])
 templates = Jinja2Templates(directory="app/templates", context_processors=[notification_context])
@@ -84,6 +87,96 @@ def my_space(request: Request, db: Session = Depends(get_db)):
             "error": request.query_params.get("error"),
         },
     )
+
+
+@router.get("/teacher/space", response_class=HTMLResponse)
+def my_whole_space(request: Request, db: Session = Depends(get_db)):
+    """Everything about them in one place: their classes, what candidates thought of them, the messages, what waits."""
+    from app.services import professor_space
+
+    professor = _my_professor(request, db)
+    if professor is None:
+        return RedirectResponse("/professors", status_code=303)
+    return templates.TemplateResponse(request=request, name="professor_space.html", context={
+        "active_page": "teacher-space", **professor_space.space(db, professor, own=True),
+        "notice": request.query_params.get("notice"), "error": request.query_params.get("error")})
+
+
+@router.post("/teacher/absence")
+def i_will_be_away(request: Request, absence_date: str = Form(""), start_time: str = Form(""), end_time: str = Form(""),
+                   reason: str = Form(""), db: Session = Depends(get_db)):
+    """They say they will be away: their sessions that day look for a replacement (the admin is told)."""
+    from datetime import date, time
+
+    from app.models.professor_absence import ProfessorAbsence
+    from app.services import replacements
+    from app.services.settings_service import public_base_url
+
+    professor = _my_professor(request, db)
+    if professor is None:
+        raise HTTPException(status_code=404, detail="No professor profile")
+    try:
+        day = date.fromisoformat(absence_date)
+        begins = time.fromisoformat(start_time) if start_time else None
+        ends = time.fromisoformat(end_time) if end_time else None
+    except ValueError:
+        return RedirectResponse(f"/teacher/space?{urlencode({'error': _t('Choose the day you will be away.')})}#absences", status_code=303)
+    if day < local_now().date():
+        return RedirectResponse(f"/teacher/space?{urlencode({'error': _t('Choose a day to come.')})}#absences", status_code=303)
+    absence = ProfessorAbsence(professor_id=professor.id, absence_date=day, start_time=begins, end_time=ends, reason=reason.strip()[:200] or None)
+    db.add(absence)
+    db.commit()
+    opened = replacements.open_for_absence(db, absence, public_base_url(db, request))
+    notice = _t("Noted. The admin is told; {0} of your sessions that day look for a replacement.", len(opened)) if opened else _t("Noted. The admin is told.")
+    return RedirectResponse(f"/teacher/space?{urlencode({'notice': notice})}#absences", status_code=303)
+
+
+def _writer_of(request: Request, db: Session, class_id: str) -> tuple[ClassGroup, str]:
+    """The class, when the one asking teaches it (or is the admin), and the name it is signed with."""
+    user = auth.current(request)
+    group = db.get(ClassGroup, class_id)
+    if group is None or user is None:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if user.is_admin:
+        return group, user.name or "9antra"
+    professor = _my_professor(request, db)
+    if professor is None or group.professor_id != professor.id:
+        raise HTTPException(status_code=403, detail="Only the professor of this class writes to it.")
+    return group, professor.name
+
+
+@router.post("/teacher/classes/{class_id}/message")
+def write_to_my_class(class_id: str, request: Request, subject: str = Form(""), body: str = Form(""), channel: str = Form("email"),
+                      back: str = Form(""), db: Session = Depends(get_db)):
+    """A professor writes to every candidate of their class (email, or WhatsApp too), signed with their name."""
+    from app.services import reminders
+
+    group, name = _writer_of(request, db, class_id)
+    back = "/teacher/space" if not auth.current(request).is_admin else (back if back.startswith("/professors/") else f"/classes/{class_id}")
+    text = body.strip()
+    if text and name and name not in text[-120:]:
+        text += f"\n\n{name}"
+    try:
+        reminder = reminders.create(db, audience="class", audience_id=group.id, subject=subject, body=text, by=name,
+                                    channel=channel if channel in ("email", "both", "whatsapp") else "email", send_at=None)
+    except ValueError as problem:
+        return RedirectResponse(f"{back}?{urlencode({'error': str(problem)})}#classes", status_code=303)
+    sent, failed = reminders.send(db, reminder)
+    notice = _t("Sent to the candidates of {0}: {1}; not reached: {2}.", group.name, sent, failed) if failed else _t("Sent to the candidates of {0}: {1}.", group.name, sent)
+    return RedirectResponse(f"{back}?{urlencode({'notice': notice})}#classes", status_code=303)
+
+
+class _Topic(BaseModel):
+    topic: str = ""
+
+
+@router.post("/teacher/write")
+def write_it_for_me(payload: _Topic, request: Request, db: Session = Depends(get_db)):
+    """“Write it for me”, for a professor's message to their class: only the topic goes to the online writer."""
+    from app.services import reminder_writer
+
+    professor = _my_professor(request, db)
+    return reminder_writer.write(db, payload.topic, audience="class", author=professor.name if professor else None)
 
 
 @router.get("/teacher/profile", response_class=HTMLResponse)

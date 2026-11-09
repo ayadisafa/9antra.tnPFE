@@ -38,6 +38,7 @@ from .news_item import NewsItem
 from .market_signal import MarketSignal
 from .resource_reminder import ResourceReminder
 from .agent_run import AgentRun
+from .chat_line import ChatLine
 from .social import FeedbackAnswer, SocialAsset, SocialPost
 from app.services.professor_announcements import ProfessorAnnouncement  # noqa: F401  (its table is made at start)
 from app.services.session_check import SessionCheck  # noqa: F401  (its table is made at start)
@@ -97,4 +98,5 @@ __all__ = [
     "CandidateEmail",
     "CandidateAbsence",
     "CandidateFeedback",
+    "ChatLine",
 ]

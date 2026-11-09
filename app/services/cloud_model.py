@@ -80,8 +80,6 @@ def generate(contents: list[dict], *, system: str | None = None, tools: list[dic
     the order to try (WRITING by default)."""
     if not available():
         return None
-    import requests
-
     body: dict = {"contents": contents, "generationConfig": {"temperature": temperature}}
     if system:
         body["systemInstruction"] = {"parts": [{"text": system}]}
@@ -90,8 +88,34 @@ def generate(contents: list[dict], *, system: str | None = None, tools: list[dic
     if schema:
         body["generationConfig"]["responseMimeType"] = "application/json"
         body["generationConfig"]["responseSchema"] = schema
+    found = _post(body, models or WRITING)
+    return found["content"] if found else None
+
+
+def search(query: str) -> dict | None:
+    """Google, through the model ("grounding with Google Search"): {"text", "sources": [{"title", "url", "site"}]}, or
+    None. Only words go: the callers never put a person's name in it (lookups.private_in)."""
+    if not available() or not (query or "").strip():
+        return None
+    body = {"contents": [{"role": "user", "parts": [{"text": query.strip()}]}], "tools": [{"google_search": {}}],
+            "generationConfig": {"temperature": 0.2}}
+    found = _post(body, WRITING)
+    if not found:
+        return None
+    sources = []
+    for chunk in (found.get("groundingMetadata") or {}).get("groundingChunks") or []:
+        web = chunk.get("web") or {}
+        if web.get("uri"):
+            sources.append({"title": web.get("title") or web.get("domain") or "", "url": web["uri"], "site": web.get("domain") or web.get("title") or ""})
+    return {"text": text_of(found.get("content")), "sources": sources}
+
+
+def _post(body: dict, models: list[str]) -> dict | None:
+    """The model's first candidate ({"content", ...}) from the first key and model that answer, or None."""
+    import requests
+
     payload = json.dumps(body, ensure_ascii=False).encode("utf-8")
-    for model in models or WRITING:
+    for model in models:
         for key in _ready_keys(model):
             try:
                 response = requests.post(URL.format(model=model), data=payload, timeout=TIMEOUT,
@@ -101,13 +125,14 @@ def generate(contents: list[dict], *, system: str | None = None, tools: list[dic
                 return None
             if response.status_code == 200:
                 try:
-                    content = response.json()["candidates"][0]["content"]
-                except (KeyError, IndexError, ValueError):
+                    candidate = response.json()["candidates"][0]
+                    candidate["content"]
+                except (KeyError, IndexError, ValueError, TypeError):
                     logger.warning("Cloud model gave no content (%s)", model)
                     break                                   # blocked or empty: the next model
                 with _lock:
                     _used[date.today().isoformat()] = used_today() + 1
-                return content
+                return candidate
             if response.status_code in (429, 403):
                 _rest(key, model, response)
                 continue                                    # this key is spent for this model: the next key

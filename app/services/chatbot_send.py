@@ -26,6 +26,9 @@ SEND_START = re.compile(
 _CHANNEL = {"whatsapp": r"\b(whats ?app|wa)\b", "sms": r"\b(sms|texto|text message)\b", "email": r"\b(e-?mail|mail|courriel)\b"}
 _SEPARATOR = re.compile(r"\s*(?:pour (?:lui|leur) dire(?: que)?|pour (?:l|les)'?informer(?: que)?|pour dire(?: que)?|en (?:lui )?disant(?: que)?|"
                         r"saying(?: that)?|to say(?: that)?|to tell (?:him|her|them)(?: that)?|that|que|qu'|:)\s+", re.I)
+_INTENT = re.compile(r"\s+(?=(?:pour\s+(?:lui|leur|l'|les|le|la)\s*)?(?:rappeler|demander|remercier|inviter|f[ée]liciter|souhaiter|annoncer|"
+                     r"pr[ée]venir|encourager|relancer)\b)|\s+(?=to\s+(?:remind|ask|thank|invite|congratulate|wish|encourage)\b)|"
+                     r"\s+(?=(?:about|au sujet de|concernant|[àa] propos de)\s)", re.I)
 _EMAIL = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
 _PHONE = re.compile(r"(?<!\d)(?:\+?\d[\d ]{6,15}\d)(?!\d)")
 _AS_IS = re.compile(r"\b(tel quel|telle quelle|sans reformuler|as is|as it is|word for word|mot pour mot)\b", re.I)
@@ -129,6 +132,10 @@ def parse(message: str) -> dict | None:
         found = _SEPARATOR.search(message, pos=SEND_START.search(message).end())
         if found:
             head, what = message[:found.start()], message[found.end():].strip()
+        else:
+            purpose = _INTENT.search(message, pos=SEND_START.search(message).end())
+            if purpose:                       # "écris à Fares pour lui rappeler la séance": what it is for, written by Yasmine
+                head, what = message[:purpose.start()], message[purpose.end():].strip()
     ways = [way for way, pattern in _CHANNEL.items() if re.search(pattern, head, re.I)]
     who = SEND_START.sub("", head, count=1)
     who = re.sub(r"(?i)\b(un|une|a|an|le|la|the|par|by|on|sur|via|en)\b", " ", who)
@@ -164,6 +171,10 @@ def resolve(db: Session, who: str) -> tuple[list[dict], list[str], list[tuple[st
     rest = _PHONE.sub(" ", rest)
     people = _people(db)
     for part in re.split(r"\s*(?:,|\bet\b|\band\b|&)\s*", rest, flags=re.I):
+        members = _class_members(db, part)
+        if members is not None:
+            found.extend(members)               # "la classe MD1": every candidate of that class
+            continue
         words = [word for word in _plain(part).split() if len(word) >= 3]
         if not words:
             continue
@@ -178,8 +189,38 @@ def resolve(db: Session, who: str) -> tuple[list[dict], list[str], list[tuple[st
     return found, unknown, several
 
 
+_CLASS_WORDS = {"la", "le", "les", "l", "classe", "class", "the", "candidats", "candidates", "de", "du", "des", "of", "all", "tous", "toute", "groupe", "group"}
+
+
+def _class_members(db: Session, part: str) -> list[dict] | None:
+    """Every candidate of the class the words name ("la classe MD1", "MD1"), or None when they name no class."""
+    from app.models import ClassGroup
+    from app.services.enrollment_service import class_members
+
+    words = [word for word in _plain(part).split() if word not in _CLASS_WORDS]
+    if not words:
+        return None
+    wanted = " ".join(words)
+    group = next((row for row in db.query(ClassGroup).all() if " ".join(_plain(row.name).split()) == wanted), None)
+    if group is None:
+        return None
+    found = []
+    for registration in class_members(db, group.id):
+        person = registration.candidate
+        if person is not None:
+            found.append({"kind": "candidate", "id": person.id, "name": person.full_name or person.email or "", "email": person.email,
+                          "phone": person.phone, "row": person})
+    return found
+
+
 def _ask(text: str, fr: bool, links=None) -> dict:
     return {"reply": text, "links": links or [], "source": "action", "sources": [{"label": "The application's people (candidates, professors, team)"}]}
+
+
+def _source(reworded: dict | None) -> str:
+    if not reworded:
+        return "Your own words"
+    return "Written by Yasmine from your words (figures checked)" if reworded.get("by") == "cloud" else "Reworded by the inbox's rewording (figures checked)"
 
 
 def _why_waiting(way: str) -> str:
@@ -321,8 +362,13 @@ def handle(db: Session, message: str, fr: bool, *, author: str = "Admin", allowe
     reworded = None
     if not parsed["as_is"]:
         first = people[0]["name"].split()[0].capitalize() if len(people) == 1 and people[0]["kind"] not in ("address", "number") else ""
-        reworded = (reword_from_tunisian(text, first) if tunisian else
-                    reply_writer.reformulate(text, first_name=first, language="en" if parsed["english"] else "fr"))
+        from app.services import reminder_writer
+
+        # Yasmine writes it herself from the words (the cloud writer, figures checked); without it, the inbox's rewording.
+        reworded = reminder_writer.reword(text, first, "en" if parsed["english"] else "fr")
+        if reworded is None:
+            reworded = (reword_from_tunisian(text, first) if tunisian else
+                        reply_writer.reformulate(text, first_name=first, language="en" if parsed["english"] else "fr"))
         if reworded is None:
             return _ask((f"Je n'ai pas pu reformuler (l'assistant ne répond pas en ce moment) : rien n'est parti. Pour envoyer vos mots tels quels, "
                          f"ajoutez « tel quel ».\n\nVos mots : {text}") if fr else
@@ -339,7 +385,7 @@ def handle(db: Session, message: str, fr: bool, *, author: str = "Admin", allowe
         links = [{"label": f"Write to {item['name'].split()[0]}", "url": f"/inbox/compose?candidate={item['id']}"} for item in people if item["kind"] == "candidate"][:3]
         return {"reply": ((f"« Envoyer tout de suite » est désactivé : rien n'est parti. Voici le texte pour {names} :\n\n{text}" if fr else
                            f"“Send at once” is off: nothing was sent. Here is the text for {names}:\n\n{text}")),
-                "links": links, "source": "action", "sources": [{"label": "Reworded by the inbox's rewording (figures checked)" if reworded else "Your own words"}]}
+                "links": links, "source": "action", "sources": [{"label": _source(reworded)}]}
     lines, links = [], []
     sent_any = False
     for person in people:
@@ -364,5 +410,5 @@ def handle(db: Session, message: str, fr: bool, *, author: str = "Admin", allowe
     head = ("Voici ce qui s'est passé :" if fr else "Here is what happened:") if sent_any or lines else ""
     return {"reply": f"{head}\n" + "\n".join(lines) + ("\n\n" + ("Le texte envoyé :\n" if fr else "The text sent:\n") + text),
             "links": links[:5], "source": "action",
-            "sources": [{"label": "Reworded by the inbox's rewording (figures checked)" if reworded else "Your own words"},
+            "sources": [{"label": _source(reworded)},
                         {"label": "The way chosen above the inbox" if not parsed["ways"] else "The way you asked", "url": "/inbox#ways"}]}

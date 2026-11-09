@@ -20,6 +20,21 @@ from sqlalchemy.orm import Session
 
 # The social parts of a message, in the order they are looked for. A greeting counts only at the start.
 _PATTERNS = {
+    # Playing: a joke asked, boredom, teasing, "are you a robot?", "I love you". Looked for first: they lead the answer.
+    "joke": re.compile(
+        r"\b(racont\w*[- ]moi (?:une |des )?blagues?|(?:une|des|ta|une autre) blagues?|blagues?|fais[- ]moi rire|tell me (?:a|another) joke|"
+        r"(?:a|another|one more) joke|jokes?|make me laugh|something funny|a3tini nokta|9olli nokta|o7kili nokta|nokta|n9at|dha7akni|da7akni)\b"
+        r"|(?:احكي لي|احكيلي|قل لي|قولي)?\s*نكتة|نكته|نكت|ضحكني|ضحّكني", re.IGNORECASE),
+    "bored": re.compile(r"\b(je m['’ ]?ennuie|on s['’ ]?ennuie|i'?m bored|i am bored|so bored|dhja3t|dhje3t|9alla9t|mallit)\b|زهقت|مليت|ملّيت", re.IGNORECASE),
+    "tease": re.compile(
+        r"\b(tu es (?:nulle?|b[êe]te|idiote?|trop lente?)|t['’]es (?:nulle?|b[êe]te|trop lente?)|tu sers [àa] rien|tu (?:ne )?comprends rien|"
+        r"you'?re (?:useless|stupid|dumb|so slow)|you are (?:useless|stupid|dumb|so slow)|you suck|enti mahboula|enti bhima|ma tefhem chay)\b"
+        r"|غبية|ما تفهم شي", re.IGNORECASE),
+    "robot": re.compile(
+        r"\b(tu es (?:un |une )?(?:robot|humaine?|vraie?|machine|une ia|une vraie personne)|t['’]es (?:un |une )?(?:robot|humaine?|machine)|"
+        r"es[- ]tu (?:un |une )?(?:robot|humaine?|vraie?|machine)|are you (?:a |an )?(?:robot|human|bot|real|machine|ai|real person)|"
+        r"enti (?:robot|insen|bnadem|machine))\b|انت روبوت|إنتي روبوت|هل أنت إنسان|انتي روبوت", re.IGNORECASE),
+    "love": re.compile(r"\b(je t['’ ]?(?:aime|adore)|i love you|love you|n7ebek|nhebek|n7abek|nheb fik|n7eb fik)\b|نحبك|أحبك|احبك", re.IGNORECASE),
     "greeting": re.compile(
         r"^\W*(bonjour|bonsoir|salut|coucou|hello|hi|hey|good (?:morning|afternoon|evening)|aslema|ahla|ahlan|marhba|marhaba|"
         r"sba7 el khir|saba7 el khir|mse el khir|salam|slm|السلام عليكم|سلام|مرحبا|اهلا|أهلا|صباح الخير|مساء الخير)\b[\s,!.]*", re.IGNORECASE),
@@ -53,13 +68,14 @@ _PATTERNS = {
         r"tsba7 3la khir|ciao)\b|مع السلامة|تصبح على خير|بالسلامة", re.IGNORECASE),
     "laugh": re.compile(r"\b(ha(?:ha)+|hi(?:hi)+|lol|mdr|ptdr)\b|😂|🤣|😄|😆", re.IGNORECASE),
 }
-# An order to send or write: its words are the message's, never small talk.
+_PLAY = ("joke", "bored", "tease", "robot", "love")
+# An order to send or write: its words are the message's, never small talk ("tell me a joke" is still a joke).
 _ORDER = re.compile(r"\b(envoie|envoyer|envoyez|écris|ecris|écrivez|send|write|dis[- ]lui|dis à|dis a|tell|ab3ath|ekteb|rappelle|répond|reponds|reply)\b",
                     re.IGNORECASE)
 # Words that tell the language of a short social message (the general reader needs longer sentences).
 _FRENCH = re.compile(r"\b(salut|bonjour|bonsoir|coucou|merci|bonne|ça|ca|tu|vous|toi|comment|désolée?|desolee?|je|suis|qui|es|revoir|demain|bravo|très|tres|bien|contente?|géniale?)\b", re.IGNORECASE)
 _ENGLISH = re.compile(r"\b(hello|hi|hey|how|thanks|thank|you|good|night|morning|evening|bye|sorry|who|are|i'?m|great|fine)\b", re.IGNORECASE)
-_TUNISIAN = re.compile(r"\b(aslema|ahla|labes|labess|chnowa|chniya|a7welek|chna7welek|y3aychek|beslema|bislema|ena|enti|behi|barcha|sba7|mse|tsba7|ta3ban\w*|far7an\w*|sama7ni|chkoun|kifek|khallas)\b", re.IGNORECASE)
+_TUNISIAN = re.compile(r"\b(aslema|ahla|labes|labess|chnowa|chniya|a7welek|chna7welek|y3aychek|beslema|bislema|ena|enti|behi|barcha|sba7|mse|tsba7|ta3ban\w*|far7an\w*|sama7ni|chkoun|kifek|khallas|a3tini|nokta|n9at|9olli|o7kili|dha7akni|da7akni|mallit|dhja3t)\b", re.IGNORECASE)
 _ARABIC = re.compile("[؀-ۿ]")
 # Words around a social part that do not make a question by themselves ("je suis fatiguée aujourd'hui").
 _AROUND = {"aujourd", "hui", "aujourd'hui", "today", "ce", "soir", "matin", "un", "peu", "vraiment", "trop", "beaucoup", "bit",
@@ -79,7 +95,8 @@ def read(text: str, name: str | None = None) -> dict:
     text = (text or "").strip()
     found = {"kinds": [], "question": text, "only": False, "formal": bool(re.search(r"\bvous\b|allez-vous", text, re.IGNORECASE)),
              "lang": language_of(text) if text else "fr", "text": text}
-    if not text or _ORDER.search(text) or len(text) > 400:
+    playing = any(_PATTERNS[kind].search(text) for kind in _PLAY)
+    if not text or (_ORDER.search(text) and not playing) or len(text) > 400:
         return found
     rest = text
     for kind, pattern in _PATTERNS.items():
@@ -98,6 +115,8 @@ def read(text: str, name: str | None = None) -> dict:
     # A question is left when it asks (a question mark and a word) or says enough (two words that are not filler).
     asks = bool(meaningful) and bool(re.search(r"[?؟]", rest))
     question = rest.strip(" ,;:!.-") if (asks or len(meaningful) >= 2) else ""
+    if "joke" in found["kinds"] or "bored" in found["kinds"]:
+        question = ""                               # "une blague sur Python": the joke is the answer (its subject picks it)
     found.update(question=question, only=not question)
     return found
 
@@ -128,6 +147,16 @@ _SAY = {
         "goodbye_night": ["Bonne nuit{, name}, {repose-toi|reposez-vous} bien 🌙"],
         "goodbye": ["À bientôt{, name} ! Bonne {day} 👋", "À tout à l'heure{, name} ! 👋"],
         "laugh": ["😄", "Haha 😄"],
+        "laugh_joke": ["Haha 😄 Je savais qu'elle vous plairait ! Une autre ?", "😄 J'en ai d'autres en réserve, si vous voulez."],
+        "joke": ["{joke}", "Allez, une petite 😄\n\n{joke}", "En voilà une :\n\n{joke}"],
+        "bored": ["Une petite blague pour la pause ? 😄\n\n{joke}"],
+        "tease": ["Aïe 😅 Je fais de mon mieux ! Dites-moi ce qui n'allait pas, et je réessaie.",
+                  "Oups, j'ai raté celle-là 😅 Reformulez-la-moi et je fais mieux."],
+        "robot": ["Je suis faite de code et de bonne humeur 😄 Pas de café pour moi, mais je n'oublie jamais une séance.",
+                  "100 % numérique, 0 % fatigue 🤖 Et toujours là pour {toi|vous} !"],
+        "love": ["Oh 🥰 Moi aussi, j'adore travailler avec {toi|vous} ! On s'occupe de quoi maintenant ?",
+                 "Ça me touche 💛 Allez, on fait équipe : qu'est-ce que je peux faire ?"],
+        "another": "Une autre !",
         "hello": {"morning": "Bonjour", "afternoon": "Bonjour", "evening": "Bonsoir"},
         "assistant": {"female": "assistante", "male": "assistant"},
         "day": {"day": "journée", "evening": "soirée"},
@@ -151,6 +180,15 @@ _SAY = {
         "goodbye_night": ["Good night{, name}, rest well 🌙"],
         "goodbye": ["See you soon{, name}! Have a nice {day} 👋", "Bye{, name}! 👋"],
         "laugh": ["😄", "Haha 😄"],
+        "laugh_joke": ["Haha 😄 I knew you'd like that one! Another?", "😄 I have more where that came from."],
+        "joke": ["{joke}", "Here's a little one 😄\n\n{joke}", "Here you go:\n\n{joke}"],
+        "bored": ["A little joke for the break? 😄\n\n{joke}"],
+        "tease": ["Ouch 😅 I'm doing my best! Tell me what went wrong and I'll try again.",
+                  "Oops, I missed that one 😅 Put it another way and I'll do better."],
+        "robot": ["I'm made of code and good mood 😄 No coffee for me, but I never forget a session.",
+                  "100% digital, 0% tired 🤖 And always here for you!"],
+        "love": ["Aww 🥰 I love working with you too! What shall we do next?", "That's sweet 💛 Let's team up: what can I do?"],
+        "another": "Another one!",
         "hello": {"morning": "Good morning", "afternoon": "Hello", "evening": "Good evening"},
         "assistant": {"female": "assistant", "male": "assistant"},
         "day": {"day": "day", "evening": "evening"},
@@ -172,6 +210,13 @@ _SAY = {
         "goodbye_night": ["ليلة سعيدة{ name} 🌙"],
         "goodbye": ["إلى اللقاء{ name}! 👋", "مع السلامة{ name}! 👋"],
         "laugh": ["😄"],
+        "laugh_joke": ["😄 كنت أعرف أنها ستعجبك! أخرى؟"],
+        "joke": ["{joke}", "إليك واحدة 😄\n\n{joke}"],
+        "bored": ["نكتة صغيرة للاستراحة؟ 😄\n\n{joke}"],
+        "tease": ["آه 😅 أبذل قصارى جهدي! قل لي ما الذي لم يكن صحيحا وسأحاول من جديد."],
+        "robot": ["أنا مصنوعة من الشيفرة والمزاج الجيد 😄 لا قهوة لي، لكنني لا أنسى أي حصة."],
+        "love": ["🥰 وأنا أيضا أحب العمل معك! ماذا نفعل الآن؟"],
+        "another": "واحدة أخرى!",
         "hello": {"morning": "صباح الخير", "afternoon": "أهلًا", "evening": "مساء الخير"},
         "assistant": {"female": "مساعدتك", "male": "مساعدك"},
         "day": {"day": "", "evening": ""},
@@ -194,6 +239,13 @@ _SAY = {
         "goodbye_night": ["Tsba7 3la khir{ name} 🌙"],
         "goodbye": ["Beslema{ name}! 👋", "Netla9aw 9rib{ name}! 👋"],
         "laugh": ["😄"],
+        "laugh_joke": ["Haha 😄 Kont na3ref bech t3ajbek! N9ollek okhra?", "😄 3andi barcha okhrin."],
+        "joke": ["{joke}", "Hak wa7da 😄\n\n{joke}"],
+        "bored": ["Nokta sghira lel pause? 😄\n\n{joke}"],
+        "tease": ["Aïe 😅 Na3mel elli najjem! 9olli chnowa ma mchech w n3awed.", "Oups, ghlott fi hedhi 😅 3awedhali b klem ekhor w na3mel khir."],
+        "robot": ["Ena m3amla b code w bel kef 😄 Ma nochrobch 9ahwa, ama 3omri ma nensa séance.", "100 % numérique, 0 % ta3ab 🤖 W dima hna lik!"],
+        "love": ["🥰 W ena zeda n7eb nekhdem m3ak! Chnowa na3mlou tawa?", "Ferr7tni 💛 Yalla équipe: chnowa najjem na3mel?"],
+        "another": "Wa7da okhra!",
         "hello": {"morning": "Sba7 el khir", "afternoon": "Aslema", "evening": "Mse el khir"},
         "assistant": {"female": "assistante", "male": "assistant"},
         "day": {"day": "", "evening": ""},
@@ -203,7 +255,80 @@ _SAY = {
     },
 }
 # The kind that leads the answer when a message has several (a greeting and "how are you": she answers how she is).
-_LEAD = ("who_are_you", "feeling_bad", "how_are_you", "me_too", "im_fine", "goodbye", "feeling_good", "compliment", "thanks", "sorry", "greeting", "laugh")
+_LEAD = ("joke", "bored", "tease", "robot", "love", "who_are_you", "feeling_bad", "how_are_you", "me_too", "im_fine", "goodbye", "feeling_good", "compliment", "thanks", "sorry", "greeting", "laugh")
+
+
+# Jokes about the centre's days: written here, about training, code and the office, never about a person.
+JOKES = {
+    "fr": [
+        "Un candidat m'a demandé si le cours de Python mordait. Je lui ai répondu : seulement si tu oublies l'indentation 🐍",
+        "Pourquoi le CSS est toujours stressé ? Parce que personne n'arrive jamais vraiment à le centrer 🎯",
+        "Un formateur DevOps ne dit pas « bonne nuit ». Il dit : « déploiement réussi, on reprend demain » 🚀",
+        "J'ai voulu apprendre la cybersécurité, mais mon mot de passe m'a demandé de me présenter d'abord 🔐",
+        "La data science, c'est l'art de dire « ça dépend »… avec un très joli graphique 📊",
+        "Un bug entre dans une classe. Le formateur lui dit : « Asseyez-vous, on va vous corriger » 🐞",
+        "Je ne dors jamais : je fais juste une pause de 0,2 seconde entre deux emails ☕",
+        "Mon chiffre préféré ? Le nombre de candidats qui paient à temps. Il est petit, mais je l'aime beaucoup 😄",
+        "En cours de JavaScript, toutes les promesses ont été tenues… un peu plus tard que prévu ⏳",
+        "Le Wi-Fi de la salle et moi, on a un point commun : on fonctionne mieux quand personne ne nous regarde 📶",
+    ],
+    "en": [
+        "A candidate asked me if the Python course bites. I said: only if you forget the indentation 🐍",
+        "Why is CSS always stressed? Nobody ever manages to really centre it 🎯",
+        "A DevOps trainer never says “good night”. They say: “deployment successful, see you tomorrow” 🚀",
+        "I tried to learn cybersecurity, but my password asked me to introduce myself first 🔐",
+        "Data science is the art of saying “it depends”… with a very pretty chart 📊",
+        "A bug walks into a class. The trainer says: “Take a seat, we'll fix you” 🐞",
+        "I never sleep: I just take a 0.2-second break between two emails ☕",
+        "My favourite number? Candidates who pay on time. It's small, but I love it 😄",
+        "In the JavaScript class, every promise was kept… a little later than planned ⏳",
+        "The classroom Wi-Fi and I have one thing in common: we work best when nobody is watching 📶",
+    ],
+    "ar": [
+        "سألني مترشح: هل تعضّ دورة بايثون؟ قلت له: فقط إذا نسيت المسافات البادئة 🐍",
+        "لماذا الـCSS متوتر دائما؟ لأن لا أحد ينجح حقا في وضعه في المنتصف 🎯",
+        "مدرّب DevOps لا يقول «تصبح على خير»، بل يقول: «تم النشر بنجاح، نكمل غدا» 🚀",
+        "علم البيانات هو فنّ أن تقول «حسب الحالة»… برسم بياني جميل جدا 📊",
+        "دخلت حشرة برمجية إلى القسم، فقال لها المدرّب: «تفضّلي بالجلوس، سنصلحك» 🐞",
+        "أنا لا أنام أبدا: أرتاح فقط 0.2 ثانية بين رسالتين ☕",
+    ],
+    "tn": [
+        "Wa7ed candidat sa2alni: el cours mta3 Python y3odh? 9otlou: ken nsit l'indentation barka 🐍",
+        "3lech el CSS dima mstressi? 5ater 7ad ma ycentrih mriguel 🎯",
+        "Formateur DevOps ma y9oulch « tesba7 3la khir ». Y9oul: « déploiement réussi, ghodwa nkamlou » 🚀",
+        "7abit net3allem cybersécurité, ama el mot de passe 9alli: arrafni bik 9bal 🔐",
+        "El data science: t9oul « ça dépend »… ama b graphique mezyen barcha 📊",
+        "Bug dkhal lel classe, el formateur 9allou: « o93od, taw nsal7ouk » 🐞",
+        "Ena 3omri ma nor9od: nertee7 0,2 seconde bin email w email ☕",
+    ],
+}
+ANOTHER = re.compile(r"^\W*(?:(?:une|encore une) autre|encore(?: une)?|une de plus|another(?: one)?|one more|again|zid(?: wa7da)?|wa7da okhra|o5ra|okhra|"
+                     r"أخرى|واحدة أخرى|زيد)\W*(?:!|\?|stp|svp|please|blague|joke|nokta)?\W*$", re.IGNORECASE)
+
+
+def _told(history: list[dict] | None) -> list[str]:
+    """The jokes she told in this conversation, so she tells another."""
+    said = " ".join(item.get("content") or "" for item in (history or [])[-30:] if item.get("role") == "assistant")
+    return [joke for jokes in JOKES.values() for joke in jokes if joke in said]
+
+
+def another_joke(message: str, history: list[dict] | None) -> bool:
+    """"Une autre !" right after a joke: another joke."""
+    if not ANOTHER.match(message or ""):
+        return False
+    last = next((item.get("content") or "" for item in reversed(history or []) if item.get("role") == "assistant"), "")
+    return any(joke in last for jokes in JOKES.values() for joke in jokes)
+
+
+def _joke(lang: str, text: str, history: list[dict] | None, rng) -> str:
+    """A joke not told yet in this conversation; one about the subject named, when there is one ("une blague sur Python")."""
+    told = set(_told(history))
+    jokes = [joke for joke in JOKES[lang] if joke not in told] or JOKES[lang]
+    words = {word for word in re.findall(r"[^\W\d_]{4,}", (text or "").lower())} - {"blague", "joke", "nokta", "raconte", "tell"}
+    about = [joke for joke in JOKES[lang] if words & set(re.findall(r"[^\W\d_]{4,}", joke.lower()))]
+    if about:
+        return rng.choice([joke for joke in about if joke not in told] or about)     # the subject asked wins, told or not
+    return rng.choice(jokes[:3])
 
 
 def language_of(text: str) -> str:
@@ -259,11 +384,19 @@ def _waiting(db: Session, user, lang: str, now) -> str | None:
     return lines[0]["text"] if lines else None
 
 
-def answer(db: Session, social: dict, *, user=None, lang: str | None = None) -> dict:
+def answer(db: Session, social: dict, *, user=None, lang: str | None = None, history: list[dict] | None = None) -> dict:
     """Her answer to a message that is only small talk."""
     lang = lang if lang in _SAY else (social.get("lang") if social.get("lang") in _SAY else "fr")
     words, context = _SAY[lang], _context(db, user, lang)
     kind = next((kind for kind in _LEAD if kind in social["kinds"]), "greeting")
+    if kind in ("joke", "bored"):
+        import time
+
+        rng = random.Random(f"{social.get('text')}|{time.time()}")       # a joke asked again is another joke
+        said = rng.choice(words[kind]).replace("{joke}", _joke(lang, social.get("text") or "", history, rng))
+        return {"reply": said, "links": [], "source": "talk", "sources": [], "resources": [], "language": lang, "options": [words["another"]]}
+    if kind == "laugh" and _told(history[-2:] if history else None):
+        kind = "laugh_joke"
     if kind == "goodbye" and re.search(r"nuit|night|tsba7|تصبح", social.get("text") or "", re.IGNORECASE):
         kind = "goodbye_night"
     rng = random.Random(f"{social.get('text')}|{context['now']:%Y-%m-%d}")       # varies, but the same words get the same answer today
@@ -271,6 +404,8 @@ def answer(db: Session, social: dict, *, user=None, lang: str | None = None) -> 
                  hello=context["hello"], assistant=context["assistant"], day=context["day"])
     if "greeting" in social["kinds"] and kind not in ("greeting", "goodbye", "goodbye_night"):
         said = context["hello"] + (" ! " if lang == "fr" else "! ") + said         # "Bonjour ! Je vais très bien…"
+    if kind == "laugh_joke":
+        return {"reply": said, "links": [], "source": "talk", "sources": [], "resources": [], "language": lang, "options": [words["another"]]}
     if kind in ("how_are_you", "greeting", "feeling_bad", "im_fine", "me_too"):
         line = _waiting(db, user, lang, context["now"])
         if line:

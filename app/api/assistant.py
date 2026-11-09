@@ -106,14 +106,14 @@ def chat_with_assistant(payload: AssistantMessage, request: Request, db: Session
     # application's own data, its guides and what it knows (see chatbot); the language model is only its last resort.
     from app.services import auth, orchestrator
 
+    from app.services import conversation
+
     page = payload.path if payload.path and payload.path.startswith("/") and not payload.path.startswith("//") else None
-    found = orchestrator.dispatch_chat(db, message, payload.history, user=auth.current(request), lang=payload.lang, path=(page or "")[:200] or None)
-    return {"reply": found["reply"], "links": found.get("links") or [], "source": found.get("source"),
-            "sources": found.get("sources") or [], "resources": found.get("resources") or [],
-            "suggestions": found.get("suggestions") or [], "context": context, "recommendations": recommendations,
-            "schema": found.get("schema"), "agent": found.get("agent"), "category": found.get("category"),
-            "consulted": found.get("consulted") or [], "understood": found.get("understood") or [], "path": found.get("path") or [],
-            "short": found.get("short"), "picture": found.get("picture")}
+    user = auth.current(request)
+    found = orchestrator.dispatch_chat(db, message, payload.history, user=user, lang=payload.lang, path=(page or "")[:200] or None)
+    # Kept, so the conversation goes on from page to page and from one day to the next.
+    conversation.save(db, user, message, found, page)
+    return {**conversation.response(found), "context": context, "recommendations": recommendations}
 
 
 @router.post("/auto-send")

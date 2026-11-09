@@ -119,7 +119,11 @@ check("a time already past is refused", "already past" in where(admin.post("/rem
 before = len(sent)
 answer = admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "Tout de suite", "body": "Bonjour {first_name}", "when": "now"})
 check("“now” goes at the next pass, within a minute", "within a minute" in where(answer) and len(sent) == before)
+from app.services import letters
+_letters = letters.send_due
+letters.send_due = lambda *a, **k: 0        # the Monday letter is its own suite's (test_follow_up): this check runs any day
 jobs.reminders_tick()
+letters.send_due = _letters
 check("the job sends what is due and nothing else", len(sent) == before + 1 and sent[-1]["to_email"] == "omar.rm@test.local" and db.query(AdminReminder).filter(AdminReminder.subject == "Une date à retenir").first().status == "scheduled")
 answer = admin.post(f"/reminders/{made.id}/cancel")
 check("cancelling from the page sends nothing", "Nothing more is sent" in where(answer) and len(sent) == before + 1)

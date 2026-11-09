@@ -30,8 +30,12 @@ _TUNISIAN = ("Tunisian is often written in Latin letters with digits for some so
 
 READ = {
     "admin": ("You help the admin of 9antra, a training centre in Tunisia (programs, classes, sessions, professors, candidates, payments, "
-              "emails). Read the admin's message and call the lookups that hold the facts needed to answer it: call every one that "
-              "may help, several at once if useful. Never answer from memory. If the message is only small talk, call none. "
+              "emails, the job market, the journal). Read the admin's message and call the lookups that hold the facts needed to answer "
+              "it: call every one that may help, several at once if useful. Never answer from memory. If the message is only small "
+              "talk, call none. If it is too vague to know what to look up (\"how many?\" with no subject, several possible meanings), "
+              "call only ask_back. Use web_search only for what the application cannot know (the job market in Tunisia, salaries, a "
+              "technology, news outside the journal), never with a person's name. Earlier turns of the conversation say what a short "
+              "message refers to (\"and last month?\", \"the second one\"). "
               "Messages may be in French, English, Arabic or Tunisian. " + _TUNISIAN),
     "candidate": ("You help 9antra, a training centre in Tunisia, answer a message from one of its registered candidates. Read it and "
                   "call the lookups that hold the facts needed to answer it (several at once if useful); the lookups see only this "
@@ -49,7 +53,12 @@ WRITE = {
               "- FACTS are written in English: put their words in the language of the answer, keeping names and figures as they are.\n"
               "- Complete, natural sentences, like a helpful colleague (\"You have 4 candidates; none registered this week.\").\n"
               "- When FACTS say something only for one program, class or person, say it for that one by name; do not make it general.\n"
-              "- Short and direct: the answer first, then at most a short list (up to 8 lines). No greeting.\n"
+              "- Answer exactly what was asked: every part of it, and nothing it did not ask (no extra figures, lists, advice or "
+              "offers to help). The answer first; a short list (up to 8 lines) only when a list is asked. No greeting.\n"
+              "- FACTS from web_search come from the internet, not the centre's records: say so (\"on the web, …\") and keep them apart "
+              "from the centre's figures.\n"
+              "- If FACTS show several possible matches for what was asked (two candidates with that name, several classes) and you "
+              "cannot tell which, put a short question in `clarify` with the options (copied from FACTS), and make `reply` that question.\n"
               "- For each thing asked, give `answered` and `evidence`: the exact words of FACTS that answer it (copied, short)."),
     "candidate": ("Write the reply to the candidate using ONLY the FACTS given. Rules:\n"
                   "- Write in the language of the candidate's message: French, English, Modern Standard Arabic, or Tunisian in Latin "
@@ -87,6 +96,10 @@ SCHEMA = {
     },
     "required": ["language", "route", "sensitive", "asks", "reply"],
 }
+
+
+SCHEMA_ADMIN = {**SCHEMA, "properties": {**SCHEMA["properties"], "clarify": {"type": "OBJECT", "properties": {
+    "question": {"type": "STRING"}, "options": {"type": "ARRAY", "items": {"type": "STRING"}}}}}}
 
 
 def _plain(text: str) -> str:
@@ -155,6 +168,7 @@ def answer(question: str, tools: dict, role: str, *, history: list[dict] | None 
     declarations = [tool.declaration() for tool in tools.values()]
     facts: dict = {}
     used: list[str] = []
+    asked_back = None
     for _ in range(MAX_ROUNDS):
         content = cloud_model.generate(turns, system=READ[role], tools=declarations, models=cloud_model.READING)
         if content is None:
@@ -164,7 +178,12 @@ def answer(question: str, tools: dict, role: str, *, history: list[dict] | None 
             break
         turns.append(content)
         responses = []
+        if all(call.get("name") == "ask_back" for call in calls):
+            asked_back = calls[0].get("args") or {}
+            break                               # too vague to look anything up: the question back is the answer
         for call in calls[:MAX_CALLS - len(used)]:
+            if call.get("name") == "ask_back":
+                continue                        # asked with real lookups: the lookups answer
             tool = tools.get(call.get("name"))
             arguments = call.get("args") or {}
             try:
@@ -180,6 +199,13 @@ def answer(question: str, tools: dict, role: str, *, history: list[dict] | None 
         turns.append({"role": "user", "parts": responses})
         if len(used) >= MAX_CALLS:
             break
+    if asked_back is not None and asked_back.get("question"):
+        # The question back: no figure the message did not say, and short options to tap.
+        options = [str(option).strip()[:80] for option in asked_back.get("options") or [] if str(option).strip()][:4]
+        reply = str(asked_back["question"]).strip()[:300]
+        checked = check(reply + "\n" + "\n".join(options), {}, asked, [])
+        return {"reply": reply, "language": lang or "fr", "route": "answer", "sensitive": "none", "asks": [], "ok": checked["ok"],
+                "unsupported": checked["unsupported"], "covered": False, "facts": {}, "used": ["ask_back"], "options": options, "clarify": True}
     if not facts and role == "admin":
         return None                     # nothing to look up for it: the application's other ways answer
     # (a candidate's message is still read: a thank-you needs no answer, a refund comes to the admin)
@@ -191,14 +217,18 @@ def answer(question: str, tools: dict, role: str, *, history: list[dict] | None 
         lang = seen if seen in ("ar", "tn") else None      # Arabic letters and Tunisian are told apart for sure; French or English the model sees
     chosen = {"fr": "French", "en": "English", "ar": "Arabic",
               "tn": "Tunisian written in Latin letters, the way they wrote (e.g. \"3andek 4 candidats\", \"ma khallsouch\")"}.get(lang or "")
-    prompt = (f"Today is {today}.\n\nFACTS (what the application's records say):\n{json.dumps(facts, ensure_ascii=False, default=str, indent=1)}"
+    prompt = (f"Today is {today}.\n\nFACTS (what the application's records say; web_search results come from the internet):\n{json.dumps(facts, ensure_ascii=False, default=str, indent=1)}"
               f"\n\n{written_for.capitalize()} message:\n{asked}" + (f"\n\nWrite the answer in {chosen}." if chosen else ""))
-    content = cloud_model.generate([{"role": "user", "parts": [{"text": prompt}]}], system=WRITE[role], schema=SCHEMA, temperature=0.3)
+    content = cloud_model.generate([{"role": "user", "parts": [{"text": prompt}]}], system=WRITE[role],
+                                   schema=SCHEMA_ADMIN if role == "admin" else SCHEMA, temperature=0.3)
     found = cloud_model.json_of(content)
     if not found or not isinstance(found.get("reply"), str):
         return None
-    checked = check(found["reply"], facts, asked, found.get("asks") or [])
+    clarify = found.get("clarify") if role == "admin" and isinstance(found.get("clarify"), dict) else {}
+    options = [str(option).strip()[:80] for option in clarify.get("options") or [] if str(option).strip()][:4] if clarify.get("question") else []
+    checked = check(found["reply"] + ("\n" + "\n".join(options) if options else ""), facts, asked, found.get("asks") or [])
     asks = checked["asks"]
     return {"reply": found["reply"].strip(), "language": found.get("language") or "fr", "route": found.get("route") or "answer",
             "sensitive": found.get("sensitive") or "none", "asks": asks, "ok": checked["ok"], "unsupported": checked["unsupported"],
-            "covered": bool(asks) and all(item["verified"] for item in asks), "facts": facts, "used": used}
+            "covered": bool(asks) and all(item["verified"] for item in asks), "facts": facts, "used": used,
+            "options": options, "clarify": bool(options)}

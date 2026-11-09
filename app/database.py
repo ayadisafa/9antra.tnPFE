@@ -332,6 +332,7 @@ def ensure_sqlite_compatibility():
             "resource_reminder_text": "TEXT",
             "registration_form_url": "VARCHAR",
             "next_class_gap_days": "INTEGER DEFAULT 10",
+            "replacement_fallback": "VARCHAR DEFAULT 'ask'",
             "session_check_on": "BOOLEAN DEFAULT 1",
             "session_check_hours": "INTEGER DEFAULT 24",
             "weekly_every": "INTEGER DEFAULT 1",
@@ -377,7 +378,7 @@ def ensure_sqlite_compatibility():
         },
         "admin_reminders": {"channel": "VARCHAR DEFAULT 'email'", "repeat": "VARCHAR DEFAULT 'once'", "until": "DATETIME",
                             "times": "INTEGER DEFAULT 0", "done_keys": "TEXT",
-                            "design": "TEXT"},
+                            "design": "TEXT", "hours_before": "INTEGER"},       # before each session: how many hours before
 
         "candidate_emails": {
             "emotions": "TEXT",
@@ -464,8 +465,6 @@ def ensure_sqlite_compatibility():
         },
         # The journal's articles: their photo, as their feed gives it.
         "news_items": {"image_url": "VARCHAR"},
-        # The admin's reminders: before each session, how many hours before.
-        "admin_reminders": {"hours_before": "INTEGER"},
     }
 
     with engine.begin() as connection:

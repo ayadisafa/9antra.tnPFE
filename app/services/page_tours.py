@@ -349,6 +349,27 @@ TOURS: dict[str, dict] = {
               ["Add the course of the week", "Mark who was there"]),
         *FRAME,
     ),
+    "/professors": _tour(
+        "professors", "Professors", "Every professor, each with their own space: classes, what candidates think, messages and what waits for them.",
+        _step("#pf-stats", "bi-bar-chart", "The figures", "How many professors, how many teach now, and what waits for them (the urgent first)."),
+        _step("#pf-list", "bi-person-video3", "Every professor", "Their classes, candidates, presence, stars and the first things that wait. Open one for their whole space.",
+              ["Open a professor's space"]),
+        *FRAME,
+    ),
+    "/teacher/space": _tour(
+        "teacher-space", "My space", "Everything about you in one place: your classes, what candidates think, your messages and what waits for you.",
+        _step("#ps-stats", "bi-bar-chart", "Their figures", "Classes, candidates, presence, stars from candidates, questions answered and how fast."),
+        _step("#problems", "bi-exclamation-triangle", "What waits", "An absence without a replacement, presence sheets not filled, questions waiting, a meeting link missing, low reviews: each one opens the place to solve it.",
+              ["Open the place to solve it"]),
+        _step(".ui-tabs", "bi-segmented-nav", "Their space, in tabs", "Classes, next sessions, what candidates think, messages, absences."),
+        _step("#classes", "bi-easel2", "Classes", "Each class with its hours, candidates and presence; write to every candidate of a class (and let Yasmine write it from a topic).",
+              ["Write to the class", "Write it for me"], click='.ui-tab[data-tab="classes"]'),
+        _step("#feedback", "bi-star-half", "What candidates think", "The stars and the words about the professor, from the reviews at the end of each program.",
+              click='.ui-tab[data-tab="feedback"]'),
+        _step("#absences", "bi-calendar-x", "Absences", "A day away: each session that day looks for a replacement; if nobody can, another day or a week later.",
+              ["Note an absence"], click='.ui-tab[data-tab="absences"]'),
+        finish='.ui-tab[data-tab="classes"]',
+    ),
     "/teacher/profile": _tour(
         "teacher-profile", "Your profile", "How the centre and the candidates see you.",
         _step(".tp-card", "bi-person-badge", "Your card", "Your name, specialities and how to reach you.", [], ["Your phone and email"]),
@@ -356,6 +377,20 @@ TOURS: dict[str, dict] = {
 }
 
 _PATTERNS: list[tuple[re.Pattern, dict]] = [
+    (re.compile(r"^/professors/[^/]+$"), _tour(
+        "professor-space", "A professor's space", "Everything about one professor: their classes, what candidates think of them, the messages and what waits for them.",
+        _step("#ps-stats", "bi-bar-chart", "Their figures", "Classes, candidates, presence, stars from candidates, questions answered and how fast."),
+        _step("#problems", "bi-exclamation-triangle", "What waits", "An absence without a replacement, presence sheets not filled, questions waiting, a meeting link missing, low reviews: each one opens the place to solve it.",
+              ["Open the place to solve it"]),
+        _step(".ui-tabs", "bi-segmented-nav", "Their space, in tabs", "Classes, next sessions, what candidates think, messages, absences."),
+        _step("#classes", "bi-easel2", "Classes", "Each class with its hours, candidates and presence; write to every candidate of a class (and let Yasmine write it from a topic).",
+              ["Write to the class", "Write it for me"], click='.ui-tab[data-tab="classes"]'),
+        _step("#feedback", "bi-star-half", "What candidates think", "The stars and the words about the professor, from the reviews at the end of each program.",
+              click='.ui-tab[data-tab="feedback"]'),
+        _step("#absences", "bi-calendar-x", "Absences", "A day away: each session that day looks for a replacement; if nobody can, another day or a week later.",
+              ["Note an absence"], click='.ui-tab[data-tab="absences"]'),
+        finish='.ui-tab[data-tab="classes"]',
+    )),
     (re.compile(r"^/candidate/[^/]+$"), _tour(
         "candidate", "A candidate's file", "Everything about one person: their programs, payments, learning, behaviour and messages.",
         _step("#live-candidate-hero", "bi-person-vcard", "Who they are", "Name, contact, programs and what is paid.",
@@ -452,7 +487,7 @@ def for_path(path: str) -> dict | None:
 def every() -> list[tuple[str, dict]]:
     """Every tour with an address to show (patterns as a sample address), for the assistant's knowledge."""
     found = list(TOURS.items())
-    samples = {"candidate": "/candidate/…", "payment-reminder": "/candidate/…/payment-reminder", "course": "/classes/…/course",
+    samples = {"professor-space": "/professors/…", "candidate": "/candidate/…", "payment-reminder": "/candidate/…/payment-reminder", "course": "/classes/…/course",
                "presence": "/classes/…/attendance", "class": "/classes/…", "program-pdf": "/programs/…/pdf", "program": "/programs/…",
                "data-row": "/data/…/…", "data-table": "/data/…"}
     found += [(samples.get(tour["key"], tour["key"]), tour) for _, tour in _PATTERNS]

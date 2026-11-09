@@ -13,6 +13,32 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-09", "day": date(2026, 11, 9), "title": "Yasmine goes further, and every professor has their own space",
+        "items": [
+            {"icon": "bi-chat-left-heart", "title": "She remembers, takes you anywhere, and asks when it is unclear",
+             "text": "Your conversation with Yasmine goes on from page to page and from one day to the next (“where were we?”). Ask her "
+                     "to open a page or someone's file and she takes you there; “show me around, by yourself” visits every page. "
+                     "“Prepare an email for Fares: …” opens the email already written. A vague question gets a short question back, "
+                     "with choices to tap.", "url": "/"},
+            {"icon": "bi-images", "title": "Answers drawn as moving cards, only what you asked",
+             "text": "Figures come as tiles that count up, shares as rings, amounts as bars, people as chips, dates on a line, "
+                     "articles and web pages as links: only what the answer says. “What can you do?” shows every ability as a card to "
+                     "try, and what she does not do yet. She also tells jokes, and searches the job market, the journal and the web "
+                     "(never with a person's name).", "url": "/"},
+            {"icon": "bi-person-video3", "title": "Every professor has their own space",
+             "text": "Professors, in the menu: each one's classes, what candidates thought of them, the messages and what waits for "
+                     "them (an absence without a replacement, sheets not filled, questions waiting, a link missing). Professors see "
+                     "their own in “My space”, say when they will be away, and write to their classes.", "url": "/professors"},
+            {"icon": "bi-calendar2-week", "title": "A professor away: another professor, another day, or a week later",
+             "text": "When nobody can replace them, choose on the class page: another professor, another day, or a week later (the "
+                     "sessions after it follow, the candidates are told). Or let it go a week later by itself (Settings, Classes). "
+                     "A candidate whose next class would then start too soon moves to a later one.", "url": "/settings#replacement-fallback"},
+            {"icon": "bi-alarm", "title": "Reminders: several times, and written for you",
+             "text": "One reminder can go at several times. Say what it is about and Yasmine writes it (no date or figure you did not "
+                     "give: those are left for you to fill).", "url": "/reminders#new"},
+        ],
+    },
+    {
         "key": "2026-11-08b", "day": date(2026, 11, 8), "title": "Yasmine and the email assistant understand any question",
         "items": [
             {"icon": "bi-stars", "title": "Any question, in any wording or language",
