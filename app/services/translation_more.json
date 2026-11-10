@@ -343,6 +343,10 @@
 ". Si c'est la même formation sous un autre nom, fusionnez-les plutôt que de compléter les deux",
 ". إذا كان التكوين نفسه باسم آخر، ادمجهما بدلا من إكمال الاثنين"
 ],
+". Inside it": [
+". À l'intérieur",
+". بداخله"
+],
 ". Is the disk connected?": [
 ". Le disque est-il branché ?",
 ". هل القرص موصول؟"
@@ -1095,6 +1099,10 @@
 "Une nouvelle conversation commence ici.",
 "محادثة جديدة تبدأ هنا."
 ],
+"A new link for your iPhone is ready: put it in the shortcut.": [
+"Un nouveau lien pour votre iPhone est prêt : mettez-le dans le raccourci.",
+"رابط جديد لهاتفك iPhone جاهز: ضعه في الاختصار."
+],
 "A new professor": [
 "Un nouveau formateur",
 "مكوّن جديد"
@@ -1359,6 +1367,10 @@
 "Un petit mot personnel fait souvent revenir un candidat.",
 "كلمة شخصية قصيرة غالبا ما تعيد المترشح."
 ],
+"A shortcut on your iPhone sends every SMS waiting, from your own number, and tells the application which went: Settings, SMS.": [
+"Un raccourci sur votre iPhone envoie tous les SMS en attente, depuis votre propre numéro, et dit à l'application lesquels sont partis : Paramètres, SMS.",
+"اختصار على هاتفك iPhone يرسل كل الرسائل القصيرة المنتظرة، من رقمك الخاص، ويخبر التطبيق بما أُرسل: الإعدادات، الرسائل القصيرة."
+],
 "A simpler inbox": [
 "Une boîte de réception plus simple",
 "صندوق رسائل أبسط"
@@ -1414,6 +1426,10 @@
 "A template needs a name, a subject and a message.": [
 "Un modèle a besoin d'un nom, d'un objet et d'un message.",
 "النموذج يحتاج اسما وموضوعا ورسالة."
+],
+"A test was sent: it arrives in a few seconds.": [
+"Un test est parti : il arrive dans quelques secondes.",
+"أُرسل اختبار: يصل خلال ثوان."
 ],
 "A tip that changes with the days left": [
 "Un conseil qui change selon les jours restants",
@@ -2290,6 +2306,10 @@
 "An iPhone does not let an application send SMS by itself. So each SMS (asked to Yasmine, from the inbox, the team chat or a reminder) waits with a button: on your iPhone it opens Messages with the text already written to the right number, and you press Send. The phone buttons call at once. To send SMS with nobody pressing Send, an Android phone with the SMS gateway is needed (Settings, SMS).": [
 "Un iPhone ne laisse pas une application envoyer des SMS toute seule. Chaque SMS (demandé à Yasmine, depuis la boîte de réception, la discussion d'équipe ou un rappel) attend donc avec un bouton : sur votre iPhone, il ouvre Messages avec le texte déjà écrit au bon numéro, et vous appuyez sur Envoyer. Les boutons de téléphone appellent tout de suite. Pour envoyer des SMS sans que personne n'appuie sur Envoyer, il faut un téléphone Android avec la passerelle SMS (Paramètres, SMS).",
 "لا يسمح هاتف iPhone لتطبيق بإرسال الرسائل القصيرة وحده. لذلك تنتظر كل رسالة قصيرة (طُلبت من ياسمين، أو من صندوق الرسائل، أو محادثة الفريق، أو تذكير) مع زر: على هاتفك iPhone يفتح تطبيق الرسائل والنص مكتوب إلى الرقم الصحيح، وتضغط أنت على إرسال. أزرار الهاتف تتصل فورا. ولإرسال الرسائل القصيرة دون أن يضغط أحد على إرسال، يلزم هاتف Android مع بوابة الرسائل القصيرة (الإعدادات، الرسائل القصيرة)."
+],
+"An iPhone never lets an application send SMS by itself, but its": [
+"Un iPhone ne laisse jamais une application envoyer des SMS toute seule, mais son app",
+"لا يسمح هاتف iPhone أبدا لتطبيق بإرسال الرسائل القصيرة وحده، لكن تطبيق"
 ],
 "An information letter": [
 "Une lettre d'information",
@@ -4926,6 +4946,10 @@
 "Copies the whole database and the uploaded files, checks the copy, and keeps two weeks of them.": [
 "Copie toute la base de données et les fichiers importés, vérifie la copie, et en garde deux semaines.",
 "ينسخ كامل قاعدة البيانات والملفات المرفوعة، يراجع النسخة، ويحتفظ بنسخ أسبوعين."
+],
+"Copy": [
+"Copier",
+"نسخ"
 ],
 "Copy the 16 letters": [
 "Copiez les 16 lettres",
@@ -7727,6 +7751,10 @@
 "D'après ce qui est enregistré : absences, questions sans réponse, résultats, sommes dues.",
 "حسب ما سُجّل: الغيابات، والأسئلة دون إجابة، والنتائج، والمبالغ المستحقة."
 ],
+"From your iPhone: one tap sends every SMS waiting": [
+"Depuis votre iPhone : un appui envoie tous les SMS en attente",
+"من هاتفك iPhone: لمسة واحدة ترسل كل الرسائل القصيرة المنتظرة"
+],
 "Front-end web developer": [
 "Développeur web front-end",
 "مطوّر واجهات ويب"
@@ -7754,6 +7782,14 @@
 "General practice, not counted": [
 "Pratique générale, non comptée",
 "ممارسة عامة، غير محسوبة"
+],
+"Get Contents of URL": [
+"Obtenir le contenu de l'URL",
+"الحصول على محتويات URL"
+],
+"Get Dictionary Value": [
+"Obtenir la valeur du dictionnaire",
+"الحصول على قيمة القاموس"
 ],
 "Get a PDF": [
 "Obtenir un PDF",
@@ -8883,6 +8919,10 @@
 "Instagram vit de stories : publiez en story le programme qui commence bientôt.",
 "إنستغرام يعيش على القصص: انشر البرنامج الذي يبدأ قريبا كقصة."
 ],
+"Install": [
+"Installez",
+"ثبّت"
+],
 "Instructions, examples, formats, testing prompts. Practice: improve one prompt in five measured steps.": [
 "Instructions, exemples, formats, tester les prompts. Pratique : améliorer un prompt en cinq étapes mesurées.",
 "التعليمات، الأمثلة، الصيغ، اختبار الأوامر. تطبيق: تحسين أمر في خمس خطوات مقاسة."
@@ -9002,6 +9042,10 @@
 "It could start as a module in": [
 "Cela pourrait commencer comme un module dans",
 "يمكن أن يبدأ كوحدة في"
+],
+"It did not work this time: try again in a moment.": [
+"Ça n'a pas marché cette fois : réessayez dans un instant.",
+"لم ينجح الأمر هذه المرة: أعد المحاولة بعد لحظة."
 ],
 "It does not answer right now: emails wait for you, nothing is written by itself.": [
 "Il ne répond pas pour l'instant : les emails vous attendent, rien n'est écrit tout seul.",
@@ -10083,6 +10127,10 @@
 "Faire une copie maintenant",
 "عمل نسخة الآن"
 ],
+"Make a new link? The shortcut then needs the new one; the old link stops working.": [
+"Créer un nouveau lien ? Le raccourci aura alors besoin du nouveau ; l'ancien lien ne marchera plus.",
+"إنشاء رابط جديد؟ سيحتاج الاختصار عندها إلى الجديد؛ والرابط القديم يتوقف عن العمل."
+],
 "Make a planned post": [
 "Faire une publication prévue",
 "اصنع منشورا مخططا"
@@ -10110,6 +10158,10 @@
 "Make or bring back a copy of the data": [
 "Faire ou restaurer une copie des données",
 "إنجاز نسخة من البيانات أو استرجاعها"
+],
+"Make the shortcut on the iPhone (about 5 minutes": [
+"Créer le raccourci sur l'iPhone (environ 5 minutes",
+"إنشاء الاختصار على هاتف iPhone (حوالي 5 دقائق"
 ],
 "Make the video": [
 "Faire la vidéo",
@@ -10882,6 +10934,10 @@
 "New in the application": [
 "Nouveau dans l'application",
 "جديد في التطبيق"
+],
+"New link": [
+"Nouveau lien",
+"رابط جديد"
 ],
 "New messages from the centre": [
 "Nouveaux messages du centre",
@@ -11755,6 +11811,10 @@
 "Normalement vide : payer donne une classe tout de suite. Une inscription arrive ici quand sa formation n'est pas encore liée, quand la création automatique de classes est désactivée, ou après que vous avez retiré un candidat d'une classe.",
 "فارغ عادة: الدفع يمنح قسما فورا. يصل التسجيل إلى هنا عندما لا يكون برنامجه مرتبطا بعد، أو عندما يكون الإنشاء التلقائي للأقسام معطّلا، أو بعد إخراجك مترشحا من قسم."
 ],
+"Not a phone subscription": [
+"Pas un abonnement de téléphone",
+"ليس اشتراك هاتف"
+],
 "Not asked": [
 "Non demandé",
 "لم يُسأل"
@@ -12011,6 +12071,10 @@
 "Notes enregistrées.",
 "تم حفظ الملاحظات."
 ],
+"Nothing": [
+"Rien",
+"لا شيء"
+],
 "Nothing asked to improve": [
 "Rien à améliorer demandé",
 "لا طلب للتحسين"
@@ -12235,6 +12299,22 @@
 "Notification de type",
 "إشعار من نوع"
 ],
+"Notifications are blocked for this application: allow them in the phone's settings (Notifications).": [
+"Les notifications sont bloquées pour cette application : autorisez-les dans les réglages du téléphone (Notifications).",
+"الإشعارات محظورة لهذا التطبيق: اسمح بها في إعدادات الهاتف (الإشعارات)."
+],
+"Notifications need the secure address. Open the application on this phone from": [
+"Les notifications demandent l'adresse sécurisée. Ouvrez l'application sur ce téléphone depuis",
+"تتطلب الإشعارات العنوان الآمن. افتح التطبيق على هذا الهاتف من"
+],
+"Notifications on your phone": [
+"Notifications sur votre téléphone",
+"الإشعارات على هاتفك"
+],
+"Notifications on your phone, even when it is closed": [
+"Des notifications sur votre téléphone, même application fermée",
+"إشعارات على هاتفك، حتى والتطبيق مغلق"
+],
 "Notifications that close themselves": [
 "Des notifications qui se ferment toutes seules",
 "إشعارات تُغلق وحدها"
@@ -12286,6 +12366,10 @@
 "Off": [
 "Désactivé",
 "معطّل"
+],
+"Off on this device.": [
+"Désactivé sur cet appareil.",
+"متوقف على هذا الجهاز."
 ],
 "Off: I answer": [
 "Désactivé : je réponds",
@@ -12374,6 +12458,10 @@
 "On an Android phone with a SIM, install the free app “SMS Gateway for Android” (sms-gate.app).": [
 "Sur un téléphone Android avec une carte SIM, installez l'application gratuite « SMS Gateway for Android » (sms-gate.app).",
 "على هاتف Android بشريحة SIM، ثبّت التطبيق المجاني «SMS Gateway for Android» (sms-gate.app)."
+],
+"On an iPhone: first add the application to your home screen (Share, then Add to Home Screen), open it from there, then come back here.": [
+"Sur un iPhone : ajoutez d'abord l'application à l'écran d'accueil (Partager, puis Sur l'écran d'accueil), ouvrez-la de là, puis revenez ici.",
+"على هاتف iPhone: أضف التطبيق أولا إلى الشاشة الرئيسية (مشاركة، ثم إضافة إلى الشاشة الرئيسية)، وافتحه من هناك، ثم عد إلى هنا."
 ],
 "On any change": [
 "À chaque changement",
@@ -12482,6 +12570,10 @@
 "On: click to switch it off": [
 "Activé : cliquez pour le désactiver",
 "مفعّل: انقر لإيقافه"
+],
+"On: this device is told.": [
+"Activé : cet appareil est prévenu.",
+"مفعّل: هذا الجهاز يتلقى التنبيهات."
 ],
 "On: what you ask it to send (email, WhatsApp, SMS) goes at once, reworded. Off: it is only prepared.": [
 "Activé : ce que vous lui demandez d'envoyer (email, WhatsApp, SMS) part tout de suite, reformulé. Désactivé : c'est seulement préparé.",
@@ -13019,6 +13111,10 @@
 "L'ouvrir",
 "افتحه"
 ],
+"Open it on a phone where Tailscale is on: the application works like an app, from anywhere, and can send notifications to your phone even when it is closed (turn them on in My account).": [
+"Ouvrez-la sur un téléphone où Tailscale est activé : l'application fonctionne comme une app, de partout, et peut envoyer des notifications à votre téléphone même fermée (activez-les dans Mon compte).",
+"افتحه على هاتف يعمل عليه Tailscale: يعمل التطبيق كتطبيق هاتف، من أي مكان، ويمكنه إرسال الإشعارات إلى هاتفك حتى وهو مغلق (فعّلها في حسابي)."
+],
 "Open it on its own site": [
 "L'ouvrir sur son propre site",
 "افتحه على موقعه"
@@ -13238,6 +13334,10 @@
 "Open “App passwords”, type a name such as 9antra, and press Create.": [
 "Ouvrez « Mots de passe des applications », tapez un nom comme 9antra, puis appuyez sur Créer.",
 "افتح «كلمات مرور التطبيقات»، اكتب اسما مثل 9antra، ثم اضغط إنشاء."
+],
+"Opened from your private secure address (Tailscale) and added to the home screen, the application tells your phone when something needs you, with a picture of what it is about; a tap opens the exact place. Turn it on in My account, and choose per phone: what needs you, everything, or nothing. Professors are told of the centre's messages the same way.": [
+"Ouverte depuis votre adresse sécurisée privée (Tailscale) et ajoutée à l'écran d'accueil, l'application prévient votre téléphone quand quelque chose a besoin de vous, avec une image de ce dont il s'agit ; un appui ouvre l'endroit exact. Activez-la dans Mon compte, et choisissez pour chaque téléphone : ce qui a besoin de vous, tout, ou rien. Les formateurs sont prévenus des messages du centre de la même façon.",
+"عندما يُفتح من عنوانك الآمن الخاص (Tailscale) ويُضاف إلى الشاشة الرئيسية، ينبّه التطبيق هاتفك عندما يحتاجك أمر ما، مع صورة لموضوعه؛ ولمسة تفتح المكان المعني. فعّلها في حسابي، واختر لكل هاتف: ما يحتاجك، أو كل شيء، أو لا شيء. ويتلقى الأساتذة رسائل المركز بالطريقة نفسها."
 ],
 "Opens LinkedIn's own job search for “": [
 "Ouvre la recherche d'emploi de LinkedIn pour «",
@@ -14527,6 +14627,10 @@
 "Remettre le texte d'origine",
 "إرجاع النص الأصلي"
 ],
+"Put the shortcut on your home screen, or in Automation choose a time of day and “Run Immediately”. If your iPhone still asks before sending, that is Apple's rule.": [
+"Mettez le raccourci sur votre écran d'accueil, ou dans Automatisation choisissez une heure de la journée et « Exécuter immédiatement ». Si votre iPhone demande encore avant d'envoyer, c'est la règle d'Apple.",
+"ضع الاختصار على شاشتك الرئيسية، أو في الأتمتة اختر ساعة من اليوم و«التشغيل فورًا». إن بقي هاتفك يسأل قبل الإرسال، فتلك قاعدة Apple."
+],
 "Put this reminder back as it was at first (its words, its design and its timing)?": [
 "Remettre ce rappel comme au début (ses mots, son design et son moment) ?",
 "إرجاع هذا التذكير كما كان في البداية (كلماته وتصميمه وتوقيته)؟"
@@ -15447,6 +15551,10 @@
 "Rouvrir",
 "إعادة الفتح"
 ],
+"Repeat with Each": [
+"Répéter avec chacun",
+"التكرار مع كل"
+],
 "Replace everything listed here in “": [
 "Remplacer tout ce qui est listé ici dans «",
 "استبدال كل ما هو مُدرج هنا في «"
@@ -15734,6 +15842,10 @@
 "SMS from your Android phone": [
 "SMS depuis votre téléphone Android",
 "SMS من هاتفك Android"
+],
+"SMS from your iPhone, one tap for all": [
+"Les SMS depuis votre iPhone, un appui pour tous",
+"الرسائل القصيرة من هاتفك iPhone، لمسة واحدة للجميع"
 ],
 "SMS not delivered": [
 "SMS non livré",
@@ -16310,6 +16422,10 @@
 "Self-paced online courses from the videos already recorded": [
 "Des cours en ligne à son rythme, à partir des vidéos déjà enregistrées",
 "دروس عن بعد حسب الوتيرة الخاصة، من الفيديوهات المسجّلة"
+],
+"Send Message": [
+"Envoyer le message",
+"إرسال رسالة"
 ],
 "Send a message again": [
 "Renvoyer un message",
@@ -17023,6 +17139,10 @@
 "Vidéos courtes",
 "الفيديوهات القصيرة"
 ],
+"Shortcuts": [
+"Raccourcis",
+"الاختصارات"
+],
 "Show": [
 "Afficher",
 "عرض"
@@ -17190,6 +17310,10 @@
 "Simulating a real attacker from first access to objective. Practice: a team exercise on a lab company.": [
 "Simuler un vrai attaquant du premier accès à l'objectif. Pratique : un exercice d'équipe sur une entreprise de labo.",
 "محاكاة مهاجم حقيقي من أول دخول إلى الهدف. تطبيق: تمرين جماعي على مؤسسة مخبرية."
+],
+"Since": [
+"Depuis",
+"منذ"
 ],
 "Since then they also registered for": [
 "Depuis, il s'est aussi inscrit à",
@@ -17511,6 +17635,10 @@
 "Encore dû",
 "ما زال مستحقا"
 ],
+"Still inside": [
+"Toujours à l'intérieur",
+"ما زلت بالداخل"
+],
 "Still missing": [
 "Il manque encore",
 "لا يزال ينقص"
@@ -17766,6 +17894,10 @@
 "Tabs, each with its picture and three steps. When and what to post is now a light help in its own tab, and soft on the dashboard.": [
 "Des onglets, chacun avec son image et trois étapes. Quand et quoi publier est maintenant une aide légère dans son propre onglet, et discrète sur le tableau de bord.",
 "علامات تبويب، لكل منها صورته وثلاث خطوات. متى وماذا تنشر أصبح مساعدة خفيفة في علامتها الخاصة، وهادئة في لوحة القيادة."
+],
+"Tailscale": [
+"Tailscale",
+"Tailscale"
 ],
 "Tailwind / Bootstrap": [
 "Tailwind / Bootstrap",
@@ -18278,6 +18410,10 @@
 "The application is now called": [
 "L'application s'appelle maintenant",
 "أصبح اسم التطبيق"
+],
+"The application on your phone, like an app": [
+"L'application sur votre téléphone, comme une app",
+"التطبيق على هاتفك، كتطبيق هاتف"
 ],
 "The application reads the payments, the emails, the classes and the candidates' answers, and puts the next thing to do at the top, with the reason.": [
 "L'application lit les paiements, les emails, les classes et les réponses des candidats, et met en haut la prochaine chose à faire, avec la raison.",
@@ -20959,6 +21095,10 @@
 "Ce navigateur",
 "هذا المتصفح"
 ],
+"This browser cannot receive notifications.": [
+"Ce navigateur ne peut pas recevoir de notifications.",
+"هذا المتصفح لا يستطيع تلقي الإشعارات."
+],
 "This candidate": [
 "Ce candidat",
 "هذا المترشح"
@@ -21551,6 +21691,10 @@
 "Tokens, embeddings, classification, extraction. Pratique : trier des messages par sujet et mesurer les erreurs.",
 "الرموز، embeddings، التصنيف، الاستخراج. تطبيق: فرز الرسائل حسب الموضوع وقياس الأخطاء."
 ],
+"Told on this phone (or computer) when something needs you, with a picture of what it is about, even when the application is closed. A tap opens the exact place.": [
+"Prévenu sur ce téléphone (ou cet ordinateur) quand quelque chose a besoin de vous, avec une image de ce dont il s'agit, même quand l'application est fermée. Un appui ouvre l'endroit exact.",
+"تصلك تنبيهات على هذا الهاتف (أو الحاسوب) عندما يحتاجك أمر ما، مع صورة لموضوعه، حتى والتطبيق مغلق. لمسة واحدة تفتح المكان المعني."
+],
 "Tone": [
 "Ton",
 "النبرة"
@@ -21719,9 +21863,17 @@
 "Transformer mes mots en réponse complète (les chiffres et les liens sont gardés",
 "حوّل كلماتي إلى إجابة كاملة (تُحفظ الأرقام والروابط"
 ],
+"Turn off on this device": [
+"Désactiver sur cet appareil",
+"إيقافها على هذا الجهاز"
+],
 "Turn on 2-Step Verification": [
 "Activez la validation en deux étapes (2-Step Verification)",
 "فعّل التحقق بخطوتين (2-Step Verification)"
+],
+"Turn on notifications": [
+"Activer les notifications",
+"تفعيل الإشعارات"
 ],
 "Two clicks missing": [
 "Il manque deux clics",
@@ -22563,6 +22715,10 @@
 "Que cherchez-vous ?",
 "عمّ تبحث؟"
 ],
+"What arrives, with its moving picture": [
+"Ce qui arrive, avec son image animée",
+"ما يصل، مع صورته المتحركة"
+],
 "What came": [
 "Ce qui est arrivé",
 "ما وصل"
@@ -22839,6 +22995,10 @@
 "De quoi il parle : l'agent de ce sujet l'a traité",
 "موضوعه: تولاه وكيل هذا الموضوع"
 ],
+"What it is told": [
+"Ce qu'il reçoit",
+"ما يتلقاه"
+],
 "What it learnt": [
 "Ce qu'il a appris",
 "ما تعلّمه"
@@ -22874,6 +23034,10 @@
 "What makes a page slow, Core Web Vitals, images, caching. Practice: measure a page, improve it, measure again.": [
 "Ce qui rend une page lente, Core Web Vitals, images, cache. Pratique : mesurer une page, l'améliorer, mesurer à nouveau.",
 "ما يجعل الصفحة بطيئة، Core Web Vitals، الصور، التخزين المؤقت. تطبيق: قياس صفحة، تحسينها، ثم قياسها مجددا."
+],
+"What needs me": [
+"Ce qui a besoin de moi",
+"ما يحتاجني"
 ],
 "What needs you, alive": [
 "Ce qui a besoin de vous, vivant",
@@ -23846,6 +24010,10 @@
 "Which setting? Say “what can you change?” for the list.": [
 "Quel réglage ? Dites « que peux-tu changer ? » pour la liste.",
 "أي إعداد؟ قل «ماذا يمكنك أن تغير؟» لترى القائمة."
+],
+"While the application is open, each notification slides in from the top like on a phone, with the moving picture of its subject; the number of what waits shows on the application's icon.": [
+"Quand l'application est ouverte, chaque notification glisse depuis le haut comme sur un téléphone, avec l'image animée de son sujet ; le nombre de ce qui attend s'affiche sur l'icône de l'application.",
+"عندما يكون التطبيق مفتوحا، ينزلق كل إشعار من الأعلى كما على الهاتف، مع الصورة المتحركة لموضوعه؛ ويظهر عدد ما ينتظر على أيقونة التطبيق."
 ],
 "Who (candidates or professors), what, when: once, every week, every month, or at each absence.": [
 "Qui (candidats ou professeurs), quoi, quand : une fois, chaque semaine, chaque mois, ou à chaque absence.",
@@ -25159,6 +25327,10 @@
 "Les chiffres de vos publications",
 "أرقام منشوراتك"
 ],
+"Your private secure address (Tailscale": [
+"Votre adresse sécurisée privée (Tailscale",
+"عنوانك الآمن الخاص (Tailscale"
+],
 "Your profile": [
 "Votre profil",
 "ملفك"
@@ -25603,6 +25775,10 @@
 "et le code banque du RIB concorde.",
 "ورمز البنك في RIB متطابق."
 ],
+"and the Repeat Item's": [
+"et l'élément répété",
+"والعنصر المكرر"
+],
 "and the pace": [
 "et le rythme",
 "والنسق"
@@ -25698,6 +25874,10 @@
 "any time": [
 "à tout moment",
 "في أي وقت"
+],
+"app can: a shortcut asks the application for the SMS waiting": [
+"le peut : un raccourci demande à l'application les SMS en attente (",
+"يستطيع ذلك: يطلب اختصار من التطبيق الرسائل القصيرة المنتظرة ("
 ],
 "are bold. A paragraph starting with": [
 "sont en gras. Un paragraphe qui commence par",
@@ -26943,6 +27123,10 @@
 "iPhone : Safari › Partager › Sur l'écran d'accueil. Android : menu Chrome › Ajouter à l'écran d'accueil.",
 "iPhone: Safari › مشاركة › إضافة إلى الشاشة الرئيسية. Android: قائمة Chrome › إضافة إلى الشاشة الرئيسية."
 ],
+"id": [
+"id",
+"id"
+],
 "in": [
 "dans",
 "في"
@@ -27034,6 +27218,10 @@
 "instead if you would rather not answer by email now.": [
 "à la place si vous préférez ne pas répondre par email maintenant.",
 "بدلا من ذلك إن كنت تفضّل عدم الإجابة بالبريد الآن."
+],
+"instead of": [
+"à la place de",
+"بدلا من"
 ],
 "internship offer": [
 "offre de stage",
@@ -27354,6 +27542,10 @@
 "messages": [
 "messages",
 "messages"
+],
+"method POST, to the same link with": [
+"méthode POST, vers le même lien avec",
+"الطريقة POST، إلى نفس الرابط مع"
 ],
 "min": [
 "min",
@@ -27843,6 +28035,10 @@
 "affiche maintenant ses initiales.",
 "يعرض الآن أحرفه الأولى."
 ],
+"now), sends each from your iPhone's own number, and tells the application which went. One tap on its icon, Siri, or a time of day.": [
+"en ce moment), envoie chacun depuis le numéro de votre iPhone, et dit à l'application lesquels sont partis. Un appui sur son icône, Siri, ou une heure de la journée.",
+"الآن)، ويرسل كل واحدة من رقم هاتفك iPhone، ويخبر التطبيق بما أُرسل. لمسة على أيقونته، أو Siri، أو ساعة من اليوم."
+],
 "now?": [
 "maintenant ?",
 "الآن؟"
@@ -27850,6 +28046,10 @@
 "now? Its start date becomes today.": [
 "maintenant ? Sa date de début devient aujourd'hui.",
 "الآن؟ يصبح تاريخ بدايته اليوم."
+],
+"number": [
+"number",
+"number"
 ],
 "number cannot be read: write it like +216 71 123 456.": [
 "numéro illisible : écrivez-le comme +216 71 123 456.",
@@ -27878,6 +28078,10 @@
 "of the": [
 "des",
 "من"
+],
+"of the Repeat Item, then": [
+"de l'élément répété, puis",
+"للعنصر المكرر، ثم"
 ],
 "of the program done": [
 "de la formation déjà faite",
@@ -27954,6 +28158,10 @@
 "on site": [
 "en présentiel",
 "حضوري"
+],
+"on the iPhone (App Store) and sign in with the same account as this computer.": [
+"sur l'iPhone (App Store) et connectez-vous avec le même compte que cet ordinateur.",
+"على هاتف iPhone (App Store) وسجّل الدخول بنفس حساب هذا الحاسوب."
 ],
 "on the same days and hours": [
 "les mêmes jours et aux mêmes heures",
@@ -28274,6 +28482,10 @@
 "present, late or absent": [
 "présent, en retard ou absent",
 "حاضر، متأخر أو غائب"
+],
+"press +, and name it “Send 9antra SMS”.": [
+"appuyez sur +, et nommez-le « Send 9antra SMS ».",
+"اضغط على + وسمّه «Send 9antra SMS»."
 ],
 "prices, hours, weekly plan": [
 "prix, heures, plan hebdomadaire",
@@ -28811,6 +29023,10 @@
 "membre de l'équipe",
 "عضو الفريق"
 ],
+"text": [
+"text",
+"text"
+],
 "texts": [
 "textes",
 "نصوص"
@@ -28942,6 +29158,10 @@
 "the team's desk, in the words of your Facebook page": [
 "le bureau de l'équipe, avec les mots de votre page Facebook",
 "مكتب الفريق، بكلمات صفحتك على Facebook"
+],
+"the value for": [
+"la valeur pour",
+"القيمة لـ"
 ],
 "the way chosen at the top of the inbox, and the next one if it does not work": [
 "le moyen choisi en haut de la boîte de réception, puis le suivant s'il ne marche pas",
@@ -29531,9 +29751,17 @@
 "sans paiement ni réponse. Un autre email a peu de chances d'y changer quelque chose.",
 "دون دفع أو رد. من غير المرجّح أن يغيّر بريد آخر ذلك."
 ],
+"with that text to that number (open its arrow and turn off “Show When Run”).": [
+"avec ce texte à ce numéro (ouvrez sa flèche et désactivez « Afficher lors de l'exécution »).",
+"بذلك النص إلى ذلك الرقم (افتح سهمه وأوقف «إظهار عند التشغيل»)."
+],
 "with the address above (the phone and this computer on the same Wi-Fi, and the application started for the phone).": [
 "avec l'adresse ci-dessus (le téléphone et cet ordinateur sur le même Wi-Fi, et l'application démarrée pour le téléphone).",
 "بالعنوان أعلاه (الهاتف وهذا الحاسوب على نفس شبكة Wi-Fi، والتطبيق مشغّل للهاتف)."
+],
+"with the link above.": [
+"avec le lien ci-dessus.",
+"بالرابط أعلاه."
 ],
 "with the program attached: you read it, then send": [
 "avec la formation jointe : vous le lisez, puis l'envoyez",

@@ -97,6 +97,18 @@ def serialize_notification(notification) -> dict:
     }
 
 
+def _with_picture(found: dict) -> dict:
+    """The moving picture of its subject, for the banner the page shows (and its emoji and colour)."""
+    try:
+        from app.services import phone_push, pictures
+
+        emoji, colour, scene = phone_push.kind_of(found.get("category"))
+        found.update(emoji=emoji, colour=colour, picture=pictures.scene(scene))
+    except Exception:
+        pass
+    return found
+
+
 def _topics_for(obj, deleted: bool = False) -> set[str]:
     """Which UI topics an added, changed or deleted row affects."""
     name = type(obj).__name__
@@ -193,7 +205,7 @@ def install_session_hooks(session_factory) -> None:
         for obj in session.new:
             if type(obj).__name__ == "Notification":
                 if (obj.recipient_role or "admin") == "admin":
-                    notifications.append(serialize_notification(obj))
+                    notifications.append(_with_picture(serialize_notification(obj)))
             else:
                 topics |= _topics_for(obj)
         for obj in session.dirty:
@@ -209,6 +221,11 @@ def install_session_hooks(session_factory) -> None:
         try:
             for notification in notifications:
                 broadcaster.publish("notification", notification)
+            if notifications:
+                # The phones that said yes are told too, even with the application closed (in the background).
+                from app.services import phone_push
+
+                phone_push.after_notifications([{key: value for key, value in item.items() if key != "picture"} for item in notifications])
             if topics:
                 publish_change(*topics)
         except Exception:

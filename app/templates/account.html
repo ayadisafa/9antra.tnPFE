@@ -49,6 +49,66 @@
   </div>
 
   <div class="col-12">
+    <section class="ui-card" id="phone">
+      <div class="ui-card-head"><div>
+        <div class="ui-card-title"><i class="bi bi-phone-vibrate"></i>Notifications on your phone</div>
+        <div class="ui-card-sub">Told on this phone (or computer) when something needs you, with a picture of what it is about, even when the application is closed. A tap opens the exact place.</div>
+      </div></div>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <span class="ui-chip muted" id="push-state" aria-live="polite">…</span>
+        <button class="ui-btn primary" type="button" id="push-on" hidden><i class="bi bi-bell"></i>Turn on notifications</button>
+        <button class="ui-btn" type="button" id="push-test" hidden><i class="bi bi-send"></i>Send me a test</button>
+        <button class="ui-btn ghost" type="button" id="push-off" hidden>Turn off on this device</button>
+      </div>
+      <div class="small text-muted mt-2" id="push-help" aria-live="polite"></div>
+      <span hidden data-push="on">On: this device is told.</span>
+      <span hidden data-push="off">Off on this device.</span>
+      <span hidden data-push="insecure">Notifications need the secure address. Open the application on this phone from {{ secure_address or 'its private Tailscale address' }}.</span>
+      <span hidden data-push="install">On an iPhone: first add the application to your home screen (Share, then Add to Home Screen), open it from there, then come back here.</span>
+      <span hidden data-push="unsupported">This browser cannot receive notifications.</span>
+      <span hidden data-push="denied">Notifications are blocked for this application: allow them in the phone's settings (Notifications).</span>
+      <span hidden data-push="error">It did not work this time: try again in a moment.</span>
+      <span hidden data-push="tested">A test was sent: it arrives in a few seconds.</span>
+      {% if push_devices %}
+      <div class="push-devices mt-3">
+        {% for row in push_devices %}
+        <div class="device">
+          <span class="ui-stat-ico"><i class="bi {{ 'bi-phone' if row.device in ('iPhone', 'Android') else 'bi-laptop' }}"></i></span>
+          <div class="flex-grow-1"><b data-no-i18n>{{ row.device }}</b><div class="ui-card-sub">Since {{ row.created_at.strftime('%d %b') if row.created_at else '' }}</div></div>
+          <form method="post" action="/account/push/level" class="d-flex gap-2 align-items-center">
+            <input type="hidden" name="id" value="{{ row.id }}">
+            <select name="level" class="form-select form-select-sm" style="width:auto" onchange="this.form.requestSubmit()" aria-label="What it is told">
+              <option value="important" {{ 'selected' if row.level == 'important' }}>What needs me</option>
+              <option value="all" {{ 'selected' if row.level == 'all' }}>Everything</option>
+              <option value="off" {{ 'selected' if row.level == 'off' }}>Nothing</option>
+            </select>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </section>
+    <script>
+    (function () {
+      var state = document.getElementById("push-state"), help = document.getElementById("push-help");
+      var on = document.getElementById("push-on"), off = document.getElementById("push-off"), test = document.getElementById("push-test");
+      function said(key) { var node = document.querySelector('[data-push="' + key + '"]'); return node ? node.textContent : key; }
+      function show(key) {
+        state.textContent = said(key === "on" ? "on" : "off");
+        state.className = "ui-chip " + (key === "on" ? "ok" : "muted");
+        help.textContent = (key === "on" || key === "off") ? "" : said(key);
+        on.hidden = key !== "off"; off.hidden = test.hidden = key !== "on";
+      }
+      if (!window.phonePush) return;
+      window.phonePush.state().then(show).catch(function () { show("unsupported"); });
+      on.addEventListener("click", function () { window.phonePush.turnOn().then(function (key) { show(key === "granted" ? "on" : key); if (key === "on") location.reload(); }).catch(function () { show("error"); }); });
+      off.addEventListener("click", function () { window.phonePush.turnOff().then(function () { location.reload(); }); });
+      test.addEventListener("click", function () { window.phonePush.test().then(function () { help.textContent = said("tested"); }); });
+    })();
+    </script>
+  </div>
+
+  <div class="col-12">
     <section class="ui-card">
       <div class="ui-card-head">
         <div>

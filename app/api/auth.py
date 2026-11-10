@@ -256,6 +256,8 @@ def account_page(request: Request, db: Session = Depends(get_db)):
             "me": db.get(User, me.id),
             "sessions": auth.sessions_of(db, me.id, request.cookies.get(auth.COOKIE)),
             "min_password": auth.MIN_PASSWORD,
+            "push_devices": __import__("app.services.phone_push", fromlist=["devices"]).devices(db, me),
+            "secure_address": __import__("app.services.phone_sms", fromlist=["secure_address"]).secure_address(),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         },

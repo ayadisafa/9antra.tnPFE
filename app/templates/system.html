@@ -388,6 +388,12 @@
       <span class="sy-step-no">3</span>
       <div><b>Notifications</b><span>The bell and its counter are live while the application is open on your phone, and a notification takes you to the exact place to look. To be warned when it is closed, the application needs a public address that starts with https{% if not phone.public %}: until then, your phone has to be on this Wi-Fi with the page open{% endif %}.</span></div>
     </li>
+    {% if phone.secure %}
+    <li class="sy-step" id="phone-secure">
+      <span class="sy-step-no"><i class="bi bi-shield-lock"></i></span>
+      <div><b>Your private secure address (Tailscale)</b><span>Open it on a phone where Tailscale is on: the application works like an app, from anywhere, and can send notifications to your phone even when it is closed (turn them on in My account).</span><br><span class="sy-address" data-no-i18n>{{ phone.secure }}</span></div>
+    </li>
+    {% endif %}
     <li class="sy-step" id="phone-sms">
       <span class="sy-step-no">4</span>
       <div><b>SMS and calls from your iPhone</b><span>An iPhone does not let an application send SMS by itself. So each SMS (asked to Yasmine, from the inbox, the team chat or a reminder) waits with a button: on your iPhone it opens Messages with the text already written to the right number, and you press Send. The phone buttons call at once. To send SMS with nobody pressing Send, an Android phone with the SMS gateway is needed (Settings, SMS).</span></div>

@@ -714,6 +714,25 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
           <li>Press “Test the phone”. Then choose SMS at the top of the inbox if you want SMS to go first.</li>
         </ol>
       </details>
+      <div class="st-sub mt-3" id="iphone-sms"><b><i class="bi bi-apple"></i> From your iPhone: one tap sends every SMS waiting</b></div>
+      <div class="st-sub mb-2">An iPhone never lets an application send SMS by itself, but its <strong>Shortcuts</strong> app can: a shortcut asks the application for the SMS waiting ({{ iphone_sms.waiting }} now), sends each from your iPhone's own number, and tells the application which went. One tap on its icon, Siri, or a time of day.</div>
+      <div class="d-flex gap-2 flex-wrap align-items-center mb-2">
+        <code class="st-sub" id="iphone-link" data-no-i18n style="word-break:break-all;">{{ (iphone_sms.address or 'https://<the private Tailscale address>') ~ '/phone-sms/' ~ iphone_sms.token ~ '/waiting' }}</code>
+        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" onclick="navigator.clipboard && navigator.clipboard.writeText(document.getElementById('iphone-link').textContent)">Copy</button>
+        <form method="post" action="/settings/sms/iphone-link" class="m-0" data-confirm="Make a new link? The shortcut then needs the new one; the old link stops working."><button class="btn btn-sm btn-outline-secondary rounded-pill">New link</button></form>
+      </div>
+      <details>
+        <summary class="st-sub" style="cursor:pointer;"><strong>Make the shortcut on the iPhone (about 5 minutes)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li>Install <strong>Tailscale</strong> on the iPhone (App Store) and sign in with the same account as this computer.</li>
+          <li>Open <strong>Shortcuts</strong>, press +, and name it “Send 9antra SMS”.</li>
+          <li>Add <strong>Get Contents of URL</strong> with the link above.</li>
+          <li>Add <strong>Get Dictionary Value</strong>: the value for <code>messages</code>.</li>
+          <li>Add <strong>Repeat with Each</strong>. Inside it: <strong>Get Dictionary Value</strong> <code>number</code> of the Repeat Item, then <code>text</code> of the Repeat Item, then <strong>Send Message</strong> with that text to that number (open its arrow and turn off “Show When Run”).</li>
+          <li>Still inside: <strong>Get Contents of URL</strong>, method POST, to the same link with <code>/sent/</code> and the Repeat Item's <code>id</code> instead of <code>/waiting</code>.</li>
+          <li>Put the shortcut on your home screen, or in Automation choose a time of day and “Run Immediately”. If your iPhone still asks before sending, that is Apple's rule.</li>
+        </ol>
+      </details>
     </div>
   </details>
   <div class="st-group" data-tab-of="settings" data-tab-panel="centre"><i class="bi bi-building"></i>Your centre</div>

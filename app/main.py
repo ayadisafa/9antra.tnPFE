@@ -45,6 +45,7 @@ from app.api.market import router as market_router
 from app.api.program_pdf import router as program_pdf_router
 from app.api.reminders import router as reminders_router
 from app.api.professors import router as professors_router
+from app.api.app_shell import router as app_shell_router
 from app.api.i18n import router as i18n_router
 from app.api.workspace import router as workspace_router
 from app.api.page_pdf import router as page_pdf_router
@@ -215,6 +216,7 @@ app.include_router(market_router)      # /programs/market: before program_router
 app.include_router(program_pdf_router) # /programs/{id}/pdf: a program to download or send
 app.include_router(reminders_router)   # /reminders: the admin's own reminders
 app.include_router(professors_router)  # /professors: every professor, and each one's own space
+app.include_router(app_shell_router)   # /sw.js, phones' notifications, the iPhone's SMS link
 app.include_router(i18n_router)        # /language, /i18n: the interface in French and Arabic
 app.include_router(workspace_router)   # /find, /data, /settings/team: find anything, change any value, the team
 app.include_router(quiz_router)

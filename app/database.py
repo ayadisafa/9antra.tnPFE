@@ -333,6 +333,7 @@ def ensure_sqlite_compatibility():
             "registration_form_url": "VARCHAR",
             "next_class_gap_days": "INTEGER DEFAULT 10",
             "replacement_fallback": "VARCHAR DEFAULT 'ask'",
+            "phone_sms_token": "VARCHAR",
             "session_check_on": "BOOLEAN DEFAULT 1",
             "session_check_hours": "INTEGER DEFAULT 24",
             "weekly_every": "INTEGER DEFAULT 1",

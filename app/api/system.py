@@ -75,6 +75,7 @@ def system_page(request: Request, db: Session = Depends(get_db)):
                 "address": f"http://{address}:{port}" if address else None,
                 "open": system_status.open_to_the_network(address, port),
                 "public": None if local else base_url,
+                "secure": __import__("app.services.phone_sms", fromlist=["secure_address"]).secure_address(),
             },
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
@@ -135,6 +136,10 @@ def manifest(db: Session = Depends(get_db)):
         {
             "name": look["name"], "short_name": look["name"][:12], "start_url": "/", "scope": "/",
             "display": "standalone", "background_color": "#f6f3fb", "theme_color": colour, "icons": icons,
+            "id": "/", "description": "The centre's application: candidates, classes, payments, messages, and Yasmine.",
+            # A long press on its icon: straight to these.
+            "shortcuts": [{"name": name, "url": url, "icons": icons[:1]} for name, url in
+                          (("Inbox", "/inbox"), ("Candidates", "/candidate/all"), ("Payments", "/payments"), ("Notifications", "/system#phone"))],
         },
         media_type="application/manifest+json",
         headers={"Cache-Control": "no-cache"},

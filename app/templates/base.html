@@ -422,7 +422,7 @@
     {% if theme_css %}<style id="theme-colour">{{ theme_css | safe }}</style>{% endif %}
     {% block extra_head %}{% endblock %}
 </head>
-<body class="first-paint{{ ' menu-right' if ui_menu_side == 'right' }}" data-session-tag="{{ session_tag }}">
+<body class="first-paint{{ ' menu-right' if ui_menu_side == 'right' }}" data-session-tag="{{ session_tag }}" data-app-name="{{ app_brand.name if app_brand else '9antra' }}">
 {% if ui_background != 'plain' %}
 <div class="it-bg" aria-hidden="true">
   <i class="bi bi-code-slash" style="--x:31%; --y:9%; --s:46px; --d:27s; --w:-3s;"></i>
@@ -1639,6 +1639,7 @@ function updateBadgeCount(amount) {
         let current = parseInt(badge.innerText, 10) || 0;
         current += amount;
         badge.innerText = current > 0 ? current : 0;
+        if (window.setAppIconCount) window.setAppIconCount(current);
         if (current > 0) {
             badge.classList.add("badge-pulse");
         } else {
@@ -1794,7 +1795,8 @@ document.addEventListener("submit", event => {
         updateBadgeCount(1);
         const href = notificationHref(data);
         const link = href !== "#" ? ` <a href="${escapeNotifText(href)}" class="fw-semibold text-decoration-none">Open</a>` : "";
-        showFacebookToast(data.title || "Notification", escapeNotifText(data.message || "") + link);
+        if (window.showAppBanner) window.showAppBanner(data, href);
+        else showFacebookToast(data.title || "Notification", escapeNotifText(data.message || "") + link);
         document.dispatchEvent(new CustomEvent("friend:news", { detail: { title: data.title || "", message: data.message || "", href: href } }));
     }
 
@@ -2426,6 +2428,142 @@ document.addEventListener("submit", event => {
       all.appendChild(box);
     });
     return all;
+  };
+})();
+</script>
+<style>
+  /* A notification while the application is open: a banner from the top, like a phone's, with the moving picture of
+     its subject; it leaves by itself, or with a swipe up. */
+  .app-banners { position:fixed; left:50%; top:calc(10px + env(safe-area-inset-top, 0px)); transform:translateX(-50%); z-index:1100;
+                 width:min(430px, calc(100vw - 20px)); display:grid; gap:8px; pointer-events:none; }
+  .app-banner { pointer-events:auto; position:relative; display:grid; grid-template-columns:62px minmax(0, 1fr) 24px; gap:10px; align-items:center;
+                padding:10px 10px 12px; border-radius:22px; text-decoration:none; color:var(--ink-text, #241a38); overflow:hidden;
+                background:rgba(255,255,255,.94); -webkit-backdrop-filter:blur(18px) saturate(1.4); backdrop-filter:blur(18px) saturate(1.4);
+                border:1px solid rgba(255,255,255,.7); box-shadow:0 18px 40px -16px rgba(36,26,56,.45), 0 0 0 1px rgba(36,26,56,.06);
+                touch-action:pan-x; }
+  .app-banner:hover { color:inherit; }
+  .ab-pic { position:relative; width:62px; height:62px; border-radius:16px; overflow:hidden; display:grid; place-items:center;
+            background:color-mix(in srgb, var(--tone) 14%, #fff); }
+  .ab-pic .art { width:78px; height:auto; display:block; }
+  .ab-emoji { position:absolute; right:-4px; bottom:-4px; width:26px; height:26px; border-radius:50%; display:grid; place-items:center;
+              font-size:.9rem; background:#fff; box-shadow:0 4px 10px -4px rgba(0,0,0,.35); }
+  .ab-text { min-width:0; display:grid; gap:1px; }
+  .ab-head { display:flex; justify-content:space-between; gap:6px; font-size:.66rem; font-weight:800; letter-spacing:.03em; text-transform:uppercase; color:#8a7d97; }
+  .ab-text b { font-size:.86rem; line-height:1.25; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ab-text small { font-size:.76rem; color:#5b5670; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+  .ab-close { border:0; background:none; color:#9b95b0; font-size:.9rem; align-self:start; cursor:pointer; padding:0; }
+  .ab-time { position:absolute; left:16px; right:16px; bottom:5px; height:3px; border-radius:3px; background:color-mix(in srgb, var(--tone) 18%, #fff); overflow:hidden; }
+  .ab-time::after { content:""; position:absolute; inset:0; background:var(--tone); transform-origin:left; animation:abTime 7s linear forwards; }
+  .app-banner:hover .ab-time::after { animation-play-state:paused; }
+  @keyframes abTime { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+  @media (prefers-reduced-motion: no-preference) {
+    .app-banner { animation:abIn .55s cubic-bezier(.2,1.1,.3,1) both; }
+    .app-banner.is-leaving { animation:abOut .32s ease-in both; }
+    .ab-emoji { animation:abPop 1.6s ease-in-out .4s 2; }
+  }
+  @keyframes abIn { from { opacity:0; transform:translateY(-120%) scale(.96); } to { opacity:1; transform:none; } }
+  @keyframes abOut { to { opacity:0; transform:translateY(-110%) scale(.96); } }
+  @keyframes abPop { 0%, 100% { transform:scale(1); } 40% { transform:scale(1.25) rotate(-8deg); } }
+  .push-devices .device { display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--border-color); flex-wrap:wrap; }
+</style>
+<span hidden id="ab-now">now</span>
+<script>
+/* The application as a phone app: its service worker (notifications with the application closed, once it is opened
+   from the secure address), notifications on this device (window.phonePush), the banner of what arrives, and the
+   number on the application's icon. */
+(function () {
+  var secure = window.isSecureContext && "serviceWorker" in navigator;
+  if (secure) navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(function () {});
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  function installed() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; }
+  function ready() { return navigator.serviceWorker.register("/sw.js", { scope: "/" }).then(function () { return navigator.serviceWorker.ready; }); }
+  function keyBytes(text) {
+    var raw = atob((text + "===".slice((text.length + 3) % 4)).replace(/-/g, "+").replace(/_/g, "/"));
+    return Uint8Array.from(raw, function (c) { return c.charCodeAt(0); });
+  }
+  function post(url, body) {
+    return fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body || {}) });
+  }
+  window.phonePush = {
+    ios: ios, installed: installed,
+    state: function () {
+      if (!window.isSecureContext) return Promise.resolve("insecure");
+      if (ios && !installed()) return Promise.resolve("install");
+      if (!secure || !("PushManager" in window) || !("Notification" in window)) return Promise.resolve("unsupported");
+      if (Notification.permission === "denied") return Promise.resolve("denied");
+      return ready().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) { return sub ? "on" : "off"; });
+    },
+    turnOn: function () {
+      // On an iPhone the question must come from the tap itself: asked first, before anything else waits.
+      return Notification.requestPermission().then(function (answer) {
+        if (answer !== "granted") return answer;
+        return Promise.all([ready(), fetch("/account/push/key").then(function (r) { return r.json(); })]).then(function (both) {
+          var reg = both[0], key = keyBytes(both[1].key);
+          return reg.pushManager.getSubscription().then(function (old) {
+            return old ? old.unsubscribe().then(function () { return null; }) : null;      // a fresh one, with this application's key
+          }).then(function () {
+            return reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
+          }).then(function (sub) {
+            return post("/account/push/subscribe", sub.toJSON()).then(function (r) { return r.ok ? "on" : "error"; });
+          });
+        });
+      });
+    },
+    turnOff: function () {
+      return ready().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) {
+        if (!sub) return "off";
+        return post("/account/push/unsubscribe", { endpoint: sub.endpoint }).then(function () { return sub.unsubscribe(); }).then(function () { return "off"; });
+      });
+    },
+    test: function () { return post("/account/push/test").then(function (r) { return r.json(); }); }
+  };
+
+  // The number on the application's icon (an installed app on iPhone or Android): what waits, like the bell.
+  window.setAppIconCount = function (count) {
+    if (!navigator.setAppBadge) return;
+    try { (count > 0 ? navigator.setAppBadge(count) : navigator.clearAppBadge()).catch(function () {}); } catch (error) {}
+  };
+  var bell = document.getElementById("nav-notif-badge");
+  if (bell) window.setAppIconCount(parseInt(bell.textContent, 10) || 0);
+
+  // What arrives while the application is open: a banner from the top, with the moving picture of its subject.
+  window.showAppBanner = function (data, href) {
+    var stack = document.getElementById("app-banners");
+    if (!stack) {
+      stack = document.createElement("div"); stack.id = "app-banners"; stack.className = "app-banners"; stack.setAttribute("aria-live", "polite");
+      document.body.appendChild(stack);
+    }
+    var link = href && href !== "#";
+    var banner = document.createElement(link ? "a" : "div");
+    banner.className = "app-banner"; if (link) banner.href = href;
+    banner.style.setProperty("--tone", data.colour || "#a42c67");
+    var pic = document.createElement("span"); pic.className = "ab-pic";
+    if (data.picture) pic.innerHTML = data.picture;                 // the application's own drawing (services/pictures.py)
+    var emoji = document.createElement("span"); emoji.className = "ab-emoji"; emoji.textContent = data.emoji || "🔔"; pic.appendChild(emoji);
+    var text = document.createElement("span"); text.className = "ab-text";
+    var head = document.createElement("span"); head.className = "ab-head";
+    var app = document.createElement("span"); app.textContent = document.body.dataset.appName || "9antra";
+    var when = document.createElement("span"); when.textContent = (document.getElementById("ab-now") || {}).textContent || "now";
+    head.append(app, when);
+    var title = document.createElement("b"); title.textContent = data.title || "";
+    var said = document.createElement("small"); said.textContent = data.message || "";
+    text.append(head, title, said);
+    var close = document.createElement("button"); close.type = "button"; close.className = "ab-close"; close.setAttribute("aria-label", "Close");
+    close.innerHTML = '<i class="bi bi-x-lg"></i>';
+    var time = document.createElement("span"); time.className = "ab-time";
+    banner.append(pic, text, close, time);
+    stack.prepend(banner);
+    while (stack.children.length > 3) stack.lastChild.remove();
+    function leave() { if (banner.classList.contains("is-leaving")) return; banner.classList.add("is-leaving"); setTimeout(function () { banner.remove(); }, 330); }
+    close.addEventListener("click", function (event) { event.preventDefault(); event.stopPropagation(); leave(); });
+    var timer = setTimeout(leave, 7000);
+    banner.addEventListener("mouseenter", function () { clearTimeout(timer); });
+    banner.addEventListener("mouseleave", function () { timer = setTimeout(leave, 3000); });
+    var startY = null;
+    banner.addEventListener("pointerdown", function (event) { startY = event.clientY; });
+    banner.addEventListener("pointermove", function (event) { if (startY !== null && event.clientY - startY < -28) { startY = null; leave(); } });
+    banner.addEventListener("pointerup", function () { startY = null; });
+    if (navigator.vibrate && document.visibilityState === "visible") { try { navigator.vibrate([40, 30, 40]); } catch (error) {} }
   };
 })();
 </script>

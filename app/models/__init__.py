@@ -45,6 +45,7 @@ from app.services.session_check import SessionCheck  # noqa: F401  (its table is
 from app.services.resends import PlannedResend  # noqa: F401  (its table is made at start)
 from app.services.session_reminders import SessionReminderSent  # noqa: F401  (its table is made at start)
 from app.services.replacements import SessionReplacement  # noqa: F401  (its table is made at start)
+from app.services.phone_push import PushSubscription  # noqa: F401  (its table is made at start)
 
 __all__ = [
     "MarketOffer",

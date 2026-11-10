@@ -44,7 +44,7 @@ ADMIN, PROFESSOR, STAFF = "admin", "professor", "staff"
 # "/app.webmanifest" lets a phone put the application on its home screen.
 # "/whatsapp/webhook" is Meta's: it proves each message with the app's secret (see api/whatsapp.py).
 _OPEN_PREFIXES = ("/login", "/logout", "/setup", "/static/", "/learn/", "/opinion/", "/level/", "/join/", "/replace/", "/favicon", "/app.webmanifest",
-                  "/whatsapp/webhook", "/sms/webhook")
+                  "/whatsapp/webhook", "/sms/webhook", "/sw.js", "/notify-picture/", "/phone-sms/")
 # What a professor may open besides the pages of their own classes.
 _PROFESSOR_PREFIXES = ("/teacher", "/account", "/guide", "/language", "/i18n/", "/events/stream")
 _CLASS_PAGE = re.compile(r"^/classes/([^/]+)/(course|attendance)(/|$)")

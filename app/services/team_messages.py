@@ -319,6 +319,11 @@ def send(db: Session, key: str, text: str, channels, *, author: str) -> list[Tea
         db.add(row)
         kept.append(row)
     db.commit()
+    if "app" in wanted:
+        # Their phone is told too (when they said yes to notifications), even with the application closed.
+        from app.services import phone_push
+
+        phone_push.to_person(db, key, author or "9antra", text)
     return kept
 
 

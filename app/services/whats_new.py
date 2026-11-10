@@ -13,6 +13,22 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-10", "day": date(2026, 11, 10), "title": "The application on your phone, like an app",
+        "items": [
+            {"icon": "bi-phone-vibrate", "title": "Notifications on your phone, even when it is closed",
+             "text": "Opened from your private secure address (Tailscale) and added to the home screen, the application tells your "
+                     "phone when something needs you, with a picture of what it is about; a tap opens the exact place. Turn it on "
+                     "in My account, and choose per phone: what needs you, everything, or nothing. Professors are told of the "
+                     "centre's messages the same way.", "url": "/account#phone"},
+            {"icon": "bi-bell", "title": "What arrives, with its moving picture",
+             "text": "While the application is open, each notification slides in from the top like on a phone, with the moving "
+                     "picture of its subject; the number of what waits shows on the application's icon.", "url": "/"},
+            {"icon": "bi-apple", "title": "SMS from your iPhone, one tap for all",
+             "text": "A shortcut on your iPhone sends every SMS waiting, from your own number, and tells the application which "
+                     "went: Settings, SMS.", "url": "/settings#iphone-sms"},
+        ],
+    },
+    {
         "key": "2026-11-09b", "day": date(2026, 11, 9), "title": "The email assistant tells every kind of message apart, and the iPhone",
         "items": [
             {"icon": "bi-envelope-check", "title": "Yes or no, answers, opinions, the course",

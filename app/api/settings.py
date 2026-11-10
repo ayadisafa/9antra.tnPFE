@@ -66,6 +66,7 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "assistant_model": email_assistant.MODEL,
             "model_ready": email_assistant.model_available(),
             "cloud": _cloud_state(),
+            "iphone_sms": _iphone_sms(db),
             "brand": branding(settings),
             "default_signature": DEFAULT_SIGNATURE,
             "mailbox_ready": mailbox_service.configured(),
@@ -96,6 +97,14 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "error": request.query_params.get("error"),
         },
     )
+
+
+def _iphone_sms(db) -> dict:
+    """The iPhone's shortcut: its link (with its secret), the SMS waiting now, and the address it uses."""
+    from app.services import phone_sms
+
+    address = phone_sms.secure_address()
+    return {"address": address, "token": phone_sms.token(db), "waiting": len(phone_sms.waiting(db))}
 
 
 def _cloud_state() -> dict:
