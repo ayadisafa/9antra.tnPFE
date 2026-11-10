@@ -124,7 +124,7 @@ db.commit()
 message = tp.send(db, "payment_reminder", registration=reg, manual=True)
 db.commit()
 check("ways: an automatic email follows the choice: an SMS waits for the admin", message is not None and message.channel == "sms" and message.status == "to_send")
-check("ways: the SMS opens the phone's messages, written", whatsapp_inbox.link_of(message).startswith("sms:+21698111222?body="), whatsapp_inbox.link_of(message))
+check("ways: the SMS opens the phone's messages, written", whatsapp_inbox.link_of(message).startswith("sms:+21698111222?&body="), whatsapp_inbox.link_of(message))
 page = admin.get(f"/inbox?thread={message.thread_id}").text
 check("inbox: the choice is above it", 'action="/inbox/channels"' in page and "Let the system choose" in page and "If it does not work, the next way" in page)
 check("inbox: the SMS has its button", "Open messages" in page and "sms:+21698111222" in page)

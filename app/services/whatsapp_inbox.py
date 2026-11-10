@@ -223,7 +223,9 @@ def link_of(message: CandidateEmail) -> str | None:
         from urllib.parse import quote
 
         number = whatsapp.normalise(message.recipient)
-        return f"sms:{number}?body={quote(message.body or '')}" if number else None
+        from app.services import sms
+
+        return sms.link(number, message.body or "") if number else None
     return whatsapp.link(message.recipient, message.body)
 
 

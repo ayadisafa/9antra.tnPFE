@@ -169,7 +169,9 @@ def tell_admin(db: Session, *, channel: str, who: str, text: str, answered: dict
 
             action = whatsapp.link(number or who, answered["text"]) or "/inbox"
         elif channel == "sms":
-            action = f"sms:{number or who}?body={quote(answered['text'])}"
+            from app.services import sms
+
+            action = sms.link(number or who, answered["text"])
         else:
             action = f"mailto:{who}?subject={quote('Inscription 9antra')}&body={quote(answered['text'])}"
     db.add(Notification(recipient_role="admin", category="CANDIDATE_EMAIL", title=title[:200], message=message[:500], action_url=action))

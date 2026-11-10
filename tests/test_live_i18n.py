@@ -122,7 +122,7 @@ check("form: a stranger on WhatsApp: written for you when no Business number", s
 whatsapp_inbox.receive_sms(db, phone="98700700", text="Bonjour, comment s'inscrire ?", sms_id="SMS-FORM-1")
 db.commit()
 said = db.query(Notification).filter(Notification.title.like("Asked how to register (SMS)%")).first()
-check("form: a stranger by SMS: the same, ready to send", said is not None and said.action_url.startswith("sms:+21698700700?body="))
+check("form: a stranger by SMS: the same, ready to send", said is not None and said.action_url.startswith("sms:+21698700700?&body="))
 whatsapp_inbox.receive(db, phone="21698765499", text="Bonjour, vous êtes ouverts samedi ?", wa_id="WA-FORM-2")
 db.commit()
 check("form: another question from a stranger stays a plain notice", db.query(Notification).filter(Notification.title == "WhatsApp from a number that is not a candidate").count() == 1)

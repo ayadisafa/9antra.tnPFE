@@ -13,7 +13,7 @@ import unicodedata
 # meaning in French, in English: every way of writing the word
 _WORDS: list[tuple[str, str, tuple[str, ...]]] = [
     ("bonjour", "hello", ("aslema", "3aslema", "aslama", "3aslama", "ahla", "ahlan", "عسلامة", "اهلا")),
-    ("ça va", "fine / how are you", ("labes", "labas", "labess", "chnahwalek", "chna7walek", "chniya ahwalek", "لاباس", "شنحوالك")),
+    ("ça va", "fine / how are you", ("labes", "labas", "labess", "chnahwalek", "chna7walek", "chniya ahwalek", "cv", "cava", "لاباس", "شنحوالك")),
     ("merci", "thank you", ("ya3tik essa7a", "ya3tik sa7a", "y3aychek", "ya3aychek", "3aychek", "yaychek", "barkallahoufik", "berkallahoufik", "يعيشك", "يعطيك الصحة")),
     ("au revoir", "goodbye", ("bslama", "beslama", "bislema", "bisslema", "بالسلامة")),
     ("si Dieu le veut", "hopefully", ("inchallah", "nchallah", "inshallah", "nshallah", "ان شاء الله", "نشالله")),

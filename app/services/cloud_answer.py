@@ -26,7 +26,8 @@ MAX_CALLS = 8
 
 _TUNISIAN = ("Tunisian is often written in Latin letters with digits for some sounds (3 = ع, 7 = ح, 9 = ق, 5 = خ, 2 = ء): "
              "\"wa9tech\" = when, \"9addech\" = how much, \"win\" = where, \"fama\" = is there, \"chkoun\" = who, \"kifech\" = how, "
-             "\"khallas\" = paid, \"ybattel\" = drop out, \"ghayeb\" = absent, \"chna3mel\" = what do I do, \"soum\" = price.")
+             "\"khallas\" = paid, \"ybattel\" = drop out, \"ghayeb\" = absent, \"chna3mel\" = what do I do, \"soum\" = price. "
+             "\"cv\" in a short message is \"ça va\" (fine), not a CV: \"no cv\" / \"non cv\" = no, it's fine, nothing wrong.")
 
 READ = {
     "admin": ("You help the admin of 9antra, a training centre in Tunisia (programs, classes, sessions, professors, candidates, payments, "
@@ -52,6 +53,8 @@ WRITE = {
               "the items and none fits (no class starts next week, nobody is absent), say there is none.\n"
               "- FACTS are written in English: put their words in the language of the answer, keeping names and figures as they are.\n"
               "- Complete, natural sentences, like a helpful colleague (\"You have 4 candidates; none registered this week.\").\n"
+              "- A yes/no question (\"did Fares pay?\", \"is the class full?\") is answered Yes or No first (Oui/Non, نعم/لا, Ey/Le), "
+              "then the fact that says so; when FACTS cannot say, say that, never a guess.\n"
               "- When FACTS say something only for one program, class or person, say it for that one by name; do not make it general.\n"
               "- Answer exactly what was asked: every part of it, and nothing it did not ask (no extra figures, lists, advice or "
               "offers to help). The answer first; a short list (up to 8 lines) only when a list is asked. No greeting.\n"
@@ -75,10 +78,17 @@ WRITE = {
                   "- A problem they report (they cannot connect, a link does not work, an error, something missing) is never "
                   "answered by a general rule: give what FACTS say that helps, mark the problem itself answered=false, and say "
                   "the team will help them.\n"
+                  "- A yes/no question (\"have I paid everything?\", \"is there a session Saturday?\") is answered Oui or Non first "
+                  "(Yes/No, نعم/لا, Ey/Le) when FACTS say it, then the fact; when FACTS do not say it, answered=false.\n"
                   "- For each thing asked, give `answered` and `evidence`: the exact words of FACTS that answer it (copied, short).\n"
                   "- `route`: course_files when they ask for the course, files, slides or recording of a week or session; "
                   "course_question when they ask about the subject taught itself (how something works in the course); no_reply when "
-                  "they only thank or acknowledge and ask nothing; answer otherwise.\n"
+                  "they only thank or acknowledge and ask nothing (\"merci\", \"ok\", \"no cv\", \"labes\"); quiz_answers when they give "
+                  "answers to questions they were sent (\"1-B, 2-A\", \"pour la 3 je dirais C\"): copy each in `quiz_answers` as its "
+                  "question number and the letter chosen; review when they only give their opinion of the program, the class or the "
+                  "professor (good or mixed) and ask nothing; answer otherwise.\n"
+                  "- `kind`: yes_no when the main thing asked is a yes/no question, question for another question, request when they ask "
+                  "for something to be done or sent, information when they only tell something.\n"
                   "- `sensitive`: refund when they ask for money back, cancellation when they want to cancel or stop, complaint when "
                   "they complain or are unhappy (with the trainer, the pace, the service); none otherwise."),
 }
@@ -87,7 +97,10 @@ SCHEMA = {
     "type": "OBJECT",
     "properties": {
         "language": {"type": "STRING", "enum": ["fr", "en", "ar", "tn"]},
-        "route": {"type": "STRING", "enum": ["answer", "course_files", "course_question", "no_reply"]},
+        "route": {"type": "STRING", "enum": ["answer", "course_files", "course_question", "no_reply", "quiz_answers", "review"]},
+        "kind": {"type": "STRING", "enum": ["yes_no", "question", "request", "information"]},
+        "quiz_answers": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
+            "question": {"type": "INTEGER"}, "choice": {"type": "STRING"}}, "required": ["question", "choice"]}},
         "sensitive": {"type": "STRING", "enum": ["none", "refund", "cancellation", "complaint"]},
         "asks": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {
             "ask": {"type": "STRING"}, "answered": {"type": "BOOLEAN"}, "evidence": {"type": "ARRAY", "items": {"type": "STRING"}}},
@@ -231,4 +244,6 @@ def answer(question: str, tools: dict, role: str, *, history: list[dict] | None 
     return {"reply": found["reply"].strip(), "language": found.get("language") or "fr", "route": found.get("route") or "answer",
             "sensitive": found.get("sensitive") or "none", "asks": asks, "ok": checked["ok"], "unsupported": checked["unsupported"],
             "covered": bool(asks) and all(item["verified"] for item in asks), "facts": facts, "used": used,
-            "options": options, "clarify": bool(options)}
+            "options": options, "clarify": bool(options), "kind": found.get("kind") or "question",
+            "quiz_answers": [item for item in found.get("quiz_answers") or [] if isinstance(item, dict)
+                             and str(item.get("choice") or "").strip()[:1].upper() in "ABCDEF" and str(item.get("choice") or "").strip()]}

@@ -196,7 +196,9 @@ def link_of(row: TeamMessage, number: str | None) -> str | None:
     if row.channel == "whatsapp":
         return whatsapp.link(number, row.body)
     if row.channel == "sms":
-        return f"sms:{number}?body={quote(row.body)}"
+        from app.services import sms
+
+        return sms.link(number, row.body or "")
     return None
 
 

@@ -40,6 +40,7 @@ _PATTERNS = {
         r"sba7 el khir|saba7 el khir|mse el khir|salam|slm|السلام عليكم|سلام|مرحبا|اهلا|أهلا|صباح الخير|مساء الخير)\b[\s,!.]*", re.IGNORECASE),
     "im_fine": re.compile(
         r"\b(je vais (?:très |tres )?bien|(?:ça|ca) va (?:très |tres )?bien|bien merci|i'?m (?:fine|good|great|well)|labes el 7amdoulillah|"
+        r"(?:no|non|nn) cv|cv merci|cv 7amdoullah|cv hamdoullah|"
         r"labes 7amdoulillah|ena labes|ena behi|الحمد لله بخير|بخير الحمد لله|أنا بخير|انا بخير)\b", re.IGNORECASE),
     "how_are_you": re.compile(
         r"\b(comment (?:vas[- ]tu|tu vas|allez[- ]vous|(?:ça|ca) va)|tu vas bien|vous allez bien|(?:ça|ca) va(?=\s*(?:[?!.,;:]|$|et\s+(?:toi|vous)|toi\b))|"

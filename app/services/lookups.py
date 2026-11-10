@@ -823,6 +823,74 @@ def _my_trainings(db: Session, candidate) -> dict:
     return {"candidate": candidate.full_name or candidate.email, "count": len(rows), "trainings": rows}
 
 
+def _my_payments(db: Session, candidate) -> dict:
+    """This candidate's money: per training what it costs, what was paid and when and how, what is left, the reminder, the
+    receipts they sent and what became of them, and how to pay."""
+    from app.models.payment import Payment
+    from app.models.payment_proof import PaymentProof
+    from app.models.registration import RegistrationStatus
+    from app.services.settings_service import get_settings
+
+    rows = []
+    for registration in candidate.registrations:
+        if registration.status == RegistrationStatus.CANCELLED:
+            continue
+        paid = db.query(Payment).filter(Payment.registration_id == registration.id).order_by(Payment.payment_date.asc()).all()
+        rows.append({"program": registration.program_name, "total": _money(registration.total_amount or registration.total_price),
+                     "paid": _money(registration.paid_amount), "still_to_pay": _money(registration.remaining_amount),
+                     "paid_in_full": registration.remaining_amount <= 0,
+                     "payments": [{"on": _day(row.payment_date), "amount": _money(row.amount), "how": row.payment_method or "not written"} for row in paid],
+                     "payment_reminder_sent": "yes" if registration.reminder_sent_at else "no"})
+    proofs = (db.query(PaymentProof).filter(PaymentProof.candidate_id == candidate.id).order_by(PaymentProof.created_at.desc()).limit(5).all())
+    said = {"reading": "being read", "waiting": "received, waiting for the team to confirm it", "confirmed": "confirmed: the payment is recorded",
+            "refused": "not accepted by the team"}
+    settings = get_settings(db)
+    ways = ["bank transfer to the centre's account (RIB: " + " / ".join(line.strip() for line in settings.centre_ribs.splitlines() if line.strip()) + ")"
+            ] if (settings.centre_ribs or "").strip() else []
+    return {"candidate": candidate.full_name or candidate.email, "count": len(rows), "trainings": rows,
+            "receipts_sent": [{"on": _day(row.created_at), "amount": _money(row.amount) if row.amount else "not read",
+                               "state": said.get(row.status, row.status)} for row in proofs],
+            "how_to_pay": ways or ["not written by the centre: the team will say"],
+            "after_paying": "send a photo or PDF of the receipt by email or WhatsApp: it is read and the team confirms it; "
+                            "once paid in full, a class is found or created at once and an email says which"}
+
+
+def _my_progress(db: Session, candidate) -> dict:
+    """Where this candidate is: their place in a class (or why they wait), the level check, the weekly questions, their
+    presence, the course files of their weeks, and the personal link to each online session."""
+    from app.models import ClassStatus
+    from app.models.quiz import Quiz
+    from app.models.registration import RegistrationStatus
+    from app.models.user import Attendance
+    from app.services import level_check
+
+    trainings = []
+    for registration in candidate.registrations:
+        if registration.status == RegistrationStatus.CANCELLED:
+            continue
+        group = registration.class_group
+        if group is not None:
+            place = f"in the class {group.name}" + (" (finished)" if group.status == ClassStatus.COMPLETED else "")
+        elif registration.remaining_amount > 0:
+            place = "not in a class yet: placed at once when paid in full"
+        else:
+            place = "paid, waiting: they follow another training first (one at a time), or a class is being found"
+        level = level_check.current(db, registration.id)
+        level_state = ("not sent yet (it goes once paid in full, before the start)" if level is None
+                       else "answered" + (f": level {level.assessed_level}" if getattr(level, "assessed_level", None) else "")
+                       if level.completed_at else "sent, not answered yet (its link is in their email)")
+        weekly = (db.query(Quiz).filter(Quiz.registration_id == registration.id, Quiz.kind.in_(("weekly", "session")), Quiz.sent_at.isnot(None)).all())
+        done = [row for row in weekly if row.completed_at is not None]
+        scores = [row.score for row in done if row.score is not None]
+        marks = [status for (status,) in db.query(Attendance.status).filter(Attendance.registration_id == registration.id).all()]
+        trainings.append({"program": registration.program_name, "place": place, "level_check": level_state,
+                          "weekly_questions": f"{len(done)} answered of {len(weekly)} sent" + (f", average {round(sum(scores) / len(scores))}%" if scores else ""),
+                          "presence": f"present {sum(1 for mark in marks if mark in ('present', 'late'))} of {len(marks)} sessions" if marks else "no session marked yet",
+                          "session_links": "online: a personal link to each session comes by email within the hour before it"
+                          if (registration.delivery_mode or "online") != "onsite" else "on site: no link needed"})
+    return {"candidate": candidate.full_name or candidate.email, "count": len(trainings), "trainings": trainings}
+
+
 def _program_facts(db: Session, name: str = "") -> dict:
     from app.models import Program
     from app.models.program import ProgramLevel
@@ -876,6 +944,11 @@ def _rules(db: Session) -> dict:
         "The files of each week's course are sent once the professor adds them.",
         "A question about the content of the course goes to the professor of the class, who answers.",
         "A refund, a cancellation or a complaint is always answered by the team, never by the assistant.",
+        "To register: the registration form (its link is in the centre's facts), then pay; the payment reminder comes once, a day after registering.",
+        "To pay: by the ways the centre wrote; then a photo or PDF of the receipt by email or WhatsApp, which the team confirms.",
+        "Once paid in full: placed in a class at once (found or created), with an email saying which class and when it starts.",
+        "Questions about the subject taught go to the professor of their class, only once the training is paid in full; the professor answers by email.",
+        "At the end of the program, each candidate is asked their opinion once (stars, then a few words if they want).",
     ]}
 
 
@@ -893,6 +966,11 @@ def for_candidate(db: Session, candidate) -> dict[str, Tool]:
         Tool("programs", "The programs: price online and on site, weeks, hours per week, when the next class starts; for one program, "
                          "what it teaches level by level.", _params(name=("Only this program (part of its name)", "STRING", None)),
              lambda name="": _program_facts(db, name)),
+        Tool("my_payments", "This candidate's money: per training the price, what was paid (when, how), what is left, the payment reminder, "
+                            "the receipts they sent and what became of them, how to pay, and what happens after paying.", None,
+             lambda: _my_payments(db, candidate)),
+        Tool("my_progress", "Where this candidate is: in a class or why they wait, their level check, weekly questions answered and average, "
+                            "their presence, and how they get the link to each online session.", None, lambda: _my_progress(db, candidate)),
         Tool("centre", "The centre: where it is, phone, WhatsApp, email, website, Facebook, the registration form, whether bank transfer is possible.",
              None, lambda: _centre(db)),
         Tool("rules", "How things work at 9antra: placement after payment, the payment reminder, one training at a time, links to online "

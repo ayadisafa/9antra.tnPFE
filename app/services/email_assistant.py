@@ -110,6 +110,9 @@ _THANKS_ONLY = re.compile(
     r"c'est noté|c est noté|noté|شكرا|يعطيك الصحة|3aychek|aychek)\b[^?]*$",
     re.IGNORECASE,
 )
+# "no cv", "cv merci", "ça va", "c bon": fine, nothing wrong, nothing asked ("cv" is "ça va" here, not a CV).
+_FINE_ONLY = re.compile(r"^\W*(?:(?:no|non|nn|nan|la|le)\W+)?(?:cv|ça va|ca va|cava|c bon|cbon|c'est bon|labes|labess)\W*"
+                        r"(?:(?:merci|mrc|thanks|3aychek|y3aychek)\W*)?$", re.IGNORECASE)
 _QUESTION_WORDS = re.compile(
     r"\b(est-ce|pouvez|pourriez|peux|puis-je|comment|quand|combien|où|quel|quelle|quels|quelles|pourquoi|"
     r"can|could|how|when|where|what|which|why|do you|is there)\b",
@@ -382,8 +385,11 @@ def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
     opened = _OPENING.sub("", stripped, count=1)
     thanked = (reply_rules.pattern(rules) if rules else _THANKS_ONLY).match(opened)
     thanks_only = not asks and len(stripped) < (rules["max_length"] if rules else 200) and bool(thanked)
+    fine_only = bool(_FINE_ONLY.match(stripped))
     if thanks_only and rules and rules["only_thanks"] and not reply_rules.pure_thanks(opened, rules):
         thanks_only = False
+    if fine_only:
+        thanks_only = True                  # "no cv": they are fine, nothing to answer
     if intent == "complaint":
         sentiment = "frustrated"
     elif re.search(r"\b(merci|thanks|thank you|super|parfait|génial|genial|ravi|content|شكرا)\b", lowered):
@@ -400,7 +406,7 @@ def analyse(subject: str, body: str, rules: dict | None = None) -> dict:
         "intent": "greeting" if thanks_only else intent,
         # Everything except a plain thank-you is handled: answered, or shown to the admin.
         "needs_reply": not thanks_only,
-        "thanks_word": thanked.group(1).lower() if thanks_only else None,
+        "thanks_word": ("cv" if fine_only else thanked.group(1).lower()) if thanks_only else None,
         "question": question_sentence(stripped),
         "requests": requests_of(stripped),             # each thing asked, so that none is missed
         "sentiment": sentiment,
@@ -1480,6 +1486,39 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
 
     # Any question, understood by the cloud model and answered only from this candidate's facts (None: as before).
     read = cloud_reply.read(db, candidate, message, subject)
+    cloud_route = read["route"] if read is not None else None
+    if read is not None and read["route"] == "quiz_answers" and read.get("quiz_answers"):
+        # Answers to the questions they were sent, written their own way ("pour la 3 je dirais C"): read by the cloud
+        # reader as question and letter, then graded like "1-B, 2-A".
+        written = ", ".join(f"{item['question']}-{str(item['choice']).strip()[:1].upper()}" for item in read["quiz_answers"])
+        handled = None if is_test(message) else weekly_questions.handle_reply(db, candidate.id, thread.subject or message.subject or "", written)
+        if handled is not None:
+            graded = f"{greeting_for(candidate, 'fr')}\n\n{handled['text']}"
+            text, html_body = compose_reply(db, candidate, graded, language="fr")
+            email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system", thread=thread,
+                                  language="fr", note=f"Answers to the questions, read by the cloud reader as {written}.")
+            message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+            message.analysis = f"Answers to the questions ({handled['quiz'].course_name}), read as {written}" + (": graded." if handled["done"] else ": some still missing.")
+            thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
+            return "replied"
+        return _ask_admin(db, thread, message, candidate, f"They seem to answer questions ({written}), but no questions wait for their answers: read it.", None)
+    if read is not None and read["route"] == "review" and read["sensitive"] == "none":
+        # Their opinion, not a question: kept (with the review asked at the end, when there is one), nothing to answer.
+        from app.services import program_feedback
+
+        kept = None
+        for registration in candidate.registrations:
+            row = program_feedback.of_registration(db, registration.id)
+            if row is not None and row.status != "received":
+                kept = program_feedback.from_reply(db, registration.id, message.body or "", message_id=message.id)
+                if kept is not None:
+                    break
+        message.status, message.requires_admin, message.intent = "no_reply", False, "other"
+        message.analysis = "Their opinion (not a question)" + (", kept as their review of the program." if kept is not None else ".")
+        reply_rules.mark(message, "opinion")
+        thread.status, thread.needs_admin, thread.last_status = "received", False, "no_reply"
+        _notify(db, thread, "CANDIDATE_EMAIL", f"{name} gave their opinion", (message.body or "")[:200])
+        return "no_reply"
     if read is not None:
         if read["sensitive"] != "none":
             label = {"refund": "a refund", "cancellation": "a cancellation", "complaint": "a complaint"}[read["sensitive"]]
@@ -1509,7 +1548,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                     "They are not registered in it: they were told to register first. The course of a program is only for its candidates.")
             return "replied"
     wanted = (course_requests.lookup(db, candidate, f"{subject}\n{asked_text}")
-              if read is None and course_requests.asks_for_material(f"{subject}\n{asked_text}") else None)
+              if read is None and (cloud_route == "course_files" or course_requests.asks_for_material(f"{subject}\n{asked_text}")) else None)
     if wanted is not None and wanted["state"] != "ready":
         # The course of a week not added yet (or not taught yet): the professor and the admin are asked, the candidate told.
         professor = course_questions.professor_of(db, wanted["class"])
@@ -1537,7 +1576,7 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                 + "it goes to them by itself as soon as its files are added on the course page.")
         return "replied"
     material_ready = wanted is not None
-    if read is None and not material_ready and course_questions.is_learning_question(f"{subject}\n{asked_text}"):
+    if read is None and not material_ready and (cloud_route == "course_question" or course_questions.is_learning_question(f"{subject}\n{asked_text}")):
         # About the learning itself: only for a candidate who paid that program, and their professor answers.
         registration, class_group = course_questions.class_of(db, candidate, asked_text)
         if registration is None:

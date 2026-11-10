@@ -308,7 +308,7 @@ def _send_one(db: Session, person: dict, text: str, ways: list[str], *, author: 
             else:
                 from urllib.parse import quote
 
-                results.append({"way": "sms", "status": "waiting", "why": _why_waiting("sms"), "link": f"sms:{number}?body={quote(text)}"})
+                results.append({"way": "sms", "status": "waiting", "why": _why_waiting("sms"), "link": sms.link(number, text)})
         elif way == "whatsapp":
             if whatsapp.configured():
                 problem = whatsapp.send(number, text)

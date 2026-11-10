@@ -22,6 +22,13 @@ ENV_NAMES = ("SMS_GATEWAY_URL", "SMS_GATEWAY_USER", "SMS_GATEWAY_PASSWORD", "SMS
 MAX_SKEW = 300
 
 
+def link(number: str, text: str = "") -> str:
+    """An sms: link that opens the phone's Messages with the text written: "?&body=" is read by iPhones and Android phones."""
+    from urllib.parse import quote
+
+    return f"sms:{number}" + (f"?&body={quote(text)}" if text else "")
+
+
 def _env(name: str) -> str:
     return (os.getenv(name) or "").strip()
 

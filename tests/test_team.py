@@ -90,7 +90,7 @@ bubbles = tm.conversation(db, nour_key)
 check("conversation: one bubble with four ways", len(bubbles) == 1 and len(bubbles[0]["ways"]) == 4)
 links = {way["channel"]: way["link"] for way in bubbles[0]["ways"]}
 check("conversation: WhatsApp opens on the number, written", links["whatsapp"].startswith("https://wa.me/21622333444?text="), links["whatsapp"])
-check("conversation: SMS opens the phone's messages, written", links["sms"].startswith("sms:+21622333444?body=Bonjour"), links["sms"])
+check("conversation: SMS opens the phone's messages, written", links["sms"].startswith("sms:+21622333444?&body=Bonjour"), links["sms"])
 page = admin.get(f"/inbox/team?person={nour_key}").text
 check("page: the conversation shows, with the buttons", "la salle change samedi" in page and "wa.me/21622333444" in page and "sms:+21622333444" in page)
 admin.post(f"/inbox/team/message/{ids['whatsapp']}/sent", data={"person": nour_key})

@@ -1263,6 +1263,10 @@
 "Une question comme les gens la posent, et la réponse à donner.",
 "سؤال كما يطرحه الناس، والإجابة الواجب تقديمها."
 ],
+"A question asked as yes or no is answered yes or no first (Yasmine does the same). Answers to the questions they were sent, written their own way, are graded. An opinion is kept as their review, with nothing to answer. A question about the course goes to their professor, only once they paid in full. “no cv” means they are fine: nothing to answer.": [
+"Une question posée en oui ou non reçoit d'abord un oui ou un non (Yasmine fait de même). Les réponses aux questions envoyées, écrites à leur manière, sont corrigées. Un avis est gardé comme leur avis sur le programme, sans rien à répondre. Une question sur le cours va à leur formateur, seulement une fois tout payé. « no cv » veut dire que tout va bien : rien à répondre.",
+"السؤال المطروح بنعم أو لا يُجاب عنه أولا بنعم أو لا (وياسمين تفعل الشيء نفسه). وتُصحَّح الإجابات عن الأسئلة المرسلة، المكتوبة بطريقتهم. ويُحفظ الرأي كرأيهم في البرنامج، دون أي رد. والسؤال عن الدرس يذهب إلى أستاذهم، فقط بعد الدفع الكامل. «no cv» تعني أن كل شيء بخير: لا شيء للرد."
+],
 "A question is not an opinion": [
 "Une question n'est pas un avis",
 "السؤال ليس رأيا"
@@ -2282,6 +2286,10 @@
 "An empty line starts a new paragraph. A line starting with": [
 "Une ligne vide commence un nouveau paragraphe. Une ligne qui commence par",
 "السطر الفارغ يبدأ فقرة جديدة. السطر الذي يبدأ بـ"
+],
+"An iPhone does not let an application send SMS by itself. So each SMS (asked to Yasmine, from the inbox, the team chat or a reminder) waits with a button: on your iPhone it opens Messages with the text already written to the right number, and you press Send. The phone buttons call at once. To send SMS with nobody pressing Send, an Android phone with the SMS gateway is needed (Settings, SMS).": [
+"Un iPhone ne laisse pas une application envoyer des SMS toute seule. Chaque SMS (demandé à Yasmine, depuis la boîte de réception, la discussion d'équipe ou un rappel) attend donc avec un bouton : sur votre iPhone, il ouvre Messages avec le texte déjà écrit au bon numéro, et vous appuyez sur Envoyer. Les boutons de téléphone appellent tout de suite. Pour envoyer des SMS sans que personne n'appuie sur Envoyer, il faut un téléphone Android avec la passerelle SMS (Paramètres, SMS).",
+"لا يسمح هاتف iPhone لتطبيق بإرسال الرسائل القصيرة وحده. لذلك تنتظر كل رسالة قصيرة (طُلبت من ياسمين، أو من صندوق الرسائل، أو محادثة الفريق، أو تذكير) مع زر: على هاتفك iPhone يفتح تطبيق الرسائل والنص مكتوب إلى الرقم الصحيح، وتضغط أنت على إرسال. أزرار الهاتف تتصل فورا. ولإرسال الرسائل القصيرة دون أن يضغط أحد على إرسال، يلزم هاتف Android مع بوابة الرسائل القصيرة (الإعدادات، الرسائل القصيرة)."
 ],
 "An information letter": [
 "Une lettre d'information",
@@ -6866,6 +6874,10 @@
 "Everything about one program.": [
 "Tout sur un programme.",
 "كل شيء عن برنامج."
+],
+"Everything about the candidate who writes": [
+"Tout sur le candidat qui écrit",
+"كل شيء عن المترشح الذي يكتب"
 ],
 "Everything about the class, in one form.": [
 "Tout sur la classe, dans un seul formulaire.",
@@ -12447,6 +12459,10 @@
 "Sur la bonne voie",
 "على الطريق الصحيح"
 ],
+"On your iPhone": [
+"Sur votre iPhone",
+"على هاتفك iPhone"
+],
 "On your own posts": [
 "Sur vos propres publications",
 "في منشوراتك"
@@ -15703,6 +15719,10 @@
 "SMS Gateway for Android",
 "SMS Gateway for Android"
 ],
+"SMS and calls from your iPhone": [
+"SMS et appels depuis votre iPhone",
+"الرسائل القصيرة والمكالمات من هاتف iPhone"
+],
 "SMS answered": [
 "SMS répondus",
 "الإجابة على SMS"
@@ -18855,6 +18875,10 @@
 "L'assistant e-mail demande à l'agent de la formation que suit le candidat : ses semaines, ses professeurs et ce que vous lui avez dit. La page Agents compte ce que chaque agent de formation a répondu.",
 "مساعد البريد يسأل وكيل البرنامج الذي يتابعه المترشح: أسابيعه وأساتذته وما قلته عنه. صفحة الوكلاء تحصي ما أجاب عنه كل وكيل برنامج."
 ],
+"The email assistant tells every kind of message apart, and the iPhone": [
+"L'assistant email distingue chaque sorte de message, et l'iPhone",
+"مساعد البريد يميّز كل نوع من الرسائل، وهاتف iPhone"
+],
 "The email could not be sent. It is kept in the candidate's discussion (Inbox), where you can send it again once email works.": [
 "L'email n'a pas pu être envoyé. Il est gardé dans la discussion du candidat (Boîte de réception), d'où vous pourrez le renvoyer une fois l'email fonctionnel.",
 "تعذّر إرسال البريد. هو محفوظ في محادثة المترشح (البريد الوارد)، ويمكنك إعادة إرساله بعد أن يعمل البريد."
@@ -19510,6 +19534,10 @@
 "The page's number is the digits at the end of urn:li:organization:12345678.": [
 "Le numéro de la page, ce sont les chiffres à la fin de urn:li:organization:12345678.",
 "رقم الصفحة هو الأرقام في آخر urn:li:organization:12345678."
+],
+"The pages fit the notch and the home bar, fields no longer zoom, and every SMS opens Messages with the text already written: you press Send. How to open it on your iPhone: How it is working, On your phone.": [
+"Les pages s'adaptent à l'encoche et à la barre d'accueil, les champs ne zooment plus, et chaque SMS ouvre Messages avec le texte déjà écrit : vous appuyez sur Envoyer. Pour l'ouvrir sur votre iPhone : Comment ça marche, Sur votre téléphone.",
+"تتلاءم الصفحات مع النتوء وشريط الشاشة الرئيسية، ولم تعد الحقول تكبّر الصفحة، وكل رسالة قصيرة تفتح تطبيق الرسائل والنص مكتوب: تضغط أنت على إرسال. لفتحه على هاتفك iPhone: كيف يعمل، على هاتفك."
 ],
 "The pages in English, French or Arabic.": [
 "Les pages en anglais, en français ou en arabe.",
@@ -20610,6 +20638,10 @@
 "Their own space: their classes, the course, the presence and their messages": [
 "Son propre espace : ses classes, le cours, la présence et ses messages",
 "فضاؤه الخاص: أقسامه، الدرس، الحضور ورسائله"
+],
+"Their payments (when, how, what is left), the receipts they sent and what became of them, how to pay, their place in a class or why they wait, their level check, weekly questions and presence: the email assistant reads them to answer, every figure checked.": [
+"Ses paiements (quand, comment, ce qui reste), les reçus qu'il a envoyés et ce qu'ils sont devenus, comment payer, sa place dans une classe ou pourquoi il attend, son test de niveau, ses questions de la semaine et sa présence : l'assistant email les lit pour répondre, chaque chiffre vérifié.",
+"مدفوعاته (متى، وكيف، وما بقي)، والوصولات التي أرسلها وما صار بها، وكيف يدفع، ومكانه في قسم أو سبب انتظاره، واختبار مستواه، وأسئلة الأسبوع، وحضوره: يقرؤها مساعد البريد ليجيب، مع التحقق من كل رقم."
 ],
 "Their programs have no week-by-week content yet, so candidates were told nothing about what they will study: {names}.": [
 "Leurs formations n'ont pas encore de contenu semaine par semaine, donc on n'a rien dit aux candidats sur ce qu'ils vont étudier : {names}.",
@@ -24614,6 +24646,10 @@
 "Yasmine, your friend: click to talk with her": [
 "Yasmine, votre amie : cliquez pour lui parler",
 "ياسمين، صديقتك: انقر للتحدث معها"
+],
+"Yes or no, answers, opinions, the course": [
+"Oui ou non, réponses, avis, le cours",
+"نعم أو لا، إجابات، آراء، الدرس"
 ],
 "Yes, alone": [
 "Oui, seul",

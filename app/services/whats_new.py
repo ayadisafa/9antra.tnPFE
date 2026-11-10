@@ -13,6 +13,23 @@ CATEGORY = "WHATS_NEW"
 
 RELEASES = [
     {
+        "key": "2026-11-09b", "day": date(2026, 11, 9), "title": "The email assistant tells every kind of message apart, and the iPhone",
+        "items": [
+            {"icon": "bi-envelope-check", "title": "Yes or no, answers, opinions, the course",
+             "text": "A question asked as yes or no is answered yes or no first (Yasmine does the same). Answers to the questions they "
+                     "were sent, written their own way, are graded. An opinion is kept as their review, with nothing to answer. A question "
+                     "about the course goes to their professor, only once they paid in full. “no cv” means they are fine: nothing to answer.", "url": "/inbox"},
+            {"icon": "bi-person-vcard", "title": "Everything about the candidate who writes",
+             "text": "Their payments (when, how, what is left), the receipts they sent and what became of them, how to pay, their "
+                     "place in a class or why they wait, their level check, weekly questions and presence: the email assistant reads "
+                     "them to answer, every figure checked.", "url": "/inbox"},
+            {"icon": "bi-phone", "title": "On your iPhone",
+             "text": "The pages fit the notch and the home bar, fields no longer zoom, and every SMS opens Messages with the text "
+                     "already written: you press Send. How to open it on your iPhone: How it is working, On your phone.",
+             "url": "/system#phone"},
+        ],
+    },
+    {
         "key": "2026-11-09", "day": date(2026, 11, 9), "title": "Yasmine goes further, and every professor has their own space",
         "items": [
             {"icon": "bi-chat-left-heart", "title": "She remembers, takes you anywhere, and asks when it is unclear",

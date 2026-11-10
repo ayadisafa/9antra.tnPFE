@@ -416,4 +416,22 @@
     .ui-head::after, .page-flash, .page-flash.is-leaving { animation:none !important; }
     .ui-btn:hover { transform:none; } body .sidebar nav ul li a.nav-link:hover { padding-inline-start:.6rem; }
   }
+  /* ---- iPhone (9 November): the notch and the home bar, the real height of the page (Safari's bars come and go), no
+     zoom when a field is touched (iOS zooms on fields under 16px), no grey flash on a tap. ---- */
+  html { -webkit-text-size-adjust:100%; text-size-adjust:100%; }
+  a, button, summary, label, [role="button"], .tab { -webkit-tap-highlight-color:rgba(164,44,103,.12); touch-action:manipulation; }
+  @supports (-webkit-touch-callout: none) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]), select, textarea { font-size:max(16px, 1em) !important; }
+  }
+  @media (max-width: 991px) {
+    body .wrapper > main.main { padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+    @supports (height: 100dvh) {
+      body .wrapper > aside.sidebar { height:100dvh !important; }
+      body .assistant-panel { height:min(560px, calc(100dvh - 190px - env(safe-area-inset-bottom, 0px))); }
+      .wrapper { min-height:100dvh; }
+    }
+    .assistant-compose { padding-bottom:max(12px, env(safe-area-inset-bottom, 0px)); }
+  }
+  /* Yasmine's window open: the page tour's small offer waits (on a phone it would sit on her header). */
+  body:has(.assistant-panel.open) #tour-hint { display:none; }
 </style>
