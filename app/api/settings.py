@@ -3,7 +3,7 @@ import os
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, File, Form, Request, UploadFile
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -518,11 +518,15 @@ def save_email_account(smtp_email: str = Form(""), smtp_password: str = Form("")
 
 
 @router.post("/appearance")
-def save_appearance(ui_color: str = Form(""), ui_menu_side: str = Form(""), ui_background: str = Form(""), ui_mode: str = Form(""),
-                    db: Session = Depends(get_db)):
-    """The design: its main colour, the side of the menu, and whether the background moves."""
+def save_appearance(request: Request, ui_color: str = Form(""), ui_menu_side: str = Form(""), ui_background: str = Form(""),
+                    ui_mode: str = Form(""), db: Session = Depends(get_db)):
+    """The design: its main colour, the side of the menu, and whether the background moves. Saved by the page itself
+    the moment something is chosen (it then asks for JSON: the design as it is now)."""
+    quick = "application/json" in request.headers.get("accept", "")
     colour = theme.clean(ui_color)
     if colour is None:
+        if quick:
+            return JSONResponse(status_code=400, content={"detail": "Choose a colour."})
         return _back(error="Choose a colour.", anchor="#appearance")
     settings = get_settings(db)
     settings.ui_color = None if colour == theme.DEFAULT else colour
@@ -533,6 +537,8 @@ def save_appearance(ui_color: str = Form(""), ui_menu_side: str = Form(""), ui_b
     if ui_mode in ("soft", "colours", "night", "night-blue"):
         settings.ui_mode = None if ui_mode == "soft" else ui_mode
     db.commit()
+    if quick:
+        return theme.look(settings)
     return _back(notice="Colour saved. Every page now uses it.", anchor="#appearance")
 
 

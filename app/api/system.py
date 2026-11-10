@@ -135,7 +135,7 @@ def manifest(db: Session = Depends(get_db)):
     return JSONResponse(
         {
             "name": look["name"], "short_name": look["name"][:12], "start_url": "/", "scope": "/",
-            "display": "standalone", "background_color": "#f6f3fb", "theme_color": colour, "icons": icons,
+            "display": "standalone", "background_color": theme.look(settings)["bar"], "theme_color": colour, "icons": icons,
             "id": "/", "description": "The centre's application: candidates, classes, payments, messages, and Yasmine.",
             # A long press on its icon: straight to these.
             "shortcuts": [{"name": name, "url": url, "icons": icons[:1]} for name, url in

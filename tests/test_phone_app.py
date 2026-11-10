@@ -15,6 +15,7 @@ requests.get = _no_web; requests.post = _no_web
 
 import base64
 import json
+import re
 import os
 from datetime import datetime
 import app.main as main
@@ -179,6 +180,14 @@ _, plain = decrypt(posted[0]["data"], key2, p2, s2)
 check("…saying who wrote and what", json.loads(plain[:-1])["title"] == "Leila Admin" and "samedi" in json.loads(plain[:-1])["body"])
 page = client.get("/account").text
 check("My account: notifications on this phone (turn on, test, per device)", 'id="phone"' in page and 'id="push-on"' in page and "data-push=\"install\"" in page)
+# A script above window.phonePush's definition that uses it at once finds nothing and gives up: the card stayed on "…".
+defined = page.index("window.phonePush = {")
+early = [block for block in re.findall(r"<script>(.*?)</script>", page[:defined], re.S) if "window.phonePush" in block]
+check("…its script, and the “Turn on” offer, wait for the page to be read (the phone helper is defined below them)",
+      len(early) == 2 and all("DOMContentLoaded" in block for block in early), [block[:80] for block in early])
+check("…the offer only in the application opened from the home screen (on a computer “this phone” would be wrong)",
+      "if (!window.phonePush.installed()) return;" in page)
+check("…and the state is never left waiting on the first install of the service worker", 'done("off"); }, 8000)' in page)
 requests.post = _no_web
 
 # ======================================================================

@@ -34,6 +34,7 @@ def notification_context(request: Request) -> dict:
     db = SessionLocal()
     try:
         settings = get_settings(db)
+        look = theme.look(settings)
         from app.services import dynamic_words
 
         context = {
@@ -41,15 +42,16 @@ def notification_context(request: Request) -> dict:
             "shown": dynamic_words.shower(db, translations.clean_language(request.cookies.get("lang"))),
             "current_user": user,
             "is_admin": user.is_admin,
-            "theme_css": theme.css(settings.ui_color),
-            "ui_menu_side": "right" if getattr(settings, "ui_menu_side", None) == "right" else "left",
-            "ui_mode": getattr(settings, "ui_mode", None) if getattr(settings, "ui_mode", None) in ("colours", "night", "night-blue") else "soft",
+            "theme_css": look["css"],
+            "ui_menu_side": look["menu_side"],
+            "ui_mode": look["mode"],
+            "ui_bar": look["bar"],
             "ui_lang": translations.clean_language(request.cookies.get("lang")),
             "staff_menu": __import__("app.services.access", fromlist=["menu"]).menu(user.permissions) if getattr(user, "is_staff", False) else [],
             "ui_languages": translations.LANGUAGES,
             "i18n_version": translations.version(db, translations.clean_language(request.cookies.get("lang")))
                             if translations.clean_language(request.cookies.get("lang")) != "en" else "",
-            "ui_background": "plain" if getattr(settings, "ui_background", None) == "plain" else "animated",
+            "ui_background": look["background"],
             "app_brand": brand.view(settings),
             "page_guide": guides.for_path(request.url.path),
             "page_tour": _tour_of(db, request),

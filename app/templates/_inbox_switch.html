@@ -6,6 +6,8 @@
   .ibx-switch a.is-on { background:var(--primary-berry); color:#fff; box-shadow:0 8px 18px -10px var(--primary-berry); }
   .ibx-switch b { min-width:20px; height:20px; border-radius:999px; background:#e11d48; color:#fff; font-size:.68rem; display:inline-grid; place-items:center; padding:0 6px; }
   .ibx-switch a.is-on b { background:#fff; color:var(--primary-berry); }
+  /* A phone: the three fit the screen (smaller, the names on two lines when needed). */
+  @media (max-width: 575px) { .ibx-switch { display:flex; max-width:100%; } .ibx-switch a { flex:1 1 0; min-width:0; justify-content:center; text-align:center; padding:7px 8px; gap:5px; font-size:.76rem; } }
 </style>
 <nav class="ibx-switch" aria-label="Inboxes">
   <a href="/inbox" class="{{ 'is-on' if inbox_side == 'candidates' }}"><i class="bi bi-people-fill"></i>Candidates{% if inbox_pending %}<b>{{ inbox_pending }}</b>{% endif %}</a>

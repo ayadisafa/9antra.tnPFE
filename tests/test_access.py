@@ -295,7 +295,8 @@ check("theme: the sign-in page takes it too", "--primary-berry:#1d4ed8" in anon.
 page = admin.get("/settings")
 check("theme: Settings shows the colour chooser and who can sign in", 'id="appearance"' in page.text and 'value="#1d4ed8"' in page.text and "Who can sign in" in page.text and "admin@example.com" in page.text)
 admin.post("/settings/appearance", data={"ui_color": "#a42c67"}); db.expire_all()
-check("theme: choosing the original colour removes the override", get_settings(db).ui_color is None and 'id="theme-colour"' not in admin.get("/").text)
+# The page keeps an empty colour rule (an open page fills it when the colour changes elsewhere): no override in it.
+check("theme: choosing the original colour removes the override", get_settings(db).ui_color is None and '<style id="theme-colour"></style>' in admin.get("/").text)
 
 # ======================================================================
 # G. Reformulate

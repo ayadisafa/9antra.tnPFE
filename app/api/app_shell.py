@@ -7,7 +7,8 @@ from fastapi.responses import JSONResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services import auth, phone_push, phone_sms
+from app.services import auth, phone_push, phone_sms, theme
+from app.services.settings_service import get_settings
 from app.services.ui_words import t as _t
 
 router = APIRouter(tags=["Phone app"])
@@ -61,6 +62,12 @@ def _me(request: Request):
     if user is None:
         raise HTTPException(status_code=401)
     return user
+
+
+@router.get("/account/look")
+def look_now(db: Session = Depends(get_db)):
+    """The design as it is now: an open page takes it when it changed on another page or device (base.html)."""
+    return theme.look(get_settings(db))
 
 
 @router.get("/account/push/key")

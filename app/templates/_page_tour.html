@@ -51,7 +51,7 @@
   .tour-hand { position:fixed; z-index:2052; font-size:1.6rem; color:#fff; pointer-events:none; filter:drop-shadow(0 3px 5px rgba(0,0,0,.45)); opacity:0; }
   .tour-hint { position:fixed; z-index:2040; top:74px; inset-inline-end:18px; width:min(300px, calc(100vw - 24px)); background:#fff; border-radius:18px; padding:14px 14px 12px;
                box-shadow:0 22px 50px -18px rgba(18,10,30,.5); border:1px solid #f1e3ee; animation:tourIn .45s cubic-bezier(.2,.8,.2,1) both; }
-  .tour-hint::before { content:""; position:absolute; top:-7px; inset-inline-end:64px; width:14px; height:14px; background:#fff; border-left:1px solid #f1e3ee; border-top:1px solid #f1e3ee; transform:rotate(45deg); }
+  .tour-hint::before { content:""; position:absolute; top:-7px; inset-inline-end:var(--tour-arrow, 64px); width:14px; height:14px; background:#fff; border-left:1px solid #f1e3ee; border-top:1px solid #f1e3ee; transform:rotate(45deg); }
   .tour-hint b { display:flex; gap:8px; align-items:center; font-size:.9rem; }
   .tour-hint b i { color:var(--primary-berry, #a42c67); animation:tourWiggle 1.2s ease .4s 2; }
   .tour-hint p { font-size:.8rem; color:#5b5670; margin:4px 0 10px; }
@@ -285,6 +285,19 @@
     document.body.appendChild(hint);
     const help = document.querySelector("[data-tour-show]");
     if (help) help.classList.add("tour-call");
+    // Under the top bar and the notifications offer, never over one of their buttons (on a phone the top bar takes
+    // several lines), its arrow pointing at the "?".
+    const spot = help && help.getBoundingClientRect(), bar = help && help.closest(".topbar"), offer = document.querySelector("main .push-offer");
+    if (spot && spot.height) {
+      const below = [spot, bar, offer].map(node => !node ? 0 : node.bottom !== undefined ? node.bottom : node.getBoundingClientRect().bottom);
+      hint.style.top = Math.round(Math.max(...below) + 12) + "px";
+      // Its arrow (71px from its end) under the "?", the box kept 12px inside the screen.
+      const width = hint.getBoundingClientRect().width, view = document.documentElement.clientWidth, middle = spot.left + spot.width / 2;
+      const fromEnd = document.documentElement.dir === "rtl" ? middle : view - middle;
+      const end = Math.max(12, Math.min(view - width - 12, fromEnd - 71));
+      hint.style.insetInlineEnd = Math.round(end) + "px";
+      hint.style.setProperty("--tour-arrow", Math.round(Math.max(14, Math.min(width - 28, fromEnd - end - 7))) + "px");
+    }
     hint.addEventListener("click", event => {
       if (event.target.closest("[data-hint-go]")) { hint.remove(); openMap(); }
       else if (event.target.closest("[data-hint-later]")) { hint.remove(); remember(); }

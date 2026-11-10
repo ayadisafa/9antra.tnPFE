@@ -437,7 +437,8 @@
   /* The phone's clock and battery on a solid band: the page slides under it, not through it. The top bar stays below. */
   .status-band { position:fixed; left:0; right:0; top:0; height:env(safe-area-inset-top, 0px); background:var(--canvas, #f6f3fb); z-index:1150; pointer-events:none; }
   @media (max-width: 991px) {
-    .topbar { top:calc(8px + env(safe-area-inset-top, 0px)); }
+    .topbar { top:calc(8px + env(safe-area-inset-top, 0px)); transition:box-shadow .2s ease, padding .2s ease, background-color .2s ease, transform .25s ease; }
+    .topbar.is-away { transform:translateY(calc(-100% - 12px - env(safe-area-inset-top, 0px))); box-shadow:none; }
     .topbar .user-profile { flex-wrap:wrap; row-gap:6px; justify-content:flex-end; max-width:100%; min-width:0; }
   }
   .push-offer { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:12px 14px; margin:0 0 16px; border-radius:18px;
@@ -445,6 +446,9 @@
   .push-offer > i { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; color:#fff;
                     background:linear-gradient(135deg, var(--primary-berry), #d0558f); }
   .push-offer > div { flex:1 1 180px; min-width:0; } .push-offer b { display:block; font-size:.88rem; } .push-offer span { font-size:.76rem; color:var(--muted); }
+  .push-offer button { border-radius:999px; padding:7px 14px; font-size:.8rem; font-weight:700; border:1px solid transparent; line-height:1.2; }
+  .push-offer [data-push-yes] { background:var(--primary-berry); color:#fff; }
+  .push-offer [data-push-later] { background:transparent; color:var(--muted); border-color:var(--border-color); }
   @media (prefers-reduced-motion: no-preference) { .push-offer > i { animation:awBeat 1.6s ease-in-out 3; } }
   /* Yasmine's window open: the page tour's small offer waits (on a phone it would sit on her header). */
   body:has(.assistant-panel.open) #tour-hint { display:none; }

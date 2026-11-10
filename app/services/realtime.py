@@ -146,6 +146,10 @@ def _topics_for(obj, deleted: bool = False) -> set[str]:
         topics |= {"classes", "dashboard"}
     elif name == "SystemSettings":
         topics |= {"settings", "classes", "system"}
+        # The design changed: every open page, on every device, takes it at once.
+        state = inspect(obj)
+        if any(state.attrs[key].history.has_changes() for key in ("ui_color", "ui_mode", "ui_menu_side", "ui_background")):
+            topics.add("look")
     elif name in ("Program", "ProgramProposal"):
         topics |= {"programs", "dashboard"}
     elif name in ("ClassMaterial", "ClassWeek", "WeekQuestion"):

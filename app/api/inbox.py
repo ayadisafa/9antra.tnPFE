@@ -1,6 +1,7 @@
 """Inbox: discussions with candidates, the questions waiting for the admin,
 personalized emails, the email templates and the assistant's knowledge base."""
 import dataclasses
+import difflib
 import json
 import os
 import time
@@ -405,11 +406,14 @@ def reply(
     reword: bool = Form(False),
     reword_language: str = Form(""),
     remember: bool = Form(False),
+    as_is: bool = Form(False),
     db: Session = Depends(get_db),
 ):
     thread = _thread_or_404(db, thread_id)
     note = body.strip()           # the admin's own words, kept as they are when asked to remember them
-    if reword and body.strip():
+    # Reworded: the admin's own few words. Never the system's draft (already an email), nor what came back from a
+    # stop ("as it is"): the press after "read it first" sends the box.
+    if reword and body.strip() and not as_is and not _drafted_by_system(db, thread, body):
         # "Reword and send at once": the admin's words (any language) as a proper reply; sent only when nothing changed.
         last_inbound = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
                         .order_by(CandidateEmail.received_at.desc()).first())
@@ -417,11 +421,13 @@ def reply(
         written = reply_writer.reformulate(body, first_name=name[0].capitalize() if name else "",
                                            question=(last_inbound.body or "") if last_inbound else "", language=reword_language or None)
         if written is None:
-            return _redirect("/inbox", thread=thread_id, draft=body[:1500],
-                             error="The assistant did not answer, so nothing was sent: your words are back in the box.")
+            return _redirect("/inbox", thread=thread_id, draft=body[:1500], as_is="1",
+                             error="The assistant did not answer, so nothing was sent: your words are back in the box. "
+                                   "“Send answer” now sends them as they are.")
         if written.get("warning"):
-            return _redirect("/inbox", thread=thread_id, draft=written["reply"][:1500],
-                             error="Not sent: read the reworded answer first. " + written["warning"])
+            return _redirect("/inbox", thread=thread_id, draft=written["reply"][:1500], as_is="1",
+                             error="Not sent: read the reworded answer first. " + written["warning"]
+                                   + " “Send answer” now sends what is in the box, as it is.")
         body = written["reply"]
     from app.services import derja
 
@@ -461,6 +467,14 @@ def reply(
         notice += " The system learned it and will answer this question by itself."
         notice += _read_again(db, taught, skip_thread_id=thread_id)
     return _redirect("/inbox", notice=notice, thread=thread_id)
+
+
+def _drafted_by_system(db: Session, thread: EmailThread, body: str) -> bool:
+    """The text is the draft the system prepared for the waiting question, perhaps touched up: already an email."""
+    last = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
+            .order_by(CandidateEmail.received_at.desc()).first())
+    draft = " ".join(((last.suggested_reply or "") if last else "").split()).lower()
+    return bool(draft) and difflib.SequenceMatcher(None, draft, " ".join(body.split()).lower()).ratio() >= 0.75
 
 
 def _read_again(db: Session, entry: KnowledgeEntry, skip_thread_id: str | None = None) -> str:

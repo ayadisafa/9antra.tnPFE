@@ -2431,6 +2431,10 @@
 "Répondre aux personnes pas encore inscrites",
 "الرد على الأشخاص غير المسجّلين بعد"
 ],
+"Answer sent": [
+"Réponse envoyée",
+"تم إرسال الردّ"
+],
 "Answer the candidate": [
 "Répondre au candidat",
 "الرد على المترشح"
@@ -11951,6 +11955,10 @@
 "Non enregistré : la connexion a été perdue.",
 "لم يُحفظ: انقطع الاتصال."
 ],
+"Not saved: try again.": [
+"Pas enregistré : réessayez.",
+"لم يُحفظ: حاول مرة أخرى."
+],
 "Not scheduled": [
 "Non programmée",
 "غير مبرمج"
@@ -16027,6 +16035,10 @@
 "Enregistré",
 "تم الحفظ"
 ],
+"Saved as soon as you choose: every page, on the phone and on the computer, changes at once.": [
+"Enregistré dès que vous choisissez : chaque page, sur le téléphone comme sur l'ordinateur, change aussitôt.",
+"يُحفظ بمجرّد أن تختار: كل صفحة، على الهاتف وعلى الحاسوب، تتغيّر فورًا."
+],
 "Saved from an answer you sent": [
 "Gardée d'une réponse que vous avez envoyée",
 "محفوظة من إجابة أرسلتها"
@@ -16050,6 +16062,10 @@
 "Saved. Your wording is kept and the assistant will not change it.": [
 "Enregistré. Votre formulation est gardée et l'assistant ne la changera pas.",
 "تم الحفظ. صياغتك محفوظة ولن يغيّرها المساعد."
+],
+"Saved: every page, on every device, uses it now.": [
+"Enregistré : chaque page, sur chaque appareil, l'utilise maintenant.",
+"تم الحفظ: كل صفحة، على كل جهاز، تستعمله الآن."
 ],
 "Saved: no weekly questions are sent.": [
 "Enregistré : aucune question hebdomadaire n'est envoyée.",
@@ -16078,6 +16094,10 @@
 "Saves": [
 "Enregistrements",
 "حفظ"
+],
+"Saving…": [
+"Enregistrement…",
+"جارٍ الحفظ…"
 ],
 "Say what is essential this week and what can wait.": [
 "Dites ce qui est essentiel cette semaine et ce qui peut attendre.",
@@ -18474,6 +18494,10 @@
 "The assistant did not answer, so nothing was sent: your words are back in the box.": [
 "L'assistant n'a pas répondu, donc rien n'a été envoyé : vos mots sont revenus dans la case.",
 "لم يستجب المساعد، لذا لم يُرسل شيء: عادت كلماتك إلى الخانة."
+],
+"The assistant did not answer, so nothing was sent: your words are back in the box. “Send answer” now sends them as they are.": [
+"L'assistant n'a pas répondu, donc rien n'a été envoyé : vos mots sont revenus dans la case. « Envoyer la réponse » les envoie maintenant tels quels.",
+"لم يُجب المساعد، لذلك لم يُرسَل شيء: كلماتك عادت إلى الخانة. «إرسال الإجابة» يرسلها الآن كما هي."
 ],
 "The assistant did not answer. Try again in a moment.": [
 "L'assistant n'a pas répondu. Réessayez dans un instant.",
@@ -30078,6 +30102,10 @@
 "“Save and send the ones due now” sends the reminders due today.": [
 "« Enregistrer et envoyer ceux qui sont dus maintenant » envoie les rappels dus aujourd'hui.",
 "«حفظ وإرسال المستحقة الآن» يرسل التذكيرات المستحقة اليوم."
+],
+"“Send answer” now sends what is in the box, as it is.": [
+"« Envoyer la réponse » envoie maintenant ce qui est dans la case, tel quel.",
+"«إرسال الإجابة» يرسل الآن ما في الخانة، كما هو."
 ],
 "“Send at once” in its header turns automatic sending on or off.": [
 "« Envoyer tout de suite » dans son en-tête active ou désactive l'envoi automatique.",

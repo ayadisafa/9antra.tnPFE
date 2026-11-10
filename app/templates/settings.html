@@ -866,8 +866,13 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
         <div class="d-flex gap-2 align-items-center">
           <input type="color" class="form-control form-control-color" id="appearance-colour" name="ui_color" value="{{ ui_colour }}" title="Any other colour" aria-label="Any other colour">
           <span class="st-sub" id="appearance-value">{{ ui_colour }}</span>
-          <button class="btn btn-sm btn-outline-secondary text-nowrap ms-auto">Save the colour</button>
+          <button class="btn btn-sm btn-outline-secondary text-nowrap ms-auto" id="appearance-save">Save the colour</button>
+          <span class="st-sub ms-auto" id="appearance-saved" aria-live="polite" hidden></span>
         </div>
+        <div class="st-sub mt-2">Saved as soon as you choose: every page, on the phone and on the computer, changes at once.</div>
+        <span hidden data-look-say="saving">Saving…</span>
+        <span hidden data-look-say="done">Saved: every page, on every device, uses it now.</span>
+        <span hidden data-look-say="failed">Not saved: try again.</span>
       </form>
     </div>
   </details>
@@ -1007,17 +1012,32 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
     markSelected();
   });
 
-  // Colour of the design: a swatch fills the colour field; the page shows it at once.
+  // Colour of the design: saved the moment something is chosen (a swatch, any colour, day or night, the menu, the
+  // background). This page and every other open one, on every device, take it at once (base.html, the "look" topic).
+  const form = document.getElementById('appearance-form');
   const colour = document.getElementById('appearance-colour');
   const value = document.getElementById('appearance-value');
   const swatches = document.querySelectorAll('#appearance-form .st-swatch');
-  if (colour) {
+  if (form && colour) {
+    const saved = document.getElementById('appearance-saved');
+    const say = key => { saved.hidden = false; saved.textContent = form.querySelector(`[data-look-say="${key}"]`).textContent; };
     const show = () => {
       value.textContent = colour.value;
       swatches.forEach(swatch => swatch.classList.toggle('is-chosen', swatch.dataset.colour === colour.value));
     };
-    swatches.forEach(swatch => swatch.addEventListener('click', () => { colour.value = swatch.dataset.colour; show(); }));
+    const save = () => {
+      show();
+      say('saving');
+      fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+        .then(answer => answer.ok ? answer.json() : Promise.reject(answer.status))
+        .then(look => { if (window.applyLook) window.applyLook(look); say('done'); })
+        .catch(() => say('failed'));
+    };
+    document.getElementById('appearance-save').hidden = true;
+    swatches.forEach(swatch => swatch.addEventListener('click', () => { colour.value = swatch.dataset.colour; save(); }));
     colour.addEventListener('input', show);
+    colour.addEventListener('change', save);
+    form.querySelectorAll('input[type="radio"]').forEach(radio => radio.addEventListener('change', save));
   }
 })();
 </script>

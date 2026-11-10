@@ -99,7 +99,7 @@ def left_out(phrase: str, reply: str) -> list[str]:
 
 
 def _trouble(found: dict) -> int:
-    return len(found["missing"]) + 2 * len(found["added"]) + (2 if found["odd"] else 0)
+    return len(found["missing"]) + 2 * len(found["added"]) + (2 if found["odd"] else 0) + (3 if found.get("lost") else 0)
 
 
 _AMOUNT = re.compile(r"(\d+(?:[.,]\d+)?)\s*(?:dt|tnd|dinars?)\b", re.IGNORECASE)
@@ -126,6 +126,9 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
     language = {"fr": "French", "en": "English"}.get((language or "").lower(), language) or language_for(question, phrase)
     if language not in _EXAMPLES:
         language = "French"
+    # Web links go to the model as short marks ([lien 1]): it garbles a long address, a mark it keeps or visibly loses.
+    original = phrase
+    phrase, links = protect_links(phrase, "lien" if language == "French" else "link")
     # The note may be in Tunisian (Latin or Arabic letters), French or English, mixed: what its Tunisian words mean is
     # given from the hand-written list. When the note is not in the language asked, its words cannot be compared one
     # by one with the reply: only the figures are checked then.
@@ -147,7 +150,9 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
         + f"The candidate's first name: {first_name or '(unknown: greet without a name)'}\n\n"
         "Rules: full, correct, friendly sentences; the same meaning as the note, nothing added, nothing "
         "left out; every number, date, time and name exactly as in the note; a greeting first, one short "
-        "polite sentence last; no signature and no 'Cordialement' (they are added automatically).\n\n"
+        "polite sentence last; no signature and no 'Cordialement' (they are added automatically)."
+        + (" Each mark like [link 1] is a web link: keep it exactly as it is, once." if links else "")
+        + "\n\n"
         'Answer with: {"reply": "..."}'
     )
     best = None
@@ -158,8 +163,9 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
             continue
         reply = _without_signature(str(data["reply"]).replace("\\n", "\n"))
         reply = _amounts_in_dinars(phrase, reply)
-        found = {"reply": reply, "added": added_figures(phrase, reply), "missing": [] if translating else left_out(phrase, reply),
-                 "odd": bool(_ODD_LETTER.search(reply))}
+        restored = restore_links(reply, links) if links else reply
+        found = {"reply": restored, "added": added_figures(phrase, reply), "missing": [] if translating else left_out(phrase, reply),
+                 "odd": bool(_ODD_LETTER.search(reply)), "lost": restored is None}
         if best is None or _trouble(found) < _trouble(best):
             best = found
         if not _trouble(found):
@@ -169,6 +175,7 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
             ("it left out: " + ", ".join(found["missing"])) if found["missing"] else "",
             ("it added figures that are not in the note: " + ", ".join(found["added"])) if found["added"] else "",
             "it contained wrong letters" if found["odd"] else "",
+            "it lost or changed the marks of the web links" if found["lost"] else "",
         ])) + ". Write it again, correctly."
     if best is None:
         return None
@@ -180,7 +187,10 @@ def reformulate(phrase: str, *, first_name: str = "", question: str = "", langua
         remarks.append("the system wrote " + ", ".join(best["added"]) + ", which is not in your phrase")
     if best["odd"]:
         remarks.append("some letters look wrong")
-    return {"reply": best["reply"], "warning": ("Check before sending: " + "; ".join(remarks) + ".") if remarks else None}
+    if best["lost"]:
+        remarks.append("the rewording lost a web link, so your own words are kept")
+    return {"reply": original if best["lost"] else best["reply"],
+            "warning": ("Check before sending: " + "; ".join(remarks) + ".") if remarks else None}
 
 
 # ------------------------------------------------------------------

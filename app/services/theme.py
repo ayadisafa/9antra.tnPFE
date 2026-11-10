@@ -86,5 +86,21 @@ def css(colour: str | None) -> str:
     return ":root{" + ";".join(f"{name}:{value}" for name, value in variables.items()) + "}"
 
 
+# The top of a phone (its clock, the browser's bar) in the page's own background, for each "Day or night"
+# (night turns the page over: these are the colours it shows then).
+BARS = {"soft": "#f6f3fb", "colours": "#fdf2f8", "night": "#110e17", "night-blue": "#1a2a53"}
+
+
+def look(settings) -> dict:
+    """The design as every page shows it: its colour (a style rule), day or night, the menu's side, the background.
+    An open page takes it again when it changes elsewhere (base.html, /account/look)."""
+    mode = getattr(settings, "ui_mode", None)
+    mode = mode if mode in ("colours", "night", "night-blue") else "soft"
+    return {"css": css(getattr(settings, "ui_color", None)), "mode": mode,
+            "menu_side": "right" if getattr(settings, "ui_menu_side", None) == "right" else "left",
+            "background": "plain" if getattr(settings, "ui_background", None) == "plain" else "animated",
+            "bar": BARS[mode]}
+
+
 def current_colour(settings) -> str:
     return clean(getattr(settings, "ui_color", None)) or DEFAULT

@@ -89,7 +89,8 @@
       {% endif %}
     </section>
     <script>
-    (function () {
+    // window.phonePush is defined further down the page: wait until the page is read.
+    document.addEventListener("DOMContentLoaded", function () {
       var state = document.getElementById("push-state"), help = document.getElementById("push-help");
       var on = document.getElementById("push-on"), off = document.getElementById("push-off"), test = document.getElementById("push-test");
       function said(key) { var node = document.querySelector('[data-push="' + key + '"]'); return node ? node.textContent : key; }
@@ -104,7 +105,7 @@
       on.addEventListener("click", function () { window.phonePush.turnOn().then(function (key) { show(key === "granted" ? "on" : key); if (key === "on") location.reload(); }).catch(function () { show("error"); }); });
       off.addEventListener("click", function () { window.phonePush.turnOff().then(function () { location.reload(); }); });
       test.addEventListener("click", function () { window.phonePush.test().then(function () { help.textContent = said("tested"); }); });
-    })();
+    });
     </script>
   </div>
 

@@ -33,7 +33,10 @@
   .ix-fold[open] > summary { color:var(--primary-berry); margin-bottom:6px; }
   .ix-sources-list { font-size:.78rem; color:#5b5470; margin-top:6px; } .ix-sources-list ul { margin:4px 0 0; padding-left:18px; }
   .ix-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 18px; align-items: start; }
-  @media (max-width: 1199px) { .ix-layout { grid-template-columns: 1fr; } }
+  /* One column: as wide as the screen, never as wide as the longest link in a message (it wraps instead). */
+  @media (max-width: 1199px) { .ix-layout { grid-template-columns: minmax(0, 1fr); } }
+  .ix-layout > .ix-card { min-width:0; overflow-wrap:anywhere; scroll-margin-top:12px; }
+  .ix-context .ix-chip { white-space:normal; max-width:100%; }     /* a long program name wraps inside its chip */
   .ix-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; }
 
   .ix-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 14px 10px; }
@@ -636,7 +639,8 @@
       </div>
       {% endif %}
 
-      <form method="post" action="/inbox/thread/{{ selected.id }}/reply">
+      <form method="post" action="/inbox/thread/{{ selected.id }}/reply" id="reply-form">
+        {% if request.query_params.get('as_is') %}<input type="hidden" name="as_is" value="true">{% endif %}
         <label class="form-label fw-bold small mb-1" for="reply-body">
           {% if pending and pending.suggested_reply %}Draft prepared by the system — edit it or replace it
           {% elif pending %}Your answer
@@ -686,12 +690,22 @@
         {% endif %}
 
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <button class="btn btn-berry rounded-pill px-4"><i class="bi bi-send-fill me-1"></i>Send answer</button>
+          <button class="btn btn-berry rounded-pill px-4" data-send-answer><i class="bi bi-send-fill me-1"></i>Send answer</button>
           {% if pending %}
           <button class="btn btn-light border rounded-pill fw-semibold" formaction="/inbox/thread/{{ selected.id }}/no-reply" formnovalidate>No answer needed</button>
           {% endif %}
         </div>
+        <span hidden id="reply-sending">Sending…</span>
       </form>
+      <script>
+        // "Send answer" can take a moment (the wording first): the button says so, and a second press waits for it.
+        document.getElementById("reply-form")?.addEventListener("submit", event => {
+          const button = event.submitter;
+          if (!button || !button.matches("[data-send-answer]")) return;
+          button.disabled = true;
+          button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + document.getElementById("reply-sending").textContent;
+        });
+      </script>
     </div>
     {% else %}
     <div class="ix-empty">
@@ -873,6 +887,18 @@
       event.preventDefault();
       send(form.closest(".ix-aside-chat").id, form.elements.text.value);
     });
+  })();
+</script>
+<script>
+  // On a phone the list comes first: an opened discussion is brought into view, with the result of the last action
+  // (the answer went, or why it did not) just above it.
+  (() => {
+    if (!window.matchMedia("(max-width: 1199px)").matches || !new URLSearchParams(location.search).get("thread")) return;
+    const section = document.querySelector(".ix-layout > section.ix-card");
+    if (!section) return;
+    const flashes = document.querySelectorAll(".page-flash");
+    flashes.forEach(flash => section.before(flash));
+    requestAnimationFrame(() => (flashes[0] || section).scrollIntoView({ block: "start" }));
   })();
 </script>
 {% endblock %}

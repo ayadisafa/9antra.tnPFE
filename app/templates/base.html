@@ -9,7 +9,7 @@
     {% if app_brand and app_brand.icon %}<link rel="icon" type="image/png" href="{{ app_brand.icon }}">{% endif %}
     {# On a phone: its own icon on the home screen, and no browser bars once opened from there. #}
     <link rel="manifest" href="/app.webmanifest">
-    <meta name="theme-color" content="#f6f3fb">
+    <meta name="theme-color" content="{{ ui_bar or '#f6f3fb' }}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-title" content="{{ app_brand.name if app_brand else '9antra' }}">
@@ -419,7 +419,7 @@
     </style>
     {% include "_base_look.html" %}
     {# The colour chosen in Settings replaces the original one on every page. #}
-    {% if theme_css %}<style id="theme-colour">{{ theme_css | safe }}</style>{% endif %}
+    <style id="theme-colour">{{ theme_css | safe }}</style>
     {% block extra_head %}{% endblock %}
 </head>
 <body class="first-paint{{ ' menu-right' if ui_menu_side == 'right' }}" data-session-tag="{{ session_tag }}" data-app-name="{{ app_brand.name if app_brand else '9antra' }}">
@@ -985,6 +985,19 @@
     const room = () => document.documentElement.style.setProperty("--stick-top", (bar.offsetHeight + 20) + "px");
     const mark = () => { bar.classList.toggle("is-stuck", window.scrollY > 24); };
     window.addEventListener("scroll", mark, { passive: true });
+    // On a phone the bar takes several lines: it slides away while reading down and comes back when going up.
+    const phone = window.matchMedia("(max-width: 991px)");
+    let last = window.scrollY, away = false;
+    window.addEventListener("scroll", () => {
+      const y = window.scrollY;
+      if (Math.abs(y - last) < 8 && y > 120) return;
+      const now = phone.matches && y > 120 && y > last && !bar.querySelector(".show");
+      last = y;
+      if (now === away) return;
+      away = now;
+      bar.classList.toggle("is-away", away);
+      if (away) document.documentElement.style.setProperty("--stick-top", "0px"); else room();
+    }, { passive: true });
     window.addEventListener("resize", room);
     bar.addEventListener("transitionend", room);
     mark(); room();
@@ -1871,6 +1884,7 @@ document.addEventListener("submit", event => {
             else refreshInboxCount();
         }
         if (topics.includes("team")) refreshTeamCount();
+        if (topics.includes("look") && window.refreshLook) window.refreshLook();
         if (topics.some(topic => pageTopics.has(topic))) scheduleRefresh();
     }
 
@@ -2475,6 +2489,35 @@ document.addEventListener("submit", event => {
   .push-devices .device { display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--border-color); flex-wrap:wrap; }
 </style>
 <span hidden id="ab-now">now</span>
+<script>
+/* The design (colour, day or night, menu side, background) changed on another page or device: this page takes it at
+   once, without reloading. Asked again when the page comes back in sight (a phone waking the application up). */
+(function () {
+  var shown = null;
+  function apply(look) {
+    var key = JSON.stringify(look);
+    if (!look || key === shown) return;
+    shown = key;
+    var style = document.getElementById("theme-colour");
+    if (style) style.textContent = look.css || "";
+    var root = document.documentElement;
+    Array.prototype.slice.call(root.classList).forEach(function (name) { if (name.indexOf("mode-") === 0) root.classList.remove(name); });
+    if (look.mode && look.mode !== "soft") root.classList.add("mode-" + look.mode);
+    document.body.classList.toggle("menu-right", look.menu_side === "right");
+    var moving = document.querySelector(".it-bg");
+    if (moving) moving.hidden = look.background === "plain";
+    var bar = document.querySelector('meta[name="theme-color"]');
+    if (bar && look.bar) bar.setAttribute("content", look.bar);
+  }
+  window.applyLook = apply;
+  window.refreshLook = function () {
+    return fetch("/account/look", { headers: { "Accept": "application/json" } })
+      .then(function (answer) { return answer.ok ? answer.json() : null; })
+      .then(function (look) { if (look) apply(look); }).catch(function () {});
+  };
+  document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") window.refreshLook(); });
+})();
+</script>
 <div class="status-band" aria-hidden="true"></div>
 <template id="push-offer">
   <div class="push-offer" role="region" aria-label="Notifications on this phone">
@@ -2485,13 +2528,14 @@ document.addEventListener("submit", event => {
   </div>
 </template>
 <script>
-/* Opened from the home screen with notifications off: offered once, in one tap (the tap itself asks the phone). */
-(function () {
+/* Opened from the home screen with notifications off: offered once, in one tap (the tap itself asks the phone).
+   Waits until the page is read: window.phonePush is defined further down. */
+document.addEventListener("DOMContentLoaded", function () {
   if (!window.phonePush || !window.isSecureContext) return;
   var later = null;
   try { later = localStorage.getItem("push-offer-later"); } catch (error) {}
   if (later && Date.now() - Number(later) < 7 * 86400000) return;
-  if (!window.phonePush.installed() && /iPhone|iPad|iPod/.test(navigator.userAgent)) return;
+  if (!window.phonePush.installed()) return;
   window.phonePush.state().then(function (state) {
     if (state !== "off") return;
     var main = document.querySelector("main.main"), source = document.getElementById("push-offer");
@@ -2507,7 +2551,7 @@ document.addEventListener("submit", event => {
       card.remove();
     });
   }).catch(function () {});
-})();
+});
 </script>
 <script>
 /* The application as a phone app: its service worker (notifications with the application closed, once it is opened
@@ -2533,7 +2577,9 @@ document.addEventListener("submit", event => {
       if (ios && !installed()) return Promise.resolve("install");
       if (!secure || !("PushManager" in window) || !("Notification" in window)) return Promise.resolve("unsupported");
       if (Notification.permission === "denied") return Promise.resolve("denied");
-      return ready().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) { return sub ? "on" : "off"; });
+      var known = ready().then(function (reg) { return reg.pushManager.getSubscription(); }).then(function (sub) { return sub ? "on" : "off"; });
+      // The first visit installs the service worker: never left waiting on it ("Turn on" waits for it itself).
+      return Promise.race([known, new Promise(function (done) { setTimeout(function () { done("off"); }, 8000); })]);
     },
     turnOn: function () {
       // On an iPhone the question must come from the tap itself: asked first, before anything else waits.

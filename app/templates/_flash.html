@@ -3,7 +3,7 @@
 <div class="alert alert-success page-flash mb-3" role="status"><i class="bi bi-check-circle-fill me-2"></i><span data-no-i18n>{{ shown(notice) if shown is defined else notice }}</span></div>
 {% endif %}
 {% if error %}
-<div class="alert alert-danger page-flash mb-3" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i><span data-no-i18n>{{ shown(error) if shown is defined else error }}</span></div>
+<div class="alert alert-danger page-flash mb-3" role="alert"><i class="bi bi-exclamation-octagon-fill me-2"></i><span data-no-i18n>{{ shown(error) if shown is defined else error }}</span><button type="button" class="btn-close ms-auto flex-shrink-0" aria-label="Close" onclick="this.closest('.page-flash').remove()"></button></div>
 {% endif %}
 {% if notice or error %}
 <script>
@@ -13,9 +13,10 @@
     url.searchParams.delete('notice');
     url.searchParams.delete('error');
     window.history.replaceState({}, '', url.pathname + url.search + url.hash);
-    document.querySelectorAll('.page-flash').forEach((note) => {
+    // A notice leaves by itself; an error stays until it is closed (it says why something did not happen).
+    document.querySelectorAll('.page-flash.alert-success').forEach((note) => {
       const leave = () => { if (note.matches(':hover')) { setTimeout(leave, 2000); return; } note.classList.add('is-leaving'); setTimeout(() => note.remove(), 520); };
-      setTimeout(leave, note.classList.contains('alert-danger') ? 14000 : 7000);
+      setTimeout(leave, 7000);
     });
   })();
 </script>
