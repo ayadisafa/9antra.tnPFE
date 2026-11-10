@@ -7799,6 +7799,10 @@
 "Recevez par email un lien pour en choisir un nouveau",
 "احصل على رابط بالبريد لاختيار كلمة جديدة"
 ],
+"Get notifications on this phone?": [
+"Recevoir les notifications sur ce téléphone ?",
+"تلقي الإشعارات على هذا الهاتف؟"
+],
 "GitHub Actions": [
 "GitHub Actions",
 "GitHub Actions"
@@ -12306,6 +12310,10 @@
 "Notifications need the secure address. Open the application on this phone from": [
 "Les notifications demandent l'adresse sécurisée. Ouvrez l'application sur ce téléphone depuis",
 "تتطلب الإشعارات العنوان الآمن. افتح التطبيق على هذا الهاتف من"
+],
+"Notifications on this phone": [
+"Notifications sur ce téléphone",
+"الإشعارات على هذا الهاتف"
 ],
 "Notifications on your phone": [
 "Notifications sur votre téléphone",
@@ -21867,6 +21875,10 @@
 "Désactiver sur cet appareil",
 "إيقافها على هذا الجهاز"
 ],
+"Turn on": [
+"Activer",
+"تفعيل"
+],
 "Turn on 2-Step Verification": [
 "Activez la validation en deux étapes (2-Step Verification)",
 "فعّل التحقق بخطوتين (2-Step Verification)"
@@ -23770,6 +23782,10 @@
 "When something disappears from 9antra.tn it is listed here, kept as it was.": [
 "Quand quelque chose disparaît de 9antra.tn, il est listé ici, gardé tel qu'il était.",
 "عندما يختفي شيء من 9antra.tn يُدرج هنا، محفوظا كما كان."
+],
+"When something needs you, even with the application closed.": [
+"Quand quelque chose a besoin de vous, même avec l'application fermée.",
+"عندما يحتاجك أمر ما، حتى والتطبيق مغلق."
 ],
 "When the admin gives you a class, it appears here.": [
 "Quand l'administrateur vous donne une classe, elle apparaît ici.",

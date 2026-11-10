@@ -592,6 +592,13 @@
                         <span>All the data</span>
                     </a>
                 </li>
+                <li class="nav-section-label">Account</li>
+                <li class="nav-item tone-slate">
+                    <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
+                        <span class="nav-ico"><i class="bi bi-person-gear"></i></span>
+                        <span>My account</span>
+                    </a>
+                </li>
                 {% elif staff_menu %}
                 {# A team member: the parts the admin opened to them. #}
                 <li class="nav-section-label">Your space</li>
@@ -614,8 +621,8 @@
                 <li class="nav-section-label">Account</li>
                 <li class="nav-item tone-slate">
                     <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
-                        <span class="nav-ico"><i class="bi bi-lock-fill"></i></span>
-                        <span>Password</span>
+                        <span class="nav-ico"><i class="bi bi-person-gear"></i></span>
+                        <span>My account</span>
                     </a>
                 </li>
                 {% else %}
@@ -649,8 +656,8 @@
                 <li class="nav-section-label">Account</li>
                 <li class="nav-item tone-slate">
                     <a href="/account" class="nav-link {% if active_page == 'account' %}active{% endif %}">
-                        <span class="nav-ico"><i class="bi bi-lock-fill"></i></span>
-                        <span>Password</span>
+                        <span class="nav-ico"><i class="bi bi-person-gear"></i></span>
+                        <span>My account</span>
                     </a>
                 </li>
                 {% endif %}
@@ -959,6 +966,7 @@
       more.classList.toggle("active", open);
       more.setAttribute("aria-expanded", open ? "true" : "false");
       document.body.style.overflow = open ? "hidden" : "";
+      document.body.classList.toggle("menu-open", open);
     };
     more.addEventListener("click", () => set(!side.classList.contains("open")));
     backdrop.addEventListener("click", () => set(false));
@@ -2467,6 +2475,40 @@ document.addEventListener("submit", event => {
   .push-devices .device { display:flex; gap:10px; align-items:center; padding:8px 0; border-top:1px solid var(--border-color); flex-wrap:wrap; }
 </style>
 <span hidden id="ab-now">now</span>
+<div class="status-band" aria-hidden="true"></div>
+<template id="push-offer">
+  <div class="push-offer" role="region" aria-label="Notifications on this phone">
+    <i class="bi bi-bell-fill"></i>
+    <div><b>Get notifications on this phone?</b><span>When something needs you, even with the application closed.</span></div>
+    <button type="button" class="ui-btn primary sm" data-push-yes>Turn on</button>
+    <button type="button" class="ui-btn ghost sm" data-push-later>Not now</button>
+  </div>
+</template>
+<script>
+/* Opened from the home screen with notifications off: offered once, in one tap (the tap itself asks the phone). */
+(function () {
+  if (!window.phonePush || !window.isSecureContext) return;
+  var later = null;
+  try { later = localStorage.getItem("push-offer-later"); } catch (error) {}
+  if (later && Date.now() - Number(later) < 7 * 86400000) return;
+  if (!window.phonePush.installed() && /iPhone|iPad|iPod/.test(navigator.userAgent)) return;
+  window.phonePush.state().then(function (state) {
+    if (state !== "off") return;
+    var main = document.querySelector("main.main"), source = document.getElementById("push-offer");
+    if (!main || !source) return;
+    var card = source.content.firstElementChild.cloneNode(true);
+    var head = main.querySelector(".topbar");
+    main.insertBefore(card, head ? head.nextSibling : main.firstChild);
+    card.querySelector("[data-push-yes]").addEventListener("click", function () {
+      window.phonePush.turnOn().then(function (answer) { card.remove(); if (answer === "on") window.phonePush.test(); }).catch(function () { card.remove(); });
+    });
+    card.querySelector("[data-push-later]").addEventListener("click", function () {
+      try { localStorage.setItem("push-offer-later", String(Date.now())); } catch (error) {}
+      card.remove();
+    });
+  }).catch(function () {});
+})();
+</script>
 <script>
 /* The application as a phone app: its service worker (notifications with the application closed, once it is opened
    from the secure address), notifications on this device (window.phonePush), the banner of what arrives, and the

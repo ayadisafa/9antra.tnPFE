@@ -432,6 +432,20 @@
     }
     .assistant-compose { padding-bottom:max(12px, env(safe-area-inset-bottom, 0px)); }
   }
+  /* The phone's menu open: nothing floats over it (they come back when it closes). */
+  body.menu-open .fr, body.menu-open .fr-back, body.menu-open .assistant-panel, body.menu-open .tour-hint { visibility:hidden; }
+  /* The phone's clock and battery on a solid band: the page slides under it, not through it. The top bar stays below. */
+  .status-band { position:fixed; left:0; right:0; top:0; height:env(safe-area-inset-top, 0px); background:var(--canvas, #f6f3fb); z-index:1150; pointer-events:none; }
+  @media (max-width: 991px) {
+    .topbar { top:calc(8px + env(safe-area-inset-top, 0px)); }
+    .topbar .user-profile { flex-wrap:wrap; row-gap:6px; justify-content:flex-end; max-width:100%; min-width:0; }
+  }
+  .push-offer { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:12px 14px; margin:0 0 16px; border-radius:18px;
+                background:linear-gradient(135deg, #fff, #fbf1f7); border:1px solid #f3e4ee; box-shadow:0 10px 24px -18px rgba(164,44,103,.6); }
+  .push-offer > i { width:38px; height:38px; flex:none; border-radius:12px; display:grid; place-items:center; color:#fff;
+                    background:linear-gradient(135deg, var(--primary-berry), #d0558f); }
+  .push-offer > div { flex:1 1 180px; min-width:0; } .push-offer b { display:block; font-size:.88rem; } .push-offer span { font-size:.76rem; color:var(--muted); }
+  @media (prefers-reduced-motion: no-preference) { .push-offer > i { animation:awBeat 1.6s ease-in-out 3; } }
   /* Yasmine's window open: the page tour's small offer waits (on a phone it would sit on her header). */
   body:has(.assistant-panel.open) #tour-hint { display:none; }
 </style>
