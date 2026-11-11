@@ -710,6 +710,10 @@ def knowledge_tick():
         from app.services import reply_rules
 
         reply_rules.read_again(db)
+        # The emails waiting for something the assistant did not know: looked for again; read again once it is there.
+        from app.services import search_further
+
+        search_further.again(db)
     except Exception:
         db.rollback()
         logger.exception("Sorting the messages failed.")

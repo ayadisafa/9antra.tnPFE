@@ -633,6 +633,9 @@ def _remember(db: Session, message: str, allowed: bool) -> dict | None:
     try:
         entry = knowledge_service.save_fact(db, text=found.group(1).strip())
         db.commit()
+        from app.services import search_further
+
+        search_further.again(db, force=True)        # a waiting email that lacked it is read again
     except ValueError as error:
         db.rollback()
         return {"reply": str(error), "links": [], "source": "system"}

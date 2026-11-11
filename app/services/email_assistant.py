@@ -888,7 +888,7 @@ def related_links(db: Session, program_ids: list[str] | None, language: str = "f
 
 
 def _ask_admin(db: Session, thread: EmailThread, message: CandidateEmail, candidate: Candidate,
-               reason: str, draft: str | None) -> str:
+               reason: str, draft: str | None, searched: dict | None = None) -> str:
     message.status = "needs_admin"
     message.requires_admin = True
     message.escalation_reason = reason
@@ -896,11 +896,25 @@ def _ask_admin(db: Session, thread: EmailThread, message: CandidateEmail, candid
     thread.status = "needs_admin"
     thread.needs_admin = True
     thread.last_status = "needs_admin"
-    _notify(
-        db, thread, "EMAIL_QUESTION", "Your answer is needed",
-        f"{candidate.full_name or candidate.email} asks: {message.question or message.subject or 'see the email'}",
-    )
+    asks = f"{candidate.full_name or candidate.email} asks: {message.question or message.subject or 'see the email'}"
+    if searched:
+        from app.services import search_further
+
+        asks = f"{asks} · {search_further.told(searched)}"
+    _notify(db, thread, "EMAIL_QUESTION", "Your answer is needed", asks)
     return "needs_admin"
+
+
+def unanswered(found: dict, missed: list[dict], threshold: float, analysis: dict, message: CandidateEmail) -> list[str]:
+    """The points of a message the assistant could not answer from what it knows (none when the answer is whole and
+    only waits for another reason: the admin's review, a frustrated candidate, a language…)."""
+    if found.get("method") == "cloud":
+        return [item["ask"] for item in (found.get("cloud") or {}).get("asks") or [] if not item.get("verified")]
+    if missed:
+        return [item["request"] for item in missed]
+    if not found.get("answer") or found.get("confidence", 0) < threshold:
+        return list(analysis.get("requests") or []) or [message.question or message.subject or ""]
+    return []
 
 
 _REPLY_PREFIX = re.compile(r"^\s*((re|tr|fw|fwd|aw|ref|réf)\s*:\s*)+", re.IGNORECASE)
@@ -1714,7 +1728,22 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
         elif not is_test(message) and not on_whatsapp and not email_threads.smtp_configured():
             reason = "The answer is ready, but email delivery is not configured, so it was not sent."
     if reason:
-        return _ask_admin(db, thread, message, candidate, reason, answer_text)
+        # Something it did not know: looked for further (the centre's details, what was taught, the admin's own answers
+        # to others, the templates) before it comes to the admin, who is told what was found and what is missing.
+        searched = None
+        points = unanswered(found, missed, threshold, analysis, message)
+        if any(point.strip() for point in points):
+            from app.services import search_further
+
+            try:
+                searched = search_further.look(db, points, question=message.question or asked_text, skip_thread_id=thread.id)
+                kept = json.loads(message.sources or "{}")
+                kept["searched"] = searched
+                message.sources = json.dumps(kept, ensure_ascii=False)
+            except Exception:
+                logger.exception("Looking further failed")
+                searched = None
+        return _ask_admin(db, thread, message, candidate, reason, answer_text, searched=searched)
 
     if analysis["language"] == "ar" and answer_text and found.get("language") != "ar":
         # A fixed sentence in Arabic first (written by hand): the answer itself is in French.

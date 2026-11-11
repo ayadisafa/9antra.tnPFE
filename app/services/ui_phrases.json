@@ -3718,5 +3718,45 @@
 "A new link for your iPhone is ready: put it in the shortcut.": [
 "Un nouveau lien pour votre iPhone est prêt : mettez-le dans le raccourci.",
 "رابط جديد لهاتفك iPhone جاهز: ضعه في الاختصار."
+],
+"Not found anywhere: {0}. Tell me under the draft and I answer.": [
+"Introuvable nulle part : {0}. Dites-le-moi sous le brouillon et je réponds.",
+"لم أجده في أي مكان: {0}. أخبرني تحت المسودة وسأجيب."
+],
+"I looked further and found {0} lead(s): they are under the draft, to add in one tap.": [
+"J'ai cherché plus loin et trouvé {0} piste(s) : elles sont sous le brouillon, à ajouter d'un geste.",
+"بحثت أبعد ووجدت {0} مسار(ات): هي تحت المسودة، تُضاف بلمسة واحدة."
+],
+"Found something for {0}'s question": [
+"Trouvé quelque chose pour la question de {0}",
+"وجدت شيئًا لسؤال {0}"
+],
+"One waiting question lacked it: the assistant is reading it again.": [
+"Une question en attente en manquait : l'assistant la relit.",
+"سؤال منتظر كان ينقصه ذلك: المساعد يعيد قراءته."
+],
+"{0} waiting questions lacked it: the assistant is reading them again.": [
+"{0} questions en attente en manquaient : l'assistant les relit.",
+"{0} أسئلة منتظرة كان ينقصها ذلك: المساعد يعيد قراءتها."
+],
+"Write what was missing, in a few words.": [
+"Écrivez ce qui manquait, en quelques mots.",
+"اكتب ما كان ناقصًا، في بضع كلمات."
+],
+"Kept: every assistant knows it now.": [
+"C'est gardé : chaque assistant le sait maintenant.",
+"تم الحفظ: كل مساعد يعرفه الآن."
+],
+"The RIB is also written in Settings › Your centre, where receipts are checked against it.": [
+"Le RIB est aussi écrit dans Paramètres › Votre centre, où les reçus sont vérifiés par rapport à lui.",
+"الـRIB مكتوب أيضًا في الإعدادات › مركزك، حيث تُراجَع الإيصالات على أساسه."
+],
+"The assistant is reading the question again with it: it answers by itself if every point is now checked, or brings you a new draft.": [
+"L'assistant relit la question avec cela : il répond seul si chaque point est maintenant vérifié, sinon il vous apporte un nouveau brouillon.",
+"المساعد يعيد قراءة السؤال بذلك: يجيب وحده إن صارت كل نقطة متحقَّقًا منها، وإلا يقدّم لك مسودة جديدة."
+],
+"Waiting questions that lacked them are read again.": [
+"Les questions en attente qui en manquaient sont relues.",
+"الأسئلة المنتظرة التي كانت تنقصها تُقرأ من جديد."
 ]
 }

@@ -1875,6 +1875,10 @@
 "Ajouter le cours de cette semaine à {count} classes",
 "إضافة درس هذا الأسبوع إلى {count} أقسام"
 ],
+"Add to the draft": [
+"Ajouter au brouillon",
+"إضافة إلى المسودة"
+],
 "Add to the knowledge base": [
 "Ajouter à la base de connaissances",
 "إضافة إلى قاعدة المعارف"
@@ -1922,6 +1926,10 @@
 "Add your programs": [
 "Ajoutez vos formations",
 "أضف برامجك"
+],
+"Added": [
+"Ajouté",
+"أُضيف"
 ],
 "Added by you": [
 "Ajouté par vous",
@@ -7471,6 +7479,10 @@
 "Par exemple : Informations pratiques pour la rentrée de novembre",
 "مثلا: معلومات عملية لانطلاقة نوفمبر"
 ],
+"For example: our RIB is 08 006 0123456789012 34": [
+"Par exemple : notre RIB est 08 006 0123456789012 34",
+"مثلًا: الـRIB الخاص بنا هو 08 006 0123456789012 34"
+],
 "For example: prefers to be called after 6 pm; will pay at the end of the month.": [
 "Par exemple : préfère être appelé après 6 h du soir ; paiera à la fin du mois.",
 "مثلا: يفضّل الاتصال به بعد الساعة 6 مساء؛ سيدفع في آخر الشهر."
@@ -7570,6 +7582,10 @@
 "Formations and your programs": [
 "Formations du site et vos formations",
 "تكوينات الموقع وبرامجك"
+],
+"Found nowhere.": [
+"Introuvable nulle part.",
+"لم أجده في أي مكان."
 ],
 "Found the pace": [
 "A trouvé le rythme",
@@ -8610,6 +8626,10 @@
 "I did not find how to do that. I can guide you to": [
 "Je n'ai pas trouvé comment faire cela. Je peux vous guider vers",
 "لم أجد كيفية فعل ذلك. يمكنني إرشادك إلى"
+],
+"I looked further for what I did not know": [
+"J'ai cherché plus loin ce que je ne savais pas",
+"بحثت أبعد عمّا لم أكن أعرفه"
 ],
 "I posted it": [
 "Je l'ai publié",
@@ -10046,6 +10066,10 @@
 "Look in your mailbox": [
 "Regardez dans votre boîte mail",
 "انظر في بريدك"
+],
+"Looked in: Settings › Your centre, what you taught, your answers to other candidates, your email templates. I look again by myself every 30 minutes, and at once when you write something new.": [
+"Cherché dans : Paramètres › Votre centre, ce que vous avez appris, vos réponses aux autres candidats, vos modèles d'email. Je cherche de nouveau toute seule toutes les 30 minutes, et aussitôt que vous écrivez quelque chose de nouveau.",
+"بحثت في: الإعدادات › مركزك، ما علّمتَه، ردودك على المترشحين الآخرين، نماذج رسائلك. أبحث من جديد وحدي كل 30 دقيقة، وفورًا عندما تكتب شيئًا جديدًا."
 ],
 "Looker / Qlik": [
 "Looker / Qlik",
@@ -12023,6 +12047,10 @@
 "Mal compris",
 "غير مفهوم جيدا"
 ],
+"Not written in Settings › Your centre": [
+"Pas écrit dans Paramètres › Votre centre",
+"غير مكتوب في الإعدادات › مركزك"
+],
 "Not yet": [
 "Pas encore",
 "ليس بعد"
@@ -13334,6 +13362,10 @@
 "Open where it happened": [
 "Ouvrir l'endroit où c'est arrivé",
 "فتح المكان الذي حدث فيه"
+],
+"Open where it is": [
+"Ouvrir là où c'est",
+"فتح مكانه"
 ],
 "Open where it is done": [
 "Ouvrir là où ça se fait",
@@ -17087,6 +17119,10 @@
 "Paramètres › WhatsApp Business : écrivez les quatre valeurs, Enregistrer, puis « Tester la connexion ».",
 "الإعدادات › WhatsApp Business: اكتب القيم الأربع، احفظ، ثم «اختبار الاتصال»."
 ],
+"Settings › Your centre": [
+"Paramètres › Votre centre",
+"الإعدادات › مركزك"
+],
 "Settings › Your centre › Where candidates pay.": [
 "Paramètres › Votre centre › Où les candidats paient.",
 "الإعدادات › مركزك › أين يدفع المترشحون."
@@ -18039,6 +18075,10 @@
 "Le lui apprendre",
 "علّمه ذلك"
 ],
+"Teach it and answer": [
+"L'apprendre et répondre",
+"علّمه وأجب"
+],
 "Teach it as the answer for next time": [
 "L'apprendre comme réponse pour la prochaine fois",
 "تعليمها كإجابة للمرة القادمة"
@@ -18110,6 +18150,10 @@
 "Tell its": [
 "Dites à ses",
 "أخبر"
+],
+"Tell me what was missing: I keep it and answer": [
+"Dites-moi ce qui manquait : je le garde et je réponds",
+"أخبرني بما كان ناقصًا: أحتفظ به وأجيب"
 ],
 "Tell the admin: the address is set in Settings.": [
 "Prévenez l'administrateur : l'adresse se règle dans les Paramètres.",
@@ -18759,6 +18803,10 @@
 "Le centre",
 "المركز"
 ],
+"The centre's RIB": [
+"Le RIB du centre",
+"الـRIB الخاص بالمركز"
+],
 "The centre's RIB (one per line": [
 "Le RIB du centre (un par ligne",
 "RIB المركز (واحد في كل سطر"
@@ -18771,6 +18819,10 @@
 "Le RIB du centre, où les candidats paient (un par ligne",
 "RIB المركز، حيث يدفع المترشحون (واحد في كل سطر"
 ],
+"The centre's WhatsApp": [
+"Le WhatsApp du centre",
+"واتساب المركز"
+],
 "The centre's account is not written on it.": [
 "Le compte du centre n'est pas écrit dessus.",
 "حساب المركز غير مكتوب فيه."
@@ -18782,6 +18834,10 @@
 "The centre's details, the program files and the journal": [
 "Les informations du centre, les fichiers des formations et le journal",
 "معلومات المركز، ملفات البرامج والجريدة"
+],
+"The centre's email": [
+"L'email du centre",
+"البريد الإلكتروني للمركز"
 ],
 "The centre's figures": [
 "Les chiffres du centre",
@@ -18802,6 +18858,10 @@
 "The centre's phone is not written under the emails": [
 "Le téléphone du centre n'est pas écrit sous les emails",
 "هاتف المركز غير مكتوب تحت الرسائل"
+],
+"The centre's website": [
+"Le site web du centre",
+"الموقع الإلكتروني للمركز"
 ],
 "The check questions": [
 "Les questions de test",
@@ -22443,6 +22503,10 @@
 "En attente de votre décision",
 "في انتظار قرارك"
 ],
+"Waiting questions that lacked them are read again.": [
+"Les questions en attente qui en manquaient sont relues.",
+"الأسئلة المنتظرة التي كانت تنقصها تُقرأ من جديد."
+],
 "Waiting to be read.": [
 "En attente de lecture.",
 "في انتظار القراءة."
@@ -23539,6 +23603,10 @@
 "Ce que vous pouvez faire sur cette page",
 "ما يمكنك فعله في هذه الصفحة"
 ],
+"What you taught": [
+"Ce que vous avez appris",
+"ما علّمتَه"
+],
 "What you taught the assistants": [
 "Ce que vous avez appris aux assistants",
 "ما علّمته للمساعدين"
@@ -24095,6 +24163,10 @@
 "Qui a changé quoi, et quand.",
 "من غيّر ماذا، ومتى."
 ],
+"Who cheques are made out to": [
+"À l'ordre de qui sont les chèques",
+"لأمر من تُكتب الشيكات"
+],
 "Who follows it": [
 "Qui la suit",
 "من يتابعه"
@@ -24523,6 +24595,10 @@
 "Écrivez-le sur la page de la formation : les questions et les réponses en viennent.",
 "اكتبه في صفحة البرنامج: منه تأتي الأسئلة والإجابات."
 ],
+"Write it there": [
+"L'écrire là-bas",
+"اكتبه هناك"
+],
 "Write it yourself, start from a template, or let the assistant write a first draft.": [
 "Écrivez-le vous-même, partez d'un modèle, ou laissez l'assistant écrire un premier brouillon.",
 "اكتبها بنفسك، أو انطلق من نموذج، أو اترك المساعد يكتب مسودة أولى."
@@ -24686,6 +24762,10 @@
 "Write what people said, in a few words.": [
 "Écrivez ce que les gens ont dit, en quelques mots.",
 "اكتب ما قاله الناس، في كلمات قليلة."
+],
+"Write what was missing, in a few words.": [
+"Écrivez ce qui manquait, en quelques mots.",
+"اكتب ما كان ناقصًا، في بضع كلمات."
 ],
 "Write what you did": [
 "Écrire ce que vous avez fait",
@@ -25111,6 +25191,10 @@
 "Vos réponses",
 "ردودك"
 ],
+"Your answers to other candidates": [
+"Vos réponses aux autres candidats",
+"ردودك على المترشحين الآخرين"
+],
 "Your answers, kept to answer the same question next time, and the facts every assistant knows.": [
 "Vos réponses, gardées pour répondre la prochaine fois à la même question, et les faits que chaque assistant connaît.",
 "إجاباتك، محفوظة للرد على السؤال نفسه في المرة القادمة، والحقائق التي يعرفها كل مساعد."
@@ -25218,6 +25302,10 @@
 "Your document": [
 "Votre document",
 "وثيقتك"
+],
+"Your email templates": [
+"Vos modèles d'email",
+"نماذج رسائلك"
 ],
 "Your feedback makes us better": [
 "Vos avis nous font grandir",
@@ -27851,6 +27939,10 @@
 "aucun sens que je connaisse : il peut marcher quand même, mais il faut raconter son histoire.",
 "لا معنى أعرفه: قد ينجح رغم ذلك، لكن يجب رواية قصته."
 ],
+"no point of it could be checked": [
+"aucun point n'a pu être vérifié",
+"لم يمكن التحقق من أي نقطة"
+],
 "no professor available yet": [
 "pas encore de formateur disponible",
 "لا يوجد مكوّن متاح بعد"
@@ -27962,6 +28054,10 @@
 "not in a file.": [
 "pas dans un fichier.",
 "لا في ملف."
+],
+"not in the application's facts": [
+"pas dans les faits de l'application",
+"ليس ضمن معطيات التطبيق"
 ],
 "not in the program": [
 "pas dans la formation",

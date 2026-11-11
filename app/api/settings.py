@@ -15,6 +15,7 @@ from app.services import (
 )
 from app.services.email_layout import DEFAULT_ACCENT, DEFAULT_SIGNATURE, branding, clean_accent, render_email
 from app.services.email_service import send_email_safely
+from app.services.ui_words import t as _t
 from app.services.enrollment_service import (
     START_AFTER_DAYS,
     START_FIXED_DATE,
@@ -217,7 +218,12 @@ def save_numbers(phone: str = Form(""), chat: str = Form(""), ribs: str | None =
         settings.centre_email = contact[:160] or None
         settings.centre_website = site[:200] or None
     db.commit()
-    return _back(notice="Saved: your centre's details are written under every email, cheques are read against its names and transfers against its RIB.", anchor="#centre")
+    # A question waiting for one of these details (the RIB, the address…) is read again at once.
+    from app.services import search_further
+
+    count = search_further.again(db, force=True)
+    return _back(notice="Saved: your centre's details are written under every email, cheques are read against its names and transfers against its RIB."
+                 + (" " + _t("Waiting questions that lacked them are read again.") if count else ""), anchor="#centre")
 
 
 @router.post("/whatsapp")

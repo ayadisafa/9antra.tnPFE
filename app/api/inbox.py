@@ -457,6 +457,7 @@ def reply(
             knowledge_service.save_fact(db, text=note)
             db.commit()
             notice += " Kept for the next ones: every assistant uses this information from now on."
+            notice += _looked_again(db, skip_thread_id=thread_id)
         except ValueError as err:
             db.rollback()
             notice += f" Not kept: {err}"
@@ -467,6 +468,52 @@ def reply(
         notice += " The system learned it and will answer this question by itself."
         notice += _read_again(db, taught, skip_thread_id=thread_id)
     return _redirect("/inbox", notice=notice, thread=thread_id)
+
+
+def _looked_again(db: Session, *, skip_thread_id: str | None = None) -> str:
+    """Something new was taught: the questions waiting for what they lacked are looked for again at once."""
+    from app.services import search_further
+
+    count = search_further.again(db, force=True, skip_thread_id=skip_thread_id)
+    if not count:
+        return ""
+    return " " + (_t("One waiting question lacked it: the assistant is reading it again.") if count == 1
+                  else _t("{0} waiting questions lacked it: the assistant is reading them again.", count))
+
+
+@router.post("/thread/{thread_id}/teach-missing")
+def teach_missing(thread_id: str, fact: str = Form(""), db: Session = Depends(get_db)):
+    """What the assistant could not find, told by the admin: kept for every assistant (a RIB given for "your RIB" also
+    in Settings › Your centre, where receipts are checked against it), then the question is read again with it."""
+    import re
+
+    from app.services import search_further, tunisian_banks
+    from app.services.settings_service import get_settings
+
+    thread = _thread_or_404(db, thread_id)
+    text = " ".join((fact or "").split())[:1500]
+    if len(text) < 3:
+        return _redirect("/inbox", thread=thread_id, error=_t("Write what was missing, in a few words."))
+    inbound = email_assistant.latest_inbound(db, thread)
+    searched = _parse_sources(inbound).get("searched") or {} if inbound is not None else {}
+    notice = _t("Kept: every assistant knows it now.")
+    settings = get_settings(db)
+    if "centre_ribs" in (searched.get("empty") or []) and not (settings.centre_ribs or "").strip():
+        ribs = [digits for digits in (tunisian_banks.rib_digits(item) for item in re.findall(r"\d(?:[\s.-]?\d){19}", text))
+                if digits and tunisian_banks.rib_ok(digits)]
+        if ribs:
+            settings.centre_ribs = "\n".join(tunisian_banks.pretty_rib(digits) for digits in ribs)
+            notice += " " + _t("The RIB is also written in Settings › Your centre, where receipts are checked against it.")
+    try:
+        knowledge_service.save_fact(db, text=text)
+    except ValueError as err:
+        db.rollback()
+        return _redirect("/inbox", thread=thread_id, error=str(err))
+    db.commit()
+    email_assistant.rerun(db, thread)
+    notice += " " + _t("The assistant is reading the question again with it: it answers by itself if every point is now checked, or brings you a new draft.")
+    notice += _looked_again(db, skip_thread_id=thread_id)
+    return _redirect("/inbox", thread=thread_id, notice=notice)
 
 
 def _drafted_by_system(db: Session, thread: EmailThread, body: str) -> bool:
@@ -1388,7 +1435,7 @@ def save_fact(text: str = Form(""), program_id: str = Form(""), entry_id: str = 
         db.rollback()
         return RedirectResponse(path + ("&" if "?" in path else "?") + urlencode({"error": str(err)}) + ("#" + anchor if anchor else ""), status_code=303)
     db.commit()
-    notice = "Saved. Every assistant uses it from now on, whatever language the question is in."
+    notice = "Saved. Every assistant uses it from now on, whatever language the question is in." + _looked_again(db)
     return RedirectResponse(path + ("&" if "?" in path else "?") + urlencode({"notice": notice}) + ("#" + anchor if anchor else ""), status_code=303)
 
 

@@ -36,6 +36,18 @@
   /* One column: as wide as the screen, never as wide as the longest link in a message (it wraps instead). */
   @media (max-width: 1199px) { .ix-layout { grid-template-columns: minmax(0, 1fr); } }
   .ix-layout > .ix-card { min-width:0; overflow-wrap:anywhere; scroll-margin-top:12px; }
+  /* What the assistant found by looking further, and what it did not. */
+  .ix-further { margin-top:10px; padding:10px 12px; border-radius:14px; background:#fffdf5; border:1px dashed #e8c873; font-size:.8rem; color:#5b4a1d; }
+  .ix-further-title { font-weight:800; display:flex; gap:7px; align-items:center; margin-bottom:6px; color:#7c4a03; }
+  .ix-lead { background:#fff; border:1px solid #f1e3c0; border-radius:12px; padding:8px 10px; margin-top:6px; }
+  .ix-lead-place { font-size:.72rem; color:#8a6d2b; } .ix-lead-text { margin:3px 0 6px; color:var(--ink-text); }
+  .ix-lead-do { display:flex; gap:10px; align-items:center; flex-wrap:wrap; font-size:.74rem; }
+  .ix-lead-add { border:1px solid var(--primary-berry); color:var(--primary-berry); background:#fff; border-radius:999px; padding:3px 10px; font-weight:700; display:inline-flex; gap:5px; align-items:center; }
+  .ix-lead-add:disabled { opacity:.6; }
+  .ix-miss { display:grid; grid-template-columns:18px minmax(0, 1fr); gap:6px; align-items:baseline; margin-top:6px; }
+  .ix-further-looked { margin-top:8px; font-size:.72rem; color:#8a7a55; }
+  .ix-tell { margin-top:8px; } .ix-tell label { font-weight:800; font-size:.76rem; display:block; margin-bottom:4px; }
+  .ix-tell-row { display:flex; gap:6px; flex-wrap:wrap; } .ix-tell-row input { flex:1 1 220px; min-width:0; }
   .ix-context .ix-chip { white-space:normal; max-width:100%; }     /* a long program name wraps inside its chip */
   .ix-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; }
 
@@ -608,6 +620,40 @@
         <div class="ix-ask-title"><span class="ix-y" aria-hidden="true">Y</span>I could not answer this one alone{{ ': here is my draft below' if pending.suggested_reply else '' }}</div>
         {% if pending.question %}<div class="ix-ask-question">{{ pending.question }}</div>{% endif %}
         {% if pending.escalation_reason %}<div class="ix-ask-why">{{ pending.escalation_reason }}</div>{% endif %}
+        {% set searched = sources.searched if sources and sources.searched else None %}
+        {% if searched %}
+        <div class="ix-further">
+          <div class="ix-further-title"><i class="bi bi-binoculars-fill"></i>I looked further for what I did not know</div>
+          {% for lead in searched.found %}
+          <div class="ix-lead">
+            <div class="ix-lead-place"><b>{{ lead.place }}</b>{% if lead.where %} · <span data-no-i18n>{{ lead.where }}</span>{% endif %}</div>
+            <div class="ix-lead-text" data-no-i18n>{{ lead.text }}</div>
+            <div class="ix-lead-do">
+              <button type="button" class="ix-lead-add" data-add-to-draft="{{ lead.insert or lead.text }}"><i class="bi bi-plus-lg"></i><span>Add to the draft</span></button>
+              {% if lead.link %}<a href="{{ lead.link }}">Open where it is</a>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+          {% for label in searched.empty_labels or [] %}
+          <div class="ix-miss"><i class="bi bi-pencil-square"></i><span><span>Not written in Settings › Your centre:</span> <b>{{ label }}</b>. <a href="/settings#centre">Write it there</a></span></div>
+          {% endfor %}
+          {% for item in searched.missing %}
+          <div class="ix-miss"><i class="bi bi-question-circle"></i><span><b data-no-i18n>“{{ item.ask }}”</b> · <span>Found nowhere.</span></span></div>
+          {% endfor %}
+          <div class="ix-further-looked">Looked in: Settings › Your centre, what you taught, your answers to other candidates, your email templates. I look again by myself every 30 minutes, and at once when you write something new.</div>
+          {% if searched.missing or searched.empty_labels %}
+          <form method="post" action="/inbox/thread/{{ selected.id }}/teach-missing" class="ix-tell">
+            <label for="tell-missing">Tell me what was missing: I keep it and answer</label>
+            <div class="ix-tell-row">
+              <input id="tell-missing" name="fact" class="form-control form-control-sm" required minlength="3" maxlength="1500"
+                     placeholder="For example: our RIB is 08 006 0123456789012 34">
+              <button class="btn btn-sm btn-berry rounded-pill text-nowrap"><i class="bi bi-mortarboard me-1"></i>Teach it and answer</button>
+            </div>
+          </form>
+          {% endif %}
+          <span hidden id="lead-added">Added</span>
+        </div>
+        {% endif %}
         <details class="ix-fold"><summary><i class="bi bi-three-dots"></i> How sure I was, and what I looked at</summary>
         {% if pending.confidence is not none and sources.method is defined %}
         {% set percent = (pending.confidence * 100) | round | int %}
@@ -899,6 +945,26 @@
     const flashes = document.querySelectorAll(".page-flash");
     flashes.forEach(flash => section.before(flash));
     requestAnimationFrame(() => (flashes[0] || section).scrollIntoView({ block: "start" }));
+  })();
+</script>
+<script>
+  // A lead the assistant found by looking further goes into the draft in one tap: where the cursor was, or before its source line.
+  (() => {
+    const box = document.getElementById("reply-body");
+    if (!box) return;
+    let placed = false;
+    box.addEventListener("focus", () => { placed = true; });
+    document.querySelectorAll("[data-add-to-draft]").forEach(button => button.addEventListener("click", () => {
+      const text = button.dataset.addToDraft.trim();
+      // Not placed by hand: before the line that says where the answer comes from ("Source: …"), else at the end.
+      const source = box.value.search(/\n[ \t]*(Source ?:|المصدر)[^\n]*\s*$/);
+      const at = placed ? box.selectionStart : (source >= 0 ? source : box.value.length);
+      const before = box.value.slice(0, at).replace(/\s+$/, ""), after = box.value.slice(at).replace(/^\s+/, "");
+      box.value = before + (before ? "\n\n" : "") + text + (after ? "\n\n" + after : "");
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+      button.disabled = true;
+      button.querySelector("span").textContent = document.getElementById("lead-added").textContent;
+    }));
   })();
 </script>
 {% endblock %}
