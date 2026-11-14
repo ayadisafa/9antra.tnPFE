@@ -600,7 +600,7 @@
       <a href="#live-dashboard-sessions" class="{{ 'is-ok' if not sessions_today }}"><i class="bi bi-calendar-event"></i><b>{{ sessions_today }}</b><span>{{ 'session today' if sessions_today == 1 else 'sessions today' }}</span></a>
       <a href="/inbox" class="{{ 'is-warn' if figures.emails_waiting else 'is-ok' }}"><i class="bi bi-envelope"></i><b>{{ figures.emails_waiting }}</b><span>{{ 'email waiting' if figures.emails_waiting == 1 else 'emails waiting' }}</span></a>
       <a href="#live-dashboard-advice" class="{{ 'is-warn' if advice else 'is-ok' }}"><i class="bi bi-list-check"></i><b>{{ advice | length }}</b><span>{{ 'thing to do' if advice | length == 1 else 'things to do' }}</span></a>
-      {% if no_teacher %}<a href="/classes/?tab=professors#coverage" class="is-bad"><i class="bi bi-person-exclamation"></i><b>{{ no_teacher | length }}</b><span>{{ 'program without a teacher' if no_teacher | length == 1 else 'programs without a teacher' }}</span></a>{% endif %}
+      {% if no_teacher %}<a href="/professors#coverage" class="is-bad"><i class="bi bi-person-exclamation"></i><b>{{ no_teacher | length }}</b><span>{{ 'program without a teacher' if no_teacher | length == 1 else 'programs without a teacher' }}</span></a>{% endif %}
     </div>
   </div>
   <div class="ui-actions">
@@ -872,8 +872,8 @@
         <div class="db-sub"><b>{{ no_teacher | length }}</b> · {{ 'It cannot open a class until someone teaches it.' if no_teacher | length == 1 else 'They cannot open a class until someone teaches them.' }}</div>
       </div>
     </div>
-    <div class="db-teach-list">{% for program in no_teacher %}<a href="/classes/?tab=professors#cover-{{ program.id }}">{{ program.name }}</a>{% endfor %}</div>
-    <a class="ui-btn sm primary" href="/classes/?tab=professors#coverage"><i class="bi bi-person-plus"></i>Add a professor</a>
+    <div class="db-teach-list">{% for program in no_teacher %}<a href="/professors#cover-{{ program.id }}">{{ program.name }}</a>{% endfor %}</div>
+    <a class="ui-btn sm primary" href="/professors#coverage"><i class="bi bi-person-plus"></i>Add a professor</a>
   </section>
   {% endif %}
 

@@ -57,7 +57,7 @@ def state_of(last_seen: datetime | None, now: datetime) -> str:
 _PAGES = {"/": "Dashboard", "/candidate": "Candidates", "/classes": "Classes", "/programs": "Programs", "/inbox": "Inbox",
           "/payments": "Payments", "/reminders": "Reminders", "/settings": "Settings", "/social": "Social media", "/teacher": "Their space",
           "/assistant": "The assistant", "/quiz": "Level checks", "/website": "Website", "/system": "How it is working",
-          "/workspace": "All the data", "/account": "Their account", "/whats-new": "What's new", "/guide": "How it works"}
+          "/workspace": "All the data", "/account": "Their account", "/guide": "How it works"}
 
 
 def page_name(path: str | None) -> str:

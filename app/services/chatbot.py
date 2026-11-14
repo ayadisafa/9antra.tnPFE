@@ -255,14 +255,14 @@ def _professors(db: Session, fr: bool, program: Program | None) -> dict:
         rows = db.query(Professor).order_by(Professor.name.asc()).all()
         reply = (f"{len(rows)} formateur(s) :\n" if fr else f"{len(rows)} professor{'s' if len(rows) != 1 else ''}:\n") + "\n".join(
             f"• {item.name}: {item.specialties or ('aucune spécialité' if fr else 'no speciality set')}" for item in rows)
-    return {"reply": reply, "links": [_link("Professors", "/classes/?tab=professors")], "source": "system"}
+    return {"reply": reply, "links": [_link("Professors", "/professors")], "source": "system"}
 
 
 def _programs(db: Session, fr: bool, program: Program | None) -> dict:
     if program is not None:
         weeks = sum(len(level.weeks) for level in program.levels)
         people = db.query(Registration).filter(Registration.program_id == program.id, Registration.status != RegistrationStatus.CANCELLED).count()
-        parts = [f"{program.name}: {program.price_online:.0f} DT online, {program.price_onsite:.0f} DT on site"]
+        parts = [f"{program.name}: {program.price_online:.0f} DT a month online, {program.price_onsite:.0f} DT a month on site"]
         if program.total_duration_days:
             parts.append(f"{program.total_duration_days} days")
         if weeks:
@@ -275,7 +275,7 @@ def _programs(db: Session, fr: bool, program: Program | None) -> dict:
         return {"reply": reply, "links": [_link(program.name, f"/programs/{program.id}"), _link("What the market asks", "/programs/market")], "source": "system"}
     rows = db.query(Program).order_by(Program.name.asc()).all()
     reply = (f"{len(rows)} formations :\n" if fr else f"{len(rows)} programs:\n") + "\n".join(
-        f"• {item.name}: {item.price_online:.0f} / {item.price_onsite:.0f} DT (online / on site)" for item in rows)
+        f"• {item.name}: {item.price_online:.0f} / {item.price_onsite:.0f} DT a month (online / on site)" for item in rows)
     return {"reply": reply, "links": [_link("Programs", "/programs/all")], "source": "system"}
 
 
@@ -502,7 +502,7 @@ _HOW = [
      ("Classes", "/classes/")),
     (r"add (a )?(professor|teacher)|ajouter un (formateur|prof)|specialit",
      "On the Classes page, tab Professors: “Add a professor”, then tick the programs they teach. Only a professor "
-     "who has a program among their specialities can be given its classes.", ("Professors", "/classes/?tab=professors")),
+     "who has a program among their specialities can be given its classes.", ("Professors", "/professors")),
     (r"level check|test de niveau|quiz",
      "Each paid candidate gets one level check before their program starts. On the Level checks page press “Send”, "
      "or “Send the ready ones”. Whoever has not answered after two days is reminded once.", ("Level checks", "/quiz/all")),

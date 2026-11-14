@@ -205,8 +205,8 @@
       </div>
 
       <div class="pg-money">
-        <div class="pg-box"><div class="pg-box-label">Online</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_online or 0) }} <small>DT</small></div></div>
-        <div class="pg-box"><div class="pg-box-label">On site</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_onsite or 0) }} <small>DT</small></div></div>
+        <div class="pg-box"><div class="pg-box-label">Online · a month</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_online or 0) }} <small>DT</small></div></div>
+        <div class="pg-box"><div class="pg-box-label">On site · a month</div><div class="pg-box-value">{{ "%.0f"|format(prog.price_onsite or 0) }} <small>DT</small></div></div>
         <div class="pg-box"><div class="pg-box-label">Candidates</div><div class="pg-box-value">{{ card.registrations }} <small>{% if card.registrations %}· {{ card.paid }} paid{% endif %}{% if card.classes %} · {{ card.classes }} class{{ 'es' if card.classes != 1 }}{% endif %}</small></div></div>
       </div>
 
@@ -407,8 +407,8 @@
             <div class="ui-hint">Only the name is needed. Leave the rest empty and the assistant proposes it; a picture is looked up on the web.</div>
           </div>
           <div class="col-12 ui-field"><label for="add-description">Description</label><textarea class="form-control" id="add-description" name="description" rows="2"></textarea></div>
-          <div class="col-6 col-md-3 ui-field"><label for="add-online">Online price (DT)</label><input class="form-control" id="add-online" name="price_online" type="number" min="0" step="1" value="0"><div class="ui-hint">0 = your usual price</div></div>
-          <div class="col-6 col-md-3 ui-field"><label for="add-onsite">On-site price (DT)</label><input class="form-control" id="add-onsite" name="price_onsite" type="number" min="0" step="1" value="0"></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-online">Online price, a month (DT)</label><input class="form-control" id="add-online" name="price_online" type="number" min="0" step="1" value="0"><div class="ui-hint">0 = your usual price</div></div>
+          <div class="col-6 col-md-3 ui-field"><label for="add-onsite">On-site price, a month (DT)</label><input class="form-control" id="add-onsite" name="price_onsite" type="number" min="0" step="1" value="0"></div>
           <div class="col-6 col-md-3 ui-field"><label for="add-days">Duration (days)</label><input class="form-control" id="add-days" name="total_duration_days" type="number" min="0" value="0"></div>
           <div class="col-6 col-md-3 ui-field"><label for="add-hours">Hours per week</label><input class="form-control" id="add-hours" name="hours_per_week" type="number" min="0" value="0"></div>
           <div class="col-6 col-md-3 ui-field"><label for="add-training">Training hours</label><input class="form-control" id="add-training" name="training_hours" type="number" min="0" value="0"></div>

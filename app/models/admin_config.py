@@ -118,6 +118,15 @@ class SystemSettings(Base):
     # A professor away and nobody to replace them: "ask" (the admin chooses another professor, another day or a week
     # later) or "postpone" (the session goes a week later by itself, with every session after it).
     replacement_fallback = Column(String, nullable=True, default="ask")
+    # A professor asks to be away: "nobody" (the admin decides only when nobody can replace them for a session; else it
+    # is accepted and the replacements are asked) or "always" (the admin decides every request). services/absences.py.
+    absence_decision = Column(String, nullable=True, default="nobody")
+    # Prices are for one month (services/monthly.py): one reminder this many days before a month starts; a month not
+    # paid this many days after it started pauses the candidate's access (links, files, questions) until they pay.
+    month_remind_days = Column(Integer, nullable=True, default=5)
+    month_grace_days = Column(Integer, nullable=True, default=3)
+    month_pause_on = Column(Boolean, nullable=True, default=True)
+    monthly_since = Column(DateTime, nullable=True)      # months that started before this are never charged by themselves
     # The secret of the iPhone's link that sends the waiting SMS from the iPhone (services/phone_sms.py).
     phone_sms_token = Column(String, nullable=True)
     # After each session, its questions go this many hours after it ends (services/session_check.py).

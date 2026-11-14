@@ -59,6 +59,11 @@
     <h1>Cette séance est terminée</h1>
     <p>Elle a eu lieu {{ day }}. Vous recevrez un nouveau lien pour la prochaine séance.</p>
 
+    {% elif state == 'paused' %}
+    <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
+    <h1>Votre accès est en pause</h1>
+    <p>Le paiement du mois en cours n'est pas encore reçu. Dès qu'il l'est, ce lien fonctionne à nouveau : envoyez-nous la photo du reçu par email ou sur WhatsApp.</p>
+
     {% elif state == 'no_room' %}
     <span class="eyebrow">{{ class_group.program.name if class_group.program else class_group.name }}</span>
     <h1>La salle n'est pas encore prête</h1>

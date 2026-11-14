@@ -116,6 +116,9 @@ made = db.query(AdminReminder).filter(AdminReminder.subject == "Une date à rete
 check("a reminder is planned from the page for a day and an hour", answer.status_code == 303 and "The reminder goes" in where(answer) and "18:30" in where(answer) and made is not None and made.audience == "program"
       and abs((made.send_at - rm.to_utc(tomorrow.replace(hour=18, minute=30, second=0, microsecond=0))).total_seconds()) < 1, where(answer))
 check("a time already past is refused", "already past" in where(admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "s", "body": "b", "when": "later", "date": "2020-01-01", "time": "09:00"})))
+from app.services import monthly
+
+monthly.tick = lambda *a, **k: {}       # the monthly payments are their own suite's (test_absence_month): the copy's classes vary
 before = len(sent)
 answer = admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "Tout de suite", "body": "Bonjour {first_name}", "when": "now"})
 check("“now” goes at the next pass, within a minute", "within a minute" in where(answer) and len(sent) == before)

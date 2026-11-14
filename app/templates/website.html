@@ -497,7 +497,7 @@
       {% if app_brand.logo %}<img src="{{ app_brand.icon_big }}" alt="" style="width:56px; height:56px; border-radius:50%; border:1px solid var(--border-color);">{% endif %}
       <div style="flex:1 1 320px;">
         <div class="ui-card-title">The icon comes from your Facebook page. Its posts, videos and reviews need one more thing.</div>
-        <p class="ws-text mt-2 mb-0">Facebook gives a page's picture to everyone, so the application's icon already follows the page. For the posts, the videos and the reviews, Facebook asks for the page's own access token: only an admin of the page can create it (Meta for Developers → your app → “Page access token”). Put it in the <code>.env</code> file as <code>FACEBOOK_PAGE_ACCESS_TOKEN</code>, next to <code>FACEBOOK_PAGE_ID</code>, restart, and they are read with the website every six hours.</p>
+        <p class="ws-text mt-2 mb-0">Facebook gives a page's picture to everyone, so the application's icon already follows the page. For the posts, the videos and the reviews, Facebook asks for the page's own access token: only an admin of the page can create it (Meta for Developers → your app → “Page access token”). Give it in <a href="/settings#facebook">Settings › Facebook page</a> with the page ID (the steps are there): they are then read with the website every six hours.</p>
       </div>
     </div>
   </div>

@@ -98,7 +98,7 @@ check("setup: the professor has an account, a session and an announcement", db.q
       and db.query(pa.ProfessorAnnouncement).filter(pa.ProfessorAnnouncement.professor_id == leaving.id).count() >= 1)
 
 # ---- A. The page and the dialog ----
-page = admin.get("/classes/?tab=professors").text
+page = admin.get("/professors").text
 check("page: each professor card has its bin button and the dialog", f'data-delete-professor="{leaving_id}"' in page and 'id="deleteProfessorModal"' in page)
 dialog = admin.get(f"/classes/professors/{leaving_id}/delete")
 text = dialog.text
@@ -133,7 +133,7 @@ check("access: looking only cannot delete", response.status_code in (303, 403) a
 response = admin.post(f"/classes/professors/{leaving_id}/delete", data={f"give_{k1.id}": free.id, f"give_{k2.id}": ""})
 said = where(response)
 db.expire_all()
-check("deleted: back on the Professors tab, saying what happened", response.status_code == 303 and "tab=professors" in said and "Leila Partante is deleted" in said
+check("deleted: back on the Professors page, saying what happened", response.status_code == 303 and "/professors" in said and "Leila Partante is deleted" in said
       and "DEL-K1 now goes to Bilel Libre" in said and "Waiting for a professor: DEL-K2" in said and "access is removed" in said, said)
 check("deleted: the professor is gone", db.get(Professor, leaving_id) is None)
 check("classes: the one handed over has its new professor", db.get(ClassGroup, k1.id).professor_id == free.id and db.get(ClassGroup, k1.id).professor_name == free.name)
@@ -152,7 +152,7 @@ check("question: back in the inbox for the admin", db.get(CandidateEmail, asked.
       and db.query(Notification).filter(Notification.title == "Candidate questions are back in your inbox").count() == 1)
 log = db.query(EditLog).filter(EditLog.table == "professors", EditLog.row_id == leaving_id, EditLog.action == "delete").first()
 check("log: who deleted whom, and where the classes went", log is not None and log.who == "Safa Admin" and "DEL-K1" in (log.changes or ""), log.changes if log else None)
-page = admin.get("/classes/?tab=professors").text
+page = admin.get("/professors").text
 check("page: the card is gone, the waiting class says it has no professor", f'data-delete-professor="{leaving_id}"' not in page and "DEL-K2" in page)
 
 # ---- E. Two classes at the same hours to the same professor: the second is refused, nothing changes ----

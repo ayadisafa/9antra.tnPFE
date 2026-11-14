@@ -46,6 +46,14 @@ class Registration(Base):
     total_price = Column(Float, default=0.0)
     paid_amount = Column(Float, default=0.0)
 
+    # Prices are for one month (services/monthly.py): total_amount is what is owed so far (the months begun), each month
+    # added when it starts. month_price: one month's price for this registration (its way: online or onsite).
+    month_price = Column(Float, nullable=True)
+    months = Column(Integer, nullable=True)                # how many months the program lasts (empty: the program's)
+    months_counted = Column(Integer, nullable=True)        # the months already counted (empty: the first one)
+    month_reminded = Column(Integer, nullable=True)        # the month whose one reminder went
+    paused_at = Column(DateTime, nullable=True)            # a month not paid: their access waits for the payment
+
     @property
     def remaining_amount(self) -> float:
         price = self.total_amount or self.total_price or 0.0

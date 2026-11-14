@@ -1404,6 +1404,21 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                 else:
                     draft = question
                     reason += " Which program it pays is not said: the question to ask is ready below."
+            elif mode == "auto" and not is_test(message):
+                # They know at once it arrived (on the way it came: email or WhatsApp); the admin still confirms it.
+                english = analysis["language"] == "en"
+                amounts = [proof.amount for proof in proofs if getattr(proof, "amount", None)]
+                said = (f" ({amounts[0]:.0f} DT)" if len(amounts) == 1 else "")
+                told = (f"{greeting_for(candidate, 'en' if english else 'fr')}\n\n"
+                        + (f"Thank you! We received your payment proof{said}. Our team checks it and confirms your payment very soon."
+                           if english else
+                           f"Merci ! Nous avons bien reçu votre justificatif de paiement{said}. Notre équipe le vérifie et vous confirme "
+                           "l'enregistrement de votre paiement très vite."))
+                text, html_body = compose_reply(db, candidate, told, language="en" if english else "fr")
+                sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system",
+                                             thread=thread, note="Told the payment proof is received and being checked.")
+                if sent is not None and sent.status in ("sent", "to_send"):
+                    reason += " They were told it is received and being checked."
             return _ask_admin(db, thread, message, candidate, reason, draft)
         return _ask_admin(
             db, thread, message, candidate,
@@ -1494,6 +1509,26 @@ def _process_inbound(db: Session, message: CandidateEmail) -> str:
                               language="fr", note="Answers to the weekly questions read from the reply.")
         message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
         message.analysis = f"Answers to the weekly questions ({handled['quiz'].course_name})" + (": complete, graded." if handled["done"] else ": some still missing.")
+        thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
+        return "replied"
+    # Online instead of on site, or the other way ("je préfère passer en présentiel"): changed at once by the rules of
+    # services/mode_change.py, they are told what changed (price, links, place), the admin too.
+    from app.services import mode_change
+
+    way_language = "tn" if analysis.get("derja") else ("ar" if analysis["language"] == "ar" else "en" if analysis["language"] == "en" else "fr")
+    switched = None if is_test(message) else mode_change.handle(db, candidate, f"{subject}\n{message.body or ''}", way_language)
+    if switched is not None:
+        db.commit()
+        told = f"{greeting_for(candidate, 'en' if way_language == 'en' else 'fr')}\n\n{switched['text']}"
+        if mode != "auto" or switched["registration"] is None:
+            return _ask_admin(db, thread, message, candidate, switched["note"] + (" The change is made; read the answer and send it." if switched["changed"] else ""), told)
+        text, html_body = compose_reply(db, candidate, told, language="en" if way_language == "en" else "fr", quote=message.body)
+        sent = email_threads.deliver(db, candidate, f"Re: {thread.subject}", text, html_body, kind="reply", author="system", thread=thread,
+                                     language="en" if way_language == "en" else "fr", note=switched["note"])
+        if sent is None or sent.status == "failed":
+            return _ask_admin(db, thread, message, candidate, switched["note"] + " The answer could not be delivered: send it again from here.", told)
+        message.status, message.requires_admin, message.replied_at = "replied", False, utcnow()
+        message.analysis = switched["note"]
         thread.status, thread.needs_admin, thread.last_status = "replied", False, "replied"
         return "replied"
     from app.services import cloud_reply, course_requests

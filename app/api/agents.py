@@ -1,4 +1,4 @@
-"""The agents page (who handles what, and what they did), trying the orchestrator on a sentence, and What's new."""
+"""The agents page (who handles what, and what they did), and trying the orchestrator on a sentence."""
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.services import auth, message_categories, orchestrator, whats_new
+from app.services import auth, message_categories, orchestrator
 from app.template_context import notification_context
 
 router = APIRouter(tags=["Agents"])
@@ -38,9 +38,3 @@ def try_route(payload: Sentence, request: Request, db: Session = Depends(get_db)
     return {"category": routed["category"], "agent": routed["agent"],
             "step": orchestrator.first_step(db, payload.message, user, routed["agent"]["key"])}
 
-
-@router.get("/whats-new", response_class=HTMLResponse)
-def whats_new_page(request: Request, db: Session = Depends(get_db)):
-    whats_new.mark_seen(db)
-    return templates.TemplateResponse(request=request, name="whats_new.html", context={
-        "active_page": "whats_new", "releases": whats_new.RELEASES})

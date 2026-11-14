@@ -6,6 +6,13 @@
 {% block live_topics %}candidate:{{ candidate.id }}{% endblock %}
 
 {% block extra_head %}
+<style>
+  .cp-months { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:8px; }
+  .cp-month { display:inline-flex; align-items:center; gap:3px; font-size:.7rem; font-weight:700; border-radius:999px; padding:2px 9px 2px 6px; background:#f4f1f9; color:#6b6480; }
+  .cp-month.is-paid { background:var(--mint-subtle, #e9f9ef); color:#15803d; }
+  .cp-month.is-due { background:#fff1f2; color:#be123c; }
+  .cp-month.is-now { box-shadow:0 0 0 2px var(--primary-berry); }
+</style>
 {% include "_ui.html" %}
 <style>
   .cp-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
@@ -347,6 +354,17 @@
                 <div class="ui-bar flex-grow-1 {{ 'is-full' if card.is_paid }}"><span style="width:{{ card.paid_pct }}%;"></span></div>
                 <span class="cp-meta text-nowrap fw-bold">{{ "%.0f"|format(card.paid) }} / {{ "%.0f"|format(card.total) }} DT</span>
               </div>
+              {% set plan = card.months %}
+              {% if plan and plan.count > 1 %}
+              <div class="cp-months" aria-label="Month by month">
+                {% for month in plan.months %}
+                <span class="cp-month is-{{ month.state }} {{ 'is-now' if month.now }}" title="{{ month.starts.strftime('%d/%m/%Y') if month.starts else '' }}">
+                  <i class="bi {{ 'bi-check2' if month.state == 'paid' else 'bi-exclamation' if month.state == 'due' else 'bi-dot' }}"></i>Month {{ month.number }}{% if month.starts %} · {{ month.starts.strftime('%d/%m') }}{% endif %}</span>
+                {% endfor %}
+                <span class="cp-meta">{{ "%.0f"|format(plan.price) }} DT a month · {{ "%.0f"|format(plan.total) }} DT in all</span>
+                {% if plan.paused %}<span class="ui-chip bad"><i class="bi bi-pause-circle"></i>Paused until they pay</span>{% endif %}
+              </div>
+              {% endif %}
             </div>
           </div>
 
@@ -375,6 +393,11 @@
               <input class="form-control form-control-sm" type="number" name="amount" min="0.01" step="0.01" max="{{ card.due }}" placeholder="Part paid, DT" aria-label="Amount paid in DT" style="width:128px;" required>
               <input type="hidden" name="method" value="manual">
               <button class="ui-btn sm">Record</button>
+            </form>
+            {% elif reg.program_id and reg.class_group_id and card.months and card.months.count > 1 and card.months.price > 0 and card.months.paid < card.months.count %}
+            <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record {{ '%.0f'|format(card.months.price) }} DT for the next month of {{ card.name }}, paid ahead?">
+              <input type="hidden" name="amount" value="{{ card.months.price }}"><input type="hidden" name="method" value="manual">
+              <button class="ui-btn sm"><i class="bi bi-calendar-plus"></i>Next month paid ahead ({{ "%.0f"|format(card.months.price) }} DT)</button>
             </form>
             {% elif not reg.program_id %}
             <form method="post" action="/candidate/registrations/{{ reg.id }}/program" title="This name matched no program: say which one it is and its price is set">

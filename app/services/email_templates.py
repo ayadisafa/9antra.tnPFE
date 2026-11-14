@@ -431,12 +431,81 @@ AUTO_EMAILS: dict[str, AutoEmail] = {item.key: item for item in [
         body=(
             "Bonjour {candidate_name},\n\n"
             "Nous vous rappelons que votre inscription à la formation « {program_name} » est en attente de paiement.\n\n"
-            "Montant restant : **{remaining_amount}**\n\n"
+            "Montant à régler : **{remaining_amount}**\n\n"
+            "Nos tarifs sont mensuels : ce montant couvre le premier mois, puis chaque mois se règle avant de commencer.\n\n"
             "Dès réception du paiement, vous serez affecté(e) à une classe et vous recevrez la date "
             "et l'horaire de votre première séance."
         ),
         closing="Si vous avez déjà effectué le règlement, répondez simplement à cet email "
                 "afin que notre équipe vérifie votre dossier.",
+    ),
+    AutoEmail(
+        key="month_due", group="Payment",
+        name="Next month to pay",
+        when="Prices are for one month. Sent by itself once per month, some days before the next month of the program starts "
+             "(Settings › Classes › Monthly payments), unless they already paid it.",
+        subject="Mois {month_number} de {program_name} : à régler avant le {month_start}",
+        title="Votre mois {month_number} commence bientôt",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Votre formation « {program_name} » continue ! Le mois {month_number} sur {months_total} commence le **{month_start}**.\n\n"
+            "[box]\n"
+            "Pour continuer, le paiement du mois {month_number} est de **{month_price}**, à régler avant cette date.\n\n"
+            "Vous pouvez payer par virement ou en espèces au centre ; envoyez-nous la photo du reçu par email ou sur WhatsApp, "
+            "nous la confirmons pour vous."
+        ),
+        closing="Si vous avez déjà payé, répondez simplement à ce message avec le reçu : notre équipe vérifie votre dossier.",
+        extra=(
+            ("month_number", "The month concerned (2 for the second month)", "2"),
+            ("months_total", "How many months the program lasts", "2"),
+            ("month_start", "The first day of that month", "samedi 24 octobre 2026"),
+            ("month_price", "The price of one month", "390 DT"),
+            ("program_total", "What the whole program costs them", "780 DT"),
+        ),
+    ),
+    AutoEmail(
+        key="month_paused", group="Payment",
+        name="Month not paid: access paused",
+        when="Sent once when a month of the program is still not paid some days after it started "
+             "(Settings › Classes › Monthly payments): their session links and their professor's follow-up wait for the payment.",
+        subject="Votre formation {program_name} est en pause",
+        title="On vous attend pour la suite",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Le paiement du mois {month_number} de votre formation « {program_name} » (**{month_price}**) ne nous est pas encore parvenu.\n\n"
+            "[box gold]\n"
+            "Votre accès est en pause : vos liens de séance et le suivi de votre formateur reprennent dès réception du paiement.\n\n"
+            "Envoyez-nous la photo du reçu par email ou sur WhatsApp, et vous reprenez aussitôt."
+        ),
+        closing="Une difficulté pour payer ? Répondez à ce message : nous trouverons une solution ensemble.",
+        extra=(
+            ("month_number", "The month concerned (2 for the second month)", "2"),
+            ("months_total", "How many months the program lasts", "2"),
+            ("month_start", "The first day of that month", "samedi 24 octobre 2026"),
+            ("month_price", "The price of one month", "390 DT"),
+            ("program_total", "What the whole program costs them", "780 DT"),
+        ),
+    ),
+    AutoEmail(
+        key="month_received", group="Payment",
+        name="Month paid: they continue",
+        when="Sent when a payment is recorded for a candidate already in a class (a month of the program).",
+        subject="Paiement reçu — {program_name}, mois {month_number}",
+        title="Merci, vous continuez !",
+        body=(
+            "Bonjour {candidate_name},\n\n"
+            "Nous avons bien reçu votre paiement pour « {program_name} ». Le mois {month_number} sur {months_total} est réglé : "
+            "vous continuez votre formation comme prévu.\n\n"
+            "Montant réglé au total : **{paid_amount}**"
+        ),
+        closing="À très vite en séance !",
+        extra=(
+            ("month_number", "The month concerned (2 for the second month)", "2"),
+            ("months_total", "How many months the program lasts", "2"),
+            ("month_start", "The first day of that month", "samedi 24 octobre 2026"),
+            ("month_price", "The price of one month", "390 DT"),
+            ("program_total", "What the whole program costs them", "780 DT"),
+        ),
     ),
     AutoEmail(
         key="payment_partial", group="Payment",
@@ -991,6 +1060,10 @@ def computed_values(key: str, registration: Registration | None) -> dict | None:
         return {"next_step": _next_step(class_group)}
     if key == "training_reminder":
         return _countdown(class_group)
+    if key in ("month_due", "month_paused", "month_received"):
+        from app.services import monthly
+
+        return monthly.values(registration, key)
     return {}
 
 

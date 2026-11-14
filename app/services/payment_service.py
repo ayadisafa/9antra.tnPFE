@@ -177,16 +177,20 @@ def confirm_payment(
         registration.paid_amount or 0.0
     )
 
+    # Prices are for one month: a candidate may pay the months to come ahead, up to the whole program (services/monthly.py).
+    from app.services import monthly
+
     remaining_amount = max(
         0.0,
-        total_amount - paid_amount,
+        max(total_amount, monthly.program_total(registration)) - paid_amount,
     )
 
     if amount > remaining_amount + 0.01:
         raise ValueError(
-            f"Payment exceeds remaining balance "
+            f"Payment exceeds what the whole program still costs "
             f"({remaining_amount:.2f} DT)."
         )
+    already_placed = bool(registration.class_group_id)
 
     payment = Payment(
         registration_id=registration.id,
@@ -231,6 +235,8 @@ def confirm_payment(
     )
 
     fully_paid = registration.payment_status == PaymentStatus.PAID
+    if fully_paid:
+        monthly.resume_if_paid(db, registration)        # a month owed is paid: their access starts again
     if not fully_paid:
         _create_payment_notification(
             db=db,
@@ -251,6 +257,8 @@ def confirm_payment(
         result = enroll_paid_registration(db, registration)
         if result.class_group is not None and result.reason is None:
             send_payment_email = False
+        elif result.reason == "already_assigned":
+            pass                    # a month of a program they already follow: "month_received" says they continue
         elif result.reason not in ("no_program", "busy", "no_open_class"):
             # (Those already told the admin what is missing, in one notification.)
             _create_payment_notification(db=db, registration=registration)
@@ -258,12 +266,12 @@ def confirm_payment(
         db.refresh(payment)
 
     # Emails are slow; they must not delay the response.
-    run_in_background(_payment_followup_task, registration.id, send_payment_email)
+    run_in_background(_payment_followup_task, registration.id, send_payment_email, already_placed)
 
     return payment
 
 
-def _payment_followup_task(registration_id: str, send_payment_email: bool) -> None:
+def _payment_followup_task(registration_id: str, send_payment_email: bool, already_placed: bool = False) -> None:
     """Background work after a payment: confirmation email and the level check."""
     db = SessionLocal()
     try:
@@ -273,11 +281,15 @@ def _payment_followup_task(registration_id: str, send_payment_email: bool) -> No
 
         if send_payment_email:
             # The email and its outcome are recorded in the discussion and the activity log.
-            _send_payment_confirmation_email(
-                db=db,
-                registration=registration,
-                payment_status=registration.payment_status,
-            )
+            if already_placed and registration.payment_status == PaymentStatus.PAID:
+                # They already follow the class: this was a month of it.
+                email_templates.send(db, "month_received", registration=registration)
+            else:
+                _send_payment_confirmation_email(
+                    db=db,
+                    registration=registration,
+                    payment_status=registration.payment_status,
+                )
             db.commit()
 
         if registration.payment_status == PaymentStatus.PAID:

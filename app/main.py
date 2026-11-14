@@ -44,7 +44,7 @@ from app.api.meeting import router as meeting_router
 from app.api.market import router as market_router
 from app.api.program_pdf import router as program_pdf_router
 from app.api.reminders import router as reminders_router
-from app.api.professors import router as professors_router
+from app.api.professors import public as absence_answer_router, router as professors_router
 from app.api.app_shell import router as app_shell_router
 from app.api.i18n import router as i18n_router
 from app.api.workspace import router as workspace_router
@@ -194,7 +194,7 @@ ensure_sqlite_compatibility()
 app.include_router(auth_router)
 app.include_router(page_pdf_router)    # every page as a PDF: before the pages, whose addresses would catch …/pdf
 app.include_router(friend_router)      # /account/friend: what Yasmine, the animated friend, says
-app.include_router(agents_router)      # /assistant/agents: who handles what; /whats-new
+app.include_router(agents_router)      # /assistant/agents: who handles what
 app.include_router(social_router)      # /social: posts, stories, videos, we listen, engagement
 app.include_router(sms_router)         # /sms/webhook: the SMS the Android phone receives
 app.include_router(whatsapp_router)    # /whatsapp/webhook: where Meta delivers the messages candidates send
@@ -216,6 +216,7 @@ app.include_router(market_router)      # /programs/market: before program_router
 app.include_router(program_pdf_router) # /programs/{id}/pdf: a program to download or send
 app.include_router(reminders_router)   # /reminders: the admin's own reminders
 app.include_router(professors_router)  # /professors: every professor, and each one's own space
+app.include_router(absence_answer_router)   # /absence: a professor answers a refused absence, without signing in
 app.include_router(app_shell_router)   # /sw.js, phones' notifications, the iPhone's SMS link
 app.include_router(i18n_router)        # /language, /i18n: the interface in French and Arabic
 app.include_router(workspace_router)   # /find, /data, /settings/team: find anything, change any value, the team

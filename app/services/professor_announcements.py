@@ -97,7 +97,7 @@ def send_due(db: Session, base_url: str = "") -> int:
             continue
         try:
             team_messages.send(db, f"professor:{professor.id}", text_for(db, group, professor, base_url),
-                               ["app", "email", "whatsapp"], author="The assistant")
+                               ["app", "email", "whatsapp"], author="The assistant", subject=f"Votre classe {group.name}")
             sent += 1
         except Exception:
             logger.exception("The announcement of class %s to professor %s could not be sent.", group.id, professor.id)

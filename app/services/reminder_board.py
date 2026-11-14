@@ -63,7 +63,7 @@ def items(db: Session) -> list[dict]:
          "what": "A week with no resource yet: its professor is reminded to add them, in your words.", "on": resources["on"],
          "switchable": True, "timing": {"kind": "days", "single": True, "value": resources["days"], "least": 1, "most": 14,
                                         "after": "days before the week"},
-         "when": f"{resources['days']} days before the week", "edit": "/classes/?tab=professors#resources",
+         "when": f"{resources['days']} days before the week", "edit": "/professors#resources",
          "changed": False, "designed": False, "sent": _resources_sent(db), "needs_mail": not mail_ready},
         {"key": "course_questions", "icon": "bi-patch-question", "motion": "pulse", "who": "Professors", "name": "Candidates' questions",
          "what": "A paid candidate's question about the course goes to their professor; reminded after a day, you after two.",

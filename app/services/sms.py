@@ -14,6 +14,8 @@ import logging
 import os
 import time
 
+import threading
+
 import requests
 
 logger = logging.getLogger(__name__)
@@ -45,6 +47,21 @@ def receives() -> bool:
 
 def send(phone: str, text: str) -> str | None:
     """Send an SMS from the phone. Returns the problem, or None when the phone took it."""
+    _last.id = None
+    problem, _last.id = send_tracked(phone, text)
+    return problem
+
+
+_last = threading.local()
+
+
+def last_id() -> str | None:
+    """The id of the message this thread sent last (None when it failed): to follow what became of it (services/delivery.py)."""
+    return getattr(_last, "id", None)
+
+
+def send_tracked(phone: str, text: str) -> tuple[str | None, str | None]:
+    """Send an SMS from the phone: (problem or None, the phone's id of the SMS, to follow sms:delivered / sms:failed)."""
     from app.database import let_others_write
 
     let_others_write()                      # the phone may take seconds: nobody waits for the database meanwhile
@@ -52,9 +69,9 @@ def send(phone: str, text: str) -> str | None:
 
     number = whatsapp.normalise(phone)
     if number is None:
-        return "This phone number cannot receive an SMS."
+        return "This phone number cannot receive an SMS.", None
     if not configured():
-        return "No phone is connected for SMS."
+        return "No phone is connected for SMS.", None
     base = _env("SMS_GATEWAY_URL").rstrip("/")
     auth = (_env("SMS_GATEWAY_USER"), _env("SMS_GATEWAY_PASSWORD"))
     body = {"phoneNumbers": [number], "textMessage": {"text": (text or "")[:1500]}}
@@ -63,10 +80,14 @@ def send(phone: str, text: str) -> str | None:
         if response.status_code == 404:          # older versions of the app
             response = requests.post(f"{base}/message", json={"phoneNumbers": [number], "message": (text or "")[:1500]}, auth=auth, timeout=20)
     except requests.RequestException as exc:
-        return f"The phone did not answer ({type(exc).__name__}): is it on the same Wi-Fi, with the app open?"
+        return f"The phone did not answer ({type(exc).__name__}): is it on the same Wi-Fi, with the app open?", None
     if response.status_code >= 300:
-        return f"The phone refused the SMS ({response.status_code}): {response.text[:160]}"
-    return None
+        return f"The phone refused the SMS ({response.status_code}): {response.text[:160]}", None
+    try:
+        sent = response.json().get("id")
+    except (ValueError, AttributeError):
+        sent = None
+    return None, sent
 
 
 def signature_ok(body: bytes, signature: str | None, timestamp: str | None, now: float | None = None) -> bool:

@@ -715,16 +715,6 @@
 "ar": "يطلب {0} درس الأسبوع {1}"
 },
 {
-"en": "What's new: {0}",
-"fr": "Nouveautés : {0}",
-"ar": "الجديد: {0}"
-},
-{
-"en": "{0} new things in the application. Open What's new to see each one.",
-"fr": "{0} nouveautés dans l'application. Ouvrez Nouveautés pour voir chacune.",
-"ar": "{0} أشياء جديدة في التطبيق. افتح «الجديد» لرؤية كل واحد."
-},
-{
 "en": "“{0}” is on: it goes by itself.",
 "fr": "« {0} » est activé : il part tout seul.",
 "ar": "«{0}» مفعّل: يُرسل وحده."

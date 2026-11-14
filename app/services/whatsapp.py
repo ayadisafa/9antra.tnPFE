@@ -20,6 +20,8 @@ import os
 import re
 from urllib.parse import quote
 
+import threading
+
 import requests
 from sqlalchemy.orm import Session
 
@@ -114,7 +116,22 @@ def configured() -> bool:
 
 
 def send(phone, text: str, *, free: bool = False) -> str | None:
-    """Send a message from the business number. Returns the problem, or None when it went.
+    """Send a message from the business number. Returns the problem, or None when it went."""
+    _last.id = None
+    problem, _last.id = send_tracked(phone, text, free=free)
+    return problem
+
+
+_last = threading.local()
+
+
+def last_id() -> str | None:
+    """The id of the message this thread sent last (None when it failed): to follow what became of it (services/delivery.py)."""
+    return getattr(_last, "id", None)
+
+
+def send_tracked(phone, text: str, *, free: bool = False) -> tuple[str | None, str | None]:
+    """Send a message from the business number: (problem or None, Meta's id of the message, to follow its statuses).
 
     WhatsApp only lets a business write freely to someone who wrote to it in
     the last 24 hours (`free`: an answer to them). For everyone else the message
@@ -126,9 +143,9 @@ def send(phone, text: str, *, free: bool = False) -> str | None:
     let_others_write()                      # Meta may take seconds: nobody waits for the database meanwhile
     number = normalise(phone)
     if number is None:
-        return "This phone number cannot be used on WhatsApp."
+        return "This phone number cannot be used on WhatsApp.", None
     if not configured():
-        return "No WhatsApp Business number is connected."
+        return "No WhatsApp Business number is connected.", None
     body = as_message(text)
     template = "" if free else (os.getenv("WHATSAPP_TEMPLATE") or "").strip()
     if template:
@@ -148,14 +165,18 @@ def send(phone, text: str, *, free: bool = False) -> str | None:
             headers={"Authorization": f"Bearer {os.getenv('WHATSAPP_TOKEN').strip()}"},
         )
     except requests.RequestException as exc:
-        return f"WhatsApp did not answer ({type(exc).__name__})."
+        return f"WhatsApp did not answer ({type(exc).__name__}).", None
     if response.status_code >= 300:
         try:
             reason = response.json().get("error", {}).get("message") or response.text[:200]
         except ValueError:
             reason = response.text[:200]
-        return f"WhatsApp refused the message: {reason}"
-    return None
+        return f"WhatsApp refused the message: {reason}", None
+    try:
+        sent = (response.json().get("messages") or [{}])[0].get("id")
+    except (ValueError, AttributeError, IndexError):
+        sent = None
+    return None, sent
 
 
 MAX_MEDIA_BYTES = 12 * 1024 * 1024

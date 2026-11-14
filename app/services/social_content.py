@@ -33,7 +33,7 @@ _W = {
            "you_said": "Vous avez dit", "we_did": "Nous avons fait", "program_kicker": "NOUVELLE SESSION", "starts": "Début", "weeks": "semaines",
            "online": "En ligne", "onsite": "Sur place", "both": "En ligne et sur place", "trend_kicker": "CE QUI MONTE", "join_kicker": "REJOIGNEZ-NOUS",
            "join_title": "Votre prochaine compétence commence ici", "cta": "Inscrivez-vous", "centre": "Centre de formation",
-           "taught": "déjà au programme de", "dt": "DT"},
+           "taught": "déjà au programme de", "dt": "DT / mois"},
     "en": {"trained": "candidates trained", "training": "in training", "programs": "programs", "happy": "happy", "stars": "average rating",
            "recommend": "recommend us", "said": "gave their opinion", "classes": "classes running",
            "success_kicker": "THEY SUCCEED WITH US", "success_title": "Your success, our pride",
@@ -41,7 +41,7 @@ _W = {
            "you_said": "You said", "we_did": "We did", "program_kicker": "NEW SESSION", "starts": "Starts", "weeks": "weeks",
            "online": "Online", "onsite": "On site", "both": "Online and on site", "trend_kicker": "WHAT IS RISING", "join_kicker": "JOIN US",
            "join_title": "Your next skill starts here", "cta": "Register now", "centre": "Training centre",
-           "taught": "already taught in", "dt": "DT"},
+           "taught": "already taught in", "dt": "DT / month"},
     "ar": {"trained": "مترشح تكوّن", "training": "في التكوين", "programs": "برامج", "happy": "راضون", "stars": "التقييم المتوسط",
            "recommend": "ينصحون بنا", "said": "أبدوا رأيهم", "classes": "أقسام جارية",
            "success_kicker": "ينجحون معنا", "success_title": "نجاحكم فخرنا",
@@ -49,7 +49,7 @@ _W = {
            "you_said": "قلتم", "we_did": "فعلنا", "program_kicker": "دورة جديدة", "starts": "البداية", "weeks": "أسابيع",
            "online": "عن بعد", "onsite": "حضوريا", "both": "عن بعد وحضوريا", "trend_kicker": "الأكثر رواجا", "join_kicker": "انضموا إلينا",
            "join_title": "مهارتك القادمة تبدأ هنا", "cta": "سجّل الآن", "centre": "مركز تكوين",
-           "taught": "يُدرَّس في", "dt": "د.ت"},
+           "taught": "يُدرَّس في", "dt": "د.ت / الشهر"},
 }
 _CAPTIONS = {
     "success": {

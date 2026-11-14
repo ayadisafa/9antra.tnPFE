@@ -189,7 +189,7 @@ def professor_card(db: Session, person: Professor) -> dict:
              f"• Specialities: {person.specialties or 'none written yet'}",
              f"• Classes: {', '.join(running) if running else 'none at the moment'}" + (f" ({len(groups) - len(running)} completed)" if len(groups) > len(running) else ""),
              f"• {'Available' if person.is_available else 'Not available at the moment'}"]
-    return {"reply": "\n".join(lines), "links": [_link("Professors", "/classes/?tab=professors")], "source": "system"}
+    return {"reply": "\n".join(lines), "links": [_link("Professors", "/professors")], "source": "system"}
 
 
 def money(db: Session, text: str) -> dict:
@@ -458,7 +458,7 @@ def search(db: Session, text: str) -> dict | None:
     for person in db.query(Professor).filter(like(Professor.name, Professor.specialties, Professor.email)).limit(3).all():
         lines.append(f"• Professor: {person.name} ({person.specialties or 'no speciality written'})")
     for program in db.query(Program).filter(like(Program.name, Program.description)).limit(3).all():
-        lines.append(f"• Program: {program.name}, {program.price_online or 0:.0f} DT online / {program.price_onsite or 0:.0f} DT on site")
+        lines.append(f"• Program: {program.name}, {program.price_online or 0:.0f} DT a month online / {program.price_onsite or 0:.0f} DT a month on site")
         links.append(_link(program.name, f"/programs/{program.id}"))
     for row in db.query(CandidateEmail).filter(like(CandidateEmail.subject, CandidateEmail.body)).order_by(CandidateEmail.received_at.desc()).limit(3).all():
         lines.append(_mail_line(db, row).replace("• ", "• Email: ", 1))

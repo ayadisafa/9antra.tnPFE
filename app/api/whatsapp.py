@@ -40,9 +40,14 @@ async def receive(request: Request):
         return JSONResponse({"ok": False}, status_code=400)
     from app.services import email_assistant
 
+    from app.services import delivery
+
     db = SessionLocal()
     kept = []
     try:
+        # What became of the messages sent: delivered, read, failed (services/delivery.py).
+        for item in delivery.from_whatsapp(payload):
+            delivery.update(db, item["id"], item["state"], when=item["when"], reason=item["reason"])
         for item in whatsapp_inbox.from_webhook(payload):
             message = whatsapp_inbox.receive(db, **item)
             if message is not None:

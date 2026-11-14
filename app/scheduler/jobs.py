@@ -510,6 +510,15 @@ def reminders_tick():
         logger.exception("Closing the presence of the sessions that ended failed.")
         system_status.problem("reminders", exc)
     try:
+        # Prices are for one month: the reminder before a month, the month that starts, the access paused (see monthly).
+        from app.services import monthly
+
+        monthly.tick(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Following the monthly payments failed.")
+        system_status.problem("reminders", exc)
+    try:
         # Monday's letter: the week's sessions and what waits for an answer, in one message (see letters).
         from app.services import letters
 
@@ -695,16 +704,14 @@ def knowledge_tick():
         db.rollback()
         logger.exception("Knowledge refresh failed.")
     try:
-        # Every message gets its category (the ones that came before categories), the old agent runs go, and the admin
-        # hears of what is new in the application (once per release).
-        from app.services import message_categories, orchestrator, whats_new
+        # Every message gets its category (the ones that came before categories), and the old agent runs go.
+        from app.services import message_categories, orchestrator
 
         message_categories.backfill(db)
         orchestrator.forget_old(db)
         from app.services import conversation
 
         conversation.forget_old(db)
-        whats_new.announce(db)
         # The inbox reads its own decisions again with what it learnt (the admin's corrections, a better reading of
         # replies to the opinion email) and corrects itself: nothing is sent alone, the admin reads what comes back.
         from app.services import reply_rules

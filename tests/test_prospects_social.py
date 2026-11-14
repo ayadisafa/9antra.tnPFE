@@ -79,10 +79,10 @@ price_online = f"{devops.price_online:,.0f}".replace(",", " ")
 
 # ---- A. The facts, in four languages ----
 said = prospects.reply_for(db, "Bonjour, combien coûte la formation DevOps et elle dure combien de temps ?")
-check("facts in French: price, length, the form, the numbers", said and said["lang"] == "fr" and f"{price_online} DT en ligne" in said["text"]
+check("facts in French: price, length, the form, the numbers", said and said["lang"] == "fr" and f"{price_online} DT par mois en ligne" in said["text"]
       and "semaines" in said["text"] and link in said["text"] and "+216 26 925 635" in said["text"], (said or {}).get("text", "")[:300])
 said = prospects.reply_for(db, "Hi, how much is DevOps?")
-check("facts in English", said and said["lang"] == "en" and f"costs {price_online} DT online" in said["text"] and "Hello, and thank you" in said["text"])
+check("facts in English", said and said["lang"] == "en" and f"costs {price_online} DT a month online" in said["text"] and "Hello, and thank you" in said["text"])
 said = prospects.reply_for(db, "slm 9adech soum el formation devops?")
 check("facts in Tunisian", said and said["lang"] == "tn" and "soumha" in said["text"] and said["text"].startswith("Aslema"), (said or {}).get("text", "")[:200])
 said = prospects.reply_for(db, "السلام عليكم، بقداش سعر تكوين DevOps؟")

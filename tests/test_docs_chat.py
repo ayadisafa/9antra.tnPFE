@@ -214,7 +214,7 @@ found = chat("register yasmine gharbi in python")
 check("and says so when they are already registered", "already registered in Python" in found["reply"])
 found = chat("export payments to excel")
 check("a file for Excel", link(found, "Payments for Excel")["url"] == "/data/payments.csv")
-check("earlier answers still work", "DT" in chat("who has not paid?")["reply"] and "390 DT online" in chat("How much is DevOps?")["reply"]
+check("earlier answers still work", "DT" in chat("who has not paid?")["reply"] and "390 DT a month online" in chat("How much is DevOps?")["reply"]
       and chat("tell me about Yasmine Gharbi")["links"][0]["url"] == f"/candidate/{yasmine.id}")
 api = admin.post("/assistant/chat", json={"message": "send it to Yasmine Gharbi", "history": [
     {"role": "user", "content": "send me all the programs in pdf"}, {"role": "assistant", "content": "Here are…"}, {"role": "user", "content": "send it to Yasmine Gharbi"}]})

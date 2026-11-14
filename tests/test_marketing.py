@@ -25,7 +25,7 @@ from app.models import Candidate, User, UserSession
 from app.models.candidate_email import CandidateEmail
 from app.models.news_item import NewsItem
 from app.services import (access, auth, email_templates, guides, marketing, orchestrator, reply_rules, social_content, social_images,
-                          social_music, social_video, system_actions, whats_new)
+                          social_music, social_video, system_actions)
 from app.services.schedule_utils import local_now
 from app.services.settings_service import get_settings
 
@@ -202,7 +202,6 @@ for lang in ("fr", "ar"):
     admin.cookies.set("lang", lang)
     check(f"pages in {lang}", all(admin.get(path).status_code == 200 for path in ("/", "/social", "/guide", "/reminders")))
 admin.cookies.set("lang", "en")
-check("what's new: this batch is told", any(release["key"] == "2026-11-02" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

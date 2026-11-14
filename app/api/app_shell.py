@@ -138,6 +138,30 @@ def sms_sent(secret: str, key: str, db: Session = Depends(get_db)):
     return {"ok": phone_sms.mark_sent(db, key)}
 
 
+@router.post("/phone-sms/{secret}/received")
+async def sms_received_on_iphone(secret: str, request: Request, db: Session = Depends(get_db)):
+    """An SMS that came in to the iPhone, posted by its Shortcuts automation ("When I get a message"): kept in the
+    candidate's SMS discussion and read by the assistant, like the Android phone's. Body: JSON {"number", "text"}
+    (or the same as a form)."""
+    from app.services import email_assistant, whatsapp_inbox
+
+    if not phone_sms.allowed(db, secret):
+        raise HTTPException(status_code=404)
+    try:
+        data = await request.json()
+    except Exception:
+        data = dict(await request.form())
+    number = str((data or {}).get("number") or (data or {}).get("sender") or "").strip()
+    text = str((data or {}).get("text") or (data or {}).get("message") or "").strip()
+    if not number or not text:
+        return JSONResponse({"ok": False, "reason": "number and text are needed"}, status_code=400)
+    message = whatsapp_inbox.receive_sms(db, phone=number, text=text[:4000], sms_id="")
+    db.commit()
+    if message is not None:
+        email_assistant.queue_processing(message.id)
+    return {"ok": True, "kept": 1 if message is not None else 0}
+
+
 @router.post("/settings/sms/iphone-link")
 def sms_new_link(request: Request, db: Session = Depends(get_db)):
     """A new secret for the iPhone's link: the old link stops working (the shortcut then needs the new one)."""

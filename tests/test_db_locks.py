@@ -11,6 +11,10 @@ import testenv
 testenv.prepare("db_locks")
 check = testenv.Checks()
 
+from app.database import ensure_sqlite_compatibility
+
+ensure_sqlite_compatibility()          # the columns added since the baseline, as the application adds them when it starts
+
 from sqlalchemy import event
 
 from app import database

@@ -107,7 +107,8 @@ def proof_reread(proof_id: str, back: str = Form("/payments"), db: Session = Dep
 
 
 @router.post("/payments/proofs/upload")
-async def proofs_upload(files: list[UploadFile] = File(default=[]), candidate_id: str = Form(""), db: Session = Depends(get_db)):
+async def proofs_upload(files: list[UploadFile] = File(default=[]), candidate_id: str = Form(""), came_by: str = Form(""),
+                        db: Session = Depends(get_db)):
     """Photos or PDFs of cheques, transfers or receipts dropped on the Payments page: each one is read and checked. The
     candidate is the one chosen, else the one whose name is written on it."""
     candidate = db.get(Candidate, candidate_id) if candidate_id else None
@@ -124,7 +125,8 @@ async def proofs_upload(files: list[UploadFile] = File(default=[]), candidate_id
         if not kept:
             refused.append(upload.filename)
             continue
-        proof = payment_proofs.create(db, file=kept[0], candidate=candidate, source="upload")
+        source = {"whatsapp": "whatsapp_phone", "email": "email_forwarded", "hand": "hand"}.get(came_by, "upload")
+        proof = payment_proofs.create(db, file=kept[0], candidate=candidate, source=source)
         payment_proofs.read_now(db, proof)
         read.append(proof)
     db.commit()

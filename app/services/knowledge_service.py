@@ -319,8 +319,9 @@ def _system_chunks(db: Session) -> list[dict]:
         if program.description:
             lines.append(program.description.strip())
         lines.append(
-            f"Prix (price) : {_money(program.price_online)} en ligne (online, à distance), "
-            f"{_money(program.price_onsite)} en présentiel (onsite)."
+            f"Prix (price) par mois : {_money(program.price_online)} par mois en ligne (online, à distance), "
+            f"{_money(program.price_onsite)} par mois en présentiel (onsite). Les prix sont mensuels : le premier mois se paie "
+            f"pour commencer, puis chaque mois avant de le commencer."
         )
         if weeks:
             duration = f"Durée (duration) : {weeks} semaines (weeks)"

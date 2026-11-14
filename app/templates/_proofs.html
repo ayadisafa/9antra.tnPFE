@@ -44,7 +44,7 @@
 <article class="pf" id="proof-{{ proof.id }}">
   <a class="pf-pic" href="{{ item.file_url }}" target="_blank" rel="noopener" title="Open the file">
     <img src="{{ item.file_url }}" alt="Payment proof" loading="lazy" onerror="this.replaceWith(Object.assign(document.createElement('iframe'), {src: this.src}))">
-    <span>{{ {'email': 'Email', 'whatsapp': 'WhatsApp', 'upload': 'Added by you'}.get(proof.source, proof.source) }}</span>
+    <span>{{ {'email': 'Email', 'whatsapp': 'WhatsApp', 'upload': 'Added by you', 'whatsapp_phone': 'WhatsApp, added by you', 'email_forwarded': 'Email, added by you', 'hand': 'Given at the centre'}.get(proof.source, proof.source) }}</span>
   </a>
   <div>
     <div class="pf-head">

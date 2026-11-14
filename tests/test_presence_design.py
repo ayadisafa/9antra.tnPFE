@@ -17,7 +17,7 @@ from fastapi.testclient import TestClient
 
 from app.database import SessionLocal
 from app.models import User, UserSession
-from app.services import auth, presence, whats_new
+from app.services import auth, presence
 from app.services.realtime import broadcaster
 
 db = SessionLocal()
@@ -112,7 +112,6 @@ check("Settings in six tabs, the map still on top", settings.count('class="ui-ta
 website = admin.get("/website").text
 check("the website in five tabs, each with its picture", website.count('class="ui-tab"') == 5 and website.count('class="ui-tab-intro"') == 5)
 check("every page opens with its moving picture", 'id="page-art"' in admin.get("/payments").text and 'id="page-art"' in admin.get("/candidate/all").text)
-check("what's new: told", any(release["key"] == "2026-11-04b" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

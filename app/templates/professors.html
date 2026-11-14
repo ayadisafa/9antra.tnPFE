@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% import "_ui_macros.html" as ui %}
+{% import "_tabs.html" as tabs %}
 
 {% block title %}Professors · 9antra{% endblock %}
 {% block page_title %}Professors{% endblock %}
@@ -8,73 +9,580 @@
 {% block extra_head %}
 {% include "_ui.html" %}
 <style>
-  .pf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:14px; }
-  .pf-card { position:relative; display:flex; flex-direction:column; gap:10px; padding:16px; border-radius:22px; background:#fff; border:1px solid var(--border-color);
-             text-decoration:none; color:inherit; transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
-  .pf-card:hover { transform:translateY(-3px); border-color:var(--primary-berry); box-shadow:0 18px 30px -24px rgba(164,44,103,.6); color:inherit; }
-  .pf-top { display:flex; gap:12px; align-items:center; }
-  .pf-face { width:50px; height:50px; flex:none; border-radius:16px; display:grid; place-items:center; font-weight:800; color:#fff; font-size:1.05rem;
-             background:linear-gradient(135deg, var(--primary-berry), #7c3aed); box-shadow:0 10px 20px -14px #7c3aed; }
-  .pf-name { font-weight:800; font-size:1rem; color:var(--ink-text); line-height:1.2; }
-  .pf-sub { font-size:.74rem; color:var(--muted); }
-  .pf-chips { display:flex; flex-wrap:wrap; gap:5px; }
-  .pf-figs { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; }
-  .pf-fig { background:#faf8fd; border-radius:12px; padding:7px 6px; text-align:center; }
-  .pf-fig b { display:block; font-size:.98rem; color:var(--ink-text); } .pf-fig span { font-size:.6rem; font-weight:800; text-transform:uppercase; letter-spacing:.03em; color:#9b95b0; }
-  .pf-issue { display:flex; gap:7px; align-items:flex-start; font-size:.76rem; line-height:1.35; }
+  /* The toolbar of the cards: a search and a few filters. */
+  .pf-tools { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:14px; }
+  .pf-tools .ui-search { flex:1 1 240px; }
+  .pf-pills { display:flex; gap:6px; flex-wrap:wrap; }
+  .pf-count { font-size:.74rem; color:var(--muted); font-weight:700; margin-left:auto; }
+
+  /* A professor, as their staff card. */
+  .pf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
+  .pf-card { position:relative; background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; display:flex; flex-direction:column;
+             transition:box-shadow .2s ease, transform .2s ease, border-color .2s ease; }
+  .pf-card:hover { box-shadow:0 18px 30px -24px rgba(164,44,103,.6); transform:translateY(-2px); border-color:color-mix(in srgb, var(--primary-berry) 45%, var(--border-color)); }
+  .pf-card:target { animation:pfGlow 1.6s ease 2; }
+  @keyframes pfGlow { 50% { box-shadow:0 0 0 4px rgba(164,44,103,.18); } }
+  .pf-band { height:64px; background:linear-gradient(120deg, var(--ink-2, #3b2a5a), var(--primary-berry)); position:relative; }
+  .pf-band.is-away { background:linear-gradient(120deg, #b45309, #f59e0b); }
+  .pf-band.is-off { background:linear-gradient(120deg, #6b7280, #9ca3af); }
+  .pf-band .ui-chip { position:absolute; right:14px; top:14px; background:rgba(255,255,255,.94); }
+  .pf-band .pf-urgent { left:14px; right:auto; background:#fff1f2; color:#be123c; }
+  .pf-head { padding:0 18px; margin-top:-30px; display:flex; gap:12px; align-items:flex-end; position:relative; z-index:1; }
+  .pf-head .ui-avatar { border:4px solid #fff; box-shadow:0 8px 18px -10px rgba(36,26,56,.5); }
+  .pf-name { font-weight:800; font-size:1.02rem; color:var(--ink-text); line-height:1.2; margin-top:36px; text-decoration:none; display:block; }
+  .pf-name:hover { color:var(--primary-berry); }
+  .pf-role { font-size:.72rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .pf-body { padding:12px 18px 0; display:grid; gap:8px; }
+  .pf-tags { display:flex; flex-wrap:wrap; gap:5px; }
+  .pf-line { display:flex; gap:10px; align-items:center; font-size:.8rem; color:#4d4863; min-width:0; }
+  .pf-line i { width:18px; text-align:center; color:#a79fbd; flex:none; }
+  .pf-line a { color:inherit; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .pf-line a:hover { color:var(--primary-berry); }
+  .pf-away { display:flex; flex-wrap:wrap; gap:5px; }
+  .pf-stats { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:6px; padding:12px 18px 0; }
+  .pf-stat { background:#faf8fd; border-radius:12px; padding:8px 4px; text-align:center; }
+  .pf-stat b { display:block; font-size:1rem; font-weight:800; color:var(--ink-text); line-height:1.1; }
+  .pf-stat span { font-size:.6rem; font-weight:800; color:#9b95b0; text-transform:uppercase; letter-spacing:.03em; }
+  .pf-classes { display:flex; flex-wrap:wrap; gap:5px; padding:10px 18px 0; }
+  .pf-class { font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; text-decoration:none; color:var(--ink-text); background:#f4f1f9; }
+  .pf-class:hover { background:var(--berry-subtle); color:var(--primary-berry); }
+  .pf-issues { padding:10px 18px 0; display:grid; gap:5px; }
+  .pf-issue { display:flex; gap:7px; align-items:flex-start; font-size:.76rem; line-height:1.35; text-decoration:none; color:#4d4863; }
+  .pf-issue:hover { color:var(--primary-berry); }
   .pf-issue i { margin-top:2px; } .pf-issue.bad i { color:#e11d48; } .pf-issue.warn i { color:#d97706; } .pf-issue.info i { color:#6366f1; }
-  .pf-ok { font-size:.76rem; color:#15803d; font-weight:700; display:flex; gap:6px; align-items:center; }
-  .pf-flag { position:absolute; top:12px; right:12px; }
-  @media (prefers-reduced-motion: no-preference) { .pf-card { animation:pfIn .4s ease both; animation-delay:calc(var(--i) * 50ms); } }
+  .pf-ok { font-size:.76rem; color:#15803d; font-weight:700; display:flex; gap:6px; align-items:center; padding:10px 18px 0; }
+  .pf-access { margin:12px 18px 0; border-radius:12px; padding:8px 12px; font-size:.75rem; display:flex; gap:8px; align-items:center; }
+  .pf-access.on { background:var(--mint-subtle); color:#0f5132; }
+  .pf-access.off { background:#f4f1f9; color:#5b5670; }
+  .pf-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; }
+  .pf-foot form { margin:0; }
+  .pf-foot .pf-delete { margin-inline-start:auto; }
+  @media (prefers-reduced-motion: no-preference) { .pf-card { animation:pfIn .4s ease both; animation-delay:calc(var(--i, 0) * 45ms); } }
   @keyframes pfIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+
+  /* Absences: how a request goes, the requests to decide, the coming ones. */
+  .ab-how { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:10px; margin-bottom:14px; }
+  .ab-step { position:relative; background:#faf8fd; border-radius:16px; padding:12px 14px 12px 52px; font-size:.78rem; color:#4d4863; line-height:1.4; }
+  .ab-step b { display:block; color:var(--ink-text); font-size:.84rem; }
+  .ab-step .ab-ico { position:absolute; left:12px; top:12px; width:30px; height:30px; border-radius:10px; display:grid; place-items:center; color:#fff; background:var(--primary-berry); }
+  .ab-step:nth-child(2) .ab-ico { background:#0ea5e9; } .ab-step:nth-child(3) .ab-ico { background:#16a34a; }
+  @media (prefers-reduced-motion: no-preference) { .ab-step .ab-ico { animation:abBob 2.6s ease-in-out infinite; } .ab-step:nth-child(2) .ab-ico { animation-delay:.3s; } .ab-step:nth-child(3) .ab-ico { animation-delay:.6s; } }
+  @keyframes abBob { 50% { transform:translateY(-3px); } }
+  @media (max-width: 767px) { .ab-how { grid-template-columns:1fr; } }
+  .ab-card { border:1px solid var(--border-color); border-radius:18px; padding:14px 16px; background:#fff; margin-bottom:12px; }
+  .ab-card.is-wait { border-color:#fcd34d; box-shadow:inset 4px 0 0 #f59e0b; }
+  .ab-card.is-insists { border-color:#fecdd3; box-shadow:inset 4px 0 0 #e11d48; }
+  .ab-card.is-open { animation:pfGlow 1.6s ease 2; }
+  .ab-top { display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+  .ab-top .ab-who { min-width:0; flex:1 1 220px; }
+  .ab-who b { display:block; font-size:.92rem; color:var(--ink-text); }
+  .ab-who small { display:block; font-size:.76rem; color:var(--muted); }
+  .ab-said { margin-top:8px; font-size:.8rem; background:#fff7ed; color:#7c2d12; border-radius:12px; padding:8px 12px; }
+  .ab-sessions { margin:10px 0 0; display:grid; gap:6px; }
+  .ab-session { display:grid; grid-template-columns:96px minmax(0, 1fr) auto; gap:10px; align-items:center; font-size:.8rem; padding:7px 10px; border-radius:12px; background:#faf8fd; }
+  .ab-session .when { font-weight:800; color:var(--ink-text); font-size:.76rem; }
+  .ab-session.is-nobody { background:#fff1f2; }
+  @media (max-width: 575px) { .ab-session { grid-template-columns:1fr; } }
+  .ab-free { display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
+  .ab-decide { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); gap:10px; margin-top:12px; }
+  .ab-decide form { margin:0; display:grid; gap:6px; align-content:start; background:#faf8fd; border-radius:14px; padding:10px; }
+  .ab-decide textarea { font-size:.8rem; border-radius:10px; }
+  @media (max-width: 767px) { .ab-decide { grid-template-columns:1fr; } }
+  .ab-quiet { font-size:.8rem; color:var(--muted); padding:6px 2px; }
+  .ab-section { font-size:.72rem; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:#6b6480; margin:18px 0 10px; display:flex; gap:8px; align-items:center; }
+
+  /* Deleting a professor: who they are, each class and who takes it, what goes with them. */
+  .pd-who { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
+  .pd-who b { display:block; font-size:1rem; color:var(--ink-text); } .pd-who small { display:block; font-size:.76rem; color:var(--muted); }
+  .pd-label { font-size:.72rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#6b6480; margin:4px 0 8px; }
+  .pd-class { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr); gap:10px; align-items:center; padding:9px 12px; border:1px solid var(--border-color); border-radius:14px; margin-bottom:6px; }
+  .pd-class b { display:block; font-size:.86rem; color:var(--ink-text); } .pd-class small { display:block; font-size:.72rem; color:var(--muted); }
+  .pd-class select { border-radius:10px; }
+  .pd-warn { font-size:.74rem; color:#9a3412; background:var(--gold-subtle); border-radius:10px; padding:6px 10px; margin:-2px 0 8px; }
+  .pd-quiet { display:flex; gap:8px; align-items:center; font-size:.82rem; color:#4d4863; background:#faf8fd; border-radius:12px; padding:10px 12px; }
+  .pd-quiet i { color:var(--mint); }
+  .pd-goes { list-style:none; padding:0; margin:14px 0 0; display:grid; gap:6px; }
+  .pd-goes li { display:flex; gap:9px; align-items:flex-start; font-size:.8rem; color:#4d4863; }
+  .pd-goes i { color:#a79fbd; margin-top:1px; }
+  .pd-go { background:#be123c !important; border-color:#be123c !important; color:#fff !important; }
+  .pd-go:hover { background:#9f1239 !important; }
+  @media (max-width: 575px) { .pd-class { grid-template-columns:1fr; } .pf-grid { grid-template-columns:1fr; } }
+
+  .pf-pick { display:flex; flex-wrap:wrap; gap:6px; }
+  .pf-pick label { cursor:pointer; margin:0; }
+  .pf-pick input { position:absolute; opacity:0; width:0; height:0; }
+  .pf-pick span { display:inline-flex; align-items:center; gap:6px; border:1.5px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-size:.78rem; font-weight:700; color:#5b5670; transition:border-color .12s ease, background-color .12s ease, color .12s ease; }
+  .pf-pick span::before { content:"+"; font-weight:800; color:#b5afc8; }
+  .pf-pick input:checked + span { border-color:var(--primary-berry); background:var(--berry-subtle); color:var(--primary-berry); }
+  .pf-pick input:checked + span::before { content:"✓"; color:var(--primary-berry); }
+  .pf-pick input:focus-visible + span { outline:2px solid var(--primary-berry); outline-offset:2px; }
+
+  /* Who teaches each program */
+  .pc-alert { display:flex; gap:12px; align-items:flex-start; background:linear-gradient(120deg, #fff1f2, #fff7f7); border:1px solid #fecdd3; border-radius:16px; padding:12px 14px; margin:4px 0 12px; }
+  .pc-alert-ico { width:38px; height:38px; border-radius:12px; background:#ffe4e6; color:#be123c; display:grid; place-items:center; font-size:1.15rem; flex:none; animation:pcPulse 2.4s ease-in-out infinite; }
+  @keyframes pcPulse { 50% { box-shadow:0 0 0 6px rgba(225,29,72,.12); } }
+  .pc-alert b { color:#9f1239; font-size:.86rem; }
+  .pc-alert-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .pc-alert-list a { font-size:.76rem; font-weight:700; color:#be123c; background:#fff; border:1px solid #fecdd3; border-radius:999px; padding:3px 10px; text-decoration:none; }
+  .pc-alert-list a:hover { background:#be123c; color:#fff; }
+  .pc-row { display:grid; grid-template-columns:minmax(180px, 1.1fr) minmax(0, 1.4fr) auto; gap:12px; align-items:center; padding:10px 8px; border-top:1px solid var(--border-color); border-radius:12px; transition:background-color .15s ease; }
+  .pc-row:hover { background:#faf8fd; }
+  .pc-row.is-nobody { background:#fff8f8; box-shadow:inset 3px 0 0 #e11d48; }
+  .pc-row:target { animation:pcGlow 1.6s ease 2; }
+  @keyframes pcGlow { 50% { background:#ffe4e6; } }
+  @media (max-width: 991px) { .pc-row { grid-template-columns:1fr; } }
+  .pc-name { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.88rem; }
+  .pc-people { display:flex; gap:6px; flex-wrap:wrap; }
+  .pc-person { display:inline-flex; align-items:center; gap:6px; background:var(--berry-subtle); color:var(--primary-berry); border-radius:999px; padding:2px 10px 2px 2px; font-size:.76rem; font-weight:700; text-decoration:none; }
+  .pc-person:hover { background:var(--primary-berry); color:#fff; }
+  .pc-none { font-size:.8rem; color:#be123c; font-weight:600; }
+  .pc-do { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
+  .pc-also { display:flex; gap:6px; margin:0; } .pc-also select, .pc-new-form input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 8px; }
+  .pc-new summary { list-style:none; cursor:pointer; } .pc-new summary::-webkit-details-marker { display:none; }
+  .pc-new-form { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .rr-line { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.86rem; font-weight:700; }
+  .rr-line input[type=number] { width:64px; border:1px solid var(--border-color); border-radius:10px; padding:4px 8px; }
+  @media (prefers-reduced-motion: reduce) { .pc-alert-ico, .pc-row:target, .pf-card:target, .ab-card.is-open { animation:none; } }
 </style>
 {% endblock %}
 
 {% block content %}
 {% include "_flash.html" %}
+{% set state_labels = {'requested': 'Asked', 'insists': 'Still cannot come', 'accepted': 'Accepted', 'refused': 'Refused', 'cancelled': 'Taken back'} %}
 <div class="ui-head">
   <div>
     <h2>Professors</h2>
-    <p>Each professor has their own space: who they are, their classes, what candidates thought of them, the messages, and what waits for them.</p>
+    <p>Everything about your professors in one place: who they are and what they teach, their absences and the requests to decide, who teaches each program, and the reminders to add their resources. Each one also has their own space.</p>
   </div>
-  <div class="ui-actions"><a class="ui-btn" href="/classes/?tab=professors"><i class="bi bi-person-plus"></i>Add or change a professor</a></div>
+  <div class="ui-actions">
+    <button type="button" class="ui-btn" data-bs-toggle="modal" data-bs-target="#absenceModal" data-absence-any><i class="bi bi-calendar-x"></i>Note an absence</button>
+    <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#professorModal" data-professor-new><i class="bi bi-person-plus"></i>Add a professor</button>
+  </div>
 </div>
 
-<div class="ui-stats mb-3" id="pf-stats">
-  <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-video3"></i></div><div><div class="ui-stat-num">{{ totals.professors }}</div><div class="ui-stat-label">Professors</div></div></div>
+<div class="ui-stats mb-3" id="live-professors-kpis" data-live-region>
+  <a class="ui-stat" href="#people" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-person-video3"></i></div><div><div class="ui-stat-num">{{ totals.professors }}</div><div class="ui-stat-label">Professors</div></div></a>
   <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-easel2-fill"></i></div><div><div class="ui-stat-num">{{ totals.teaching }}</div><div class="ui-stat-label">Teaching now</div></div></div>
-  <div class="ui-stat {{ 't-gold' if totals.problems else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-exclamation-triangle-fill"></i></div><div><div class="ui-stat-num">{{ totals.problems }}</div><div class="ui-stat-label">Things to look at</div></div></div>
-  <div class="ui-stat {{ 't-rose' if totals.urgent else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-lightning-charge-fill"></i></div><div><div class="ui-stat-num">{{ totals.urgent }}</div><div class="ui-stat-label">Urgent</div></div></div>
+  <a class="ui-stat {{ 't-gold' if totals.waiting else 't-mint' }}" href="#absences" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ totals.waiting }}</div><div class="ui-stat-label">Absence requests to decide</div></div></a>
+  <div class="ui-stat {{ 't-gold' if totals.away else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-airplane"></i></div><div><div class="ui-stat-num">{{ totals.away }}</div><div class="ui-stat-label">Away today</div></div></div>
+  <a class="ui-stat {{ 't-red' if totals.nobody else 't-mint' }}" href="#coverage" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-person-exclamation"></i></div><div><div class="ui-stat-num">{{ totals.nobody }}</div><div class="ui-stat-label">Programs without a teacher</div></div></a>
 </div>
 
-<div class="pf-grid" id="pf-list">
-  {% for row in rows %}
-  {% set person = row.professor %}
-  <a class="pf-card" href="/professors/{{ person.id }}" style="--i:{{ loop.index0 }};">
-    {% if row.bad %}<span class="ui-chip bad pf-flag"><i class="bi bi-lightning-charge-fill"></i>{{ row.bad }}</span>{% endif %}
-    <div class="pf-top">
-      <div class="pf-face" data-no-i18n>{{ (person.name or '?').split()[:2] | map('first') | join('') | upper }}</div>
-      <div style="min-width:0;">
-        <div class="pf-name" data-no-i18n>{{ person.name }}</div>
-        <div class="pf-sub">{% if person.is_available %}<i class="bi bi-circle-fill" style="color:#16a34a; font-size:.5rem;"></i> Available{% else %}<i class="bi bi-circle-fill" style="color:#9ca3af; font-size:.5rem;"></i> Not available{% endif %}</div>
+{{ tabs.tabs("pf", [("people", "bi-person-video3", "Professors"), ("absences", "bi-calendar-x", "Absences"),
+                    ("coverage", "bi-diagram-3", "Who teaches what"), ("resources", "bi-journal-richtext", "Resources")]) }}
+
+{# ================= The professors ================= #}
+<section id="people" data-tab-of="pf" data-tab-panel="people">
+  {{ tabs.intro("pf", "people", "team", "Each professor, at a glance", "Only a professor who has a program among their specialities teaches its classes. A professor with access signs in and sees only their own classes, their absences and their messages.") }}
+  <div class="pf-tools">
+    <div class="ui-search"><i class="bi bi-search"></i><input type="search" id="pfSearch" placeholder="Search a professor, a program, a class…" autocomplete="off" aria-label="Search a professor"></div>
+    <div class="pf-pills" id="pfFilters">
+      <button type="button" class="ui-pill is-active" data-filter="all">All</button>
+      <button type="button" class="ui-pill" data-filter="teaching">Teaching</button>
+      <button type="button" class="ui-pill" data-filter="waits">Something waits</button>
+      <button type="button" class="ui-pill" data-filter="away">Away</button>
+      <button type="button" class="ui-pill" data-filter="noaccess">No access</button>
+    </div>
+    <span class="pf-count" id="pfCount" aria-live="polite"></span>
+  </div>
+  <div class="pf-grid" id="live-professors-cards" data-live-region>
+    {% for row in rows %}
+    {% set person = row.professor %}
+    {% set marks = [] %}{% if row.teaching %}{{ marks.append('teaching') or '' }}{% endif %}{% if row.problems %}{{ marks.append('waits') or '' }}{% endif %}{% if row.away %}{{ marks.append('away') or '' }}{% endif %}{% if not row.account %}{{ marks.append('noaccess') or '' }}{% endif %}
+    <article class="pf-card" id="professor-{{ person.id }}" style="--i:{{ loop.index0 }};" data-marks="{{ marks | join(' ') }}"
+             data-search="{{ (person.name ~ ' ' ~ (row.specialties | join(' ')) ~ ' ' ~ (row.classes | map(attribute='name') | join(' '))) | lower }}">
+      <div class="pf-band {{ 'is-away' if row.availability[0] == 'away' else 'is-off' if row.availability[0] == 'off' }}">
+        {% if row.bad %}<span class="ui-chip pf-urgent"><i class="bi bi-lightning-charge-fill"></i>{{ row.bad }} urgent</span>{% endif %}
+        <span class="ui-chip {{ 'ok' if row.availability[0] == 'on' else 'warn' if row.availability[0] in ('away', 'later') else 'bad' }}">{% if row.availability[0] == 'on' %}<span class="ui-dot"></span>{% endif %}<span data-no-i18n>{{ row.availability[1] }}</span></span>
       </div>
-    </div>
-    {% if row.specialties %}<div class="pf-chips">{% for item in row.specialties %}<span class="ui-chip muted" data-no-i18n>{{ item }}</span>{% endfor %}</div>{% endif %}
-    <div class="pf-figs">
-      <div class="pf-fig"><b>{{ row.figures.classes }}</b><span>Classes</span></div>
-      <div class="pf-fig"><b>{{ row.figures.candidates }}</b><span>Candidates</span></div>
-      <div class="pf-fig"><b>{{ (row.figures.presence ~ '%') if row.figures.presence is not none else '—' }}</b><span>Presence</span></div>
-      <div class="pf-fig"><b>{{ ('★ ' ~ row.figures.stars) if row.figures.stars else '—' }}</b><span>Stars</span></div>
-    </div>
-    {% if row.problems %}
-    <div>{% for item in row.problems[:2] %}<div class="pf-issue {{ item.tone }}"><i class="bi {{ item.icon }}"></i><span data-no-i18n>{{ item.text }}</span></div>{% endfor %}
-      {% if row.problems | length > 2 %}<div class="pf-sub mt-1">+{{ row.problems | length - 2 }} more</div>{% endif %}</div>
+      <div class="pf-head">
+        {{ ui.avatar(person.name, 62) }}
+        <div class="pb-1" style="min-width:0;"><a class="pf-name" href="/professors/{{ person.id }}" data-no-i18n>{{ person.name }}</a><div class="pf-role">Professor</div></div>
+      </div>
+      <div class="pf-body">
+        <div class="pf-tags">{% for item in row.specialties %}<span class="ui-chip brand" data-no-i18n>{{ item }}</span>{% else %}<span class="ui-chip muted">No specialty set</span>{% endfor %}</div>
+        <div class="pf-line"><i class="bi bi-star-fill" style="color:#f5b301;"></i>{% if row.figures.stars %}<b>{{ row.figures.stars }}</b>/5 from {{ row.figures.rated }} review{{ 's' if row.figures.rated != 1 }}{% else %}<span class="text-muted">No rating from candidates yet</span>{% endif %}</div>
+        <div class="pf-line"><i class="bi bi-envelope"></i>{% if person.email %}<a href="mailto:{{ person.email }}" data-no-i18n>{{ person.email }}</a>{% else %}<span class="text-muted">No email</span>{% endif %}</div>
+        <div class="pf-line"><i class="bi bi-telephone"></i>{% if person.phone %}<a href="tel:{{ person.phone }}" data-no-i18n>{{ person.phone }}</a>{% else %}<span class="text-muted">No phone</span>{% endif %}</div>
+        {% if row.away %}<div class="pf-away">{% for item in row.away %}<a class="ui-chip {{ 'warn' if item.state == 'accepted' else 'bad' }}" href="/professors?absence={{ item.absence.id }}#absences" style="text-decoration:none;"><i class="bi bi-calendar-x"></i>{% if item.state != 'accepted' %}Asks {% else %}Away {% endif %}<span data-no-i18n>{{ item.period }}</span></a>{% endfor %}</div>{% endif %}
+      </div>
+      <div class="pf-stats">
+        <div class="pf-stat"><b>{{ row.figures.classes }}</b><span>Classes</span></div>
+        <div class="pf-stat"><b>{{ row.figures.candidates }}</b><span>Candidates</span></div>
+        <div class="pf-stat"><b>{{ row.hours | round | int if row.hours == row.hours | round else row.hours }}</b><span>Hours / week</span></div>
+        <div class="pf-stat"><b>{{ (row.figures.presence ~ '%') if row.figures.presence is not none else '—' }}</b><span>Presence</span></div>
+      </div>
+      {% if row.classes %}<div class="pf-classes">{% for item in row.classes %}<a class="pf-class" href="/classes/{{ item.id }}" data-no-i18n>{{ row.looks[item.id].symbol }} {{ item.name }}</a>{% endfor %}</div>{% endif %}
+      {% if row.problems %}
+      <div class="pf-issues">{% for item in row.problems[:2] %}<a class="pf-issue {{ item.tone }}" href="{{ item.url if not item.url.startswith('#') else '/professors/' ~ person.id ~ item.url }}"><i class="bi {{ item.icon }}"></i><span data-no-i18n>{{ item.text }}</span></a>{% endfor %}
+        {% if row.problems | length > 2 %}<a class="pf-issue info" href="/professors/{{ person.id }}#problems"><i class="bi bi-three-dots"></i><span>{{ row.problems | length - 2 }} more in their space</span></a>{% endif %}</div>
+      {% else %}
+      <div class="pf-ok"><i class="bi bi-check-circle-fill"></i>Nothing waits for them.</div>
+      {% endif %}
+      <div class="pf-access {{ 'on' if row.account and row.account.is_active else 'off' }}">
+        {% if row.account and row.account.is_active %}<i class="bi bi-key-fill"></i><span>Signs in with <strong data-no-i18n>{{ row.account.email }}</strong>{% if row.account.last_login_at %} · last time {{ row.account.last_login_at.strftime('%d %b') }}{% else %} · never signed in yet{% endif %}</span>
+        {% else %}<i class="bi bi-key"></i><span>No access yet: cannot sign in.</span>{% endif %}
+      </div>
+      <div class="pf-foot">
+        <a class="ui-btn sm primary" href="/professors/{{ person.id }}"><i class="bi bi-person-workspace"></i>Their space</a>
+        <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#professorModal"
+                data-professor-edit="{{ person.id }}" data-name="{{ person.name }}" data-email="{{ person.email or '' }}" data-phone="{{ person.phone or '' }}"
+                data-specialties="{{ row.specialties | join(', ') }}" data-from="{{ person.available_from or '' }}" data-until="{{ person.available_until or '' }}"
+                data-available="{{ '1' if person.is_available else '0' }}"><i class="bi bi-pencil"></i>Edit</button>
+        <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#accessModal"
+                data-access="{{ person.id }}" data-name="{{ person.name }}" data-email="{{ (row.account.email if row.account else person.email) or '' }}"
+                data-has="{{ '1' if row.account else '0' }}"><i class="bi bi-key"></i>{{ 'New password' if row.account else 'Give access' }}</button>
+        <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#absenceModal" data-absence="{{ person.id }}" data-name="{{ person.name }}"><i class="bi bi-calendar-x"></i>Absence</button>
+        <button type="button" class="ui-btn sm ghost danger pf-delete" data-bs-toggle="modal" data-bs-target="#deleteProfessorModal" data-delete-professor="{{ person.id }}"
+                title="Delete this professor" aria-label="Delete this professor"><i class="bi bi-trash3"></i></button>
+      </div>
+    </article>
     {% else %}
-    <div class="pf-ok"><i class="bi bi-check-circle-fill"></i>Nothing waits for them.</div>
+    <div class="ui-empty"><i class="bi bi-person-video3"></i><strong>No professor yet</strong>Add the first one: classes can then be given to them.</div>
+    {% endfor %}
+  </div>
+  <div class="ui-empty d-none" id="pfNoMatch"><i class="bi bi-search"></i><strong>No professor matches</strong>Change the search or the filter.</div>
+</section>
+
+{# ================= Absences ================= #}
+<section id="absences" data-tab-of="pf" data-tab-panel="absences">
+  <div class="ab-how" aria-label="How an absence goes">
+    <div class="ab-step"><span class="ab-ico"><i class="bi bi-calendar-plus"></i></span><b>1. The professor asks</b>From their space: from a day to a day, the whole day or some hours, and why.</div>
+    <div class="ab-step"><span class="ab-ico"><i class="bi bi-search"></i></span><b>2. Who could replace them?</b>For each session in that period: a professor who teaches its program, is not away, and has no class at those hours.</div>
+    <div class="ab-step"><span class="ab-ico"><i class="bi bi-check2-circle"></i></span><b>3. {{ 'Accepted alone, or you decide' if absence_decision == 'nobody' else 'You decide' }}</b>{% if absence_decision == 'nobody' %}Someone free for every session: accepted, and they are asked. Nobody free for a session: it waits for you, here.{% else %}Every request waits for you, here.{% endif %} <a href="/settings#absence-decision" class="ui-link">Change</a></div>
+  </div>
+
+  <div class="ab-section"><i class="bi bi-hourglass-split"></i>To decide <span class="ui-chip {{ 'warn' if waiting_absences else 'ok' }}">{{ waiting_absences | length }}</span></div>
+  <div id="live-absence-requests" data-live-region>
+  {% for item in waiting_absences %}
+  {% set absence = item.absence %}
+  <article class="ab-card {{ 'is-insists' if item.state == 'insists' else 'is-wait' }} {{ 'is-open' if opened_absence == absence.id }}" id="absence-{{ absence.id }}">
+    <div class="ab-top">
+      {{ ui.avatar(item.professor.name, 44) }}
+      <div class="ab-who"><b data-no-i18n>{{ item.professor.name }}</b>
+        <small><span data-no-i18n>{{ item.period }}</span> · {{ item.days }} day{{ 's' if item.days != 1 }}{% if absence.reason %} · “<span data-no-i18n>{{ absence.reason }}</span>”{% endif %}</small></div>
+      <span class="ui-chip {{ 'bad' if item.state == 'insists' else 'warn' }}">{{ state_labels[item.state] }}</span>
+      {% if item.check.nobody %}<span class="ui-chip bad"><i class="bi bi-person-x"></i>Nobody free for {{ item.check.nobody }} of {{ item.check.count }}</span>
+      {% elif item.check.count %}<span class="ui-chip ok"><i class="bi bi-people"></i>Someone free for each session</span>
+      {% else %}<span class="ui-chip muted">No session in that period</span>{% endif %}
+    </div>
+    {% if item.state == 'insists' and absence.response %}<div class="ab-said"><b>Their answer to your refusal:</b> <span data-no-i18n>{{ absence.response }}</span></div>{% endif %}
+    {% if item.check.sessions %}
+    <div class="ab-sessions">
+      {% for line in item.check.sessions %}
+      <div class="ab-session {{ 'is-nobody' if line.nobody }}">
+        <span class="when">{{ line.session.session_date.strftime('%a %d/%m') }}{% set hours_from = line.session.start_time or line.class.start_time %}{% if hours_from %} · {{ hours_from.strftime('%H:%M') }}{% endif %}</span>
+        <span><a href="/classes/{{ line.class.id }}" data-no-i18n>{{ line.class.name }}</a>{% if line.replacing %} · <i>replacing a colleague</i>{% endif %}</span>
+        <span class="ab-free">{% if line.taken %}<span class="ui-chip info">Already asked</span>{% elif line.nobody %}<span class="ui-chip bad">Nobody free</span>{% else %}{% for person in line.choices[:3] %}<span class="ui-chip ok" data-no-i18n>{{ person.name }}</span>{% endfor %}{% if line.choices | length > 3 %}<span class="ui-chip muted">+{{ line.choices | length - 3 }}</span>{% endif %}{% endif %}</span>
+      </div>
+      {% endfor %}
+    </div>
     {% endif %}
-  </a>
+    <div class="ab-decide">
+      <form method="post" action="/professors/absences/{{ absence.id }}/accept">
+        <input type="hidden" name="back" value="/professors#absences">
+        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="A word for them (optional)" aria-label="A word for the professor"></textarea>
+        <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Accept</button>
+        <div class="small text-muted">{% if item.check.nobody %}The sessions with nobody free then follow your rule: {{ 'you choose another professor, another day or a week later, on the class' if (settings.replacement_fallback or 'ask') == 'ask' else 'they go a week later by themselves' }}.{% else %}Each session asks its replacement; they confirm.{% endif %}</div>
+      </form>
+      <form method="post" action="/professors/absences/{{ absence.id }}/refuse">
+        <input type="hidden" name="back" value="/professors#absences">
+        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="Why (they read it), e.g. “Nobody can take your class that week; could you move it?”" aria-label="Why it is refused"></textarea>
+        <button class="ui-btn sm danger"><i class="bi bi-x-lg"></i>Refuse</button>
+        <div class="small text-muted">They get a message (application, email, WhatsApp) with one click to answer: “I will be there” or “I still cannot come”.</div>
+      </form>
+    </div>
+  </article>
   {% else %}
-  <div class="ui-empty"><i class="bi bi-person-video3"></i><strong>No professor yet</strong>Add your professors in Classes, Professors.</div>
+  <div class="ab-quiet"><i class="bi bi-check-circle text-success"></i> No request waits for you.</div>
   {% endfor %}
+  </div>
+
+  <div class="ab-section"><i class="bi bi-calendar-check"></i>Coming <span class="ui-chip muted">{{ coming_absences | length }}</span></div>
+  <div id="live-absence-coming" data-live-region>
+  {% set replace_labels = {'searching': 'Looking', 'asked': 'Asked', 'accepted': 'Replaced', 'none': 'Nobody free: choose', 'moved': 'Moved to another day', 'postponed': 'A week later', 'past': 'Passed', 'cancelled': 'Not needed', 'dropped': 'Given back'} %}
+  {% for item in coming_absences %}
+  {% set absence = item.absence %}
+  <article class="ab-card {{ 'is-open' if opened_absence == absence.id }}" id="absence-{{ absence.id }}">
+    <div class="ab-top">
+      {{ ui.avatar(item.professor.name, 40) }}
+      <div class="ab-who"><b data-no-i18n>{{ item.professor.name }}</b>
+        <small><span data-no-i18n>{{ item.period }}</span> · {{ item.days }} day{{ 's' if item.days != 1 }}{% if absence.reason %} · “<span data-no-i18n>{{ absence.reason }}</span>”{% endif %} · {{ 'asked by them' if absence.requested_by == 'professor' else 'noted by the centre' }}</small></div>
+      <form method="post" action="/professors/absences/{{ absence.id }}/remove" class="m-0" data-confirm="Remove this absence? The replacements still being asked stop; a colleague who already said yes keeps the session.">
+        <input type="hidden" name="back" value="/professors#absences"><button class="ui-btn sm ghost"><i class="bi bi-x-circle"></i>Remove</button></form>
+    </div>
+    {% if item.replaced %}
+    <div class="ab-sessions">
+      {% for line in item.replaced %}
+      <a class="ab-session {{ 'is-nobody' if line.row.status == 'none' }}" href="/classes/{{ line.class.id }}?replacement={{ line.row.id }}#follow" style="text-decoration:none; color:inherit;">
+        <span class="when">{{ line.session.session_date.strftime('%a %d/%m') }}</span>
+        <span data-no-i18n>{{ line.class.name }}</span>
+        <span class="ab-free"><span class="ui-chip {{ 'ok' if line.row.status == 'accepted' else 'bad' if line.row.status == 'none' else 'info' }}">{{ replace_labels.get(line.row.status, line.row.status) }}{% if line.asked and line.row.status in ('asked', 'accepted') %} · <span data-no-i18n>{{ line.asked.name }}</span>{% endif %}</span></span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}<div class="ab-quiet">No session of theirs in that period.</div>{% endif %}
+  </article>
+  {% else %}
+  <div class="ab-quiet">No absence coming.</div>
+  {% endfor %}
+  </div>
+
+  {% if refused_absences %}
+  <div class="ab-section"><i class="bi bi-calendar2-x"></i>Refused lately</div>
+  {% for item in refused_absences %}
+  {% set absence = item.absence %}
+  <article class="ab-card" id="absence-{{ absence.id }}">
+    <div class="ab-top">
+      {{ ui.avatar(item.professor.name, 36) }}
+      <div class="ab-who"><b data-no-i18n>{{ item.professor.name }}</b><small><span data-no-i18n>{{ item.period }}</span>{% if absence.decision_note %} · “<span data-no-i18n>{{ absence.decision_note }}</span>”{% endif %}</small></div>
+      {% if absence.response %}<span class="ui-chip ok"><i class="bi bi-reply"></i><span data-no-i18n>{{ absence.response }}</span></span>{% else %}<span class="ui-chip muted">No answer yet</span>{% endif %}
+    </div>
+  </article>
+  {% endfor %}
+  {% endif %}
+</section>
+
+{# ================= Who teaches each program ================= #}
+{% set nobody = coverage | selectattr('nobody') | list %}
+<section class="ui-card mb-3" id="coverage" data-tab-of="pf" data-tab-panel="coverage">
+  <div class="ui-card-head">
+    <div><div class="ui-card-title"><i class="bi bi-diagram-3"></i>Who teaches each program</div>
+      <div class="ui-card-sub">Add as many professors as you like to a program: someone who already works with you, or a new one. A program nobody teaches yet cannot open a class.</div></div>
+    <span class="ui-chip {{ 'bad' if nobody else 'ok' }}">{% if nobody %}<i class="bi bi-exclamation-octagon-fill"></i> {{ nobody | length }} without a teacher yet{% else %}<i class="bi bi-check2-circle"></i> Every program has a teacher{% endif %}</span>
+  </div>
+  {% if nobody %}
+  <div class="pc-alert"><span class="pc-alert-ico"><i class="bi bi-person-exclamation"></i></span>
+    <div><b>No teacher yet</b><div class="pc-alert-list">{% for row in nobody %}<a href="#cover-{{ row.program.id }}" data-no-i18n>{{ row.program.name }}</a>{% endfor %}</div></div></div>
+  {% endif %}
+  {% for row in coverage %}
+  <div class="pc-row {{ 'is-nobody' if row.nobody }}" id="cover-{{ row.program.id }}">
+    <div class="pc-name"><b data-no-i18n>{{ row.program.name }}</b>
+      {% if row.nobody %}<span class="ui-chip bad">No teacher yet</span>{% else %}<span class="ui-chip ok">{{ row.real | length }} professor{{ 's' if row.real | length != 1 }}</span>{% endif %}</div>
+    <div class="pc-people">
+      {% for professor in row.real %}<a class="pc-person" href="#professor-{{ professor.id }}">{{ ui.avatar(professor.name, 22) }}<span data-no-i18n>{{ professor.name }}</span></a>{% endfor %}
+      {% for professor in row.places %}<span class="ui-chip muted" title="A place to name: never given a class until it has a real name">{{ professor.name.split('(')[-1].rstrip(')') }} · to name</span>{% endfor %}
+      {% if row.nobody and not row.places %}<span class="pc-none">Nobody teaches it yet.</span>{% endif %}
+    </div>
+    <div class="pc-do">
+      {% if row.others %}
+      <form method="post" action="/classes/professors/" class="pc-also" onsubmit="this.action = '/classes/professors/' + this.querySelector('select').value + '/specialty';">
+        <input type="hidden" name="program_id" value="{{ row.program.id }}">
+        <input type="hidden" name="back" value="/professors#cover-{{ row.program.id }}">
+        <select aria-label="A professor who already works with you">{% for professor in row.others %}<option value="{{ professor.id }}">{{ professor.name }}</option>{% endfor %}</select>
+        <button class="ui-btn sm">Also teaches it</button>
+      </form>
+      {% endif %}
+      <details class="pc-new"><summary class="ui-btn sm {{ 'primary' if row.nobody }}"><i class="bi bi-person-plus"></i>A new professor</summary>
+        <form method="post" action="/classes/professors/create" class="pc-new-form">
+          <input type="hidden" name="programs" value="{{ row.program.name }}">
+          <input name="name" placeholder="Full name" required aria-label="Full name">
+          <input name="email" type="email" placeholder="Email" aria-label="Email">
+          <input name="phone" placeholder="Phone (+216…)" aria-label="Phone">
+          <button class="ui-btn primary sm">Add</button>
+        </form></details>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+{# ================= Reminders to add their resources ================= #}
+<section class="ui-card mb-3" id="resources" data-tab-of="pf" data-tab-panel="resources">
+  <div class="ui-card-head">
+    <div><div class="ui-card-title"><span class="emo emo-bounce">📚</span> Remind professors to add their resources</div>
+      <div class="ui-card-sub">Before a week is taught, when it still has no resource (slides, exercises, a video), its professor gets one message: in the application, by email and on WhatsApp. Once per class and per week.</div></div>
+    <span class="ui-chip {{ 'ok' if resource_plan.on else 'muted' }}">{{ 'On' if resource_plan.on else 'Stopped' }}</span>
+  </div>
+  <form method="post" action="/classes/professors/resource-reminders" class="rr-form">
+    <label class="rr-line"><input type="checkbox" name="on" value="1" {{ 'checked' if resource_plan.on }}> Send them, <input type="number" name="days" min="1" max="14" value="{{ resource_plan.days }}" aria-label="Days before"> day(s) before the week's session</label>
+    <label class="form-label small fw-bold mb-1 mt-2" for="rr-text">Their words <span class="text-muted fw-normal">· {professor} {class_name} {program} {week} {topic} {date} {link}</span></label>
+    <textarea id="rr-text" name="text" rows="6" class="form-control">{{ resource_plan.text }}</textarea>
+    <div class="d-flex gap-2 flex-wrap mt-2">
+      <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save</button>
+      <button class="ui-btn sm" name="send_now" value="1"><i class="bi bi-send"></i>Save and send the ones due now ({{ resource_due | selectattr('reachable') | list | length }})</button>
+    </div>
+  </form>
+  {% if resource_due %}<div class="small mt-2"><b>Due now:</b> {% for item in resource_due[:6] %}<span data-no-i18n>{{ item.professor.name }} · {{ item.group.name }}</span> week {{ item.week }} ({{ item.date.strftime('%d/%m') }}){% if not item.reachable %} <a href="#professor-{{ item.professor.id }}" class="text-danger">cannot be reached: add their email or phone</a>{% endif %}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+  {% if resource_recent %}<div class="small text-muted mt-1"><b>Last sent:</b> {% for item in resource_recent[:5] %}<span data-no-i18n>{{ item.professor }} · {{ item.class }}</span> week {{ item.week }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
+</section>
+
+<!-- ================= Add or edit a professor ================= -->
+<div class="modal fade ui-modal" id="professorModal" tabindex="-1" aria-labelledby="professorTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" action="/classes/professors/create" id="professorForm">
+      <div class="modal-header"><h5 class="modal-title" id="professorTitle">Add a professor</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-12 ui-field"><label for="pf-name">Name</label><input class="form-control" id="pf-name" name="name" required></div>
+          <div class="col-md-7 ui-field"><label for="pf-email">Email</label><input class="form-control" id="pf-email" name="email" type="email"></div>
+          <div class="col-md-5 ui-field"><label for="pf-phone">Phone</label><input class="form-control" id="pf-phone" name="phone"></div>
+          <div class="col-12 ui-field">
+            <label>What they teach</label>
+            <div class="pf-pick" id="pf-programs">
+              {% for program in programs %}<label><input type="checkbox" name="programs" value="{{ program.name }}"><span data-no-i18n>{{ program.name }}</span></label>{% endfor %}
+            </div>
+            <div class="ui-hint">Tick their specialities. Only a professor who has a program here can be given its classes.</div>
+            <input class="form-control mt-2" id="pf-specialties" name="specialties" placeholder="Other subjects, separated by commas" aria-label="Other subjects">
+          </div>
+          <div class="col-6 ui-field"><label for="pf-from">Available from</label><input class="form-control" id="pf-from" name="available_from" type="date"></div>
+          <div class="col-6 ui-field"><label for="pf-until">Available until</label><input class="form-control" id="pf-until" name="available_until" type="date"></div>
+          <div class="col-12" id="pf-available-row">
+            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="pf-available" name="is_available" value="true" checked><label class="form-check-label small fw-semibold" for="pf-available">Can be given classes</label></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="professorSubmit">Add the professor</button></div>
+    </form>
+  </div>
 </div>
+
+<!-- ================= Access of a professor ================= -->
+<div class="modal fade ui-modal" id="accessModal" tabindex="-1" aria-labelledby="accessTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><div><h5 class="modal-title" id="accessTitle">Access</h5><div class="ui-card-sub">They sign in on the same address as you, and see only their own classes.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <form method="post" id="accessForm" autocomplete="off">
+        <div class="modal-body">
+          <div class="ui-field mb-3"><label for="ac-email">Email they sign in with</label><input class="form-control" id="ac-email" name="email" type="email" required autocomplete="off"></div>
+          <div class="ui-field"><label for="ac-password">Password</label><input class="form-control" id="ac-password" name="password" type="text" minlength="{{ min_password }}" required autocomplete="off">
+            <div class="ui-hint">At least {{ min_password }} characters. Give it to them yourself; they can change it after signing in.</div></div>
+        </div>
+        <div class="modal-footer justify-content-between">
+          <button type="submit" class="ui-btn ghost sm danger d-none" id="accessRemove" form="accessRemoveForm" data-confirm="Remove this professor's access? They will no longer be able to sign in.">Remove access</button>
+          <div class="d-flex gap-2 ms-auto"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="accessSubmit">Give access</button></div>
+        </div>
+      </form>
+      <form method="post" id="accessRemoveForm"></form>
+    </div>
+  </div>
+</div>
+
+<!-- ================= Delete a professor ================= -->
+<div class="modal fade ui-modal" id="deleteProfessorModal" tabindex="-1" aria-labelledby="deleteProfessorTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header"><div><h5 class="modal-title" id="deleteProfessorTitle">Delete a professor</h5><div class="ui-card-sub">This cannot be undone.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div id="deleteProfessorBody"><div class="modal-body"><div class="ui-card-sub">Loading…</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ================= An absence ================= -->
+<div class="modal fade ui-modal" id="absenceModal" tabindex="-1" aria-labelledby="absenceTitle" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" method="post" id="absenceForm">
+      <div class="modal-header"><div><h5 class="modal-title" id="absenceTitle">Note an absence</h5><div class="ui-card-sub">Noted by you, it is accepted at once: each session in that period looks for a replacement.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
+      <div class="modal-body">
+        <input type="hidden" name="back" value="/professors#absences">
+        <div class="row g-3">
+          <div class="col-12 ui-field" id="ab-who-row"><label for="ab-who">Professor</label>
+            <select id="ab-who" class="form-select" aria-label="Professor">{% for person in professors %}<option value="{{ person.id }}">{{ person.name }}</option>{% endfor %}</select></div>
+          <div class="col-6 ui-field"><label for="ab-date">First day</label><input name="absence_date" id="ab-date" type="date" class="form-control" required min="{{ today.isoformat() }}"></div>
+          <div class="col-6 ui-field"><label for="ab-last">Last day</label><input name="end_date" id="ab-last" type="date" class="form-control" min="{{ today.isoformat() }}"><div class="ui-hint">Empty = that day only</div></div>
+          <div class="col-6 ui-field"><label for="ab-from">From</label><input name="start_time" id="ab-from" type="time" class="form-control"><div class="ui-hint">Empty = whole days</div></div>
+          <div class="col-6 ui-field"><label for="ab-to">To</label><input name="end_time" id="ab-to" type="time" class="form-control"></div>
+          <div class="col-12 ui-field"><label for="ab-reason">Reason</label><input name="reason" id="ab-reason" class="form-control" maxlength="200" placeholder="Optional"></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary">Save the absence</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------- Search and filters of the cards ----------
+  const search = document.getElementById("pfSearch");
+  const filters = document.getElementById("pfFilters");
+  const apply = () => {
+    const needle = (search.value || "").trim().toLowerCase();
+    const active = (filters.querySelector(".is-active") || {}).dataset?.filter || "all";
+    const cards = document.querySelectorAll("#live-professors-cards .pf-card");
+    let shown = 0;
+    cards.forEach(card => {
+      const marks = (card.dataset.marks || "").split(" ");
+      const matches = (!needle || card.dataset.search.includes(needle)) && (active === "all" || marks.includes(active));
+      card.classList.toggle("d-none", !matches);
+      shown += matches;
+    });
+    const count = document.getElementById("pfCount");
+    if (count) count.textContent = cards.length ? `${shown} / ${cards.length}` : "";
+    document.getElementById("pfNoMatch").classList.toggle("d-none", shown > 0 || !cards.length);
+  };
+  search.addEventListener("input", apply);
+  filters.addEventListener("click", event => {
+    const pill = event.target.closest(".ui-pill");
+    if (!pill) return;
+    filters.querySelectorAll(".ui-pill").forEach(item => item.classList.toggle("is-active", item === pill));
+    apply();
+  });
+  document.addEventListener("live:refreshed", apply);
+  apply();
+
+  // ---------- An absence asked about in the address opens in view ----------
+  const opened = document.querySelector(".ab-card.is-open");
+  if (opened) setTimeout(() => opened.scrollIntoView({ block: "center" }), 120);
+
+  // ---------- One form to add or edit, one for access, one for absences, one to delete ----------
+  document.addEventListener("click", event => {
+    const edit = event.target.closest("[data-professor-edit]");
+    const fresh = event.target.closest("[data-professor-new]");
+    if (edit || fresh) {
+      const form = document.getElementById("professorForm");
+      const data = edit ? edit.dataset : {};
+      form.action = edit ? `/classes/professors/${data.professorEdit}/edit` : "/classes/professors/create";
+      document.getElementById("professorTitle").textContent = edit ? `${data.name}` : "Add a professor";
+      document.getElementById("professorSubmit").textContent = edit ? "Save" : "Add the professor";
+      document.getElementById("pf-name").value = data.name || "";
+      document.getElementById("pf-email").value = data.email || "";
+      document.getElementById("pf-phone").value = data.phone || "";
+      // Their specialities: the programs are ticked, anything else goes in the free line.
+      const known = (data.specialties || "").split(",").map(item => item.trim()).filter(Boolean);
+      const boxes = [...document.querySelectorAll("#pf-programs input")];
+      boxes.forEach(box => { box.checked = known.some(item => item.toLowerCase() === box.value.toLowerCase()); });
+      document.getElementById("pf-specialties").value =
+        known.filter(item => !boxes.some(box => box.value.toLowerCase() === item.toLowerCase())).join(", ");
+      document.getElementById("pf-from").value = data.from || "";
+      document.getElementById("pf-until").value = data.until || "";
+      document.getElementById("pf-available").checked = edit ? data.available === "1" : true;
+      document.getElementById("pf-available-row").classList.toggle("d-none", !edit);
+    }
+    const access = event.target.closest("[data-access]");
+    if (access) {
+      const has = access.dataset.has === "1";
+      document.getElementById("accessForm").action = `/classes/professors/${access.dataset.access}/access`;
+      document.getElementById("accessRemoveForm").action = `/classes/professors/${access.dataset.access}/access/remove`;
+      document.getElementById("accessTitle").textContent = access.dataset.name;
+      document.getElementById("accessSubmit").textContent = has ? "Save the new password" : "Give access";
+      document.getElementById("accessRemove").classList.toggle("d-none", !has);
+      document.getElementById("ac-email").value = access.dataset.email || "";
+      document.getElementById("ac-password").value = "";
+    }
+    const removal = event.target.closest("[data-delete-professor]");
+    if (removal) {
+      // What deleting them will do comes from the server: their classes, who could take each, their access.
+      const body = document.getElementById("deleteProfessorBody");
+      body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">Loading…</div></div>';
+      fetch(`/classes/professors/${encodeURIComponent(removal.dataset.deleteProfessor)}/delete`, { credentials: "same-origin" })
+        .then(answer => { if (!answer.ok) throw new Error(); return answer.text(); })
+        .then(html => { body.innerHTML = html; })
+        .catch(() => { body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">It could not be opened. Reload the page and try again.</div></div>'; });
+    }
+    const absence = event.target.closest("[data-absence], [data-absence-any]");
+    if (absence) {
+      const who = document.getElementById("ab-who");
+      if (absence.dataset.absence) who.value = absence.dataset.absence;
+      document.getElementById("ab-who-row").classList.toggle("d-none", Boolean(absence.dataset.absence));
+      document.getElementById("absenceTitle").textContent = absence.dataset.name ? absence.dataset.name : "Note an absence";
+    }
+  });
+  const absenceForm = document.getElementById("absenceForm");
+  absenceForm.addEventListener("submit", () => {
+    absenceForm.action = `/classes/professors/${encodeURIComponent(document.getElementById("ab-who").value)}/absences`;
+  });
+  // The last day follows the first, so a one-day absence needs one date.
+  const first = document.getElementById("ab-date"), last = document.getElementById("ab-last");
+  first.addEventListener("change", () => { last.min = first.value; if (last.value && last.value < first.value) last.value = first.value; });
+})();
+</script>
 {% endblock %}

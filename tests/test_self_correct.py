@@ -23,7 +23,7 @@ from app.models.candidate_email import CandidateEmail
 from app.models.feedback import CandidateFeedback
 from app.models.registration import PaymentStatus, RegistrationStatus
 from app.services import (auth, email_assistant as ea, email_templates as tp, email_threads as et, enrollment_service as es, feedback_hub,
-                          orchestrator, program_feedback as pf, reply_rules, whats_new)
+                          orchestrator, program_feedback as pf, reply_rules)
 from app.services.schedule_utils import local_now
 
 sent = []
@@ -186,7 +186,6 @@ check("inbox: “read them again” on the set-aside list", 'action="/inbox/rule
 check("inbox: the button says what it found", "every decision still holds" in where(admin.post("/inbox/rules/read-again")))
 answer = orchestrator.dispatch_chat(db, "relis les messages mis de côté")
 check("Yasmine: “relis les messages mis de côté”", answer["agent"]["key"] == "inbox" and ("Relu" in answer["reply"] or "Read again" in answer["reply"]), answer["reply"][:120])
-check("what's new: this batch is told", any(release["key"] == "2026-11-02c" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

@@ -36,7 +36,7 @@ class SessionReplacement(Base):
     session_id = Column(String, nullable=False, index=True)
     class_group_id = Column(String, nullable=False, index=True)
     absent_professor_id = Column(String, nullable=False)
-    status = Column(String, nullable=False, default="searching")     # asked | accepted | none | past
+    status = Column(String, nullable=False, default="searching")     # asked | accepted | none | moved | postponed | past | cancelled | dropped
     asked_professor_id = Column(String, nullable=True)
     token = Column(String, nullable=True, index=True)
     asked_at = Column(DateTime, nullable=True)
@@ -178,12 +178,16 @@ def ask_next(db: Session, row: SessionReplacement, base_url: str) -> SessionRepl
     row.status, row.asked_professor_id, row.token, row.asked_at = "asked", professor.id, secrets.token_urlsafe(18), datetime.utcnow()
     first = ((professor.name or "").replace("Pr ", "").replace("Dr ", "").split() or [""])[0]
     text = (f"Bonjour {first}, pourriez-vous remplacer un collègue absent le {when} pour la classe {group.name} "
-            f"({group.program.name if group.program else ''}) ? Pour ce jour seulement. Confirmez ou dites non ici : "
-            f"{base_url.rstrip('/')}/replace/{row.token}")
+            f"({group.program.name if group.program else ''}) ? Pour ce jour seulement. Confirmez ou dites non en un clic.")
+    details = [("Classe", f"{group.name}" + (f" · {group.program.name}" if group.program else "")), ("Quand", when)]
+    if session.topic:
+        details.append(("Séance", session.topic))
     _notify_admin(db, row, f"{group.name}, {when}: {professor.name} was asked to replace them that day; waiting for the answer.")
     db.commit()
     try:
-        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant")
+        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant",
+                           subject="Pouvez-vous remplacer un collègue ?", rows=details,
+                           cta=("Répondre", f"{base_url.rstrip('/')}/replace/{row.token}"))
     except Exception:
         db.rollback()
         logger.exception("Replacement %s: %s could not be asked.", row.id, professor.id)
@@ -191,22 +195,32 @@ def ask_next(db: Session, row: SessionReplacement, base_url: str) -> SessionRepl
 
 
 def open_for_absence(db: Session, absence, base_url: str) -> list[SessionReplacement]:
-    """An absence was noted: each session of the professor's classes that day (at those hours) looks for a replacement."""
-    from app.models import ClassGroup, ClassStatus
-    from app.models.classsession import ClassSession
+    """An absence was accepted: each session the professor teaches in its period (at those hours) looks for a
+    replacement, for that session only: their own classes', and the ones they were to replace a colleague for."""
+    from app.models import ClassGroup
+    from app.services import absences
 
+    last = getattr(absence, "last_day", None) or absence.absence_date
     opened = []
-    for group in db.query(ClassGroup).filter(ClassGroup.professor_id == absence.professor_id, ClassGroup.status != ClassStatus.COMPLETED).all():
-        for session in db.query(ClassSession).filter(ClassSession.class_group_id == group.id, ClassSession.session_date == absence.absence_date).all():
-            if session.substitute_professor_id or not _crosses(*_hours(session, group), absence.start_time, absence.end_time):
-                continue
-            if db.query(SessionReplacement.id).filter(SessionReplacement.session_id == session.id,
-                                                      SessionReplacement.status.in_(("asked", "accepted"))).first():
-                continue
-            row = SessionReplacement(session_id=session.id, class_group_id=group.id, absent_professor_id=absence.professor_id)
-            db.add(row)
-            db.flush()
-            opened.append(ask_next(db, row, base_url))
+    for session, group, replacing in absences.sessions_in(db, absence.professor_id, absence.absence_date, last,
+                                                          absence.start_time, absence.end_time):
+        if replacing:
+            # They were to replace a colleague: that session goes back to its search, without them.
+            session.substitute_professor_id = None
+            for old in db.query(SessionReplacement).filter(SessionReplacement.session_id == session.id,
+                                                          SessionReplacement.status == "accepted").all():
+                old.status = "dropped"
+            absent_id = group.professor_id or absence.professor_id
+        else:
+            absent_id = absence.professor_id
+        if db.query(SessionReplacement.id).filter(SessionReplacement.session_id == session.id,
+                                                  SessionReplacement.status.in_(("searching", "asked", "accepted"))).first():
+            continue
+        row = SessionReplacement(session_id=session.id, class_group_id=group.id, absent_professor_id=absent_id,
+                                 declined=json.dumps([absence.professor_id]) if replacing else None)
+        db.add(row)
+        db.flush()
+        opened.append(ask_next(db, row, base_url))
     return opened
 
 
@@ -243,9 +257,10 @@ def answer(db: Session, row: SessionReplacement, yes: bool, base_url: str) -> Se
     _notify_admin(db, row, f"{group.name}, {when}: {professor.name} replaces them that day (confirmed).", done=True)
     db.commit()
     try:
-        team_messages.send(db, f"professor:{professor.id}", f"Merci ! Vous remplacez le {when} pour {group.name}. La feuille de présence "
-                           f"de cette séance : {base_url.rstrip('/')}/classes/{group.id}/attendance?session={session.id}",
-                           ["app", "email"], author="The assistant")
+        team_messages.send(db, f"professor:{professor.id}", f"Merci ! Vous remplacez le {when} pour {group.name}. "
+                           "La feuille de présence de cette séance vous attend dans votre espace.",
+                           ["app", "email"], author="The assistant", subject=f"Merci : vous remplacez le {when}",
+                           cta=("Feuille de présence", f"{base_url.rstrip('/')}/classes/{group.id}/attendance?session={session.id}"))
     except Exception:
         db.rollback()
     return row
@@ -323,8 +338,10 @@ def give_to(db: Session, row: SessionReplacement, professor_id: str, base_url: s
     db.commit()
     try:
         team_messages.send(db, f"professor:{professor.id}", f"Bonjour, vous remplacez un collègue le {when} pour la classe {group.name}. "
-                           f"La feuille de présence : {base_url.rstrip('/')}/classes/{group.id}/attendance?session={session.id}",
-                           ["app", "email", "whatsapp"], author="The assistant")
+                           "La feuille de présence de cette séance vous attend dans votre espace.",
+                           ["app", "email", "whatsapp"], author="The assistant", subject="Vous remplacez un collègue",
+                           rows=[("Classe", group.name), ("Quand", when)],
+                           cta=("Feuille de présence", f"{base_url.rstrip('/')}/classes/{group.id}/attendance?session={session.id}"))
     except Exception:
         db.rollback()
     return None
@@ -360,7 +377,8 @@ def move_session(db: Session, row: SessionReplacement, day: date, start: time | 
     if group.professor_id:
         try:
             team_messages.send(db, f"professor:{group.professor_id}", f"Votre séance de {group.name} du {old} est déplacée au {new}.",
-                               ["app", "email"], author="The assistant")
+                               ["app", "email"], author="The assistant", subject="Votre séance change de jour",
+                               rows=[("Classe", group.name), ("Avant", old), ("Maintenant", new)])
         except Exception:
             db.rollback()
     return None
@@ -395,7 +413,8 @@ def postpone_week(db: Session, row: SessionReplacement, *, by: str = "Admin") ->
     if group.professor_id:
         try:
             team_messages.send(db, f"professor:{group.professor_id}", f"La séance de {group.name} du {old} est reportée au {new} ; "
-                               "les séances suivantes sont décalées d'une semaine.", ["app", "email"], author="The assistant")
+                               "les séances suivantes sont décalées d'une semaine.", ["app", "email"], author="The assistant",
+                               subject="Votre séance est reportée d'une semaine", rows=[("Classe", group.name), ("Avant", old), ("Maintenant", new)])
         except Exception:
             db.rollback()
     from app.services.enrollment_service import class_members

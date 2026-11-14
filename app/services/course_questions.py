@@ -57,7 +57,10 @@ def class_of(db: Session, candidate, text: str = ""):
     from app.models.classgroup import ClassStatus
     from app.models.registration import PaymentStatus, RegistrationStatus
 
-    paid = [item for item in candidate.registrations if item.payment_status == PaymentStatus.PAID
+    from app.services import monthly
+
+    # Paid, or in their class with a month owed but not paused yet (the days of grace, services/monthly.py).
+    paid = [item for item in candidate.registrations if (item.payment_status == PaymentStatus.PAID or not monthly.paused(item))
             and item.status not in (RegistrationStatus.CANCELLED,) and item.class_group is not None]
     if not paid:
         return None, None
@@ -131,7 +134,8 @@ def forward(db: Session, *, candidate, message, registration, class_group, profe
     question = (message.body or "").strip()
     text = (f"Question de {candidate.full_name or candidate.email} ({class_group.name}, {registration.program_name}) :\n\n"
             f"{question}\n\nRépondez dans l'application (Messages) : votre réponse lui est envoyée.")
-    kept = team_messages.send(db, key, text, ["app", "email", "whatsapp"], author="The assistant")
+    kept = team_messages.send(db, key, text, ["app", "email", "whatsapp"], author="The assistant",
+                              subject=f"Question de {candidate.full_name or candidate.email}")
     first = kept[0] if kept else None
     if first is not None:
         first.question_message_id = message.id
@@ -241,7 +245,7 @@ def remind_due(db: Session, now: datetime | None = None) -> int:
             row.reminded_at = now
             db.commit()
             team_messages.send(db, row.person, "Rappel : une question d'un candidat attend votre réponse dans l'application (Messages).",
-                               ["app", "email", "whatsapp"], author="The assistant")
+                               ["app", "email", "whatsapp"], author="The assistant", subject="Rappel : une question attend votre réponse")
             done += 1
         elif row.reminded_at is not None and row.admin_told_at is None and row.created_at <= now - TELL_ADMIN_AFTER:
             row.admin_told_at = now

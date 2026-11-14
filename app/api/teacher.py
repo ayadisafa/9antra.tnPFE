@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session, joinedload
 
@@ -38,7 +38,7 @@ def my_space(request: Request, db: Session = Depends(get_db)):
     professor = _my_professor(request, db)
     if professor is None:
         # The admin has no classes of their own: the professors page is theirs.
-        return RedirectResponse("/classes/?tab=professors", status_code=303)
+        return RedirectResponse("/professors", status_code=303)
     now = local_now()
     classes = (
         db.query(ClassGroup)
@@ -102,33 +102,68 @@ def my_whole_space(request: Request, db: Session = Depends(get_db)):
         "notice": request.query_params.get("notice"), "error": request.query_params.get("error")})
 
 
-@router.post("/teacher/absence")
-def i_will_be_away(request: Request, absence_date: str = Form(""), start_time: str = Form(""), end_time: str = Form(""),
-                   reason: str = Form(""), db: Session = Depends(get_db)):
-    """They say they will be away: their sessions that day look for a replacement (the admin is told)."""
-    from datetime import date, time
+@router.get("/teacher/absence/check")
+def what_my_absence_means(request: Request, first: str = "", last: str = "", start: str = "", end: str = "", db: Session = Depends(get_db)):
+    """Before asking: each of their sessions in that period, and whether a colleague is free to replace them (who, is not
+    said). Nothing is saved or sent."""
+    from app.services import absences
+    from app.services.settings_service import get_settings
 
-    from app.models.professor_absence import ProfessorAbsence
-    from app.services import replacements
+    professor = _my_professor(request, db)
+    if professor is None:
+        raise HTTPException(status_code=404, detail="No professor profile")
+    try:
+        begin, finish, begins, ends = absences.read_period(first, last, start, end)
+    except ValueError as exc:
+        return JSONResponse({"error": str(exc)})
+    seen = absences.check(db, professor, begin, finish, begins, ends)
+    always = (get_settings(db).absence_decision or "nobody") == "always"
+    return JSONResponse({"always": always, "waits": always or seen["nobody"] > 0, "sessions": [
+        {"when": row["session"].session_date.strftime("%d/%m"), "class": row["class"].name, "nobody": row["nobody"]}
+        for row in seen["sessions"]]})
+
+
+@router.post("/teacher/absence")
+def i_will_be_away(request: Request, absence_date: str = Form(""), end_date: str = Form(""), start_time: str = Form(""),
+                   end_time: str = Form(""), reason: str = Form(""), db: Session = Depends(get_db)):
+    """They ask to be away (a day or a period): accepted at once when a colleague is free for each of their sessions
+    (who is asked to replace them), else the admin answers. See services/absences.py."""
+    from app.services import absences
     from app.services.settings_service import public_base_url
 
     professor = _my_professor(request, db)
     if professor is None:
         raise HTTPException(status_code=404, detail="No professor profile")
     try:
-        day = date.fromisoformat(absence_date)
-        begins = time.fromisoformat(start_time) if start_time else None
-        ends = time.fromisoformat(end_time) if end_time else None
-    except ValueError:
-        return RedirectResponse(f"/teacher/space?{urlencode({'error': _t('Choose the day you will be away.')})}#absences", status_code=303)
-    if day < local_now().date():
-        return RedirectResponse(f"/teacher/space?{urlencode({'error': _t('Choose a day to come.')})}#absences", status_code=303)
-    absence = ProfessorAbsence(professor_id=professor.id, absence_date=day, start_time=begins, end_time=ends, reason=reason.strip()[:200] or None)
-    db.add(absence)
-    db.commit()
-    opened = replacements.open_for_absence(db, absence, public_base_url(db, request))
-    notice = _t("Noted. The admin is told; {0} of your sessions that day look for a replacement.", len(opened)) if opened else _t("Noted. The admin is told.")
+        first, last, begins, ends = absences.read_period(absence_date, end_date, start_time, end_time)
+    except ValueError as exc:
+        return RedirectResponse(f"/teacher/space?{urlencode({'error': str(exc)})}#absences", status_code=303)
+    absence, done = absences.request(db, professor, first, last, begins, ends, reason, public_base_url(db, request))
+    if done.get("again"):
+        notice = _t("You already asked for this absence.")
+    elif done["outcome"] == "waiting":
+        notice = _t("Sent to the admin: you get their answer here, by email and in your messages.")
+    elif done["opened"]:
+        notice = _t("Accepted: a colleague is asked to replace you for each of your {0} session(s).", len(done["opened"]))
+    else:
+        notice = _t("Accepted: you have no session in that period.")
     return RedirectResponse(f"/teacher/space?{urlencode({'notice': notice})}#absences", status_code=303)
+
+
+@router.post("/teacher/absence/{absence_id}/cancel")
+def take_my_absence_back(absence_id: str, request: Request, db: Session = Depends(get_db)):
+    """A request still waiting for the admin is taken back."""
+    from app.models.professor_absence import ProfessorAbsence
+    from app.services import absences
+
+    professor = _my_professor(request, db)
+    absence = db.get(ProfessorAbsence, absence_id)
+    if professor is None or absence is None or absence.professor_id != professor.id:
+        raise HTTPException(status_code=404, detail="Absence not found")
+    if absences.state(absence) not in absences.WAITING:
+        return RedirectResponse(f"/teacher/space?{urlencode({'error': _t('The admin already answered this request.')})}#absences", status_code=303)
+    absences.cancel(db, absence, by=professor.name)
+    return RedirectResponse(f"/teacher/space?{urlencode({'notice': _t('Your request is taken back.')})}#absences", status_code=303)
 
 
 def _writer_of(request: Request, db: Session, class_id: str) -> tuple[ClassGroup, str]:
@@ -183,7 +218,7 @@ def write_it_for_me(payload: _Topic, request: Request, db: Session = Depends(get
 def my_profile(request: Request, db: Session = Depends(get_db)):
     professor = _my_professor(request, db)
     if professor is None:
-        return RedirectResponse("/classes/?tab=professors", status_code=303)
+        return RedirectResponse("/professors", status_code=303)
     return templates.TemplateResponse(
         request=request,
         name="teacher_profile.html",
@@ -193,7 +228,7 @@ def my_profile(request: Request, db: Session = Depends(get_db)):
             "specialties": [item.strip() for item in (professor.specialties or "").split(",") if item.strip()],
             "class_count": db.query(ClassGroup).filter(ClassGroup.professor_id == professor.id).count(),
             "absences": sorted(
-                (item for item in professor.absences if item.absence_date >= local_now().date()),
+                (item for item in professor.absences if item.last_day >= local_now().date() and (item.status or "accepted") == "accepted"),
                 key=lambda item: item.absence_date,
             ),
             "notice": request.query_params.get("notice"),

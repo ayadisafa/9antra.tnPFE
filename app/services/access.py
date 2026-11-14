@@ -11,7 +11,7 @@ import json
 
 SECTIONS = [
     # key, name shown, icon, where it starts, the addresses that belong to it
-    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard", "/whats-new")),
+    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard")),
     ("candidates", "Candidates", "bi-people-fill", "/candidate/all", ("/candidate",)),
     ("classes", "Classes", "bi-easel2-fill", "/classes/", ("/classes", "/professors")),
     ("programs", "Programs", "bi-journal-bookmark-fill", "/programs/all", ("/programs",)),
@@ -31,7 +31,7 @@ SECTIONS = [
 # outside accounts, the copies of the data.
 RIGHTS = [
     ("team", "Manage the team (add people, give access)", "bi-person-gear", ("/settings/team",)),
-    ("accounts", "Email, WhatsApp and SMS accounts (passwords, keys)", "bi-key-fill", ("/settings/email-account", "/settings/whatsapp", "/settings/sms", "/settings/linkedin")),
+    ("accounts", "Email, WhatsApp and SMS accounts (passwords, keys)", "bi-key-fill", ("/settings/email-account", "/settings/whatsapp", "/settings/sms", "/settings/linkedin", "/settings/facebook")),
     ("backups", "Copies of the data (backups)", "bi-hdd-stack-fill", ("/system/backups", "/system/backup-folder")),
 ]
 LEVELS = {"none": "Not shown", "view": "Can look", "edit": "Can change"}
@@ -39,7 +39,8 @@ NAMES = {key: name for key, name, *_ in SECTIONS}
 # Open to every signed-in person: their account, the language, the search, the live updates.
 EVERYONE = ("/account", "/logout", "/language", "/i18n/", "/find", "/realtime", "/events/stream", "/static/")
 # Never for a team member, whatever they were given: managing the team and the raw copies of the data.
-ADMIN_ONLY = ("/settings/team", "/system/backups", "/system/backup-folder", "/settings/email-account", "/settings/whatsapp", "/settings/sms")
+ADMIN_ONLY = ("/settings/team", "/system/backups", "/system/backup-folder", "/settings/email-account", "/settings/whatsapp", "/settings/sms",
+              "/settings/facebook", "/settings/linkedin")
 _READING = {"GET", "HEAD", "OPTIONS"}
 # Some forms only read (a preview, the search, the assistant's chat): they need looking, not changing.
 _READS_BY_POST = ("/reminders/preview", "/inbox/compose/preview", "/inbox/templates/preview", "/i18n/seen", "/assistant/chat",

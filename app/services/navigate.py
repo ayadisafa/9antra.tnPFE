@@ -20,7 +20,7 @@ PAGES = [
      r"candidats?|candidates?|etudiants?|students?|inscrits|المترشحين|المترشحون|الطلبة"),
     ("/candidate/all?add=1", {"en": "Add a candidate", "fr": "Ajouter un candidat", "ar": "إضافة مترشح", "tn": "Zid candidat"},
      r"(?:ajouter|nouveau|add|new|zid)\s+(?:un\s+|a\s+)?candidat\w*|إضافة مترشح"),
-    ("/classes/?tab=professors", {"en": "Professors", "fr": "Formateurs", "ar": "الأساتذة", "tn": "Les profs"},
+    ("/professors", {"en": "Professors", "fr": "Formateurs", "ar": "الأساتذة", "tn": "Les profs"},
      r"professeurs?|profs?|formateurs?|enseignants?|teachers?|professors?|trainers?|الأساتذة|الاساتذة|المكونين"),
     ("/classes/", {"en": "Classes", "fr": "Classes", "ar": "الأقسام", "tn": "Classes"},
      r"classes?|groupes?|groups?|timetable|emploi du temps|الأقسام|الاقسام"),
@@ -58,8 +58,6 @@ PAGES = [
      r"reseaux sociaux|social(?: media)?|publications?|posts?|facebook|instagram|tiktok|وسائل التواصل"),
     ("/website", {"en": "Website", "fr": "Site web", "ar": "الموقع", "tn": "Site web"}, r"site(?: web| internet)?|website|9antra tn|الموقع"),
     ("/assistant/agents", {"en": "The agents", "fr": "Les agents", "ar": "الوكلاء", "tn": "Les agents"}, r"agents?|الوكلاء"),
-    ("/whats-new", {"en": "What's new", "fr": "Nouveautés", "ar": "الجديد", "tn": "Chnowa jdid"},
-     r"nouveautes?|what s new|quoi de neuf|chnowa jdid|الجديد"),
     ("/system#automatic", {"en": "What it does by itself", "fr": "Ce qu'elle fait seule", "ar": "ما يفعله وحده", "tn": "Chnowa ya3mel wa7dou"},
      r"(?:ce qu (?:elle|il|l application) fait|what it does) (?:seule?|tout seul|by itself)|automatisations?"),
     ("/system", {"en": "How it is working", "fr": "Comment ça marche", "ar": "كيف يعمل", "tn": "Kifech ye5dem"},
@@ -212,7 +210,7 @@ def _record(db: Session, text: str) -> tuple[str, str] | None:
     for professor in db.query(Professor).all():
         parts = [part for part in _fold(professor.name).split() if len(part) >= 3]
         if parts and all(part in words for part in parts):
-            return "/classes/?tab=professors", professor.name
+            return "/professors", professor.name
     return None
 
 

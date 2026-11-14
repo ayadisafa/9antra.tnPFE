@@ -546,6 +546,7 @@
             <span class="ix-chip quiet"><i class="bi bi-envelope-paper"></i>Kept for Monday's letter</span>
           {% else %}
             <span class="ix-chip {{ 'wa' if message.channel in ('whatsapp', 'sms') else 'ok' }}"><i class="bi {{ 'bi-whatsapp' if message.channel == 'whatsapp' else 'bi-chat-dots' if message.channel == 'sms' else 'bi-check2' }}"></i>Sent{{ ' on WhatsApp' if message.channel == 'whatsapp' else ' by SMS' if message.channel == 'sms' }}</span>
+            {% if message.delivery in ('delivered', 'read') %}<span class="ix-chip {{ 'ok' if message.delivery == 'read' else 'quiet' }}" title="{{ message.delivery_at | localdt if message.delivery_at else '' }}"><i class="bi bi-check2-all" {% if message.delivery == 'read' %}style="color:#0ea5e9;"{% endif %}></i>{{ 'Read' if message.delivery == 'read' else 'Delivered' }}</span>{% endif %}
           {% endif %}
           {% if message.html_body %}<a href="/inbox/message/{{ message.id }}/html" target="_blank" rel="noopener">View as received</a>{% endif %}
         </div>

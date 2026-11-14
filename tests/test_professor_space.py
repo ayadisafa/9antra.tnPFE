@@ -127,7 +127,7 @@ prof_client.post("/login", data={"email": "nour.espace@example.com", "password":
 # ======================================================================
 page = admin.get("/professors")
 check("Professors: every professor, with their figures and what waits for them", page.status_code == 200 and "Nour Espace" in page.text
-      and "Sami Remplace" in page.text and 'id="pf-list"' in page.text, page.status_code)
+      and "Sami Remplace" in page.text and 'id="live-professors-cards"' in page.text, page.status_code)
 check("...in the menu", 'href="/professors"' in admin.get("/").text)
 page = admin.get(f"/professors/{nour.id}")
 check("a professor's space: who they are, classes, next sessions, reviews, messages, absences", page.status_code == 200 and all(
@@ -146,7 +146,13 @@ check("problems are counted from the records (Sami: no class, no account)", any(
 sami.is_available = False
 db.commit()
 response = prof_client.post("/teacher/absence", data={"absence_date": first_day.isoformat()})
-check("the professor says they will be away, from their own space", response.status_code == 303 and "Noted" in where(response), where(response))
+check("the professor says they will be away, from their own space; nobody free: it waits for the admin", response.status_code == 303
+      and "Sent to the admin" in where(response), where(response))
+from app.models.professor_absence import ProfessorAbsence
+
+asked = db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == nour.id, ProfessorAbsence.status == "requested").first()
+check("...the admin accepts it", asked is not None and admin.post(f"/professors/absences/{asked.id}/accept", data={}).status_code == 303)
+db.expire_all()
 row = db.query(SessionReplacement).filter(SessionReplacement.class_group_id == devops.id).first()
 check("...the session that day looks for a replacement; nobody free: the admin chooses", row is not None and row.status == "none", row and row.status)
 check("...their space shows it as a problem, with the place to solve it", any("nobody replaces them" in item["text"] for item in professor_space.problems(db, nour)))

@@ -35,13 +35,65 @@
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-check"></i></div><div><div class="ui-stat-num">{{ totals.to_decide }}</div><div class="ui-stat-label">Waiting for your decision</div></div></div>
 </div>
 
+{% set m = monthly %}
+<section class="ui-card mb-4" id="monthly">
+  <div class="ui-card-head">
+    <div><div class="ui-card-title"><i class="bi bi-calendar2-month"></i>Month by month</div>
+      <div class="ui-card-sub">Prices are for one month: the first month is paid to join, each next month to continue. One reminder {{ m.remind_days }} day{{ 's' if m.remind_days != 1 }} before a month; {% if m.pause_on %}not paid {{ m.grace_days }} day{{ 's' if m.grace_days != 1 }} into it, the access pauses until they pay{% else %}a month not paid does not pause the access{% endif %}. <a href="/settings#monthly" class="ui-link">Change</a></div></div>
+  </div>
+  {% if m.before %}
+  <div class="mm-block is-decide">
+    <div class="mm-title"><i class="bi bi-question-circle-fill"></i>Started before monthly payments: you decide <span class="ui-chip warn">{{ m.before | length }}</span></div>
+    <div class="ui-card-sub mb-2">These months began before monthly payments were switched on, or too soon after to remind them on time: nothing was added by itself and nobody was written to.</div>
+    {% for item in m.before %}
+    <div class="mm-row">
+      <a href="/candidate/{{ item.candidate.id }}#programs" class="mm-who" data-no-i18n>{{ item.candidate.full_name or item.candidate.email }}</a>
+      <span class="mm-what"><span data-no-i18n>{{ item.registration.program_name }}</span> · month {{ item.number }} of {{ item.months }} · since {{ item.starts.strftime('%d/%m/%Y') }}</span>
+      <span class="mm-do">
+        <form method="post" action="/payments/monthly/{{ item.registration.id }}"><input type="hidden" name="number" value="{{ item.number }}"><input type="hidden" name="choice" value="charge"><button class="ui-btn sm primary">Add {{ '%.0f' | format(item.price) }} DT to pay</button></form>
+        <form method="post" action="/payments/monthly/{{ item.registration.id }}"><input type="hidden" name="number" value="{{ item.number }}"><input type="hidden" name="choice" value="free"><button class="ui-btn sm ghost">Leave it free</button></form>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="mm-grid">
+    <div class="mm-block">
+      <div class="mm-title"><i class="bi bi-pause-circle-fill" style="color:#e11d48;"></i>Paused: a month not paid <span class="ui-chip {{ 'bad' if m.paused else 'muted' }}">{{ m.paused | length }}</span></div>
+      {% for item in m.paused %}<div class="mm-row"><a href="/candidate/{{ item.candidate.id }}#programs" class="mm-who" data-no-i18n>{{ item.candidate.full_name or item.candidate.email }}</a><span class="mm-what">month {{ item.counted }} · {{ '%.0f' | format(item.remaining) }} DT</span></div>
+      {% else %}<div class="ui-card-sub">Nobody.</div>{% endfor %}
+    </div>
+    <div class="mm-block">
+      <div class="mm-title"><i class="bi bi-hourglass-split" style="color:#d97706;"></i>A month owed, in its days of grace <span class="ui-chip {{ 'warn' if m.owed else 'muted' }}">{{ m.owed | length }}</span></div>
+      {% for item in m.owed %}<div class="mm-row"><a href="/candidate/{{ item.candidate.id }}#programs" class="mm-who" data-no-i18n>{{ item.candidate.full_name or item.candidate.email }}</a><span class="mm-what">month {{ item.counted }}{% if item.starts %} since {{ item.starts.strftime('%d/%m') }}{% endif %} · {{ '%.0f' | format(item.remaining) }} DT</span></div>
+      {% else %}<div class="ui-card-sub">Nobody.</div>{% endfor %}
+    </div>
+    <div class="mm-block">
+      <div class="mm-title"><i class="bi bi-calendar-event" style="color:#0ea5e9;"></i>Next months starting soon <span class="ui-chip muted">{{ m.soon | length }}</span></div>
+      {% for item in m.soon %}<div class="mm-row"><a href="/candidate/{{ item.candidate.id }}#programs" class="mm-who" data-no-i18n>{{ item.candidate.full_name or item.candidate.email }}</a><span class="mm-what">month {{ item.number }} on {{ item.starts.strftime('%d/%m') }} · {{ '%.0f' | format(item.price) }} DT · {% if item.ahead %}already paid{% elif item.reminded %}reminded{% else %}reminder to come{% endif %}</span></div>
+      {% else %}<div class="ui-card-sub">No month starts in the coming days.</div>{% endfor %}
+    </div>
+  </div>
+  <style>
+    .mm-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; }
+    @media (max-width: 991px) { .mm-grid { grid-template-columns:1fr; } }
+    .mm-block { background:#faf8fd; border-radius:16px; padding:12px 14px; }
+    .mm-block.is-decide { background:#fffbeb; border:1px solid #fcd34d; margin-bottom:12px; }
+    .mm-title { font-weight:800; font-size:.84rem; color:var(--ink-text); display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .mm-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 0; border-top:1px solid var(--border-color); font-size:.8rem; }
+    .mm-row:first-of-type { border-top:0; }
+    .mm-who { font-weight:700; color:var(--ink-text); text-decoration:none; } .mm-who:hover { color:var(--primary-berry); }
+    .mm-what { color:#5b5670; } .mm-do { display:flex; gap:6px; margin-inline-start:auto; } .mm-do form { margin:0; }
+  </style>
+</section>
+
 {% import "_proofs.html" as proofs_ui with context %}
 <section class="mb-4" id="proofs">
   <div class="d-flex align-items-center gap-2 mb-2">
     <h3 class="h6 fw-bold mb-0"><i class="bi bi-receipt"></i> Payment proofs to check</h3>
     <span class="ui-chip {{ 'warn' if proofs else 'muted' }}">{{ proofs | length }}</span>
   </div>
-  <p class="small text-muted mb-2">Cheques, receipts, transfers and invoices candidates send by email or WhatsApp are read here: amount, bank, RIB, date, reference, and for a cheque who it is made out to, the amount in words and its number. A photo cannot prove a proof is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set or not centre_names_set %} <a href="/settings#centre">Write the centre's RIB and the names a cheque is made out to in Settings</a> to check them.{% endif %}</p>
+  <p class="small text-muted mb-2">Cheques, receipts, transfers and invoices candidates send by email or WhatsApp (Business number connected) are read here by themselves; one that came to your own WhatsApp, drop it below: amount, bank, RIB, date, reference, and for a cheque who it is made out to, the amount in words and its number. A photo cannot prove a proof is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set or not centre_names_set %} <a href="/settings#centre">Write the centre's RIB and the names a cheque is made out to in Settings</a> to check them.{% endif %}</p>
   <form method="post" action="/payments/proofs/upload" enctype="multipart/form-data" class="pf-drop" id="proof-drop">
     <div class="pf-drop-art" aria-hidden="true"><span class="pf-drop-cheque"><i></i><i></i><i></i><b>DT</b></span><span class="pf-drop-scan"></span></div>
     <div class="pf-drop-text">
@@ -49,6 +101,12 @@
       <span>Drop photos or PDFs here, or choose them. Each one is read and checked: who it is made out to, the amount in figures and in words, the date, the bank, the RIB, the number of the cheque.</span>
       <div class="pf-drop-do">
         <label class="ui-btn sm primary pf-drop-pick"><i class="bi bi-camera"></i><span>Choose photos</span><input type="file" name="files" accept="image/*,application/pdf" multiple required></label>
+        <select name="came_by" aria-label="Where it came from">
+          <option value="">Where it came from</option>
+          <option value="whatsapp">WhatsApp, on my phone</option>
+          <option value="email">Email</option>
+          <option value="hand">Given at the centre</option>
+        </select>
         <select name="candidate_id" aria-label="Who paid">
           <option value="">Who paid? Found from the name on it when it can be</option>
           {% for person in who_paid %}<option value="{{ person.id }}">{{ person.full_name or person.email }}</option>{% endfor %}

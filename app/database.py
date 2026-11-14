@@ -227,6 +227,12 @@ def ensure_sqlite_compatibility():
             "class_group_id": "VARCHAR",
             "payment_reminder_sent": "BOOLEAN DEFAULT 0",
             "reminder_sent_at": "DATETIME",
+            # Prices are for one month (services/monthly.py): the price of a month, how many months, the months counted.
+            "month_price": "FLOAT",
+            "months": "INTEGER",
+            "months_counted": "INTEGER",
+            "month_reminded": "INTEGER",
+            "paused_at": "DATETIME",
         },
 
         "registration_biases": {
@@ -256,6 +262,19 @@ def ensure_sqlite_compatibility():
         "professors": {
             "email": "VARCHAR",
             "phone": "VARCHAR",
+        },
+        # An absence can last several days and be asked by the professor (services/absences.py).
+        "professor_absences": {
+            "end_date": "DATE",
+            "status": "VARCHAR",
+            "requested_by": "VARCHAR",
+            "decided_by": "VARCHAR",
+            "decided_at": "DATETIME",
+            "decision_note": "TEXT",
+            "token": "VARCHAR",
+            "response": "TEXT",
+            "responded_at": "DATETIME",
+            "created_at": "DATETIME",
         },
 
         # Each browser signed in is a session: which device, and when it was last used.
@@ -352,6 +371,11 @@ def ensure_sqlite_compatibility():
             "assistant_changes": "TEXT",
             "google_review_url": "VARCHAR",
             "active_days": "TEXT",
+            "absence_decision": "VARCHAR DEFAULT 'nobody'",
+            "month_remind_days": "INTEGER DEFAULT 5",
+            "month_grace_days": "INTEGER DEFAULT 3",
+            "month_pause_on": "BOOLEAN DEFAULT 1",
+            "monthly_since": "DATETIME",
         },
 
         "class_materials": {
@@ -382,6 +406,9 @@ def ensure_sqlite_compatibility():
                             "design": "TEXT", "hours_before": "INTEGER"},       # before each session: how many hours before
 
         "candidate_emails": {
+            "external_id": "VARCHAR",
+            "delivery": "VARCHAR",
+            "delivery_at": "DATETIME",
             "emotions": "TEXT",
             "author": "VARCHAR",
             "html_body": "TEXT",

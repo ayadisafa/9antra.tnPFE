@@ -222,7 +222,8 @@ check("the classes page opens", page.status_code == 200, page.status_code)
 text = page.text
 check("it shows which classes are on hold and why", "On hold" in text and "Waiting: it cannot start" in text and "No candidate is enrolled" in text)
 check("it counts them", "On hold: cannot start" in text)
-check("specialities are ticked, not typed", 'name="programs" value="Python"' in text and 'id="pf-programs"' in text)
+professors_text = client.get("/professors").text
+check("specialities are ticked, not typed (on the professors' page)", 'name="programs" value="Python"' in professors_text and 'id="pf-programs"' in professors_text)
 check("the new class form names who waits", "Marketing Digital" in text and ("Nobody is waiting for a class" in text or "waiting</option>" in text))
 items = advisor.for_dashboard(db)
 titles = " | ".join(item.title for item in items)

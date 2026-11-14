@@ -128,8 +128,8 @@ check("a how-to stays the guide's, and “what can I do?” the day's list", not
 
 said = ask("un formateur est absent, je fais quoi ?")
 check("a professor absent: the steps, and the replacement asked by itself", said.get("path") == ["read", "cases", "finish"]
-      and said["reply"].startswith("Quand un formateur est absent :") and "Classes › Formateurs › sa carte › Absence" in said["reply"]
-      and "un lien privé pour confirmer" in said["reply"], said["reply"][:400])
+      and said["reply"].startswith("Quand un formateur est absent :") and "Formateurs › « Noter une absence »" in said["reply"]
+      and "par un lien privé" in said["reply"] and "Formateurs › Absences" in said["reply"], said["reply"][:400])
 said = ask("what can I do when a candidate hasn't paid", lang="en")
 check("not paid: the one reminder, then you; and who owes now", "One payment reminder goes by itself" in said["reply"]
       and "never sends a second one" in said["reply"] and "Right now" in said["reply"] and "Kamel Quitte" in said["reply"], said["reply"])

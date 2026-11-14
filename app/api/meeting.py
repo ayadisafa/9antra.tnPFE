@@ -81,7 +81,7 @@ def join(token: str, request: Request, db: Session = Depends(get_db)):
         request=request,
         name="join.html",
         context={
-            "state": found["state"], "url": found["url"], "session": session, "class_group": class_group,
+            "state": found["state"], "url": found["url"] if found["state"] == "open" else None, "session": session, "class_group": class_group,
             "start": start, "end": end, "timed": bool(session and (session.start_time or (class_group and class_group.start_time))),
             "day": meetings._french_date(session.session_date) if session is not None else "",
             "opens_minutes": int(meetings.OPENS_BEFORE.total_seconds() // 60),

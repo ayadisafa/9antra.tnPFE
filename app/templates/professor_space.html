@@ -63,7 +63,7 @@
     {% if own %}<a class="ui-btn" href="/teacher/profile"><i class="bi bi-person-badge"></i>My profile</a>
     <a class="ui-btn" href="/account/messages"><i class="bi bi-chat-heart"></i>Messages</a>
     {% else %}<a class="ui-btn" href="{{ messages.url }}"><i class="bi bi-chat-dots"></i>Write to them</a>
-    <a class="ui-btn" href="/classes/?tab=professors"><i class="bi bi-pencil"></i>Change their details</a>
+    <a class="ui-btn" href="/professors#professor-{{ professor.id }}"><i class="bi bi-pencil"></i>Change their details</a>
     <a class="ui-btn ghost" href="/professors"><i class="bi bi-arrow-left"></i>Every professor</a>{% endif %}
   </div>
 </div>
@@ -190,24 +190,107 @@
 </section>
 
 <section class="ui-card mb-3" id="absences" data-tab-of="space" data-tab-panel="absences">
+  {% set state_labels = {'requested': 'Waiting for the admin', 'insists': 'Waiting for the admin again', 'accepted': 'Accepted', 'refused': 'Refused'} %}
+  {% set replace_labels = {'searching': 'Looking', 'asked': 'Colleague asked', 'accepted': 'Replaced', 'none': 'Nobody free yet', 'moved': 'Moved to another day', 'postponed': 'A week later', 'past': 'Passed', 'cancelled': 'Not needed', 'dropped': 'Given back'} %}
   <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-calendar-x"></i>Absences</div>
-    <div class="ui-card-sub">{% if own %}A day away: each session that day looks for a replacement (a professor who teaches it and is free). If nobody can, the admin chooses another day or a week later.{% else %}A day away: each session that day looks for a replacement (a professor who teaches it and is free). If nobody can, you choose another day or a week later.{% endif %}</div></div></div>
+    <div class="ui-card-sub">{% if own %}Ask to be away for a day or a period. When a colleague who teaches it is free for each of your sessions, it is accepted at once and they are asked to replace you; otherwise the admin answers you here, by email and in your messages.{% else %}Noted by you, an absence is accepted at once: each session in that period looks for a replacement (a professor who teaches it, is not away and has no class at those hours).{% endif %}</div></div></div>
   {% for item in absences %}
-  <div class="d-flex gap-2 align-items-center py-1"><span class="ui-chip warn"><i class="bi bi-calendar-x"></i>{{ item.absence_date.strftime('%a %d/%m/%Y') }}</span>
-    <span class="small">{% if item.start_time %}{{ item.start_time.strftime('%H:%M') }}–{{ item.end_time.strftime('%H:%M') if item.end_time else '' }}{% else %}All day{% endif %}{% if item.reason %} · <span data-no-i18n>{{ item.reason }}</span>{% endif %}</span></div>
+  {% set absence = item.absence %}
+  <div class="ps-absence is-{{ item.state }}" style="--i:{{ loop.index0 }};">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+      <span class="ui-chip {{ 'ok' if item.state == 'accepted' else 'bad' if item.state == 'refused' else 'warn' }}"><i class="bi {{ 'bi-check2-circle' if item.state == 'accepted' else 'bi-x-circle' if item.state == 'refused' else 'bi-hourglass-split' }}"></i>{{ state_labels.get(item.state, item.state) }}</span>
+      <b data-no-i18n>{{ item.period }}</b><span class="small text-muted">· {{ item.days }} day{{ 's' if item.days != 1 }}{% if absence.reason %} · <span data-no-i18n>{{ absence.reason }}</span>{% endif %}</span>
+      <span class="ms-auto d-flex gap-2">
+        {% if own and item.state in ('requested', 'insists') %}<form method="post" action="/teacher/absence/{{ absence.id }}/cancel" class="m-0"><button class="ui-btn sm ghost"><i class="bi bi-x"></i>Take it back</button></form>{% endif %}
+        {% if own and item.state == 'refused' and absence.token %}<a class="ui-btn sm primary" href="/absence/{{ absence.token }}"><i class="bi bi-reply"></i>Answer</a>{% endif %}
+        {% if not own and item.state in ('requested', 'insists') %}<a class="ui-btn sm primary" href="/professors?absence={{ absence.id }}#absences"><i class="bi bi-check2-square"></i>Decide</a>{% endif %}
+      </span>
+    </div>
+    {% if absence.decision_note %}<div class="ps-said"><b>{{ 'The admin' if own else 'Your word' }}:</b> <span data-no-i18n>{{ absence.decision_note }}</span></div>{% endif %}
+    {% if absence.response %}<div class="ps-said"><b>{{ 'Your answer' if own else 'Their answer' }}:</b> <span data-no-i18n>{{ absence.response }}</span></div>{% endif %}
+    {% if item.replaced %}<div class="ps-reps">{% for line in item.replaced %}<span class="ui-chip {{ 'ok' if line.row.status == 'accepted' else 'bad' if line.row.status == 'none' else 'muted' }}">{{ line.session.session_date.strftime('%d/%m') }} · <span data-no-i18n>{{ line.class.name }}</span> · {{ replace_labels.get(line.row.status, line.row.status) }}</span>{% endfor %}</div>
+    {% elif item.check and item.check.count %}<div class="ps-reps">{% for line in item.check.sessions %}<span class="ui-chip {{ 'bad' if line.nobody else 'ok' }}">{{ line.session.session_date.strftime('%d/%m') }} · <span data-no-i18n>{{ line.class.name }}</span> · {{ 'nobody free' if line.nobody else 'someone free' }}</span>{% endfor %}</div>{% endif %}
+  </div>
   {% else %}
   <div class="small text-muted mb-2">No absence coming.</div>
   {% endfor %}
-  <form method="post" action="{{ '/teacher/absence' if own else '/classes/professors/' ~ professor.id ~ '/absences' }}" class="d-flex gap-2 flex-wrap align-items-end mt-2">
+  <form method="post" action="{{ '/teacher/absence' if own else '/classes/professors/' ~ professor.id ~ '/absences' }}" class="ps-away mt-3" id="ps-away-form">
     {% if not own %}<input type="hidden" name="back" value="/professors/{{ professor.id }}#absences">{% endif %}
-    <label class="small">Day<input type="date" name="absence_date" class="form-control form-control-sm" required></label>
-    <label class="small">From<input type="time" name="start_time" class="form-control form-control-sm"></label>
-    <label class="small">To<input type="time" name="end_time" class="form-control form-control-sm"></label>
-    <label class="small" style="flex:1 1 160px;">Why, if you wish<input name="reason" maxlength="200" class="form-control form-control-sm"></label>
-    <button class="ui-btn sm"><i class="bi bi-calendar-plus"></i>{% if own %}I will be away{% else %}Note the absence{% endif %}</button>
+    <div class="ps-away-grid">
+      <label class="small">First day<input type="date" name="absence_date" class="form-control form-control-sm" required min="{{ today_iso }}" data-away="first"></label>
+      <label class="small">Last day<input type="date" name="end_date" class="form-control form-control-sm" min="{{ today_iso }}" data-away="last"><span class="ps-hint">Empty = that day only</span></label>
+      <label class="small">From<input type="time" name="start_time" class="form-control form-control-sm" data-away="start"><span class="ps-hint">Empty = whole days</span></label>
+      <label class="small">To<input type="time" name="end_time" class="form-control form-control-sm" data-away="end"></label>
+      <label class="small ps-away-why">Why, if you wish<input name="reason" maxlength="200" class="form-control form-control-sm"></label>
+    </div>
+    {% if own %}<div class="ps-preview" id="ps-away-preview" aria-live="polite" hidden></div>{% endif %}
+    <button class="ui-btn sm primary mt-2"><i class="bi bi-calendar-plus"></i>{% if own %}Ask to be away{% else %}Note the absence{% endif %}</button>
   </form>
+  <style>
+    .ps-absence { border:1px solid var(--border-color); border-radius:14px; padding:10px 12px; margin-bottom:8px; background:#fff; }
+    .ps-absence.is-requested, .ps-absence.is-insists { border-color:#fcd34d; box-shadow:inset 4px 0 0 #f59e0b; }
+    .ps-absence.is-refused { border-color:#fecdd3; box-shadow:inset 4px 0 0 #e11d48; }
+    .ps-absence.is-accepted { box-shadow:inset 4px 0 0 #16a34a; }
+    .ps-said { font-size:.8rem; background:#faf8fd; border-radius:10px; padding:6px 10px; margin-top:6px; }
+    .ps-reps { display:flex; flex-wrap:wrap; gap:5px; margin-top:8px; }
+    .ps-away { background:#faf8fd; border-radius:16px; padding:12px; }
+    .ps-away-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)) minmax(0, 2fr); gap:8px; align-items:start; }
+    .ps-away-grid label { display:grid; gap:3px; margin:0; }
+    .ps-hint { font-size:.66rem; color:var(--muted); }
+    @media (max-width: 767px) { .ps-away-grid { grid-template-columns:1fr 1fr; } .ps-away-why { grid-column:1 / -1; } }
+    .ps-preview { margin-top:10px; border-radius:12px; padding:10px 12px; font-size:.8rem; background:#fff; border:1px dashed var(--border-color); }
+    .ps-preview.is-ok { border-color:#86efac; background:#f0fdf4; } .ps-preview.is-wait { border-color:#fcd34d; background:#fffbeb; }
+    .ps-preview ul { margin:6px 0 0; padding-left:18px; }
+  </style>
 </section>
 
+{% if own %}
+<span hidden id="ps-said-ok">Someone is free for each of your sessions: it will be accepted at once, and they are asked to replace you.</span>
+<span hidden id="ps-said-wait">Nobody is free for some sessions: your request goes to the admin, who answers you.</span>
+<span hidden id="ps-said-always">Every request goes to the admin, who answers you here and by email.</span>
+<span hidden id="ps-said-none">No session of yours in that period: it will be accepted at once.</span>
+<span hidden id="ps-said-free">someone free</span>
+<span hidden id="ps-said-nobody">nobody free</span>
+<script>
+/* Before asking: what the request means, session by session (counted by the application, nothing is sent). */
+(function () {
+  var form = document.getElementById("ps-away-form"), preview = document.getElementById("ps-away-preview");
+  if (!form || !preview) return;
+  var said = function (id) { return (document.getElementById(id) || {}).textContent || ""; };
+  var field = function (key) { return form.querySelector('[data-away="' + key + '"]'); };
+  var timer = null;
+  function look() {
+    var first = field("first").value;
+    if (!first) { preview.hidden = true; return; }
+    var last = field("last").value;
+    if (last && last < first) { field("last").value = first; last = first; }
+    var query = new URLSearchParams({ first: first, last: last || first, start: field("start").value, end: field("end").value });
+    fetch("/teacher/absence/check?" + query.toString(), { credentials: "same-origin" })
+      .then(function (answer) { return answer.ok ? answer.json() : null; })
+      .then(function (data) {
+        if (!data) { preview.hidden = true; return; }
+        preview.hidden = false;
+        preview.className = "ps-preview " + (data.error ? "" : data.waits ? "is-wait" : "is-ok");
+        if (data.error) { preview.textContent = data.error; return; }
+        var head = document.createElement("b");
+        head.textContent = data.always ? said("ps-said-always") : !data.sessions.length ? said("ps-said-none") : data.waits ? said("ps-said-wait") : said("ps-said-ok");
+        preview.replaceChildren(head);
+        if (data.sessions.length) {
+          var list = document.createElement("ul");
+          data.sessions.forEach(function (item) {
+            var line = document.createElement("li");
+            line.textContent = item.when + " · " + item.class + " · " + said(item.nobody ? "ps-said-nobody" : "ps-said-free");
+            list.appendChild(line);
+          });
+          preview.appendChild(list);
+        }
+      })
+      .catch(function () { preview.hidden = true; });
+  }
+  form.addEventListener("input", function () { clearTimeout(timer); timer = setTimeout(look, 300); });
+})();
+</script>
+{% endif %}
 <span hidden id="ps-said-cloud">Written from your topic: read it and change what you want. A date or an hour you did not give is left as [ … ] for you to fill.</span>
 <span hidden id="ps-said-idea">The online writer is not available just now: here is the closest idea to start from.</span>
 <span hidden id="ps-said-writing">Writing…</span>

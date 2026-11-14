@@ -3758,5 +3758,213 @@
 "Waiting questions that lacked them are read again.": [
 "Les questions en attente qui en manquaient sont relues.",
 "الأسئلة المنتظرة التي كانت تنقصها تُقرأ من جديد."
+],
+"Absence saved for {0}: {1}.": [
+"Absence enregistrée pour {0} : {1}.",
+"تم تسجيل غياب {0}: {1}."
+],
+"This absence was already noted.": [
+"Cette absence était déjà notée.",
+"هذا الغياب مسجّل من قبل."
+],
+"{0} is now followed: {1}.": [
+"{0} se suit désormais : {1}.",
+"يُتابَع {0} الآن: {1}."
+],
+"{0} session(s) need a replacement: {1} professor(s) asked to confirm, {2} with nobody free (choose on the class).": [
+"{0} séance(s) à remplacer : {1} formateur(s) sollicité(s), {2} sans personne de libre (choisissez sur la classe).",
+"{0} حصة تحتاج إلى تعويض: طُلب من {1} أستاذ التأكيد، و{2} بلا أحد متاح (اختر من صفحة القسم)."
+],
+"as its candidates chose": [
+"comme ses candidats l'ont choisi",
+"كما اختار مترشحوه"
+],
+"online": [
+"en ligne",
+"عن بعد"
+],
+"on site": [
+"en présentiel",
+"حضوريا"
+],
+"online and on site": [
+"en ligne et en présentiel",
+"عن بعد وحضوريا"
+],
+"Accepted; {0} was told.": [
+"Acceptée ; {0} est prévenu(e).",
+"تم القبول؛ أُعلم {0}."
+],
+"Refused; {0} was told and can answer with one click.": [
+"Refusée ; {0} est prévenu(e) et peut répondre en un clic.",
+"تم الرفض؛ أُعلم {0} ويمكنه الرد بنقرة واحدة."
+],
+"The absence of {0} is removed.": [
+"L'absence de {0} est supprimée.",
+"تم حذف غياب {0}."
+],
+"This request is already decided.": [
+"Cette demande est déjà tranchée.",
+"تم البت في هذا الطلب من قبل."
+],
+"{0} session(s) look for a replacement, {1} with nobody free: choose for them on the class.": [
+"{0} séance(s) cherchent un remplaçant, {1} sans personne de libre : choisissez pour elles sur la classe.",
+"{0} حصة تبحث عن معوّض، {1} منها بلا أحد متاح: اختر لها من صفحة القسم."
+],
+"{0} session(s) look for a replacement.": [
+"{0} séance(s) cherchent un remplaçant.",
+"{0} حصة تبحث عن معوّض."
+],
+"You already asked for this absence.": [
+"Vous avez déjà demandé cette absence.",
+"لقد طلبت هذا الغياب من قبل."
+],
+"Sent to the admin: you get their answer here, by email and in your messages.": [
+"Envoyée à l'administration : vous recevez la réponse ici, par email et dans vos messages.",
+"أُرسل إلى الإدارة: ستصلك الإجابة هنا وعبر البريد الإلكتروني وفي رسائلك."
+],
+"Accepted: a colleague is asked to replace you for each of your {0} session(s).": [
+"Acceptée : un collègue est sollicité pour vous remplacer à chacune de vos {0} séance(s).",
+"تم القبول: طُلب من زميل تعويضك في كل حصة من حصصك الـ{0}."
+],
+"Accepted: you have no session in that period.": [
+"Acceptée : vous n'avez aucune séance pendant cette période.",
+"تم القبول: ليست لديك أي حصة في هذه الفترة."
+],
+"Your request is taken back.": [
+"Votre demande est retirée.",
+"تم سحب طلبك."
+],
+"The admin already answered this request.": [
+"L'administration a déjà répondu à cette demande.",
+"أجابت الإدارة عن هذا الطلب من قبل."
+],
+"The last day is before the first.": [
+"Le dernier jour est avant le premier.",
+"اليوم الأخير قبل اليوم الأول."
+],
+"An absence of more than {0} days: change their availability instead (Edit the professor).": [
+"Une absence de plus de {0} jours : changez plutôt sa disponibilité (Modifier le formateur).",
+"غياب يتجاوز {0} يوما: غيّر بالأحرى فترة توفّره (تعديل الأستاذ)."
+],
+"Give both hours, or none for whole days.": [
+"Indiquez les deux heures, ou aucune pour des journées entières.",
+"اذكر الساعتين معا، أو لا شيء للأيام الكاملة."
+],
+"nobody is free to replace them for {0} of their {1} sessions": [
+"personne n'est libre pour le remplacer à {0} de ses {1} séances",
+"لا أحد متاح لتعويضه في {0} من حصصه الـ{1}"
+],
+"every request waits for you (Settings › Classes)": [
+"chaque demande vous attend (Paramètres › Classes)",
+"كل طلب ينتظرك (الإعدادات › الأقسام)"
+],
+"{0}: {1}. Accepted by {2}.": [
+"{0} : {1}. Acceptée par {2}.",
+"{0}: {1}. قبله {2}."
+],
+"{0}: {1}. Refused by {2}; they were told and can answer.": [
+"{0} : {1}. Refusée par {2} ; il/elle est prévenu(e) et peut répondre.",
+"{0}: {1}. رفضه {2}؛ أُعلم ويمكنه الرد."
+],
+"Choose the first day away.": [
+"Choisissez le premier jour d'absence.",
+"اختر أول يوم غياب."
+],
+"Choose the last day away.": [
+"Choisissez le dernier jour d'absence.",
+"اختر آخر يوم غياب."
+],
+"The hours are not valid.": [
+"Les heures ne sont pas valides.",
+"الساعات غير صالحة."
+],
+"{0} will be there ({1}): they answered the refusal.": [
+"{0} sera là ({1}) : réponse au refus.",
+"سيكون {0} حاضرا ({1}): ردّ على الرفض."
+],
+"{0} still cannot come ({1}): “{2}”. Accept or refuse it.": [
+"{0} ne peut toujours pas venir ({1}) : « {2} ». Acceptez ou refusez.",
+"لا يزال {0} غير قادر على الحضور ({1}): «{2}». اقبل أو ارفض."
+],
+"The absence was taken back: no replacement needed.": [
+"L'absence est retirée : plus besoin de remplaçant.",
+"تم سحب الغياب: لا حاجة إلى معوّض."
+],
+"Accept or refuse it.": [
+"Acceptez ou refusez.",
+"اقبل أو ارفض."
+],
+"{0}: {1}. Accepted by itself: someone can replace them for each of their {2} sessions; they are being asked.": [
+"{0} : {1}. Acceptée d'elle-même : quelqu'un peut le remplacer à chacune de ses {2} séances ; ils sont sollicités.",
+"{0}: {1}. قُبل تلقائيا: يوجد من يعوّضه في كل حصة من حصصه الـ{2}؛ يجري سؤالهم."
+],
+"{0}: {1}. No session in that period: nothing to replace.": [
+"{0} : {1}. Aucune séance pendant cette période : rien à remplacer.",
+"{0}: {1}. لا توجد حصة في هذه الفترة: لا شيء للتعويض."
+],
+"{0}: month {1} of {2} ({3}) is not paid; their access is paused until they pay.": [
+"{0} : le mois {1} de {2} ({3}) n'est pas payé ; son accès est en pause jusqu'au paiement.",
+"{0}: الشهر {1} من {2} ({3}) غير مدفوع؛ وصوله موقوف إلى حين الدفع."
+],
+"Not given classes": [
+"Ne reçoit pas de classes",
+"لا تُسند إليه أقسام"
+],
+"Asked to be away {0}: waiting for the admin's answer.": [
+"Absence demandée {0} : en attente de la réponse de l'administration.",
+"طلب غياب {0}: في انتظار رد الإدارة."
+],
+"Asks to be away {0}: accept or refuse it.": [
+"Demande une absence {0} : acceptez ou refusez.",
+"يطلب الغياب {0}: اقبل أو ارفض."
+],
+"Decide": [
+"Décider",
+"قرّر"
+],
+"Away until {0}": [
+"Absent(e) jusqu'au {0}",
+"غائب حتى {0}"
+],
+"From {0}": [
+"À partir du {0}",
+"ابتداء من {0}"
+],
+"Until {0} only": [
+"Jusqu'au {0} seulement",
+"حتى {0} فقط"
+],
+"Available": [
+"Disponible",
+"متاح"
+],
+"{0}: {1} DT a month online, {2} DT a month on site.": [
+"{0} : {1} DT par mois en ligne, {2} DT par mois en présentiel.",
+"{0}: {1} دينار في الشهر عن بعد، {2} دينار في الشهر حضوريا."
+],
+"They ask from their space (a day or a period), or you note it (Professors › Absence). Someone free for each session: accepted, and asked to replace them. Nobody free: you accept or refuse on Professors › Absences.": [
+"Il la demande depuis son espace (un jour ou une période), ou vous la notez (Formateurs › Absence). Quelqu'un de libre pour chaque séance : acceptée, et il est sollicité pour le remplacer. Personne de libre : vous acceptez ou refusez dans Formateurs › Absences.",
+"يطلبه من فضائه (يوما أو فترة)، أو تسجّله أنت (المكوّنون › غياب). يوجد متاح لكل حصة: يُقبل ويُطلب منه التعويض. لا أحد متاح: تقبل أو ترفض في المكوّنون › الغيابات."
+],
+"They ask from their space, or you note it: Professors › “Note an absence” (first and last day, the hours if not whole days, the reason).": [
+"Il la demande depuis son espace, ou vous la notez : Formateurs › « Noter une absence » (premier et dernier jour, les heures si ce ne sont pas des journées entières, la raison).",
+"يطلبه من فضائه، أو تسجّله أنت: المكوّنون › «تسجيل غياب» (أول يوم وآخر يوم، والساعات إن لم تكن أياما كاملة، والسبب)."
+],
+"For each of their sessions then, a professor who teaches the program, is not away and has no class at those hours is asked, one at a time, by a private link.": [
+"Pour chacune de ses séances, un formateur qui enseigne la formation, n'est pas absent et n'a pas de cours à ces heures est sollicité, un à la fois, par un lien privé.",
+"لكل حصة من حصصه، يُسأل مكوّن يدرّس البرنامج وغير غائب وليس لديه درس في تلك الساعات، واحدا تلو الآخر، برابط خاص."
+],
+"Nobody free for a session: the request waits for you on Professors › Absences: accept (then choose another professor, another day or a week later) or refuse with a word.": [
+"Personne de libre pour une séance : la demande vous attend dans Formateurs › Absences : acceptez (puis choisissez un autre formateur, un autre jour ou une semaine plus tard) ou refusez avec un mot.",
+"لا أحد متاح لحصة: ينتظرك الطلب في المكوّنون › الغيابات: اقبل (ثم اختر مكوّنا آخر أو يوما آخر أو بعد أسبوع) أو ارفض مع كلمة."
+],
+"Refused: they get a message with one click to answer “I will be there” or “I still cannot come”; the second comes back to you.": [
+"Refusée : il reçoit un message avec un clic pour répondre « Je serai là » ou « Je ne peux toujours pas venir » ; la seconde réponse vous revient.",
+"عند الرفض: تصله رسالة بنقرة واحدة للرد «سأكون حاضرا» أو «لا أزال غير قادر على الحضور»؛ والرد الثاني يعود إليك."
+],
+"No professor teaches its program yet: add one to it in Professors › Who teaches each program.": [
+"Aucun formateur n'enseigne encore sa formation : ajoutez-en un dans Formateurs › Qui enseigne chaque formation.",
+"لا مكوّن يدرّس برنامجه بعد: أضف واحدا في المكوّنون › من يدرّس كل برنامج."
 ]
 }

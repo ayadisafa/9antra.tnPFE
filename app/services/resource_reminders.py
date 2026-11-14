@@ -107,7 +107,8 @@ def send_due(db: Session, today: date | None = None, base_url: str = "") -> int:
         })
         db.add(ResourceReminder(class_group_id=group.id, week_number=item["week"], professor_id=professor.id))
         db.commit()            # kept first: a reminder is never sent twice, whatever happens next
-        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant")
+        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant",
+                           subject=f"Les ressources de la semaine {item['week']} · {group.name}")
         count += 1
     return count
 

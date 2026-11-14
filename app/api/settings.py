@@ -90,6 +90,8 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "registration_form": __import__("app.services.registration_form", fromlist=["url"]).url(db),
             "session_check": __import__("app.services.session_check", fromlist=["settings_of"]).settings_of(db),
             "sm": _sms_view(db, request),
+            "fb": _facebook_view(),
+            "li": _linkedin_view(),
             "rules": {"never": settings.assistant_never or "", "notes": settings.assistant_notes or ""},
             "friend_options": _friend_options(),
             "centre_banks": _centre_banks(settings),
@@ -257,6 +259,52 @@ def _sms_view(db: Session, request) -> dict:
             "has_key": bool((os.getenv("SMS_SIGNING_KEY") or "").strip()), "webhook": f"{public_base_url(db, request)}/sms/webhook"}
 
 
+def _facebook_view() -> dict:
+    from app.services import facebook_page
+
+    return {"configured": facebook_page.configured(), "has_token": facebook_page.has_token(), "page_id": facebook_page.page_id()}
+
+
+def _linkedin_view() -> dict:
+    from app.services import linkedin
+
+    return {"configured": linkedin.configured(), "has_token": bool((os.getenv("LINKEDIN_ACCESS_TOKEN") or "").strip()),
+            "organization": (os.getenv("LINKEDIN_ORGANIZATION_ID") or "").strip()}
+
+
+@router.post("/facebook")
+def save_facebook(token: str = Form(""), page_id: str = Form("")):
+    """The Facebook page's access token and number (kept in .env, never in the database), used at once."""
+    from app.services import facebook_page
+
+    try:
+        facebook_page.save_account({"FACEBOOK_PAGE_ACCESS_TOKEN": token, "FACEBOOK_PAGE_ID": page_id})
+    except ValueError as error:
+        return _back(error=str(error), anchor="#facebook")
+    if not facebook_page.configured():
+        return _back(notice="Saved. Both the page access token and the page ID are needed.", anchor="#facebook")
+    return _back(notice="Saved. Press “Test the connection” to check Facebook answers.", anchor="#facebook")
+
+
+@router.post("/facebook/test")
+def test_facebook():
+    from app.services import facebook_page
+
+    ok, said = facebook_page.test_connection()
+    return _back(notice=said, anchor="#facebook") if ok else _back(error=said, anchor="#facebook")
+
+
+@router.post("/monthly")
+def save_monthly(remind_days: int = Form(5), grace_days: int = Form(3), pause_on: str = Form(""), db: Session = Depends(get_db)):
+    """Monthly payments: the reminder before a month, the days of grace, whether a month not paid pauses the access."""
+    settings = get_settings(db)
+    settings.month_remind_days = max(0, min(30, remind_days))
+    settings.month_grace_days = max(0, min(30, grace_days))
+    settings.month_pause_on = bool(pause_on)
+    db.commit()
+    return _back(notice="Monthly payments saved.", anchor="#monthly")
+
+
 @router.post("/sms")
 def save_sms(url: str = Form(""), user: str = Form(""), password: str = Form(""), key: str = Form("")):
     """The Android phone that sends and receives the SMS (kept in .env, never in the database)."""
@@ -363,6 +411,7 @@ def save_class_settings(
     apply_to_open_classes: bool = Form(False),
     next_class_gap_days: int = Form(10),
     replacement_fallback: str = Form("ask"),
+    absence_decision: str = Form("nobody"),
     session_check_on: str = Form(""),
     session_check_hours: int = Form(24),
     db: Session = Depends(get_db),
@@ -394,6 +443,7 @@ def save_class_settings(
     settings.auto_create_class_on_payment = auto_create_class_on_payment
     settings.next_class_gap_days = next_class_gap_days
     settings.replacement_fallback = replacement_fallback if replacement_fallback in ("ask", "postpone") else "ask"
+    settings.absence_decision = absence_decision if absence_decision in ("nobody", "always") else "nobody"
     settings.session_check_on = bool(session_check_on)
     settings.session_check_hours = max(1, min(72, session_check_hours))
     settings.auto_assign_professor = auto_assign_professor
@@ -584,17 +634,18 @@ def send_test_email(recipient: str = Form(...), db: Session = Depends(get_db)):
 
 
 @router.post("/linkedin")
-def save_linkedin(token: str = Form(""), organization: str = Form("")):
+def save_linkedin(token: str = Form(""), organization: str = Form(""), back: str = Form("")):
     """LinkedIn's keys for the page's posts (in the .env file, never in the database), used at once."""
     from fastapi.responses import RedirectResponse
     from urllib.parse import urlencode
 
     from app.services import linkedin
 
+    page = "/settings" if back.startswith("/settings") else "/website"
     try:
         linkedin.save_account({"LINKEDIN_ACCESS_TOKEN": token, "LINKEDIN_ORGANIZATION_ID": organization})
     except ValueError as error:
-        return RedirectResponse("/website?" + urlencode({"error": str(error)}) + "#linkedin", status_code=303)
+        return RedirectResponse(page + "?" + urlencode({"error": str(error)}) + "#linkedin", status_code=303)
     notice = ("Connected: the page's posts are read with the website, analysed and learnt." if linkedin.configured()
               else "Saved. Both the access token and the page's number are needed.")
-    return RedirectResponse("/website?" + urlencode({"notice": notice}) + "#linkedin", status_code=303)
+    return RedirectResponse(page + "?" + urlencode({"notice": notice}) + "#linkedin", status_code=303)

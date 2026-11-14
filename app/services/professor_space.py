@@ -50,17 +50,28 @@ def problems(db: Session, professor: Professor, *, own: bool = False) -> list[di
     found: list[dict] = []
     groups = _classes(db, professor)
     open_groups = [group for group in groups if group.status != ClassStatus.COMPLETED]
+    from app.services import absences as absence_rules
+
+    # An absence asked and not decided yet.
+    for absence in sorted((item for item in professor.absences if absence_rules.state(item) in absence_rules.WAITING
+                           and item.last_day >= today), key=lambda item: item.absence_date):
+        found.append({"icon": "bi-hourglass-split", "tone": "warn" if own else "bad",
+                      "text": _t("Asked to be away {0}: waiting for the admin's answer.", absence_rules.period_label(absence)) if own
+                      else _t("Asks to be away {0}: accept or refuse it.", absence_rules.period_label(absence)),
+                      "url": "#absences" if own else f"/professors?absence={absence.id}#absences", "do": _t("See it") if own else _t("Decide")})
     # An absence coming: is someone replacing them?
-    for absence in sorted((item for item in professor.absences if item.absence_date >= today), key=lambda item: item.absence_date):
+    for absence in sorted((item for item in professor.absences if absence_rules.state(item) == "accepted" and item.last_day >= today),
+                          key=lambda item: item.absence_date):
+        days = [absence.absence_date + timedelta(days=offset) for offset in range(absence_rules.days_count(absence))]
         rows = (db.query(SessionReplacement).filter(SessionReplacement.absent_professor_id == professor.id)
                 .join(ClassSession, ClassSession.id == SessionReplacement.session_id)
-                .filter(ClassSession.session_date == absence.absence_date).all())
-        day = absence.absence_date.strftime("%d/%m")
+                .filter(ClassSession.session_date.in_(days)).all())
         for row in rows:
             session = db.get(ClassSession, row.session_id)
             group = db.get(ClassGroup, row.class_group_id)
             if group is None or session is None:
                 continue
+            day = session.session_date.strftime("%d/%m")
             url = f"/classes/{group.id}?replacement={row.id}#follow"
             if row.status == "none":
                 found.append({"icon": "bi-person-x-fill", "tone": "bad", "text": _t("Away on {0}: nobody replaces them for {1} yet.", day, group.name),
@@ -106,7 +117,7 @@ def problems(db: Session, professor: Professor, *, own: bool = False) -> list[di
     for group in open_groups:
         if group.program is not None and not enrollment_service.teaches(professor, group.program):
             found.append({"icon": "bi-mortarboard", "tone": "info", "text": _t("{0} is not among the specialities written, yet {1} is taught.", group.program.name, group.name),
-                          "url": "/teacher/profile" if own else "/classes/?tab=professors", "do": _t("Add the speciality")})
+                          "url": "/teacher/profile" if own else "/professors", "do": _t("Add the speciality")})
     # Low reviews about them.
     reviews = program_feedback.of_professor(db, professor.name)
     low = [item for item in reviews["rows"] if item["answered"] and item["prof_stars"] and item["prof_stars"] <= 2]
@@ -118,10 +129,10 @@ def problems(db: Session, professor: Professor, *, own: bool = False) -> list[di
 
         if not professor.email and not professor.phone:
             found.append({"icon": "bi-telephone-x", "tone": "bad", "text": _t("No email and no phone: they cannot be told anything."),
-                          "url": "/classes/?tab=professors", "do": _t("Add their email or phone")})
+                          "url": "/professors", "do": _t("Add their email or phone")})
         if db.query(User.id).filter(User.professor_id == professor.id).first() is None:
             found.append({"icon": "bi-person-lock", "tone": "info", "text": _t("No account: they cannot fill presence or answer questions in the application."),
-                          "url": "/classes/?tab=professors", "do": _t("Give them an account")})
+                          "url": "/professors", "do": _t("Give them an account")})
     order = {"bad": 0, "warn": 1, "info": 2}
     return sorted(found, key=lambda item: order[item["tone"]])
 
@@ -205,7 +216,13 @@ def space(db: Session, professor: Professor, *, own: bool = False) -> dict:
             "feedback": said, "problems": problems(db, professor, own=own), "messages": messages(db, professor),
             "figures": figures(db, professor, groups, said),
             "specialties": [item.strip() for item in (professor.specialties or "").split(",") if item.strip()],
-            "absences": sorted((item for item in professor.absences if item.absence_date >= _today()), key=lambda item: item.absence_date)}
+            "absences": _absences_of(db, professor), "today_iso": _today().isoformat()}
+
+
+def _absences_of(db: Session, professor: Professor) -> list[dict]:
+    from app.services import absences
+
+    return absences.of_professor(db, professor)
 
 
 def _today():
@@ -228,3 +245,74 @@ def every(db: Session) -> list[dict]:
                       "specialties": [item.strip() for item in (professor.specialties or "").split(",") if item.strip()][:4]})
     found.sort(key=lambda item: (-item["bad"], -len(item["problems"]), item["professor"].name))
     return found
+
+
+def cards(db: Session) -> list[dict]:
+    """Every professor's card on the professors' page: who they are and what they teach, their figures and hours, their
+    classes, their access, their absences, and what waits for them; the ones something urgent waits for first."""
+    from datetime import date
+
+    from app.models.user import User
+    from app.services import absences, class_looks
+    from app.services.schedule_utils import parse_days
+
+    accounts = {account.professor_id: account for account in db.query(User).filter(User.professor_id.isnot(None)).all()}
+    today = _today()
+    found = []
+    for professor in db.query(Professor).order_by(Professor.name).all():
+        if (professor.name or "").startswith("À nommer"):
+            continue
+        groups = classes(db, professor)
+        said = feedback(db, professor)
+        issues = problems(db, professor)
+        mine = [card["class"] for card in groups if card["class"].status != ClassStatus.COMPLETED]
+        hours = 0.0
+        for group in mine:
+            if group.start_time and group.end_time:
+                length = (datetime.combine(date.min, group.end_time) - datetime.combine(date.min, group.start_time)).seconds / 3600
+                hours += length * max(1, len(parse_days(group.days_of_week)))
+        away = [item for item in professor.absences if absences.state(item) in absences.AWAY and item.last_day >= today]
+        away.sort(key=lambda item: item.absence_date)
+        now_away = next((item for item in away if absences.state(item) == "accepted" and item.absence_date <= today), None)
+        if not professor.is_available:
+            availability = ("off", _t("Not given classes"))
+        elif now_away is not None:
+            availability = ("away", _t("Away until {0}", now_away.last_day.strftime("%d/%m")))
+        elif professor.available_from and professor.available_from > today:
+            availability = ("later", _t("From {0}", professor.available_from.strftime("%d/%m")))
+        elif professor.available_until and professor.available_until < today:
+            availability = ("off", _t("Until {0} only", professor.available_until.strftime("%d/%m")))
+        else:
+            availability = ("on", _t("Available"))
+        found.append({"professor": professor, "figures": figures(db, professor, groups, said), "problems": issues,
+                      "bad": sum(1 for item in issues if item["tone"] == "bad"), "hours": round(hours, 1),
+                      "specialties": [item.strip() for item in (professor.specialties or "").split(",") if item.strip()],
+                      "classes": mine, "looks": {group.id: class_looks.look(group) for group in mine},
+                      "account": accounts.get(professor.id), "availability": availability,
+                      "away": [{"absence": item, "state": absences.state(item), "period": absences.period_label(item)} for item in away[:3]],
+                      "teaching": any(group.status == ClassStatus.ONGOING for group in mine)})
+    found.sort(key=lambda item: (-item["bad"], -len(item["problems"]), item["professor"].name))
+    return found
+
+
+def page(db: Session) -> dict:
+    """Everything the professors' page shows: the cards, the absences and requests, who teaches each program, and the
+    reminders to add resources."""
+    from app.api.classgroup import professors_coverage
+    from app.models import Program
+    from app.services import absences, resource_reminders
+
+    rows = cards(db)
+    programs = db.query(Program).order_by(Program.name.asc()).all()
+    professors = db.query(Professor).order_by(Professor.name.asc()).all()
+    coverage = professors_coverage(db, programs, professors)
+    waiting = absences.waiting(db)
+    return {"rows": rows, "coverage": coverage, "programs": programs,
+            "professors": [item for item in professors if not (item.name or "").startswith("À nommer")],
+            "waiting_absences": waiting, "coming_absences": absences.coming(db), "refused_absences": absences.refused(db),
+            "resource_plan": resource_reminders.settings_of(db), "resource_due": resource_reminders.due(db),
+            "resource_recent": resource_reminders.recent(db), "today": _today(),
+            "totals": {"professors": len(rows), "teaching": sum(1 for row in rows if row["teaching"]),
+                       "problems": sum(len(row["problems"]) for row in rows), "urgent": sum(row["bad"] for row in rows),
+                       "waiting": len(waiting), "nobody": sum(1 for row in coverage if row["nobody"]),
+                       "away": sum(1 for row in rows if row["availability"][0] == "away")}}

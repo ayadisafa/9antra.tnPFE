@@ -352,17 +352,18 @@ def able_to_take(db: Session, class_group: ClassGroup, exclude_id: str | None = 
 
 
 def absent_on(db: Session, professor_id: str, day: date | None, start: time | None = None, end: time | None = None) -> bool:
-    """Whether a professor is away that day (the whole day, or hours that cross the class's)."""
+    """Whether a professor is away that day (the whole day, or hours that cross the class's): an absence accepted, or
+    asked and not decided yet (they are not given more to teach meanwhile). See services/absences.py."""
+    from sqlalchemy import or_
+
     from app.models.professor_absence import ProfessorAbsence
+    from app.services import absences
 
     if day is None:
         return False
-    for absence in db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == professor_id, ProfessorAbsence.absence_date == day).all():
-        if not (absence.start_time and absence.end_time and start and end):
-            return True
-        if max(start, absence.start_time) < min(end, absence.end_time):
-            return True
-    return False
+    rows = (db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == professor_id, ProfessorAbsence.absence_date <= day,
+                                              or_(ProfessorAbsence.end_date >= day, ProfessorAbsence.absence_date == day)).all())
+    return any(absences.state(absence) in absences.AWAY and absences.covers(absence, day, start, end) for absence in rows)
 
 
 def tell_professor(db: Session, class_group: ClassGroup, professor: Professor) -> int:
@@ -380,7 +381,8 @@ def tell_professor(db: Session, class_group: ClassGroup, professor: Professor) -
             + (f", première séance le {format_date_fr(start)} à {start:%H:%M}" if start else "") + ". "
             + f"{count} candidat(s) inscrit(s) pour l'instant. Tout est dans votre espace : {public_base_url(db)}/teacher")
     try:
-        return len(team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant"))
+        return len(team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant",
+                                      subject=f"Une classe pour vous : {class_group.name}"))
     except Exception:
         db.rollback()
         logger.exception("The professor %s could not be told of class %s.", professor.id, class_group.id)
