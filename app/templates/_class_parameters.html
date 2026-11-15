@@ -44,7 +44,7 @@
           </option>
           {% endfor %}
         </select>
-        <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who can take it are offered: they teach its program, are available and free at its hours. <a href="/classes/?tab=professors" class="ui-link">Professors</a></div>
+        <div class="ui-hint" style="font-size:.7rem; color:var(--muted); margin-top:4px;">Only the professors who can take it are offered: they teach its program, are available and free at its hours. <a href="/professors" class="ui-link">Professors</a></div>
       </div>
       <div class="col-sm-5">
         <label class="cp-label" for="param-room-{{ cls.id }}">Room</label>
@@ -90,6 +90,13 @@
       <span class="cp-rule-body">
         <span class="cp-rule-title">On a date I choose</span>
         <span class="cp-rule-fields"><input name="fixed_start_date" type="date" value="{{ summary.start.strftime('%Y-%m-%d') if summary.start else '' }}" class="form-control form-control-sm" aria-label="Start date" style="max-width:190px;"></span>
+      </span>
+    </label>
+    <label class="cp-rule">
+      <input class="form-check-input" type="radio" name="start_mode" value="{{ modes.next_month }}" {% if cls.start_mode == modes.next_month %}checked{% endif %}>
+      <span class="cp-rule-body">
+        <span class="cp-rule-title">In the first week of the next month <span class="ui-chip ok" style="font-size:.62rem;">The rule</span></span>
+        <span class="cp-rule-fields"><span class="cp-hint d-block">The first session day of that week. The other choices below are your exception for this class only.</span></span>
       </span>
     </label>
     <label class="cp-rule">

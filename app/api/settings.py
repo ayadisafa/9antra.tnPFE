@@ -53,7 +53,7 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
         context={
             "active_page": "settings",
             "settings": settings,
-            "reminder_days": format_reminder_days(parse_reminder_days(settings.training_reminder_days)),
+            "reminder_days": __import__("app.services.settings_service", fromlist=["display_offsets"]).display_offsets(settings.training_reminder_days),
             "day_options": list(zip(DAY_KEYS, DAY_SHORT_EN)),
             "selected_days": [DAY_KEYS[index] for index in parse_days(settings.default_session_days)],
             "open_classes": open_classes,
@@ -83,13 +83,15 @@ def settings_page(request: Request, db: Session = Depends(get_db)):
             "facebook_ready": website_sync.facebook_connected(),
             "public_url": public_base_url(db, request),
             "public_url_local": weekly_questions.is_local_address(public_base_url(db, request)),
-            "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT},
+            "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT, "next_month": "next_month"},
             "plain_words": __import__("app.services.settings_guide", fromlist=["plain_words"]).plain_words(db, request),
             "report": _report_view(db, settings),
             "wa": _whatsapp_view(db, settings, request),
             "registration_form": __import__("app.services.registration_form", fromlist=["url"]).url(db),
             "session_check": __import__("app.services.session_check", fromlist=["settings_of"]).settings_of(db),
             "sm": _sms_view(db, request),
+            "fb": _facebook_view(),
+            "li": _linkedin_view(),
             "rules": {"never": settings.assistant_never or "", "notes": settings.assistant_notes or ""},
             "friend_options": _friend_options(),
             "centre_banks": _centre_banks(settings),
@@ -257,6 +259,52 @@ def _sms_view(db: Session, request) -> dict:
             "has_key": bool((os.getenv("SMS_SIGNING_KEY") or "").strip()), "webhook": f"{public_base_url(db, request)}/sms/webhook"}
 
 
+def _facebook_view() -> dict:
+    from app.services import facebook_page
+
+    return {"configured": facebook_page.configured(), "has_token": facebook_page.has_token(), "page_id": facebook_page.page_id()}
+
+
+def _linkedin_view() -> dict:
+    from app.services import linkedin
+
+    return {"configured": linkedin.configured(), "has_token": bool((os.getenv("LINKEDIN_ACCESS_TOKEN") or "").strip()),
+            "organization": (os.getenv("LINKEDIN_ORGANIZATION_ID") or "").strip()}
+
+
+@router.post("/facebook")
+def save_facebook(token: str = Form(""), page_id: str = Form("")):
+    """The Facebook page's access token and number (kept in .env, never in the database), used at once."""
+    from app.services import facebook_page
+
+    try:
+        facebook_page.save_account({"FACEBOOK_PAGE_ACCESS_TOKEN": token, "FACEBOOK_PAGE_ID": page_id})
+    except ValueError as error:
+        return _back(error=str(error), anchor="#facebook")
+    if not facebook_page.configured():
+        return _back(notice="Saved. Both the page access token and the page ID are needed.", anchor="#facebook")
+    return _back(notice="Saved. Press “Test the connection” to check Facebook answers.", anchor="#facebook")
+
+
+@router.post("/facebook/test")
+def test_facebook():
+    from app.services import facebook_page
+
+    ok, said = facebook_page.test_connection()
+    return _back(notice=said, anchor="#facebook") if ok else _back(error=said, anchor="#facebook")
+
+
+@router.post("/monthly")
+def save_monthly(remind_days: int = Form(5), grace_days: int = Form(3), pause_on: str = Form(""), db: Session = Depends(get_db)):
+    """Monthly payments: the reminder before a month, the days of grace, whether a month not paid pauses the access."""
+    settings = get_settings(db)
+    settings.month_remind_days = max(0, min(30, remind_days))
+    settings.month_grace_days = max(0, min(30, grace_days))
+    settings.month_pause_on = bool(pause_on)
+    db.commit()
+    return _back(notice="Monthly payments saved.", anchor="#monthly")
+
+
 @router.post("/sms")
 def save_sms(url: str = Form(""), user: str = Form(""), password: str = Form(""), key: str = Form("")):
     """The Android phone that sends and receives the SMS (kept in .env, never in the database)."""
@@ -363,6 +411,8 @@ def save_class_settings(
     apply_to_open_classes: bool = Form(False),
     next_class_gap_days: int = Form(10),
     replacement_fallback: str = Form("ask"),
+    absence_decision: str = Form("nobody"),
+    professor_program_requests: str = Form(""),
     session_check_on: str = Form(""),
     session_check_hours: int = Form(24),
     db: Session = Depends(get_db),
@@ -371,10 +421,10 @@ def save_class_settings(
     start = parse_time(default_session_start_time)
     end = parse_time(default_session_end_time)
     session_days = parse_days(days)
-    offsets = parse_reminder_days(training_reminder_days)
+    offsets = __import__("app.services.settings_service", fromlist=["parse_reminder_offsets"]).parse_reminder_offsets(training_reminder_days) if training_reminder_days.strip() else []
     problems = [
         message for failed, message in (
-            (class_start_mode not in (START_AFTER_DAYS, START_MIN_ENROLLMENT), "Choose a start rule."),
+            (class_start_mode not in (START_AFTER_DAYS, START_MIN_ENROLLMENT, "next_month"), "Choose a start rule."),
             (not 0 <= default_class_start_days <= 365, "Start delay must be between 0 and 365 days."),
             (default_class_capacity < 1, "Capacity must be at least 1."),
             (not 1 <= min_students_to_start <= max(default_class_capacity, 1), "Minimum candidates to start must be between 1 and the capacity."),
@@ -394,10 +444,12 @@ def save_class_settings(
     settings.auto_create_class_on_payment = auto_create_class_on_payment
     settings.next_class_gap_days = next_class_gap_days
     settings.replacement_fallback = replacement_fallback if replacement_fallback in ("ask", "postpone") else "ask"
+    settings.absence_decision = absence_decision if absence_decision in ("nobody", "always") else "nobody"
+    settings.professor_program_requests = bool(professor_program_requests)
     settings.session_check_on = bool(session_check_on)
     settings.session_check_hours = max(1, min(72, session_check_hours))
     settings.auto_assign_professor = auto_assign_professor
-    settings.class_start_mode = class_start_mode
+    settings.class_start_mode = "next_month"          # the rule; another date only for one class, in its parameters
     settings.default_class_start_days = default_class_start_days
     settings.min_students_to_start = min_students_to_start
     settings.min_start_notice_days = min_start_notice_days
@@ -584,17 +636,18 @@ def send_test_email(recipient: str = Form(...), db: Session = Depends(get_db)):
 
 
 @router.post("/linkedin")
-def save_linkedin(token: str = Form(""), organization: str = Form("")):
+def save_linkedin(token: str = Form(""), organization: str = Form(""), back: str = Form("")):
     """LinkedIn's keys for the page's posts (in the .env file, never in the database), used at once."""
     from fastapi.responses import RedirectResponse
     from urllib.parse import urlencode
 
     from app.services import linkedin
 
+    page = "/settings" if back.startswith("/settings") else "/website"
     try:
         linkedin.save_account({"LINKEDIN_ACCESS_TOKEN": token, "LINKEDIN_ORGANIZATION_ID": organization})
     except ValueError as error:
-        return RedirectResponse("/website?" + urlencode({"error": str(error)}) + "#linkedin", status_code=303)
+        return RedirectResponse(page + "?" + urlencode({"error": str(error)}) + "#linkedin", status_code=303)
     notice = ("Connected: the page's posts are read with the website, analysed and learnt." if linkedin.configured()
               else "Saved. Both the access token and the page's number are needed.")
-    return RedirectResponse("/website?" + urlencode({"notice": notice}) + "#linkedin", status_code=303)
+    return RedirectResponse(page + "?" + urlencode({"notice": notice}) + "#linkedin", status_code=303)

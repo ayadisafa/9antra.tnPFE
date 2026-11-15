@@ -260,9 +260,32 @@ def payments_page(request: Request, db: Session = Depends(get_db)):
             "centre_ribs_set": bool(__import__("app.services.payment_proofs", fromlist=["centre_ribs"]).centre_ribs(db)),
             "centre_names_set": bool(__import__("app.services.payment_proofs", fromlist=["centre_names"]).centre_names(db)),
             "who_paid": __import__("app.services.payment_proofs", fromlist=["who_may_have_paid"]).who_may_have_paid(db),
+            "monthly": __import__("app.services.monthly", fromlist=["board"]).board(db),
             "notice": request.query_params.get("notice"), "error": request.query_params.get("error"),
         },
     )
+
+
+@router.post("/payments/monthly/{registration_id}")
+def decide_month(registration_id: str, request: Request, number: int = Form(...), choice: str = Form(""), db: Session = Depends(get_db)):
+    """A month that started before monthly payments: the admin adds it to what they owe, or leaves it free."""
+    from urllib.parse import urlencode
+
+    from app.models.registration import Registration
+    from app.services import auth, monthly
+
+    registration = db.get(Registration, registration_id)
+    if registration is None:
+        return RedirectResponse("/payments#monthly", status_code=303)
+    who = getattr(auth.current(request), "name", None) or "Admin"
+    if choice == "charge":
+        price = monthly.charge(db, registration, number, by=who)
+        said = f"Month {number} added: {monthly.money(price)} to pay."
+    else:
+        monthly.leave_free(db, registration, number, by=who)
+        said = f"Month {number} left free."
+    db.commit()
+    return RedirectResponse("/payments?" + urlencode({"notice": said}) + "#monthly", status_code=303)
 
 
 @router.post("/advice/snooze")

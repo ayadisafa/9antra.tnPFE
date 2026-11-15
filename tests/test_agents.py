@@ -279,7 +279,7 @@ sr.set_hours(db, 24)
 items = {item["key"]: item for item in reminder_board.items(db)}
 check("reminders page: every reminder is listed", {"payment_reminder", "training_reminder", "session_reminder", "session_link", "level_reminder",
                                                    "resources", "course_questions"} <= set(items))
-check("reminders page: the new one is on, 24 h before", items["session_reminder"]["on"] and items["session_reminder"]["timing"]["value"] == 24)
+check("reminders page: the new one is on, 24 h before", items["session_reminder"]["on"] and (items["session_reminder"]["timing"]["rows"][0]["value"], items["session_reminder"]["timing"]["rows"][0]["unit"]) == (24, "hours"))
 page = admin.get("/reminders")
 check("reminders page: opens with every reminder", page.status_code == 200 and 'id="auto"' in page.text and "Reminder before each session" in page.text
       and "rb-switch" in page.text)

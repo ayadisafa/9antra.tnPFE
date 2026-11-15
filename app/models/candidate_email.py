@@ -41,6 +41,10 @@ class CandidateEmail(Base):
     escalation_reason = Column(Text, nullable=True)     # why the assistant asked the admin
     attachments = Column(Text, nullable=True)           # JSON: the files that came with the email
     channel = Column(String, default="email", nullable=True, index=True)   # email | whatsapp
+    # WhatsApp and SMS sent by themselves: Meta's or the phone's id, and what became of it (services/delivery.py).
+    external_id = Column(String, nullable=True, index=True)
+    delivery = Column(String, nullable=True)            # sent | delivered | read | failed
+    delivery_at = Column(DateTime, nullable=True)
     emotions = Column(Text, nullable=True)        # what the candidate felt, read with word lists (services/emotions.py), as JSON
     admin_score = Column(Integer, nullable=True)        # the admin's verdict on an assistant's answer: 1 right, -1 wrong
     # What the message is about (services/message_categories.py): programs, planning, payment, registration, technical,

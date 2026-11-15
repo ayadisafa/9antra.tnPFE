@@ -227,6 +227,8 @@ KINDS = {
     "ASSIGNMENT_PENDING": ("⏳", "#d97706", "classes"), "REMINDER": ("⏰", "#d97706", "sessions"), "REVIEW_LOW": ("💬", "#e11d48", "feelings"),
     "REVIEW": ("⭐", "#f59e0b", "feelings"), "REPLACEMENT": ("🔁", "#e11d48", "classes"), "MEETING_LINK": ("🔗", "#0ea5e9", "link"),
     "TEAM_MESSAGE": ("💬", "#6366f1", "team"), "ACCOUNT": ("🔐", "#475569", "identity"), "REGISTRATION_REQUEST": ("🙋", "#db2777", "candidates"),
+    "ABSENCE_REQUEST": ("🗓️", "#d97706", "classes"), "ABSENCE": ("🗓️", "#0ea5e9", "classes"), "MONTH_UNPAID": ("💳", "#e11d48", "payments"), "MONTH_CHOICE": ("🗓️", "#16a34a", "payments"), "TEACH_REQUEST": ("🎓", "#d97706", "classes"),
+    "MODE_CHANGE": ("🔀", "#7c3aed", "classes"), "MODE_CHANGE_DONE": ("🔀", "#16a34a", "candidates"),
 }
 DEFAULT_KIND = ("🔔", "#a42c67", "dashboard")
 

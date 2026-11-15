@@ -64,7 +64,7 @@ def items(db: Session) -> list[dict]:
     nobody = [program.name for program in approved if not any(enrollment_service.teaches(professor, program) for professor in real)]
     if nobody:
         found.append(_item("programs", "bi-person-exclamation", _n(len(nobody), "{0} program has no teacher yet", "{0} programs have no teacher yet"),
-                           "/classes/?tab=professors#coverage", nobody, len(nobody)))
+                           "/professors#coverage", nobody, len(nobody)))
 
     # Classes that are not finished
     classes = db.query(ClassGroup).filter(ClassGroup.status != ClassStatus.COMPLETED).all()
@@ -85,23 +85,23 @@ def items(db: Session) -> list[dict]:
                 soon.append(label)
     if soon:
         found.append(_item("classes", "bi-folder2-open", _n(len(soon), "{0} week of the next seven days has no resources yet", "{0} weeks of the next seven days have no resources yet"),
-                           "/classes/?tab=professors#resources", soon, len(soon)))
+                           "/professors#resources", soon, len(soon)))
 
     # Professors
     to_name = [professor.name for professor in professors if (professor.name or "").startswith("À nommer")]
     if to_name:
         found.append(_item("professors", "bi-question-circle", _n(len(to_name), "{0} place of a professor still to name", "{0} places of professors still to name"),
-                           "/classes/?tab=professors#coverage", to_name, len(to_name)))
+                           "/professors#coverage", to_name, len(to_name)))
     no_email = [professor.name for professor in real if not (professor.email or "").strip()]
     if no_email:
-        found.append(_item("professors", "bi-envelope-x", _n(len(no_email), "{0} professor has no email", "{0} professors have no email"), "/classes/?tab=professors", no_email, len(no_email)))
+        found.append(_item("professors", "bi-envelope-x", _n(len(no_email), "{0} professor has no email", "{0} professors have no email"), "/professors", no_email, len(no_email)))
     no_phone = [professor.name for professor in real if not (professor.phone or "").strip()]
     if no_phone:
-        found.append(_item("professors", "bi-telephone-x", _n(len(no_phone), "{0} professor has no phone", "{0} professors have no phone"), "/classes/?tab=professors", no_phone, len(no_phone)))
+        found.append(_item("professors", "bi-telephone-x", _n(len(no_phone), "{0} professor has no phone", "{0} professors have no phone"), "/professors", no_phone, len(no_phone)))
     with_access = {row[0] for row in db.query(User.professor_id).filter(User.professor_id.isnot(None), User.is_active.is_(True)).all()}
     no_access = [professor.name for professor in real if professor.id not in with_access]
     if no_access:
-        found.append(_item("professors", "bi-key", _n(len(no_access), "{0} professor cannot sign in yet", "{0} professors cannot sign in yet"), "/classes/?tab=professors", no_access, len(no_access)))
+        found.append(_item("professors", "bi-key", _n(len(no_access), "{0} professor cannot sign in yet", "{0} professors cannot sign in yet"), "/professors", no_access, len(no_access)))
 
     # Candidates
     placed = (db.query(Registration).filter(Registration.payment_status == PaymentStatus.PAID, Registration.class_group_id.is_(None),

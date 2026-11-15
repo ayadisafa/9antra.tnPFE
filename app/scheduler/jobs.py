@@ -441,6 +441,21 @@ def translations_tick():
 
 
 @system_status.watched("reminders")
+def reminders_quick_tick():
+    """Every 10 seconds: only the reminders at a time (a timer in seconds goes on time); everything else each minute."""
+    from app.services import reminders
+
+    db: Session = SessionLocal()
+    try:
+        reminders.send_scheduled(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Sending the reminders at their time failed.")
+        system_status.problem("reminders", exc)
+    finally:
+        db.close()
+
+
 def reminders_tick():
     """The reminders the admin planned, when their time has come (see reminders.send_due)."""
     from app.services import reminders
@@ -508,6 +523,19 @@ def reminders_tick():
     except Exception as exc:
         db.rollback()
         logger.exception("Closing the presence of the sessions that ended failed.")
+        system_status.problem("reminders", exc)
+    try:
+        # Prices are for one month: the reminder before a month, the month that starts, the access paused (see monthly).
+        from app.services import monthly
+
+        monthly.apply_everywhere(db)            # once: the rules applied to what existed (see monthly.apply_everywhere)
+        from app.services.enrollment_service import align_auto_classes
+
+        align_auto_classes(db)                  # a class the application made always starts in the first week of a month
+        monthly.tick(db)
+    except Exception as exc:
+        db.rollback()
+        logger.exception("Following the monthly payments failed.")
         system_status.problem("reminders", exc)
     try:
         # Monday's letter: the week's sessions and what waits for an answer, in one message (see letters).
@@ -858,6 +886,16 @@ def start():
         max_instances=1,
         coalesce=True,
         id="reminders_tick",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        reminders_quick_tick,
+        "interval",
+        seconds=10,
+        next_run_time=datetime.now() + timedelta(seconds=40),
+        max_instances=1,
+        coalesce=True,
+        id="reminders_quick_tick",
         replace_existing=True,
     )
     scheduler.add_job(

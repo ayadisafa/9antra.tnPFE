@@ -75,11 +75,12 @@ def send(db: Session, candidate: Candidate, text: str, *, kind: str, author: str
         return None
     thread = thread or thread_for(db, candidate)
     body = whatsapp.as_message(text)
-    problem = None
+    problem, sent_id = None, None
     if dry_run:
         status = "test"
     elif whatsapp.configured():
         problem = whatsapp.send(phone, body, free=within_window(db, thread))
+        sent_id = None if problem else whatsapp.last_id()
         status = "failed" if problem else "sent"
     else:
         status = "to_send"
@@ -92,6 +93,8 @@ def send(db: Session, candidate: Candidate, text: str, *, kind: str, author: str
                   else "Waiting for you: press “Open WhatsApp”, send it there, then “Sent”." if status == "to_send"
                   else "Test: not sent." if dry_run else note),
     )
+    if sent_id:
+        message.external_id, message.delivery = str(sent_id), "sent"     # Meta says later: delivered, read (services/delivery.py)
     if status == "to_send":
         thread.status = "sent" if not thread.inbound_count else thread.status
     if not dry_run:
@@ -142,11 +145,12 @@ def send_sms(db: Session, candidate: Candidate, text: str, *, kind: str, author:
         return None
     thread = thread or sms_thread_for(db, candidate)
     body = whatsapp.as_message(text)
-    problem = None
+    problem, sent_id = None, None
     if dry_run:
         status = "test"
     elif sms.configured():
         problem = sms.send(phone, body)
+        sent_id = None if problem else sms.last_id()
         status = "failed" if problem else "sent"
     else:
         status = "to_send"
@@ -158,6 +162,8 @@ def send_sms(db: Session, candidate: Candidate, text: str, *, kind: str, author:
                   else "Waiting for you: press “Open messages”, send it from your phone, then “Sent”." if status == "to_send"
                   else "Test: not sent." if dry_run else note),
     )
+    if sent_id:
+        message.external_id, message.delivery = str(sent_id), "sent"     # the phone says later: delivered or failed
     if not dry_run:
         db.add(Activity(candidate_id=candidate.id, event_type=f"{(kind or 'message').upper()}_SMS_{ {'sent': 'SENT', 'failed': 'FAILED'}.get(status, 'WAITING') }",
                         details=(problem or body)[:300]))

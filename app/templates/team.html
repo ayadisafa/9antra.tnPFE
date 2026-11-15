@@ -249,7 +249,7 @@
       <button class="ui-btn sm" name="preset" value="all" data-confirm="Give {{ person.name }} access to everything, with every special right? They stay a team member: you can take it back."><i class="bi bi-unlock"></i>Give everything</button></div>
   </form>
   {% elif person.role == 'professor' %}
-  <div class="tm-actions"><a class="ui-btn sm" href="/classes/?tab=professors">Managed on the Professors page</a></div>
+  <div class="tm-actions"><a class="ui-btn sm" href="/professors">Managed on the Professors page</a></div>
   {% endif %}
 
   {% if me.is_admin or person.role != 'admin' %}

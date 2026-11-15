@@ -2,6 +2,20 @@
 own words in French as they appear on the pages. Written by hand; a task missing here is answered in French."""
 
 TN: dict[str, tuple[str, list[str]]] = {
+    "absence-request": ("A9bel wala orfedh ghiyab formateur", [
+        "Formateurs › Absences: les demandes elli testanna 9rarek lowla, kol séance mta3 el période w chkoun ynajjem y3awdhou.",
+        "Accepter: kol séance tetlob remplaçant; elli ma fammech 7add libre ytab3ou el règle mte3ek fi Paramètres › Classes. Refuser: ekteb 3lech, howa ya9rah.",
+        "Ki tetrfedh, yjeweb b clic: « Je serai là » tsakkarha; « Je ne peux toujours pas venir » terja3lek.",
+        "Paramètres › Classes › « Un formateur demande à s'absenter »: ma9boula wa7adha ki fama 7add libre l kol séance, wala enti t9arrer kol demande."]),
+    "monthly-payments": ("El khlas b chhar: kol chhar ytkhallas bech ykammel", [
+        "Soum el formation howa soum chhar wa7ed; toulha b chhour (60 jour = 2 chhour).",
+        "Chhar louwel ytkhallas bech yodkhel classe. 9bal kol chhar jey youslou rappel wa7ed; ki yebda yetzad 3al flous elli 3lih.",
+        "Ken ma khallasch ba3d ayyem men bdeyet chhar: l'accès mte3ou yet7abbes (ma fammech lien séance, les questions w les fichiers yestannew) 7atta ykhallas.",
+        "Paiements › « Mois par mois » yfarjik chkoun 3lih ama chhar; Paramètres › Classes › Paiements mensuels lel ayyem."]),
+    "social-setup": ("Arbot les pages Facebook w LinkedIn", [
+        "Paramètres › Emails et messages › Page Facebook: el jeton d'accès mta3 el page w l'ID mta3 el page, m3a les étapes, ba3d « Tester la connexion ».",
+        "Paramètres › Page LinkedIn: el jeton d'accès (Community Management API) w numéro el page.",
+        "Ba3d, les publications (w les avis Facebook) tet9ra m3a el site kol 6 swaye3, tet7allel w l'assistant yet3allemha."]),
     "email-setup": ("Arbot el Gmail mte3ek bech el application tab3ath w ta9ra el emails", [
         "Fi compte Google mte3ek, 7el « Validation en 2 étapes » (Sécurité).",
         "A3mel « mot de passe d'application » (Sécurité › Mots de passe des applications): 16 7arf.",
@@ -33,11 +47,11 @@ TN: dict[str, tuple[str, list[str]]] = {
         "Tchouf el menu w les pages mte3ou bidhabt; ma tnajem tbadel chay.",
         "El barre safra el fou9: « Changer ce qu'il peut faire », wala « Retour à ma vue »."]),
     "professor-add": ("Zid formateur l formation", [
-        "Classes › Formateurs › « Qui enseigne chaque formation ».",
+        "Formateurs › « Qui enseigne chaque formation ».",
         "« L'enseigne aussi » l 7add ya5dem m3ak deja, wala « Un nouveau formateur » (esm, email, téléphone): 9addech ma t7eb.",
         "El formations elli 7atta 7add ma y9arrihom yjiw louwel, bel a7mar: ma tet7allech classe 7atta ykoun 3andha formateur."]),
     "resources-remind": ("Fakker les formateurs bech yzidou les ressources mte3hom", [
-        "Classes › Formateurs › « Rappeler aux formateurs d'ajouter leurs ressources ».",
+        "Formateurs › « Rappeler aux formateurs d'ajouter leurs ressources ».",
         "Ikhtar 9adech men nhar 9bal el jem3a, w ekteb el klem mte3ek.",
         "« Enregistrer et envoyer ceux qui sont dus maintenant » yab3ath elli lezem lyoum."]),
     "resources-add": ("Zid les ressources mta3 jem3a (formateurs)", [
@@ -156,15 +170,15 @@ TN: dict[str, tuple[str, list[str]]] = {
         "El case mta3 el recherche el fou9, wala Ctrl+K fi ay page.",
         "Ekteb esm, email, page, réglage wala chnowa t7eb ta3mel, w 7ell el ligne."]),
     "professor-absence": ("Sajjel ghiyeb formateur", [
-        "Classes › Formateurs › carte el formateur › Absence.",
+        "Formateurs › carte el formateur › Absence.",
         "Ikhtar el dates (w les heures ken mouch nhar kemel) w el sabab, ba3d Enregistrer.",
         "Kol séance mte3ou fi les ayyem hedhom tes2el formateur mte3 nafs el formation far8 bech yo93ed blastou, wa7ed wa7ed, b lien privé bech y2akked; ken 7atta 7ad ma ynajjem, yjik notification."]),
     "professor-delete": ("Fasa5 formateur", [
-        "Classes › Formateurs › carte el formateur › bouton el poubelle.",
+        "Formateurs › carte el formateur › bouton el poubelle.",
         "Kol classe mte3ou, ikhtar chkoun y9arriha tawa (ken les formateurs elli y9arriw el formation mte3ha w far8in fi wa9tha), wala khalliha testanna formateur.",
         "« Supprimer définitivement »: l'accès, les absences w el conversation mte3ou yetfas5ou m3ah; les classes elli kemlou ykhallou esmou."]),
     "professor-access": ("A3ti formateur accès mte3ou", [
-        "Classes › Formateurs › carte el formateur › Accès.",
+        "Formateurs › carte el formateur › Accès.",
         "Ekteb el email elli yodkhel bih w mot de passe louwel, ba3d a3tihoulou enti.",
         "Ba3d ychouf ken les classes mte3ou: el cours, la présence w les messages mte3ou."]),
     "knowledge-teach": ("3allem el assistant réponse, page wala texte", [

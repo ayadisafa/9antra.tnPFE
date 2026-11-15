@@ -167,7 +167,7 @@
 <div class="lv-remind {{ 'is-off' if not reminders_on }}">
   <span class="lv-remind-ico"><i class="bi {{ 'bi-alarm-fill' if reminders_on else 'bi-bell-slash-fill' }}"></i></span>
   <div style="min-width:0; flex:1;">
-    {% if reminders_on %}<b>One reminder, by itself</b><span>A candidate who has not answered {{ remind_after_days }} days after receiving their level check gets one reminder. Never a second one.</span>
+    {% if reminders_on %}<b>One reminder, by itself</b><span>A candidate who has not answered {{ remind_after_days }} after receiving their level check gets one reminder. Never a second one.</span>
     {% else %}<b>Reminders are stopped</b><span>Nobody is reminded to answer by itself. You can still press “Send again” on a candidate.</span>{% endif %}
   </div>
   <form method="post" action="/quiz/reminders" class="m-0">

@@ -44,7 +44,8 @@ _NOT_FOR_US = re.compile(r"\b(rembours\w*|refund\w*|annul\w*|cancel\w*|plainte|c
 _SAY = {
     "fr": {
         "hello": "Bonjour et merci pour votre message !", "hello_name": "Bonjour {name}, et merci pour votre message !",
-        "price_both": "« {program} » coûte {online} DT en ligne et {onsite} DT sur place.", "price_one": "« {program} » coûte {price} DT ({mode}).",
+        "price_both": "« {program} » coûte {online} DT par mois en ligne et {onsite} DT par mois sur place{months}.", "price_one": "« {program} » coûte {price} DT par mois ({mode}){months}.",
+        "months": " ; la formation dure {count} mois, chaque mois se règle avant de commencer",
         "online": "en ligne", "onsite": "sur place",
         "weeks": "La formation dure {weeks} semaines{hours}.", "hours": ", à raison de {hours} heures par semaine",
         "start": "La prochaine classe de « {program} » démarre le {date}.",
@@ -52,7 +53,7 @@ _SAY = {
         "content": "Au programme de « {program} » : {topics}…",
         "modes": "Elle se suit en ligne ou sur place{places}.", "places": " ({places})",
         "list": "Nos formations : {names}.", "which": "Dites-nous celle qui vous intéresse et nous vous donnons tous les détails.",
-        "list_prices": "Nos formations et leurs prix (en ligne) : {lines}.",
+        "list_prices": "Nos formations et leurs prix par mois (en ligne) : {lines}.",
         "where": "Où nous trouver : {places}.", "where_unknown": "Appelez-nous et nous vous indiquons comment venir.",
         "register": "Pour vous inscrire, il suffit de remplir notre formulaire d'inscription : {link}",
         "contact": "Pour toute question, appelez-nous au {phone}{wa}. À très bientôt !", "wa": " ou écrivez-nous sur WhatsApp au {wa}",
@@ -60,7 +61,8 @@ _SAY = {
     },
     "en": {
         "hello": "Hello, and thank you for your message!", "hello_name": "Hello {name}, and thank you for your message!",
-        "price_both": "“{program}” costs {online} DT online and {onsite} DT on site.", "price_one": "“{program}” costs {price} DT ({mode}).",
+        "price_both": "“{program}” costs {online} DT a month online and {onsite} DT a month on site{months}.", "price_one": "“{program}” costs {price} DT a month ({mode}){months}.",
+        "months": "; it lasts {count} months, each month paid before it starts",
         "online": "online", "onsite": "on site",
         "weeks": "The program lasts {weeks} weeks{hours}.", "hours": ", {hours} hours a week",
         "start": "The next “{program}” class starts on {date}.",
@@ -68,7 +70,7 @@ _SAY = {
         "content": "What “{program}” covers: {topics}…",
         "modes": "You can follow it online or on site{places}.", "places": " ({places})",
         "list": "Our programs: {names}.", "which": "Tell us which one interests you and we will give you all the details.",
-        "list_prices": "Our programs and their prices (online): {lines}.",
+        "list_prices": "Our programs and their prices a month (online): {lines}.",
         "where": "Where to find us: {places}.", "where_unknown": "Call us and we will tell you how to come.",
         "register": "To register, simply fill in our registration form: {link}",
         "contact": "For any question, call us on {phone}{wa}. See you soon!", "wa": " or write to us on WhatsApp on {wa}",
@@ -76,7 +78,8 @@ _SAY = {
     },
     "ar": {
         "hello": "مرحبا، وشكرا على رسالتك!", "hello_name": "مرحبا {name}، وشكرا على رسالتك!",
-        "price_both": "سعر «{program}» هو {online} دينار عن بعد و{onsite} دينار حضوريا.", "price_one": "سعر «{program}» هو {price} دينار ({mode}).",
+        "price_both": "سعر «{program}» هو {online} دينار في الشهر عن بعد و{onsite} دينار في الشهر حضوريا{months}.", "price_one": "سعر «{program}» هو {price} دينار في الشهر ({mode}){months}.",
+        "months": "؛ مدة التكوين {count} أشهر، ويُدفع كل شهر قبل بدايته",
         "online": "عن بعد", "onsite": "حضوريا",
         "weeks": "مدة التكوين {weeks} أسبوعا{hours}.", "hours": "، بمعدل {hours} ساعات في الأسبوع",
         "start": "يبدأ القسم القادم من «{program}» يوم {date}.",
@@ -84,7 +87,7 @@ _SAY = {
         "content": "في برنامج «{program}»: {topics}…",
         "modes": "يمكنك متابعته عن بعد أو حضوريا{places}.", "places": " ({places})",
         "list": "برامجنا: {names}.", "which": "أخبرنا بالبرنامج الذي يهمك ونعطيك كل التفاصيل.",
-        "list_prices": "برامجنا وأسعارها (عن بعد): {lines}.",
+        "list_prices": "برامجنا وأسعارها في الشهر (عن بعد): {lines}.",
         "where": "مكاننا: {places}.", "where_unknown": "اتصل بنا ونرشدك إلى مكاننا.",
         "register": "للتسجيل، يكفي ملء استمارة التسجيل: {link}",
         "contact": "لأي سؤال، اتصل بنا على {phone}{wa}. إلى اللقاء قريبا!", "wa": " أو راسلنا على واتساب {wa}",
@@ -92,7 +95,8 @@ _SAY = {
     },
     "tn": {
         "hello": "Aslema, w y3aychek 3al message mte3ek!", "hello_name": "Aslema {name}, w y3aychek 3al message mte3ek!",
-        "price_both": "« {program} » soumha {online} DT en ligne w {onsite} DT sur place.", "price_one": "« {program} » soumha {price} DT ({mode}).",
+        "price_both": "« {program} » soumha {online} DT fel chhar en ligne w {onsite} DT fel chhar sur place{months}.", "price_one": "« {program} » soumha {price} DT fel chhar ({mode}){months}.",
+        "months": " ; el formation {count} chhour, kol chhar tkhallsou 9bal ma yebda",
         "online": "en ligne", "onsite": "sur place",
         "weeks": "El formation todhrob {weeks} jem3a{hours}.", "hours": ", {hours} swaye3 fel jem3a",
         "start": "El classe ejjeya mta3 « {program} » tebda nhar {date}.",
@@ -210,11 +214,16 @@ def reply_for(db: Session, text: str, lang: str | None = None, *, registered: bo
     for program in programs[:2]:
         weeks = len(enrollment_service.curriculum_weeks(db, program.id))
         if "price" in wanted:
+            from app.services import monthly
+
+            count = monthly.program_months(program)
+            months = say["months"].format(count=count) if count > 1 else ""
             if program.price_online and program.price_onsite:
-                lines.append(say["price_both"].format(program=program.name, online=_money(program.price_online), onsite=_money(program.price_onsite)))
+                lines.append(say["price_both"].format(program=program.name, online=_money(program.price_online), onsite=_money(program.price_onsite),
+                                                      months=months))
             elif program.price_online or program.price_onsite:
                 lines.append(say["price_one"].format(program=program.name, price=_money(program.price_online or program.price_onsite),
-                                                     mode=say["online"] if program.price_online else say["onsite"]))
+                                                     mode=say["online"] if program.price_online else say["onsite"], months=months))
         if "duration" in wanted and weeks:
             hours = say["hours"].format(hours=_money(program.hours_per_week)) if program.hours_per_week else ""
             lines.append(say["weeks"].format(weeks=weeks, hours=hours))

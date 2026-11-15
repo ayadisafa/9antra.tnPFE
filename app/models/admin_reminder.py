@@ -32,4 +32,7 @@ class AdminReminder(Base):
     times = Column(Integer, nullable=False, default=0)           # how many times it went
     done_keys = Column(Text, nullable=True)                      # absence / session: what was already answered (JSON)
     hours_before = Column(Integer, nullable=True)                # session: how many hours before each session it goes
+    kind = Column(String, nullable=True)       # its kind in the catalogue (services/reminder_kinds.py): its picture on the board
+    every = Column(String, nullable=True)      # repeat "every": how often ("30min", "2w", "1mo"…: services/durations.py)
+    offset = Column(String, nullable=True)     # a watching reminder: how long before / after what it waits for
     created_at = Column(DateTime, default=datetime.utcnow)

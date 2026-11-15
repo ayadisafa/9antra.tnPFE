@@ -153,7 +153,7 @@ check("no teacher: counted by the dashboard", [program.id for program in overvie
 lines = completeness.items(db)
 check("no teacher: in what is still missing (no target of three)", (not nobody or any("programs have no teacher yet" in item["text"] for item in lines))
       and not any("fewer than three" in item["text"] for item in lines))
-page = admin.get("/classes/?tab=professors").text
+page = admin.get("/professors").text
 check("professors: “Who teaches each program”, without a target", "Who teaches each program" in page and "3 for each" not in page and "to name" not in page.split('id="coverage"')[1].split("</section>")[0].replace("A place to name", ""))
 check("professors: the programs nobody teaches come first, in red", not nobody or page.index(f'id="cover-{nobody[0].id}"') < min(
     page.index(f'id="cover-{program.id}"') for program in programs if program not in nobody) if len(nobody) < len(programs) else True)

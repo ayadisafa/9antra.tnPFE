@@ -28,6 +28,8 @@ def start_rule_label(class_group: ClassGroup) -> str:
         return f"Starts when {class_group.min_students_to_start} candidates are enrolled"
     if class_group.start_mode == START_AFTER_DAYS:
         return f"Starts {class_group.start_delay_days} days after creation"
+    if class_group.start_mode == "next_month":
+        return "Starts in the first week of the next month"
     return "Fixed start date"
 
 

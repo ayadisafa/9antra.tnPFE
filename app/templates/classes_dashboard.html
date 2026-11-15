@@ -11,6 +11,7 @@
   .cl-tabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:18px; border-bottom:1px solid var(--border-color); }
   .cl-tab { border:0; background:none; padding:10px 14px; font-weight:700; font-size:.86rem; color:#6b6680; border-bottom:3px solid transparent; margin-bottom:-1px; display:inline-flex; align-items:center; gap:7px; }
   .cl-tab:hover { color:var(--primary-berry); }
+  a.cl-tab { text-decoration:none; }
   .cl-tab.active { color:var(--primary-berry); border-bottom-color:var(--primary-berry); }
   .cl-tab .count { font-size:.68rem; background:#f1eff5; color:#5b5670; border-radius:999px; padding:1px 8px; }
   .cl-tab .count.warn { background:var(--gold-subtle); color:var(--gold-dark); }
@@ -58,51 +59,6 @@
   .cg-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; align-items:center; }
   @media (prefers-reduced-motion: reduce) { .cg-status .pulse { animation:none; } .cg-card { transition:none; } }
 
-  /* A professor, as their staff card. */
-  .pf-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px; }
-  .pf-card { background:#fff; border:1px solid var(--border-color); border-radius:22px; overflow:hidden; display:flex; flex-direction:column; }
-  .pf-band { height:64px; background:linear-gradient(120deg, var(--ink-2), var(--primary-berry)); position:relative; }
-  .pf-band .ui-chip { position:absolute; right:14px; top:14px; background:rgba(255,255,255,.92); }
-  .pf-head { padding:0 18px; margin-top:-30px; display:flex; gap:12px; align-items:flex-end; position:relative; z-index:1; }
-  .pf-head .ui-avatar { border:4px solid #fff; box-shadow:0 8px 18px -10px rgba(36,26,56,.5); }
-  .pf-name { font-weight:800; font-size:1.02rem; color:var(--ink-text); line-height:1.2; margin-top:36px; }
-  .pf-role { font-size:.72rem; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
-  .pf-body { padding:12px 18px 0; display:grid; gap:9px; }
-  .pf-tags { display:flex; flex-wrap:wrap; gap:5px; }
-  .pf-line { display:flex; gap:10px; align-items:center; font-size:.8rem; color:#4d4863; min-width:0; }
-  .pf-line i { width:18px; text-align:center; color:#a79fbd; flex:none; }
-  .pf-line a { color:inherit; text-decoration:none; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .pf-line a:hover { color:var(--primary-berry); }
-  .pf-stats { display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:12px 18px 0; }
-  .pf-stat { background:#faf8fd; border-radius:12px; padding:8px 10px; text-align:center; }
-  .pf-stat b { display:block; font-size:1.05rem; font-weight:800; color:var(--ink-text); line-height:1.1; }
-  .pf-stat span { font-size:.64rem; font-weight:700; color:#9b95b0; text-transform:uppercase; letter-spacing:.04em; }
-  .pf-classes { display:flex; flex-wrap:wrap; gap:5px; padding:10px 18px 0; }
-  .pf-class { font-size:.72rem; font-weight:700; border-radius:999px; padding:3px 10px; text-decoration:none; color:var(--ink-text); background:#f4f1f9; }
-  .pf-class:hover { background:var(--berry-subtle); color:var(--primary-berry); }
-  .pf-access { margin:12px 18px 0; border-radius:12px; padding:9px 12px; font-size:.76rem; display:flex; gap:8px; align-items:center; }
-  .pf-access.on { background:var(--mint-subtle); color:#0f5132; }
-  .pf-access.off { background:#f4f1f9; color:#5b5670; }
-  .pf-foot { display:flex; gap:6px; padding:14px 18px 16px; margin-top:auto; flex-wrap:wrap; }
-  .pf-foot form { margin:0; }
-  .pf-foot .pf-delete { margin-inline-start:auto; }
-  /* Deleting a professor: who they are, each class and who takes it, what goes with them. */
-  .pd-who { display:flex; gap:12px; align-items:center; margin-bottom:14px; }
-  .pd-who b { display:block; font-size:1rem; color:var(--ink-text); } .pd-who small { display:block; font-size:.76rem; color:var(--muted); }
-  .pd-label { font-size:.72rem; font-weight:800; letter-spacing:.05em; text-transform:uppercase; color:#6b6480; margin:4px 0 8px; }
-  .pd-class { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1.2fr); gap:10px; align-items:center; padding:9px 12px; border:1px solid var(--border-color); border-radius:14px; margin-bottom:6px; }
-  .pd-class b { display:block; font-size:.86rem; color:var(--ink-text); } .pd-class small { display:block; font-size:.72rem; color:var(--muted); }
-  .pd-class select { border-radius:10px; }
-  .pd-warn { font-size:.74rem; color:#9a3412; background:var(--gold-subtle); border-radius:10px; padding:6px 10px; margin:-2px 0 8px; }
-  .pd-quiet { display:flex; gap:8px; align-items:center; font-size:.82rem; color:#4d4863; background:#faf8fd; border-radius:12px; padding:10px 12px; }
-  .pd-quiet i { color:var(--mint); }
-  .pd-goes { list-style:none; padding:0; margin:14px 0 0; display:grid; gap:6px; }
-  .pd-goes li { display:flex; gap:9px; align-items:flex-start; font-size:.8rem; color:#4d4863; }
-  .pd-goes i { color:#a79fbd; margin-top:1px; }
-  .pd-go { background:#be123c !important; border-color:#be123c !important; color:#fff !important; }
-  .pd-go:hover { background:#9f1239 !important; }
-  @media (max-width: 575px) { .pd-class { grid-template-columns:1fr; } }
-
   .wk-grid { display:grid; grid-template-columns:repeat(7, minmax(118px, 1fr)); gap:8px; overflow-x:auto; padding-bottom:4px; }
   .wk-day { background:#faf8fd; border-radius:14px; padding:8px; min-height:120px; }
   .wk-day-name { font-size:.7rem; font-weight:800; text-transform:uppercase; letter-spacing:.05em; color:#8d88a3; text-align:center; padding:3px 0 7px; }
@@ -146,7 +102,7 @@
 
 <div class="ui-head">
   <div>
-    <h2>Classes and professors</h2>
+    <h2>Classes</h2>
     <p>
       {% if settings.auto_create_class_on_payment %}Candidates join a class the moment they pay; a new class is created when none is open for their program.
       {% else %}Candidates join an open class the moment they pay. Automatic class creation is off.{% endif %}
@@ -155,7 +111,7 @@
     </p>
   </div>
   <div class="ui-actions">
-    <button type="button" class="ui-btn" data-bs-toggle="modal" data-bs-target="#professorModal" data-professor-new><i class="bi bi-person-plus"></i>Add a professor</button>
+    <a class="ui-btn" href="/professors"><i class="bi bi-person-badge"></i>Professors</a>
     <button type="button" class="ui-btn primary" data-bs-toggle="modal" data-bs-target="#create-class-modal"><i class="bi bi-plus-lg"></i>Create a class</button>
   </div>
 </div>
@@ -166,12 +122,12 @@
   <div class="ui-stat t-sky"><div class="ui-stat-ico"><i class="bi bi-hourglass-split"></i></div><div><div class="ui-stat-num">{{ counts.not_started }}</div><div class="ui-stat-label">Not started</div></div></div>
   <div class="ui-stat {{ 't-red' if counts.on_hold else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-pause-circle-fill"></i></div><div><div class="ui-stat-num">{{ counts.on_hold }}</div><div class="ui-stat-label">On hold: cannot start</div></div></div>
   <div class="ui-stat {{ 't-gold' if pending_registrations else 't-mint' }}"><div class="ui-stat-ico"><i class="bi bi-person-plus"></i></div><div><div class="ui-stat-num">{{ pending_registrations | length }}</div><div class="ui-stat-label">Paid, waiting for a class</div></div></div>
-  <a class="ui-stat {{ 't-red' if nobody_teaches else 't-mint' }}" href="/classes/?tab=professors#coverage" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-person-exclamation"></i></div><div><div class="ui-stat-num">{{ nobody_teaches | length }}</div><div class="ui-stat-label">Programs without a teacher</div></div></a>
+  <a class="ui-stat {{ 't-red' if nobody_teaches else 't-mint' }}" href="/professors#coverage" style="text-decoration:none; color:inherit;"><div class="ui-stat-ico"><i class="bi bi-person-exclamation"></i></div><div><div class="ui-stat-num">{{ nobody_teaches | length }}</div><div class="ui-stat-label">Programs without a teacher</div></div></a>
 </div>
 
 <div class="cl-tabs" id="classesTabs" role="tablist">
   <button class="cl-tab active" data-bs-toggle="pill" data-bs-target="#tab-classes" data-tab="classes" type="button" role="tab"><i class="bi bi-collection-play"></i>Classes <span class="count" id="live-classes-count" data-live-region>{{ classes | length }}</span></button>
-  <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-professors" data-tab="professors" type="button" role="tab"><i class="bi bi-person-badge"></i>Professors <span class="count">{{ professor_cards | length }}</span></button>
+  <a class="cl-tab" href="/professors"><i class="bi bi-person-badge"></i>Professors <i class="bi bi-box-arrow-up-right" style="font-size:.7rem;"></i></a>
   <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-timetable" data-tab="timetable" type="button" role="tab"><i class="bi bi-calendar-week"></i>Timetable</button>
   <button class="cl-tab" data-bs-toggle="pill" data-bs-target="#tab-decisions" data-tab="decisions" type="button" role="tab"><i class="bi bi-person-plus"></i>Waiting for a class <span id="live-decisions-count" data-live-region>{% if pending_registrations %}<span class="count warn">{{ pending_registrations | length }}</span>{% endif %}</span></button>
 </div>
@@ -258,156 +214,6 @@
       <div class="ui-empty"><i class="bi bi-mortarboard"></i><strong>No class yet</strong>The first one is created by itself when a candidate pays.</div>
       {% endif %}
     </div>
-  </div>
-
-  <!-- ================= Professors ================= -->
-  <div class="tab-pane fade" id="tab-professors" role="tabpanel">
-    <div class="ui-card-sub mb-3">Only a professor who has a program among their specialities can teach its classes: a new class gets one of them by itself, and a class without one waits. A professor with access signs in and sees only their own classes: the course, and the presence of candidates.</div>
-
-    {# Reminders to professors to add the resources of a week before it is taught. #}
-    <section class="ui-card mb-3" id="resources" data-live-region>
-      <div class="ui-card-head">
-        <div><div class="ui-card-title"><span class="emo emo-bounce">📚</span> Remind professors to add their resources</div>
-          <div class="ui-card-sub">Before a week is taught, when it still has no resource (slides, exercises, a video), its professor gets one message: in the application, by email and on WhatsApp. Once per class and per week.</div></div>
-        <span class="ui-chip {{ 'ok' if resource_plan.on else 'muted' }}">{{ 'On' if resource_plan.on else 'Stopped' }}</span>
-      </div>
-      <form method="post" action="/classes/professors/resource-reminders" class="rr-form">
-        <label class="rr-line"><input type="checkbox" name="on" value="1" {{ 'checked' if resource_plan.on }}> Send them, <input type="number" name="days" min="1" max="14" value="{{ resource_plan.days }}" aria-label="Days before"> day(s) before the week's session</label>
-        <label class="form-label small fw-bold mb-1 mt-2" for="rr-text">Their words <span class="text-muted fw-normal">· {professor} {class_name} {program} {week} {topic} {date} {link}</span></label>
-        <textarea id="rr-text" name="text" rows="6" class="form-control">{{ resource_plan.text }}</textarea>
-        <div class="d-flex gap-2 flex-wrap mt-2">
-          <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save</button>
-          <button class="ui-btn sm" name="send_now" value="1"><i class="bi bi-send"></i>Save and send the ones due now ({{ resource_due | selectattr('reachable') | list | length }})</button>
-        </div>
-      </form>
-      {% if resource_due %}<div class="small mt-2"><b>Due now:</b> {% for item in resource_due[:6] %}{{ item.professor.name }} · {{ item.group.name }} week {{ item.week }} ({{ item.date.strftime('%d/%m') }}){% if not item.reachable %} <a href="/classes/?tab=professors#professor-{{ item.professor.id }}" class="text-danger">cannot be reached: add their email or phone</a>{% endif %}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
-      {% if resource_recent %}<div class="small text-muted mt-1"><b>Last sent:</b> {% for item in resource_recent[:5] %}{{ item.professor }} · {{ item.class }} week {{ item.week }}{{ ', ' if not loop.last }}{% endfor %}</div>{% endif %}
-      <style>.rr-line { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.86rem; font-weight:700; }
-             .rr-line input[type=number] { width:64px; border:1px solid var(--border-color); border-radius:10px; padding:4px 8px; }</style>
-    </section>
-
-    {# Who teaches each program: as many professors as you like; the programs nobody teaches yet come first, in red. #}
-    {% set nobody = coverage | selectattr('nobody') | list %}
-    <section class="ui-card mb-3" id="coverage" data-live-region>
-      <div class="ui-card-head">
-        <div><div class="ui-card-title"><i class="bi bi-people"></i>Who teaches each program</div>
-          <div class="ui-card-sub">Add as many professors as you like to a program: someone who already works with you, or a new one. A program nobody teaches yet cannot open a class.</div></div>
-        <span class="ui-chip {{ 'bad' if nobody else 'ok' }}">{% if nobody %}<i class="bi bi-exclamation-octagon-fill"></i> {{ nobody | length }} without a teacher yet{% else %}<i class="bi bi-check2-circle"></i> Every program has a teacher{% endif %}</span>
-      </div>
-      {% if nobody %}
-      <div class="pc-alert"><span class="pc-alert-ico"><i class="bi bi-person-exclamation"></i></span>
-        <div><b>No teacher yet</b><div class="pc-alert-list">{% for row in nobody %}<a href="#cover-{{ row.program.id }}">{{ row.program.name }}</a>{% endfor %}</div></div></div>
-      {% endif %}
-      {% for row in coverage %}
-      <div class="pc-row {{ 'is-nobody' if row.nobody }}" id="cover-{{ row.program.id }}">
-        <div class="pc-name"><b>{{ row.program.name }}</b>
-          {% if row.nobody %}<span class="ui-chip bad">No teacher yet</span>{% else %}<span class="ui-chip ok">{{ row.real | length }} professor{{ 's' if row.real | length != 1 }}</span>{% endif %}</div>
-        <div class="pc-people">
-          {% for professor in row.real %}<a class="pc-person" href="#professor-{{ professor.id }}">{{ ui.avatar(professor.name, 22) }}<span>{{ professor.name }}</span></a>{% endfor %}
-          {% for professor in row.places %}<span class="ui-chip muted" title="A place to name: never given a class until it has a real name">{{ professor.name.split('(')[-1].rstrip(')') }} · to name</span>{% endfor %}
-          {% if row.nobody and not row.places %}<span class="pc-none">Nobody teaches it yet.</span>{% endif %}
-        </div>
-        <div class="pc-do">
-          {% if row.others %}
-          <form method="post" action="/classes/professors/" class="pc-also" onsubmit="this.action = '/classes/professors/' + this.querySelector('select').value + '/specialty';">
-            <input type="hidden" name="program_id" value="{{ row.program.id }}">
-            <select aria-label="A professor who already works with you">{% for professor in row.others %}<option value="{{ professor.id }}">{{ professor.name }}</option>{% endfor %}</select>
-            <button class="ui-btn sm">Also teaches it</button>
-          </form>
-          {% endif %}
-          <details class="pc-new"><summary class="ui-btn sm {{ 'primary' if row.nobody }}"><i class="bi bi-person-plus"></i>A new professor</summary>
-            <form method="post" action="/classes/professors/create" class="pc-new-form">
-              <input type="hidden" name="programs" value="{{ row.program.name }}">
-              <input name="name" placeholder="Full name" required aria-label="Full name">
-              <input name="email" type="email" placeholder="Email" aria-label="Email">
-              <input name="phone" placeholder="Phone (+216…)" aria-label="Phone">
-              <button class="ui-btn primary sm">Add</button>
-            </form></details>
-        </div>
-      </div>
-      {% endfor %}
-      <style>
-        .pc-alert { display:flex; gap:12px; align-items:flex-start; background:linear-gradient(120deg, #fff1f2, #fff7f7); border:1px solid #fecdd3; border-radius:16px; padding:12px 14px; margin:4px 0 12px; }
-        .pc-alert-ico { width:38px; height:38px; border-radius:12px; background:#ffe4e6; color:#be123c; display:grid; place-items:center; font-size:1.15rem; flex:none; animation:pcPulse 2.4s ease-in-out infinite; }
-        @keyframes pcPulse { 50% { box-shadow:0 0 0 6px rgba(225,29,72,.12); } }
-        .pc-alert b { color:#9f1239; font-size:.86rem; }
-        .pc-alert-list { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
-        .pc-alert-list a { font-size:.76rem; font-weight:700; color:#be123c; background:#fff; border:1px solid #fecdd3; border-radius:999px; padding:3px 10px; text-decoration:none; }
-        .pc-alert-list a:hover { background:#be123c; color:#fff; }
-        .pc-row { display:grid; grid-template-columns:minmax(180px, 1.1fr) minmax(0, 1.4fr) auto; gap:12px; align-items:center; padding:10px 8px; border-top:1px solid var(--border-color); border-radius:12px; transition:background-color .15s ease; }
-        .pc-row:hover { background:#faf8fd; }
-        .pc-row.is-nobody { background:#fff8f8; box-shadow:inset 3px 0 0 #e11d48; }
-        .pc-row:target { animation:pcGlow 1.6s ease 2; }
-        @keyframes pcGlow { 50% { background:#ffe4e6; } }
-        @media (max-width: 991px) { .pc-row { grid-template-columns:1fr; } }
-        .pc-name { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.88rem; }
-        .pc-people { display:flex; gap:6px; flex-wrap:wrap; }
-        .pc-person { display:inline-flex; align-items:center; gap:6px; background:var(--berry-subtle); color:var(--primary-berry); border-radius:999px; padding:2px 10px 2px 2px; font-size:.76rem; font-weight:700; text-decoration:none; }
-        .pc-person:hover { background:var(--primary-berry); color:#fff; }
-        .pc-none { font-size:.8rem; color:#be123c; font-weight:600; }
-        .pc-do { display:flex; gap:6px; flex-wrap:wrap; align-items:center; justify-content:flex-end; }
-        .pc-also { display:flex; gap:6px; margin:0; } .pc-also select, .pc-new-form input { border:1px solid var(--border-color); border-radius:10px; font-size:.8rem; padding:5px 8px; }
-        .pc-new summary { list-style:none; cursor:pointer; } .pc-new summary::-webkit-details-marker { display:none; }
-        .pc-new-form { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-        @media (prefers-reduced-motion: reduce) { .pc-alert-ico, .pc-row:target { animation:none; } }
-      </style>
-    </section>
-    {% if professor_cards %}
-    <div class="pf-grid">
-      {% for card in professor_cards %}
-      {% set professor = card.professor %}
-      <article class="pf-card" id="professor-{{ professor.id }}">
-        <div class="pf-band">
-          {% if not professor.is_available %}<span class="ui-chip bad">Unavailable</span>
-          {% elif professor.available_from and professor.available_from > today %}<span class="ui-chip warn">From {{ professor.available_from.strftime('%d %b') }}</span>
-          {% else %}<span class="ui-chip ok"><span class="ui-dot"></span>Available</span>{% endif %}
-        </div>
-        <div class="pf-head">
-          {{ ui.avatar(professor.name, 62) }}
-          <div class="pb-1" style="min-width:0;"><div class="pf-name">{{ professor.name }}</div><div class="pf-role">Professor</div></div>
-        </div>
-        <div class="pf-body">
-          <div class="pf-tags">
-            {% for specialty in card.specialties %}<span class="ui-chip brand">{{ specialty }}</span>{% else %}<span class="ui-chip muted">No specialty set</span>{% endfor %}
-          </div>
-          {% set said = card.reviews.professors | selectattr('name', 'equalto', professor.name) | list %}
-          <div class="pf-line"><i class="bi bi-star-fill" style="color:#f5b301;"></i>{% if said %}<b>{{ said[0].stars }}</b>/5 from {{ said[0].count }} candidate{{ 's' if said[0].count != 1 }}{% else %}<span class="text-muted">No rating from candidates yet</span>{% endif %}</div>
-          <div class="pf-line"><i class="bi bi-envelope"></i>{% if professor.email %}<a href="mailto:{{ professor.email }}">{{ professor.email }}</a>{% else %}<span class="text-muted">No email</span>{% endif %}</div>
-          <div class="pf-line"><i class="bi bi-telephone"></i>{% if professor.phone %}<a href="tel:{{ professor.phone }}">{{ professor.phone }}</a>{% else %}<span class="text-muted">No phone</span>{% endif %}</div>
-          {% if card.absences %}
-          <div class="pf-line"><i class="bi bi-calendar-x"></i><span>Absent {% for absence in card.absences %}{{ absence.absence_date.strftime('%d %b') }}{{ ', ' if not loop.last }}{% endfor %}</span></div>
-          {% endif %}
-        </div>
-        <div class="pf-stats">
-          <div class="pf-stat"><b>{{ card.classes | length }}</b><span>Classes</span></div>
-          <div class="pf-stat"><b>{{ card.candidates }}</b><span>Candidates</span></div>
-          <div class="pf-stat"><b>{{ card.hours | round | int if card.hours == card.hours | round else card.hours }}</b><span>Hours / week</span></div>
-        </div>
-        {% if card.classes %}
-        <div class="pf-classes">{% for item in card.classes %}<a class="pf-class" href="/classes/{{ item.id }}">{{ looks[item.id].symbol }} {{ item.name }}</a>{% endfor %}</div>
-        {% endif %}
-        <div class="pf-access {{ 'on' if card.account and card.account.is_active else 'off' }}">
-          {% if card.account and card.account.is_active %}<i class="bi bi-key-fill"></i><span>Signs in with <strong>{{ card.account.email }}</strong>{% if card.account.last_login_at %} · last time {{ card.account.last_login_at.strftime('%d %b') }}{% else %} · never signed in yet{% endif %}</span>
-          {% else %}<i class="bi bi-key"></i><span>No access yet: cannot sign in.</span>{% endif %}
-        </div>
-        <div class="pf-foot">
-          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#professorModal"
-                  data-professor-edit="{{ professor.id }}" data-name="{{ professor.name }}" data-email="{{ professor.email or '' }}" data-phone="{{ professor.phone or '' }}"
-                  data-specialties="{{ card.specialties | join(', ') }}" data-from="{{ professor.available_from or '' }}" data-until="{{ professor.available_until or '' }}"
-                  data-available="{{ '1' if professor.is_available else '0' }}"><i class="bi bi-pencil"></i>Edit</button>
-          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#accessModal"
-                  data-access="{{ professor.id }}" data-name="{{ professor.name }}" data-email="{{ (card.account.email if card.account else professor.email) or '' }}"
-                  data-has="{{ '1' if card.account else '0' }}"><i class="bi bi-key"></i>{{ 'New password' if card.account else 'Give access' }}</button>
-          <button type="button" class="ui-btn sm" data-bs-toggle="modal" data-bs-target="#absenceModal" data-absence="{{ professor.id }}" data-name="{{ professor.name }}"><i class="bi bi-calendar-x"></i>Absence</button>
-          <button type="button" class="ui-btn sm ghost danger pf-delete" data-bs-toggle="modal" data-bs-target="#deleteProfessorModal" data-delete-professor="{{ professor.id }}"
-                  title="Delete this professor" aria-label="Delete this professor"><i class="bi bi-trash3"></i></button>
-        </div>
-      </article>
-      {% endfor %}
-    </div>
-    {% else %}
-    <div class="ui-empty"><i class="bi bi-person-badge"></i><strong>No professor yet</strong>Add the first one: classes can then be given to them.</div>
-    {% endif %}
   </div>
 
   <!-- ================= Timetable ================= -->
@@ -551,85 +357,6 @@
   </div>
 </div>
 
-<!-- ================= Add or edit a professor ================= -->
-<div class="modal fade ui-modal" id="professorModal" tabindex="-1" aria-labelledby="professorTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content" method="post" action="/classes/professors/create" id="professorForm">
-      <div class="modal-header"><h5 class="modal-title" id="professorTitle">Add a professor</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-12 ui-field"><label for="pf-name">Name</label><input class="form-control" id="pf-name" name="name" required></div>
-          <div class="col-md-7 ui-field"><label for="pf-email">Email</label><input class="form-control" id="pf-email" name="email" type="email"></div>
-          <div class="col-md-5 ui-field"><label for="pf-phone">Phone</label><input class="form-control" id="pf-phone" name="phone"></div>
-          <div class="col-12 ui-field">
-            <label>What they teach</label>
-            <div class="pf-pick" id="pf-programs">
-              {% for program in programs %}<label><input type="checkbox" name="programs" value="{{ program.name }}"><span>{{ program.name }}</span></label>{% endfor %}
-            </div>
-            <div class="ui-hint">Tick their specialities. Only a professor who has a program here can be given its classes.</div>
-            <input class="form-control mt-2" id="pf-specialties" name="specialties" placeholder="Other subjects, separated by commas" aria-label="Other subjects">
-          </div>
-          <div class="col-6 ui-field"><label for="pf-from">Available from</label><input class="form-control" id="pf-from" name="available_from" type="date"></div>
-          <div class="col-6 ui-field"><label for="pf-until">Available until</label><input class="form-control" id="pf-until" name="available_until" type="date"></div>
-          <div class="col-12" id="pf-available-row">
-            <div class="form-check form-switch"><input class="form-check-input" type="checkbox" role="switch" id="pf-available" name="is_available" value="true" checked><label class="form-check-label small fw-semibold" for="pf-available">Can be given classes</label></div>
-          </div>
-        </div>
-      </div>
-      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="professorSubmit">Add the professor</button></div>
-    </form>
-  </div>
-</div>
-
-<!-- ================= Access of a professor ================= -->
-<div class="modal fade ui-modal" id="accessModal" tabindex="-1" aria-labelledby="accessTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header"><div><h5 class="modal-title" id="accessTitle">Access</h5><div class="ui-card-sub">They sign in on the same address as you, and see only their own classes.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <form method="post" id="accessForm" autocomplete="off">
-        <div class="modal-body">
-          <div class="ui-field mb-3"><label for="ac-email">Email they sign in with</label><input class="form-control" id="ac-email" name="email" type="email" required autocomplete="off"></div>
-          <div class="ui-field"><label for="ac-password">Password</label><input class="form-control" id="ac-password" name="password" type="text" minlength="{{ min_password }}" required autocomplete="off">
-            <div class="ui-hint">At least {{ min_password }} characters. Give it to them yourself; they can change it after signing in.</div></div>
-        </div>
-        <div class="modal-footer justify-content-between">
-          <button type="submit" class="ui-btn ghost sm danger d-none" id="accessRemove" form="accessRemoveForm" data-confirm="Remove this professor's access? They will no longer be able to sign in.">Remove access</button>
-          <div class="d-flex gap-2 ms-auto"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary" id="accessSubmit">Give access</button></div>
-        </div>
-      </form>
-      <form method="post" id="accessRemoveForm"></form>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Delete a professor ================= -->
-<div class="modal fade ui-modal" id="deleteProfessorModal" tabindex="-1" aria-labelledby="deleteProfessorTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content">
-      <div class="modal-header"><div><h5 class="modal-title" id="deleteProfessorTitle">Delete a professor</h5><div class="ui-card-sub">This cannot be undone.</div></div><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div id="deleteProfessorBody"><div class="modal-body"><div class="ui-card-sub">Loading…</div></div></div>
-    </div>
-  </div>
-</div>
-
-<!-- ================= Absence of a professor ================= -->
-<div class="modal fade ui-modal" id="absenceModal" tabindex="-1" aria-labelledby="absenceTitle" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <form class="modal-content" method="post" id="absenceForm">
-      <div class="modal-header"><h5 class="modal-title" id="absenceTitle">Absence</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div>
-      <div class="modal-body">
-        <div class="row g-3">
-          <div class="col-12 ui-field"><label for="ab-date">Day</label><input name="absence_date" id="ab-date" type="date" class="form-control" required></div>
-          <div class="col-6 ui-field"><label for="ab-from">From</label><input name="start_time" id="ab-from" type="time" class="form-control"><div class="ui-hint">Empty = the whole day</div></div>
-          <div class="col-6 ui-field"><label for="ab-to">To</label><input name="end_time" id="ab-to" type="time" class="form-control"></div>
-          <div class="col-12 ui-field"><label for="ab-reason">Reason</label><input name="reason" id="ab-reason" class="form-control" placeholder="Optional"></div>
-        </div>
-      </div>
-      <div class="modal-footer"><button type="button" class="ui-btn ghost" data-bs-dismiss="modal">Cancel</button><button class="ui-btn primary">Save the absence</button></div>
-    </form>
-  </div>
-</div>
-
 {% include "_class_parameters_assets.html" %}
 <script>
 (() => {
@@ -723,58 +450,6 @@
     const form = event.target.form;
     form.querySelector(".existing-class-field").classList.toggle("d-none", event.target.value !== "assign_existing");
     form.querySelector(".new-class-fields").classList.toggle("d-none", event.target.value !== "create_new");
-  });
-
-  // ---------- Professors: one form to add or edit, one for access, one for absences ----------
-  document.addEventListener("click", event => {
-    const edit = event.target.closest("[data-professor-edit]");
-    const fresh = event.target.closest("[data-professor-new]");
-    if (edit || fresh) {
-      const form = document.getElementById("professorForm");
-      const data = edit ? edit.dataset : {};
-      form.action = edit ? `/classes/professors/${data.professorEdit}/edit` : "/classes/professors/create";
-      document.getElementById("professorTitle").textContent = edit ? `Edit ${data.name}` : "Add a professor";
-      document.getElementById("professorSubmit").textContent = edit ? "Save" : "Add the professor";
-      document.getElementById("pf-name").value = data.name || "";
-      document.getElementById("pf-email").value = data.email || "";
-      document.getElementById("pf-phone").value = data.phone || "";
-      // Their specialities: the programs are ticked, anything else goes in the free line.
-      const known = (data.specialties || "").split(",").map(item => item.trim()).filter(Boolean);
-      const boxes = [...document.querySelectorAll("#pf-programs input")];
-      boxes.forEach(box => { box.checked = known.some(item => item.toLowerCase() === box.value.toLowerCase()); });
-      document.getElementById("pf-specialties").value =
-        known.filter(item => !boxes.some(box => box.value.toLowerCase() === item.toLowerCase())).join(", ");
-      document.getElementById("pf-from").value = data.from || "";
-      document.getElementById("pf-until").value = data.until || "";
-      document.getElementById("pf-available").checked = edit ? data.available === "1" : true;
-      document.getElementById("pf-available-row").classList.toggle("d-none", !edit);
-    }
-    const access = event.target.closest("[data-access]");
-    if (access) {
-      const has = access.dataset.has === "1";
-      document.getElementById("accessForm").action = `/classes/professors/${access.dataset.access}/access`;
-      document.getElementById("accessRemoveForm").action = `/classes/professors/${access.dataset.access}/access/remove`;
-      document.getElementById("accessTitle").textContent = (has ? "New password for " : "Give access to ") + access.dataset.name;
-      document.getElementById("accessSubmit").textContent = has ? "Save the new password" : "Give access";
-      document.getElementById("accessRemove").classList.toggle("d-none", !has);
-      document.getElementById("ac-email").value = access.dataset.email || "";
-      document.getElementById("ac-password").value = "";
-    }
-    const removal = event.target.closest("[data-delete-professor]");
-    if (removal) {
-      // What deleting them will do comes from the server: their classes, who could take each, their access.
-      const body = document.getElementById("deleteProfessorBody");
-      body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">Loading…</div></div>';
-      fetch(`/classes/professors/${encodeURIComponent(removal.dataset.deleteProfessor)}/delete`, { credentials: "same-origin" })
-        .then(answer => { if (!answer.ok) throw new Error(); return answer.text(); })
-        .then(html => { body.innerHTML = html; })
-        .catch(() => { body.innerHTML = '<div class="modal-body"><div class="ui-card-sub">It could not be opened. Reload the page and try again.</div></div>'; });
-    }
-    const absence = event.target.closest("[data-absence]");
-    if (absence) {
-      document.getElementById("absenceForm").action = `/classes/professors/${absence.dataset.absence}/absences`;
-      document.getElementById("absenceTitle").textContent = `Absence of ${absence.dataset.name}`;
-    }
   });
 
   // ---------- The week ----------

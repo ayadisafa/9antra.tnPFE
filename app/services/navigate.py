@@ -20,7 +20,7 @@ PAGES = [
      r"candidats?|candidates?|etudiants?|students?|inscrits|المترشحين|المترشحون|الطلبة"),
     ("/candidate/all?add=1", {"en": "Add a candidate", "fr": "Ajouter un candidat", "ar": "إضافة مترشح", "tn": "Zid candidat"},
      r"(?:ajouter|nouveau|add|new|zid)\s+(?:un\s+|a\s+)?candidat\w*|إضافة مترشح"),
-    ("/classes/?tab=professors", {"en": "Professors", "fr": "Formateurs", "ar": "الأساتذة", "tn": "Les profs"},
+    ("/professors", {"en": "Professors", "fr": "Formateurs", "ar": "الأساتذة", "tn": "Les profs"},
      r"professeurs?|profs?|formateurs?|enseignants?|teachers?|professors?|trainers?|الأساتذة|الاساتذة|المكونين"),
     ("/classes/", {"en": "Classes", "fr": "Classes", "ar": "الأقسام", "tn": "Classes"},
      r"classes?|groupes?|groups?|timetable|emploi du temps|الأقسام|الاقسام"),
@@ -212,7 +212,7 @@ def _record(db: Session, text: str) -> tuple[str, str] | None:
     for professor in db.query(Professor).all():
         parts = [part for part in _fold(professor.name).split() if len(part) >= 3]
         if parts and all(part in words for part in parts):
-            return "/classes/?tab=professors", professor.name
+            return "/professors", professor.name
     return None
 
 

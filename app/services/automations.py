@@ -54,7 +54,7 @@ def listing(db: Session) -> list[dict]:
               "Each candidate gets a few questions about the session (from what the system knows of the course); their answers show next to their presence.",
               f"{session_plan['hours']} h after each session", session_plan["on"], "/settings#session-check"),
         _item("resources", "📚", "bounce", "Professors' resources", "A week with no resource yet: its professor is reminded to add them (your words).",
-              f"{resources['days']} day{'s' if resources['days'] != 1 else ''} before the week", resources["on"], "/classes/?tab=professors#resources"),
+              f"{resources['days']} day{'s' if resources['days'] != 1 else ''} before the week", resources["on"], "/professors#resources"),
         _item("questions", "🙋", "wave", "Candidates' course questions", "A paid candidate's question about the course goes to their professor; reminded after a day, you after two.",
               "When it arrives", True, "/inbox/team"),
         _item("reviews", "⭐", "twinkle", "Reviews at the end", "A class finishes: each candidate is asked their review (program, professor, what to improve), then Facebook.",

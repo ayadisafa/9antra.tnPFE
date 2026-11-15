@@ -495,6 +495,7 @@ def render_email(
     design: dict | None = None,
     banner_src: str | None = None,
     gallery=None,
+    footer: str | None = None,
 ) -> str:
     """Render one complete HTML email in the 9antra design.
 
@@ -516,7 +517,7 @@ def render_email(
     footer_lines = []
     if footer_note:
         footer_lines.append("<br>".join(html.escape(line) for line in footer_note.split("\n") if line.strip()))
-    footer_lines.append(html.escape(fixed["footer"]))
+    footer_lines.append(html.escape(footer or fixed["footer"]))      # `footer`: who it is for, when not a candidate
     footer_html = "".join(
         f'<div style="margin:0 0 6px;">{line}</div>' for line in footer_lines
     )

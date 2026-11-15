@@ -107,12 +107,12 @@ def _parameters_context(db: Session, class_group: ClassGroup, now: datetime) -> 
         "symbols": class_looks.SYMBOLS,
         "colours": class_looks.COLOURS,
         "professors": _professor_choices(db, class_group),
-        "reminder_offsets": parse_reminder_days(class_group.reminder_days),
+        "reminder_offsets": [__import__("app.services.settings_service", fromlist=["display_offsets"]).display_offsets(class_group.reminder_days)],
         "day_options": list(zip(DAY_KEYS, DAY_SHORT_EN)),
         "selected_days": [DAY_KEYS[index] for index in parse_days(class_group.days_of_week)],
         "created_local": utc_to_local(class_group.created_at),
         "now": now,
-        "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT, "fixed": START_FIXED_DATE},
+        "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT, "fixed": START_FIXED_DATE, "next_month": "next_month"},
     }
 
 
@@ -260,7 +260,7 @@ def create_professor(
 ):
     clean_name = " ".join(name.split())
     if not clean_name:
-        return _redirect("/classes/?tab=professors", error="Enter the professor's name.")
+        return _redirect("/professors", error="Enter the professor's name.")
     db.add(Professor(
         name=clean_name,
         specialties=_clean_specialties(specialties, programs),
@@ -271,7 +271,7 @@ def create_professor(
     ))
     db.commit()
     sync_class_lifecycle(db)          # a class waiting for a professor of this program takes them at once
-    return _redirect("/classes/?tab=professors", notice=f"{clean_name} added.")
+    return _redirect("/professors", notice=f"{clean_name} added.")
 
 
 @router.post("/professors/{professor_id}/edit")
@@ -291,14 +291,14 @@ def edit_professor(
     professor = _get_professor(db, professor_id)
     clean_name = " ".join(name.split())
     if not clean_name:
-        return _redirect("/classes/?tab=professors", error="Enter the professor's name.")
+        return _redirect("/professors", error="Enter the professor's name.")
     try:
         start = date.fromisoformat(available_from) if available_from else None
         end = date.fromisoformat(available_until) if available_until else None
     except ValueError:
-        return _redirect("/classes/?tab=professors", error="The availability dates are not valid.")
+        return _redirect("/professors", error="The availability dates are not valid.")
     if start and end and end < start:
-        return _redirect("/classes/?tab=professors", error="“Available until” is before “available from”.")
+        return _redirect("/professors", error="“Available until” is before “available from”.")
     professor.name = clean_name[:120]
     professor.specialties = _clean_specialties(specialties, programs)
     professor.email = email.strip().lower() or None
@@ -313,7 +313,7 @@ def edit_professor(
         account.name = professor.name
     db.commit()
     sync_class_lifecycle(db)          # available again, or a new speciality: a waiting class takes them at once
-    return _redirect("/classes/?tab=professors", notice=f"{professor.name} saved.")
+    return _redirect("/professors", notice=f"{professor.name} saved.")
 
 
 TO_NAME = "À nommer"          # a place for a professor still to find (made before 22 October 2026): never given a class
@@ -348,7 +348,7 @@ def save_resource_reminders(on: str = Form(""), days: str = Form("2"), text: str
               if plan["on"] else "The resource reminders are stopped.")
     if send_now:
         notice += f" {sent} reminder{'s' if sent != 1 else ''} sent now."
-    return _redirect("/classes/?tab=professors#resources", notice=notice)
+    return _redirect("/professors#resources", notice=notice)
 
 
 @router.post("/professors/{professor_id}/specialty")
@@ -367,7 +367,7 @@ def add_professor_specialty(
         professor.specialties = _clean_specialties(professor.specialties or "", [program.name])
         db.commit()
     sync_class_lifecycle(db)       # a class that was waiting for this can start
-    return _redirect(_return_url(request, "/classes/?tab=professors"),
+    return _redirect(_return_url(request, "/professors"),
                      notice=f"{program.name} is now one of {professor.name}'s specialities.")
 
 
@@ -380,7 +380,7 @@ def give_professor_access(
 ):
     """Let a professor sign in (or give them a new password)."""
     professor = _get_professor(db, professor_id)
-    back = "/classes/?tab=professors"
+    back = "/professors"
     account = db.query(User).filter(User.professor_id == professor.id).first()
     address = auth.clean_email(email)
     if address is None:
@@ -416,7 +416,7 @@ def remove_professor_access(professor_id: str, db: Session = Depends(get_db)):
     if account is not None:
         db.delete(account)
         db.commit()
-    return _redirect("/classes/?tab=professors", notice=f"{professor.name} can no longer sign in.")
+    return _redirect("/professors", notice=f"{professor.name} can no longer sign in.")
 
 
 @router.get("/professors/{professor_id}/delete", response_class=HTMLResponse)
@@ -446,7 +446,7 @@ async def delete_professor(professor_id: str, request: Request, db: Session = De
     try:
         done = professor_removal.remove(db, professor, handover, who=user.name if user else None)
     except ValueError as exc:
-        return _redirect("/classes/?tab=professors", error=str(exc))
+        return _redirect("/professors", error=str(exc))
     taken = assign_waiting_professors(db)
     for group, taker in taken:        # left waiting: the first professor who can takes it
         done["waiting"] = [name for name in done["waiting"] if name != group.name]
@@ -458,43 +458,45 @@ async def delete_professor(professor_id: str, request: Request, db: Session = De
     for group, taker in taken:
         tell_professor(db, group, taker)
     sync_class_lifecycle(db)          # a class still without a professor is held until it has one
-    return _redirect("/classes/?tab=professors", notice=professor_removal.notice(done))
+    return _redirect("/professors", notice=professor_removal.notice(done))
 
 
 @router.post("/professors/{professor_id}/absences")
 def add_professor_absence(
+    request: Request,
     professor_id: str,
     absence_date: str = Form(...),
+    end_date: str = Form(""),
     start_time: str = Form(""),
     end_time: str = Form(""),
     reason: str = Form(""),
     back: str = Form(""),
     db: Session = Depends(get_db),
 ):
+    """The admin notes an absence (a day or a period): accepted at once; each session in it looks for a replacement."""
+    from app.services import absences
+    from app.services.settings_service import public_base_url
+
     professor = db.get(Professor, professor_id)
     if not professor:
         raise HTTPException(status_code=404, detail="Professor not found")
-    absence = ProfessorAbsence(
-        professor_id=professor_id,
-        absence_date=date.fromisoformat(absence_date),
-        start_time=time.fromisoformat(start_time) if start_time else None,
-        end_time=time.fromisoformat(end_time) if end_time else None,
-        reason=reason.strip() or None,
-    )
-    db.add(absence)
-    db.commit()
-    # Their sessions that day look for a replacement, for that day only: a free professor is asked to confirm.
-    from app.services import replacements
-    from app.services.settings_service import public_base_url
-
-    opened = replacements.open_for_absence(db, absence, public_base_url(db))
-    notice = f"Absence saved for {professor.name}."
-    if opened:
+    target = back if back.startswith("/professors") else "/professors#absences"
+    try:
+        first, last, begins, ends = absences.read_period(absence_date, end_date, start_time, end_time)
+    except ValueError as exc:
+        return _redirect(target, error=str(exc))
+    user = auth.current(request)
+    absence, done = absences.request(db, professor, first, last, begins, ends, reason, public_base_url(db, request),
+                                     by_admin=True, by=getattr(user, "name", None) or "Admin")
+    opened = done["opened"]
+    notice = _t("Absence saved for {0}: {1}.", professor.name, absences.period_label(absence))
+    if done.get("again"):
+        notice = _t("This absence was already noted.")
+    elif opened:
         asked = sum(1 for row in opened if row.status == "asked")
-        notice += (f" {len(opened)} session(s) that day need a replacement: {asked} professor(s) asked to confirm"
-                   + (f", {len(opened) - asked} with nobody free (see the notifications)." if len(opened) - asked else "."))
-    # Noted from the professor's own space: back there.
-    return _redirect(back if back.startswith("/professors/") else "/classes/?tab=professors", notice=notice)
+        notice += " " + _t("{0} session(s) need a replacement: {1} professor(s) asked to confirm, {2} with nobody free (choose on the class).",
+                           len(opened), asked, len(opened) - asked)
+    return _redirect(target, notice=notice)
 
 
 # ------------------------------------------------------------------
@@ -556,6 +558,16 @@ def replacement_postpone(class_id: str, row_id: str, request: Request, db: Sessi
 # Class parameters and status
 # ------------------------------------------------------------------
 
+@router.post("/{class_id}/mode")
+def set_class_mode(class_id: str, request: Request, mode: str = Form(""), db: Session = Depends(get_db)):
+    """How the class is followed: online, on site, or mixed (both); empty = from its candidates' choices."""
+    class_group = _get_class(db, class_id)
+    class_group.delivery_mode = mode if mode in ("online", "onsite", "mixed") else None
+    db.commit()
+    return _redirect(_return_url(request, f"/classes/{class_id}"), notice=_t("{0} is now followed: {1}.", class_group.name,
+                                                                        {"online": _t("online"), "onsite": _t("on site"), "mixed": _t("online and on site")}.get(mode, _t("as its candidates chose"))))
+
+
 @router.post("/{class_id}/parameters")
 def save_class_parameters(
     class_id: str,
@@ -588,6 +600,8 @@ def save_class_parameters(
     # Saved from the list of classes, the admin returns to the list.
     target = "/classes/?tab=classes" if back == "list" else f"/classes/{class_id}"
     try:
+        if start_mode == START_FIXED_DATE:
+            class_group.auto_created = False      # a date you chose: the first-week rule never moves it
         result = update_class_parameters(
             db, class_group,
             name=name,
@@ -821,6 +835,8 @@ def decide_registration_assignment(
 
 @router.get("/", response_class=HTMLResponse)
 def list_classes(request: Request, db: Session = Depends(get_db)):
+    if request.query_params.get("tab") == "professors":
+        return RedirectResponse("/professors", status_code=303)        # the professors have their own page now
     sync_class_lifecycle(db)
     now = local_now()
     classes = (
@@ -870,29 +886,6 @@ def list_classes(request: Request, db: Session = Depends(get_db)):
         for program in programs
     }
 
-    accounts ={account.professor_id: account for account in db.query(User).filter(User.professor_id.isnot(None)).all()}
-    professor_cards = []
-    for professor in all_professors:
-        mine = [item for item in classes if item.professor_id == professor.id and item.status != ClassStatus.COMPLETED]
-        hours = 0.0
-        for item in mine:
-            if item.start_time and item.end_time:
-                length = (datetime.combine(date.min, item.end_time) - datetime.combine(date.min, item.start_time)).seconds / 3600
-                hours += length * max(1, len(parse_days(item.days_of_week)))
-        professor_cards.append({
-            "professor": professor,
-            "specialties": [item.strip() for item in (professor.specialties or "").split(",") if item.strip()],
-            "classes": mine,
-            "running": sum(1 for item in mine if item.status == ClassStatus.ONGOING),
-            "candidates": sum(summaries[item.id]["enrolled"] for item in mine),
-            "hours": round(hours, 1),
-            "account": accounts.get(professor.id),
-            "reviews": __import__("app.services.program_feedback", fromlist=["of_professor"]).of_professor(db, professor.name),
-            "absences": sorted(
-                (item for item in professor.absences if item.absence_date >= now.date()), key=lambda item: item.absence_date,
-            )[:3],
-        })
-
     return templates.TemplateResponse(
         request=request,
         name="classes_dashboard.html",
@@ -900,8 +893,6 @@ def list_classes(request: Request, db: Session = Depends(get_db)):
             "classes": classes,
             "summaries": summaries,
             "looks": {item.id: class_looks.look(item) for item in classes},
-            "professor_cards": professor_cards,
-            "min_password": auth.MIN_PASSWORD,
             "programs": programs,
             "active_page": "classes",
             "pending_registrations": pending_registrations,
@@ -910,9 +901,6 @@ def list_classes(request: Request, db: Session = Depends(get_db)):
             "waiting_counts": waiting_counts,
             "teachers": teachers,
             "coverage": professors_coverage(db, programs, all_professors),
-            "resource_plan": __import__("app.services.resource_reminders", fromlist=["settings_of"]).settings_of(db),
-            "resource_due": __import__("app.services.resource_reminders", fromlist=["due"]).due(db),
-            "resource_recent": __import__("app.services.resource_reminders", fromlist=["recent"]).recent(db),
 
             "today": date.today(),
             "specialty_suggestions": specialty_suggestions,
@@ -950,6 +938,8 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
             "name": (item.candidate.full_name or item.candidate.email) if item.candidate else "Candidate",
             "reminders": reminder_plan.get(item.id, []),
             "last_payment": max((payment.payment_date for payment in item.payments if payment.payment_date), default=None),
+            "month_state": __import__("app.services.monthly", fromlist=["state_of"]).state_of(item),
+            "month_plan": __import__("app.services.monthly", fromlist=["plan"]).plan(item),
         }
         for item in registrations
     ]
@@ -982,7 +972,7 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
                 "text": f"Choose one in the parameters. Only professors who have {program_name} among their specialities are listed"
                         + ("." if len(professors) else ": today nobody has it, so add it to a professor first."),
                 "link": {"label": "Choose a professor", "url": "#parameters"} if professors else
-                        {"label": "Open the professors", "url": "/classes/?tab=professors"},
+                        {"label": "Open the professors", "url": "/professors"},
             })
         elif professor is not None and class_group.program is not None and not teaches(professor, class_group.program):
             needs.append({
@@ -1013,6 +1003,7 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
             "cls": class_group,
             "summary": summary,
             "members": members,
+            "runs_months": __import__("app.services.monthly", fromlist=["longer_than_program"]).longer_than_program(class_group),
             "focus": focus,
             "other_classes": other_classes,
             "professors": professors,
@@ -1036,7 +1027,7 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
             "back": "",
             "created_local": created_local,
             "now": now,
-            "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT, "fixed": START_FIXED_DATE},
+            "modes": {"after_days": START_AFTER_DAYS, "min_enrollment": START_MIN_ENROLLMENT, "fixed": START_FIXED_DATE, "next_month": "next_month"},
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         }

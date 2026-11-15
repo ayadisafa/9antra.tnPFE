@@ -18,7 +18,7 @@ from app.models.candidate import Candidate
 from app.models.candidate_email import CandidateEmail
 from app.models.candidate_reminder import CandidateReminder
 from app.models.registration import Registration, RegistrationStatus
-from app.services import email_templates, email_threads
+from app.services import email_templates, email_threads, timings
 from app.services.email_templates import money
 
 logger = logging.getLogger(__name__)
@@ -33,9 +33,10 @@ def welcome_hours(db: Session) -> int:
 
 
 def first_after(db: Session) -> timedelta:
-    from app.services import welcome
+    """How long after registering the one reminder goes (services/timings.py)."""
+    return timings.get(db, "payment_reminder").delta
 
-    return timedelta(hours=welcome.reminder_hours(db))
+
 SUGGEST_AGAIN_AFTER = timedelta(days=3)     # of silence, before proposing another one
 MAX_ATTEMPTS = 3                            # of an email that does not go out
 _MARK = "PAYMENT_REMINDER_SENT_"
@@ -164,7 +165,7 @@ def _attempt(db: Session, candidate: Candidate, registration: Registration) -> C
         reminder = CandidateReminder(
             candidate_id=candidate.id, registration_id=registration.id,
             reminder_key="payment_24h", reminder_type="payment", planned_for=registered + first_after(db),
-            strategy=f"One reminder for everything the candidate owes, {welcome_hours(db)} hours after registering. Never repeated by itself.",
+            strategy=f"One reminder for everything the candidate owes, {timings.get(db, 'payment_reminder').label()} after registering. Never repeated by itself.",
         )
         db.add(reminder)
         db.commit()

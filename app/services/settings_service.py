@@ -68,13 +68,34 @@ def parse_reminder_days(value: str | list | None) -> list[int]:
     days = set()
     for part in parts:
         try:
-            number = int(str(part).strip())
+            number = int(str(part).strip().rstrip("dDjJ"))
         except ValueError:
-            continue
+            continue                    # a time in another unit (hours, weeks…): see parse_reminder_offsets
         if 1 <= number <= 60:
             days.add(number)
     return sorted(days, reverse=True)
 
 
-def format_reminder_days(days: list[int]) -> str:
-    return ",".join(str(day) for day in sorted(set(days), reverse=True))
+def format_reminder_days(days) -> str:
+    """Days as before ("7,3,1"); a time in another unit keeps its mark ("7,3,12h"), so what reads only days still reads them."""
+    from app.services import durations
+
+    items = list(days or [])
+    if items and not all(isinstance(item, int) for item in items):
+        found = [durations.parse(item, "days") if not isinstance(item, durations.Duration) else item for item in items if item is not None]
+        return ",".join(str(item.value) if item.unit == "days" else item.code for item in found if item is not None)
+    return ",".join(str(day) for day in sorted(set(items), reverse=True))
+
+
+def display_offsets(value) -> str:
+    """For a form: "7, 3, 12h" (a day is a bare number, another unit keeps its mark)."""
+    return ", ".join(str(item.value) if item.unit == "days" else item.code for item in parse_reminder_offsets(value))
+
+
+def parse_reminder_offsets(value) -> list:
+    """The countdown's times before the first session, in any unit (a bare number is a day), the longest first."""
+    from app.services import durations
+
+    if value is None:
+        return [durations.Duration(day, "days") for day in DEFAULT_REMINDER_DAYS]
+    return [item for item in durations.parse_list(value, "days") if item.seconds <= 60 * 86400]

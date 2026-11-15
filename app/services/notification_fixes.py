@@ -35,7 +35,7 @@ def _class_fix(db: Session, class_id: str) -> dict | None:
     if professor is None and not class_group.professor_name:
         if teachers_of(db, class_group.program):
             return _go("Choose a professor", f"/classes/{class_group.id}#parameters")
-        return _go("Give this speciality to a professor", "/classes/?tab=professors")
+        return _go("Give this speciality to a professor", "/professors")
     if professor is not None and class_group.program is not None and not teaches(professor, class_group.program):
         return _post(f"Yes, {professor.name} teaches it", f"/classes/professors/{professor.id}/specialty",
                      fields={"program_id": class_group.program_id})
@@ -51,6 +51,10 @@ def fix_for(db: Session, notification: Notification) -> dict | None:
         return registration_requests.fix(db, notification)
     if notification.category == "CLASS" and payload.get("class_id"):
         return _class_fix(db, payload["class_id"])
+    if notification.category == "MODE_CHANGE":
+        from app.services import mode_change
+
+        return mode_change.fix(db, notification)
     if notification.category == "ASSIGNMENT_PENDING" and notification.registration_id:
         registration = db.get(Registration, notification.registration_id)
         if (

@@ -133,7 +133,8 @@ check("...who is told at once", db.query(TeamMessage).filter(TeamMessage.person 
 # ======================================================================
 # C. Reminders: every day, before each session, and reset
 # ======================================================================
-check("how often: every day, and before each of their sessions", {"daily", "session"} <= set(reminders.REPEATS))
+check("how often: again and again, and before each of their sessions (the old “every day” still read)", {"every", "session"} <= set(reminders.REPEATS)
+      and reminders.OLD_REPEATS.get("daily") == "1d")
 daily = reminders.create(db, audience="class", audience_id=group.id, subject="Bonjour {first_name}", body="Pensez à réviser.", repeat="daily",
                          send_at=datetime.utcnow() - timedelta(minutes=1))
 composed.clear()
@@ -169,8 +170,8 @@ composed.clear()
 reminders.send_due(db)
 check("once per session", not composed)
 page = admin.get("/reminders").text
-check("the page: the new rhythms, the hours before, and Reset", "Before each of their sessions" in page and "Every day" in page
-      and 'name="hours_before"' in page and f"/reminders/{before.id}/reset" in page and "h before each session" in page)
+check("the page: the new rhythms, the time before (a number and its unit), and Reset", "Before each of their sessions" in page and "Again and again" in page
+      and 'name="amount"' in page and f"/reminders/{before.id}/reset" in page and "hours before each of their sessions" in page)
 response = admin.post(f"/reminders/{before.id}/reset")
 db.expire_all()
 before = db.get(AdminReminder, before.id)
@@ -187,8 +188,8 @@ check("reset: a stopped reminder is on again, at its next hour", daily.status ==
       and "Started again: it goes" in where(response), (daily.status, where(response)))
 check("before each session: for candidates only", "candidates" in where(admin.post("/reminders/create", data={
     "audience": "professors", "subject": "x", "body": "y", "repeat": "session", "hours_before": "2"})))
-check("before each session: from 1 to 168 hours", "168" in where(admin.post("/reminders/create", data={
-    "audience": "class", "to_class": group.id, "subject": "x", "body": "y", "repeat": "session", "hours_before": "500"})))
+check("before each session: at most a month before", "At most 1 month" in where(admin.post("/reminders/create", data={
+    "audience": "class", "to_class": group.id, "subject": "x", "body": "y", "repeat": "session", "amount": "2", "unit": "months"})))
 
 db.close()
 check.done()

@@ -214,11 +214,11 @@
   </div>
   <div class="pd-fact f-mint">
     <span class="pd-fact-ico"><i class="bi bi-laptop"></i></span>
-    <div><b>{{ "%.0f"|format(program.price_online or 0) }} DT</b><small>Online</small></div>
+    <div><b>{{ "%.0f"|format(program.price_online or 0) }} DT</b><small>Online, a month</small></div>
   </div>
   <div class="pd-fact f-gold">
     <span class="pd-fact-ico"><i class="bi bi-building"></i></span>
-    <div><b>{{ "%.0f"|format(program.price_onsite or 0) }} DT</b><small>On site{% if story.site.recordings %} · recordings {{ story.site.recordings }}{% endif %}</small></div>
+    <div><b>{{ "%.0f"|format(program.price_onsite or 0) }} DT</b><small>On site, a month{% if story.site.recordings %} · recordings {{ story.site.recordings }}{% endif %}</small></div>
   </div>
 </div>
 
@@ -330,7 +330,7 @@
       {% else %}
       <div class="pd-hint">No professor has this program among their specialities, so its classes cannot start.</div>
       {% endfor %}
-      <a class="ui-link d-inline-block mt-2" href="/classes/?tab=professors">{{ 'Open the professors' if story.teachers else 'Give this speciality to a professor' }}</a>
+      <a class="ui-link d-inline-block mt-2" href="/professors">{{ 'Open the professors' if story.teachers else 'Give this speciality to a professor' }}</a>
     </div>
 
     <div class="pd-box">

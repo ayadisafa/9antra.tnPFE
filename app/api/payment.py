@@ -24,13 +24,14 @@ def get_db():
 
 
 @router.post("/confirm/{registration_id}")
-def confirm_payment(registration_id: str, amount: Optional[float] = Form(None), method: str = Form("manual"), db: Session = Depends(get_db)):
+def confirm_payment(registration_id: str, amount: Optional[float] = Form(None), method: str = Form("manual"), back: str = Form(""),
+                    db: Session = Depends(get_db)):
     registration = db.get(Registration, registration_id)
     if not registration:
         raise HTTPException(status_code=404, detail="Registration not found")
     if amount is None:
         amount = registration.remaining_amount
-    profile_url = f"/candidate/{registration.candidate_id}"
+    profile_url = back.split("#")[0] if back.startswith("/payments") else f"/candidate/{registration.candidate_id}"
     try:
         # Records the payment, notifies the admin and, once fully paid,
         # enrolls the candidate in a class.
@@ -44,4 +45,4 @@ def confirm_payment(registration_id: str, amount: Optional[float] = Form(None), 
         notice = f"Payment recorded. Enrolled in {registration.class_group.name}."
     else:
         notice = "Payment recorded."
-    return RedirectResponse(url=f"{profile_url}?{urlencode({'notice': notice})}", status_code=303)
+    return RedirectResponse(url=f"{profile_url}?{urlencode({'notice': notice})}" + ("#monthly" if back.startswith("/payments") else ""), status_code=303)

@@ -101,7 +101,7 @@ rm.create(db, audience="class", audience_id=group.id, subject="Déjà prévu", b
 check("once one is planned for that class it is no longer proposed", not any("DEVOPS-RM-1 starts" in item["text"] for item in rm.suggestions(db)))
 
 page = admin.get("/reminders")
-check("the Reminders page opens and explains itself", page.status_code == 200 and "Your own reminders" in page.text and "Choose who" in page.text and "Start from an idea" in page.text and "Déjà prévu" in page.text and 'data-insert="[box gold]' in page.text, page.status_code)
+check("the Reminders page opens and explains itself", page.status_code == 200 and "Your own reminders" in page.text and "Choose who" in page.text and "What kind of reminder" in page.text and 'data-kind="missed"' in page.text and 'data-idea=' not in page.text and "Déjà prévu" in page.text and 'data-insert="[box gold]' in page.text, page.status_code)
 check("what went and what was cancelled is listed", idea["subject"] in page.text and "delivered to 2" in page.text and "cancelled, nothing sent" in page.text)
 page = admin.get(f"/reminders?audience=candidate&to={omar.id}&idea=missed")
 check("a suggestion opens the form already filled", "Vous nous avez manqué" in page.text and f'<option value="{omar.id}" selected>' in page.text)
@@ -116,6 +116,10 @@ made = db.query(AdminReminder).filter(AdminReminder.subject == "Une date à rete
 check("a reminder is planned from the page for a day and an hour", answer.status_code == 303 and "The reminder goes" in where(answer) and "18:30" in where(answer) and made is not None and made.audience == "program"
       and abs((made.send_at - rm.to_utc(tomorrow.replace(hour=18, minute=30, second=0, microsecond=0))).total_seconds()) < 1, where(answer))
 check("a time already past is refused", "already past" in where(admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "s", "body": "b", "when": "later", "date": "2020-01-01", "time": "09:00"})))
+from app.services import monthly
+
+monthly.tick = lambda *a, **k: {}       # the monthly payments are their own suite's (test_absence_month): the copy's classes vary
+monthly.apply_everywhere = lambda *a, **k: None     # (its once-only step too: it moves classes and tells their candidates)
 before = len(sent)
 answer = admin.post("/reminders/create", data={"audience": "candidate", "to_candidate": omar.id, "subject": "Tout de suite", "body": "Bonjour {first_name}", "when": "now"})
 check("“now” goes at the next pass, within a minute", "within a minute" in where(answer) and len(sent) == before)

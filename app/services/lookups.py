@@ -307,12 +307,17 @@ def _professors(db: Session, program: str = "", free_on: str = "") -> dict:
         groups = [group for group in db.query(ClassGroup).filter(ClassGroup.professor_id == person.id, ClassGroup.status != ClassStatus.COMPLETED).all()]
         found = {"professor": person.name, "teaches": person.specialties or "nothing written",
                  "available": bool(person.is_available), "classes": [f"{group.name} ({schedule_utils.describe_schedule_en(group) or 'hours not set'})" for group in groups]}
-        absences = db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == person.id, ProfessorAbsence.absence_date >= today).all()
+        from app.services import absences as absence_rules
+
+        absences = [row for row in db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == person.id).all()
+                    if row.last_day >= today and absence_rules.state(row) in absence_rules.AWAY]
+        absences.sort(key=lambda row: row.absence_date)
         if absences:
-            found["absent_on"] = [_day(row.absence_date) for row in absences[:5]]
+            found["absent_on"] = [(_day(row.absence_date) if row.last_day == row.absence_date else f"{_day(row.absence_date)} to {_day(row.last_day)}")
+                                  + ("" if absence_rules.state(row) == "accepted" else " (asked, not decided yet)") for row in absences[:5]]
         if day is not None:
             teaching = [group.name for group in groups if day.weekday() in schedule_utils.parse_days(group.days_of_week)]
-            away = any(row.absence_date == day for row in absences)
+            away = any(absence_rules.covers(row, day) for row in absences)
             found["free_that_day"] = person.is_available and not teaching and not away
             if teaching:
                 found["teaching_that_day"] = teaching
@@ -449,8 +454,10 @@ def _programs(db: Session, name: str = "") -> dict:
             continue
         registrations = [row for row in db.query(Registration).filter(Registration.program_id == program.id).all() if row.status != RegistrationStatus.CANCELLED]
         groups = db.query(ClassGroup).filter(ClassGroup.program_id == program.id, ClassGroup.status != ClassStatus.COMPLETED).all()
-        rows.append({"program": program.name, "price_online": _money(program.price_online) if program.price_online else None,
-                     "price_on_site": _money(program.price_onsite) if program.price_onsite else None,
+        rows.append({"program": program.name, "price_online_a_month": _money(program.price_online) if program.price_online else None,
+                     "price_on_site_a_month": _money(program.price_onsite) if program.price_onsite else None,
+                     "months": __import__("app.services.monthly", fromlist=["program_months"]).program_months(program),
+                     "how_paid": "each month is paid before it starts (the first month to join a class)",
                      "weeks": round(program.total_duration_days / 7) if program.total_duration_days else None,
                      "hours_per_week": program.hours_per_week, "session_time": program.class_session_time,
                      "registrations": len(registrations), "paid_in_full": sum(1 for row in registrations if row.payment_status == PaymentStatus.PAID),
@@ -904,8 +911,10 @@ def _program_facts(db: Session, name: str = "") -> dict:
     rows = []
     for program in programs[:12]:
         start = prospects._next_start(db, program)
-        found = {"program": program.name, "price_online": _money(program.price_online) if program.price_online else None,
-                 "price_on_site": _money(program.price_onsite) if program.price_onsite else None,
+        found = {"program": program.name, "price_online_a_month": _money(program.price_online) if program.price_online else None,
+                 "price_on_site_a_month": _money(program.price_onsite) if program.price_onsite else None,
+                 "months": __import__("app.services.monthly", fromlist=["program_months"]).program_months(program),
+                 "how_paid": "each month is paid before it starts (the first month to join a class)",
                  "weeks": round(program.total_duration_days / 7) if program.total_duration_days else None,
                  "hours_per_week": program.hours_per_week, "session_time": program.class_session_time,
                  "next_class_starts": _day(start) if start else "no date fixed yet"}

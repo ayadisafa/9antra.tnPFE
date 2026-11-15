@@ -35,14 +35,10 @@ class SessionReminderSent(Base):
 
 
 def hours_before(db: Session) -> int:
-    from app.services.settings_service import get_settings
+    """The timer in whole hours (it may be in any unit: services/timings.py)."""
+    from app.services import timings
 
-    value = getattr(get_settings(db), "session_reminder_hours", None)
-    try:
-        value = int(value) if value is not None else HOURS
-    except (TypeError, ValueError):
-        value = HOURS
-    return max(LEAST, min(MOST, value))
+    return max(1, -(-timings.get(db, "session_reminder").seconds // 3600))
 
 
 def set_hours(db: Session, value) -> int:
@@ -55,6 +51,7 @@ def set_hours(db: Session, value) -> int:
     if not LEAST <= hours <= MOST:
         raise ValueError(f"Between {LEAST} and {MOST} hours before the session.")
     get_settings(db).session_reminder_hours = hours
+    get_settings(db).session_reminder_before = f"{hours}h"
     db.commit()
     return hours
 
@@ -77,7 +74,9 @@ def due(db: Session, now: datetime | None = None) -> list[tuple]:
     from app.services.schedule_utils import local_now
 
     now = now or local_now()
-    ahead = timedelta(hours=hours_before(db))
+    from app.services import timings
+
+    ahead = timings.get(db, "session_reminder").delta
     found = []
     days = [now.date() + timedelta(days=offset) for offset in range(0, ahead.days + 2)]
     for session in db.query(ClassSession).filter(ClassSession.session_date.in_(days)).all():
@@ -102,7 +101,7 @@ def send_due(db: Session, now: datetime | None = None) -> int:
         return 0
     sent = 0
     for class_group, session, start in due(db, now):
-        members = attendance.members(db, class_group.id)
+        members = attendance.members(db, class_group.id, on=session.session_date)
         if class_group.status == ClassStatus.NOT_STARTED and hold_reasons(class_group, len(members)):
             continue                    # a class on hold: its sessions may move
         done = {row.registration_id for row in db.query(SessionReminderSent).filter(SessionReminderSent.session_id == session.id).all()}

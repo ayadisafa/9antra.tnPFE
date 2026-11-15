@@ -101,10 +101,10 @@ check("“ouvre les paiements”: she takes you to the payments page", said["nav
       and said["agent"]["key"] == "guide", said)
 check("...and says on arrival what the page is for", said["navigate"]["arrived"].startswith("Nous y sommes : Paiements."), said["navigate"])
 cases = {"Open the candidates page": "/candidate/all", "7ell les classes": "/classes/", "افتح الإعدادات": "/settings", "va au tableau de bord": "/",
-         "emmène-moi sur la page des formateurs": "/classes/?tab=professors", "ouvre la fiche de Fares Benali": f"/candidate/{person.id}",
+         "emmène-moi sur la page des formateurs": "/professors", "ouvre la fiche de Fares Benali": f"/candidate/{person.id}",
          "ouvre la classe YM1": f"/classes/{group.id}", "ouvre le cours de la classe YM1": f"/classes/{group.id}/course",
          "ouvre le programme DevOps": f"/programs/{program.id}", "ouvre les emails de Fares Benali": f"/inbox?candidate={person.id}",
-         "take me to the job market": "/programs/market", "ouvre les professeurs": "/classes/?tab=professors", "tu peux ouvrir la page des rappels ?": "/reminders"}
+         "take me to the job market": "/programs/market", "ouvre les professeurs": "/professors", "tu peux ouvrir la page des rappels ?": "/reminders"}
 wrong = {text: (ask(text, lang=None).get("navigate") or {}).get("url") for text in cases}
 check("pages, files, classes, programs, in four languages", all(wrong[text] == url for text, url in cases.items()),
       {text: url for text, url in wrong.items() if url != cases[text]})

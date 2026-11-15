@@ -22,7 +22,7 @@ PAGES = [
     ("Add a candidate", "/candidate/all?add=1", "candidates", "new candidate nouveau ajouter register inscrire", "bi-person-plus-fill"),
     ("Classes", "/classes/", "classes", "groups groupes sessions seances", "bi-easel2-fill"),
     ("Create a class", "/classes/#create", "classes", "new class nouvelle classe", "bi-plus-square"),
-    ("Professors and their specialities", "/classes/?tab=professors", "classes", "teachers formateurs profs speciality specialite", "bi-person-video3"),
+    ("Professors and their specialities", "/professors", "classes", "teachers formateurs profs speciality specialite", "bi-person-video3"),
     ("Programs", "/programs/all", "programs", "formations courses catalogue", "bi-journal-bookmark-fill"),
     ("Add a program", "/programs/all#add", "programs", "new program nouvelle formation import pdf", "bi-journal-plus"),
     ("What the market asks", "/programs/market", "programs", "jobs emploi linkedin skills competences trends tendances offers", "bi-graph-up-arrow"),
@@ -97,7 +97,7 @@ def find(db: Session, query: str, user=None, most: int = 6) -> list[dict]:
             groups.append({"group": "Classes", "items": [{"title": row.name, "detail": row.professor_name or "", "url": f"/classes/{row.id}", "icon": "bi-easel2"} for row in rows]})
         rows = db.query(Professor).filter(*like(Professor.name, Professor.specialties, Professor.email)).limit(most).all()
         if rows:
-            groups.append({"group": "Professors", "items": [{"title": row.name, "detail": row.specialties or "", "url": "/classes/?tab=professors", "icon": "bi-person-video3"} for row in rows]})
+            groups.append({"group": "Professors", "items": [{"title": row.name, "detail": row.specialties or "", "url": "/professors", "icon": "bi-person-video3"} for row in rows]})
     if _may(user, "reminders"):
         rows = db.query(AdminReminder).filter(*like(AdminReminder.subject, AdminReminder.audience_label)).limit(most).all()
         if rows:

@@ -161,7 +161,7 @@ resource_reminders.send_due(db)
 waiting = [item for item in resource_reminders.due(db) if item["group"].name == "TT-LOST"]
 check("resources: a professor nobody can reach is not marked reminded", waiting and not waiting[0]["reachable"]
       and not db.query(TeamMessage).filter(TeamMessage.person == f"professor:{nobody.id}").count())
-check("resources: and the card says so", "cannot be reached: add their email or phone" in admin.get("/classes/?tab=professors").text)
+check("resources: and the card says so", "cannot be reached: add their email or phone" in admin.get("/professors").text)
 nobody.email = "nadia.nowhere@example.com"
 db.commit()
 check("resources: it goes once they can be reached", resource_reminders.send_due(db) >= 1
@@ -170,7 +170,7 @@ admin.post("/classes/professors/resource-reminders", data={"days": "2", "text": 
 db.expire_all()
 check("resources: can be stopped, and the words go back to the original", not resource_reminders.settings_of(db)["on"]
       and resource_reminders.settings_of(db)["text"] == resource_reminders.DEFAULT_TEXT)
-check("resources: their card on the Professors tab", 'id="resources"' in admin.get("/classes/?tab=professors").text)
+check("resources: their card on the Professors tab", 'id="resources"' in admin.get("/professors").text)
 
 # ---- D. Everything it does by itself ----
 found = {item["key"]: item for item in automations.listing(db)}

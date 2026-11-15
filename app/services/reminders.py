@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.orm import Session
@@ -41,13 +42,23 @@ AUDIENCES = {
 FOR_PROFESSORS = ("professor", "professors")
 REPEATS = {
     "once": "Once",
-    "daily": "Every day",
-    "weekly": "Every week",
-    "monthly": "Every month",
+    "every": "Again and again",
     "session": "Before each of their sessions",
-    "absence": "Each time a candidate is marked absent",
+    "absence": "After each absence",
+    "start": "Before their class starts",
+    "after_start": "After their class started",
+    "end": "Before their class ends",
+    "after_end": "After their class ended",
+    "unanswered": "Weekly questions not answered",
+    "registered": "After they registered",
 }
-WATCHING = ("absence", "session")       # these wait for something to happen, then go to each candidate it concerns
+OLD_REPEATS = {"daily": "1d", "weekly": "1w", "monthly": "1mo"}      # kept for the reminders written before "every"
+# These wait for something to happen, then go to each candidate it concerns (once per thing, `offset` before or after).
+WATCHING = ("absence", "session", "start", "after_start", "end", "after_end", "unanswered", "registered")
+EVENTS = ("start", "after_start", "end", "after_end", "unanswered", "registered")
+OFFSET_DEFAULTS = {"session": "24h", "absence": "0min", "start": "2d", "after_start": "3w", "end": "1w", "after_end": "3d",
+                   "unanswered": "2d", "registered": "2d"}
+LATE_BY = timedelta(days=7)              # a moment passed longer ago than this is not sent any more (after a long stop)
 HOURS_BEFORE = 24                        # before each session: by default, the day before
 # What a reminder before each session can say of that session.
 SESSION_VARIABLES = (("session_date", "Day of the session", "samedi 14 novembre"), ("session_time", "Hour of the session", "18:00"),
@@ -167,9 +178,31 @@ def design_of(reminder) -> dict:
     return email_layout.clean_design(getattr(reminder, "design", None))
 
 
+def offset_of(reminder: AdminReminder):
+    """How long before / after what it waits for (a reminder written in hours before each session keeps its hours)."""
+    from app.services import durations
+
+    found = durations.parse(reminder.offset or "", "hours")
+    if found is not None:
+        return found
+    if reminder.repeat == "session":
+        return durations.Duration(reminder.hours_before or HOURS_BEFORE, "hours")
+    return durations.parse(OFFSET_DEFAULTS.get(reminder.repeat or "", "0min"), "hours")
+
+
+def every_of(reminder: AdminReminder):
+    from app.services import durations
+
+    if reminder.repeat == "every":
+        return durations.parse(reminder.every or "", "days")
+    code = OLD_REPEATS.get(reminder.repeat or "")
+    return durations.parse(code, "days") if code else None
+
+
 def create(db: Session, *, audience: str, audience_id: str | None, subject: str, body: str, title: str | None = None,
            style: str = "brand", send_at: datetime | None = None, by: str | None = None, channel: str = "email",
-           repeat: str = "once", until: datetime | None = None, design=None, hours_before: int | None = None) -> AdminReminder:
+           repeat: str = "once", until: datetime | None = None, design=None, hours_before: int | None = None,
+           every=None, offset=None, kind: str | None = None) -> AdminReminder:
     """Keep a reminder. `send_at` is UTC; None means at the next pass, within a minute. `repeat`: once, daily, weekly,
     monthly; absence (it then waits, and goes to each candidate of its choice the moment they are marked absent); or
     session (it goes to each candidate of its choice `hours_before` hours before each of their sessions)."""
@@ -179,15 +212,29 @@ def create(db: Session, *, audience: str, audience_id: str | None, subject: str,
         raise ValueError("Choose who receives the reminder.")
     if not subject.strip() or not body.strip():
         raise ValueError("Write a subject and a message.")
-    repeat = repeat if repeat in REPEATS else "once"
+    from app.services import durations
+
+    repeat = repeat if (repeat in REPEATS or repeat in OLD_REPEATS) else "once"
+    if repeat == "every":
+        every = durations.parse(every or "", "days")
+        if every is None or every.value <= 0:
+            raise ValueError("Again and again: write how often (a number and its unit).")
+        durations.checked(every, least=durations.Duration(1, "minutes"), most=durations.Duration(12, "months"))
+    if repeat in WATCHING:
+        offset = durations.parse(offset if offset is not None else (f"{hours_before}h" if repeat == "session" and hours_before else
+                                                                     OFFSET_DEFAULTS[repeat]), "hours")
+        if offset is None:
+            raise ValueError("Write the time with its unit.")
+        durations.checked(offset, most=durations.Duration(6, "months"), zero=repeat == "absence")
+        if repeat == "session":
+            durations.checked(offset, least=durations.Duration(1, "minutes"), most=durations.Duration(1, "months"))
+            hours_before = max(1, -(-offset.seconds // 3600))
+    if repeat in EVENTS and audience in FOR_PROFESSORS:
+        raise ValueError("This one goes to candidates: choose candidates (one, a class, a program, everyone).")
     if repeat == "absence" and audience in FOR_PROFESSORS:
         raise ValueError("“Each time a candidate is marked absent” goes to that candidate: choose candidates (a class, a program, everyone).")
     if repeat == "session" and audience in FOR_PROFESSORS:
         raise ValueError("“Before each of their sessions” goes to the candidates of each session: choose candidates (a class, a program, everyone).")
-    if repeat == "session":
-        hours_before = HOURS_BEFORE if hours_before is None else int(hours_before)
-        if not 1 <= hours_before <= 168:
-            raise ValueError("Before each session: from 1 to 168 hours before.")
     if repeat not in WATCHING and not recipients(db, audience, audience_id):
         raise ValueError("Nobody would receive this reminder: there is nobody with an email address in that choice.")
     reminder = AdminReminder(
@@ -196,6 +243,7 @@ def create(db: Session, *, audience: str, audience_id: str | None, subject: str,
         style=style if style in STYLES else "brand", send_at=send_at or datetime.utcnow(), created_by=by,
         channel=channel if channel in ("email", "both", "whatsapp") else "email", repeat=repeat, until=until, times=0,
         status="watching" if repeat in WATCHING else "scheduled", hours_before=hours_before if repeat == "session" else None,
+        kind=kind or None, every=every.code if repeat == "every" else None, offset=offset.code if repeat in WATCHING else None,
     )
     from app.services import email_layout, email_templates
 
@@ -207,10 +255,15 @@ def create(db: Session, *, audience: str, audience_id: str | None, subject: str,
     return reminder
 
 
-def _next_time(when: datetime, repeat: str) -> datetime | None:
-    """The next time a repeated reminder goes: a week later, or the same day of the next month (its last day when shorter)."""
+def _next_time(when: datetime, repeat: str, every: str | None = None) -> datetime | None:
+    """The next time a repeated reminder goes: `every` later (a month: the same day of the next month, or its last day)."""
     import calendar
 
+    if repeat == "every":
+        from app.services import durations
+
+        step = durations.parse(every or "", "days")
+        return step.after(when) if step is not None and step.value > 0 else None
     if repeat == "daily":
         return when + timedelta(days=1)
     if repeat == "weekly":
@@ -268,9 +321,9 @@ def reset(db: Session, reminder: AdminReminder) -> AdminReminder:
             while coming <= now:
                 coming += timedelta(days=1)
         else:
-            while coming <= now:
-                coming = _next_time(coming, reminder.repeat)
-        reminder.status, reminder.send_at = "scheduled", coming
+            while coming is not None and coming <= now:
+                coming = _next_time(coming, reminder.repeat, reminder.every)
+        reminder.status, reminder.send_at = "scheduled", coming or now
     db.commit()
     return reminder
 
@@ -302,7 +355,7 @@ def answer_sessions(db: Session, now: datetime | None = None, limit: int = 60) -
             done = set(json.loads(reminder.done_keys or "[]"))
         except ValueError:
             done = set()
-        ahead = timedelta(hours=reminder.hours_before or HOURS_BEFORE)
+        ahead = offset_of(reminder).delta
         groups = db.query(Group).filter(Group.status != ClassStatus.COMPLETED)
         if reminder.audience == "class":
             groups = groups.filter(Group.id == reminder.audience_id)
@@ -355,7 +408,7 @@ def answer_sessions(db: Session, now: datetime | None = None, limit: int = 60) -
 
 
 def cancel(db: Session, reminder: AdminReminder) -> bool:
-    if reminder.status not in ("scheduled", "watching"):
+    if reminder.status not in ("scheduled", "watching", "paused"):
         return False
     reminder.status = "cancelled"
     db.commit()
@@ -400,10 +453,10 @@ def send(db: Session, reminder: AdminReminder) -> tuple[int, int]:
         sent, failed = sent + (1 if delivered else 0), failed + (0 if delivered else 1)
     reminder.status, reminder.sent_at, reminder.sent_count, reminder.failed_count = "sent", datetime.utcnow(), sent, failed
     reminder.times = (reminder.times or 0) + 1
-    coming = _next_time(reminder.send_at, reminder.repeat or "once")
+    coming = _next_time(reminder.send_at, reminder.repeat or "once", reminder.every)
     if coming is not None:
         while coming <= datetime.utcnow():            # the server was off for a while: the next one still to come
-            coming = _next_time(coming, reminder.repeat)
+            coming = _next_time(coming, reminder.repeat, reminder.every)
         if reminder.until is None or coming <= reminder.until:
             reminder.status, reminder.send_at = "scheduled", coming
     db.commit()
@@ -428,7 +481,10 @@ def answer_absences(db: Session, limit: int = 20) -> int:
             done = set(json.loads(reminder.done_keys or "[]"))
         except ValueError:
             done = set()
+        wait = offset_of(reminder).delta          # how long after the absence it goes (0: at once)
         query = db.query(Attendance).filter(Attendance.status == "absent", Attendance.marked_at >= reminder.created_at)
+        if wait:
+            query = query.filter(Attendance.marked_at <= datetime.utcnow() - wait)
         if reminder.audience == "class":
             query = query.filter(Attendance.class_group_id == reminder.audience_id)
         elif reminder.audience == "candidate":
@@ -461,16 +517,182 @@ def answer_absences(db: Session, limit: int = 20) -> int:
     return went
 
 
+def _deliver(db: Session, reminder: AdminReminder, person, registration_id: str | None, values: dict | None = None) -> bool:
+    """One candidate, by the reminder's way (email, WhatsApp or both)."""
+    from app.services import email_composer, whatsapp, whatsapp_inbox
+
+    fields = dict(subject=reminder.subject, title=reminder.title or "", body=reminder.body, style=reminder.style,
+                  registration_id=registration_id, design=design_of(reminder), values=values or {})
+    texted = reminder.channel in ("both", "whatsapp") and whatsapp.normalise(person.phone) is not None
+    delivered = False
+    if (reminder.channel != "whatsapp" or not texted) and person.email:
+        delivered = email_composer.send_one(db, person, **fields)
+    if texted:
+        from app.services.email_templates import whatsapp_text
+
+        rendered = email_composer.render(db, candidate=person, **fields)
+        message = whatsapp_inbox.send(db, person, whatsapp_text(rendered), kind="reminder", author="admin")
+        delivered = delivered or bool(message is not None and message.status in ("sent", "to_send"))
+    return delivered
+
+
+def _events(db: Session, reminder: AdminReminder, now_local: datetime, now_utc: datetime) -> list[tuple]:
+    """(key, registration, values) of what this watching reminder must answer now (each thing once)."""
+    from app.models.classgroup import ClassGroup as Group
+    from app.models.quiz import Quiz
+    from app.services.schedule_utils import class_end_dt, class_start_dt, format_date_fr
+
+    offset = offset_of(reminder)
+    scope = _active(db)
+    if reminder.audience == "class":
+        scope = scope.filter(Registration.class_group_id == reminder.audience_id)
+    elif reminder.audience == "program":
+        scope = scope.filter(Registration.program_id == reminder.audience_id)
+    elif reminder.audience == "candidate":
+        scope = scope.filter(Registration.candidate_id == reminder.audience_id)
+    found = []
+    for registration in scope.all():
+        if reminder.audience == "unpaid" and not (registration.remaining_amount or 0) > 0:
+            continue
+        group = registration.class_group
+        if reminder.repeat == "registered":
+            moment = registration.registration_date
+            if moment is None:
+                continue
+            if moment.tzinfo is not None:
+                from datetime import timezone
+
+                moment = moment.astimezone(timezone.utc).replace(tzinfo=None)
+            due = offset.after(moment)
+            if moment >= reminder.created_at - LATE_BY and due <= now_utc <= due + LATE_BY:
+                found.append((f"reg:{registration.id}", registration, {}))
+            continue
+        if reminder.repeat == "unanswered":
+            for quiz in (db.query(Quiz).filter(Quiz.registration_id == registration.id, Quiz.kind == "weekly", Quiz.sent_at.isnot(None),
+                                               Quiz.completed_at.is_(None)).all()):
+                due = offset.after(quiz.sent_at)
+                if due <= now_utc <= due + LATE_BY:
+                    found.append((f"quiz:{quiz.id}", registration, {}))
+            continue
+        if group is None:
+            continue
+        start, end = class_start_dt(group), class_end_dt(group)
+        values = {"start_date": format_date_fr(start) if start else "", "start_time": f"{start:%H:%M}" if start else ""}
+        if reminder.repeat == "start" and start is not None and offset.before(start) <= now_local < start:
+            found.append((f"start:{registration.id}:{group.id}", registration, values))
+        elif reminder.repeat == "end" and end is not None and offset.before(end) <= now_local < end:
+            found.append((f"end:{registration.id}:{group.id}", registration, values))
+        elif reminder.repeat == "after_start" and start is not None and offset.after(start) <= now_local <= offset.after(start) + LATE_BY \
+                and (end is None or now_local < end):
+            found.append((f"after_start:{registration.id}:{group.id}", registration, values))
+        elif reminder.repeat == "after_end" and end is not None and offset.after(end) <= now_local <= offset.after(end) + LATE_BY:
+            found.append((f"after_end:{registration.id}:{group.id}", registration, values))
+    return found
+
+
+def answer_events(db: Session, limit: int = 60) -> int:
+    """The watching reminders of the new triggers: each candidate it concerns, once per thing. Returns how many went."""
+    import json
+
+    from app.services.schedule_utils import local_now
+
+    now_local, now_utc = local_now(), datetime.utcnow()
+    went = 0
+    for reminder in db.query(AdminReminder).filter(AdminReminder.status == "watching", AdminReminder.repeat.in_(EVENTS)).all():
+        if reminder.until is not None and reminder.until < now_utc:
+            reminder.status = "sent"
+            db.commit()
+            continue
+        try:
+            done = set(json.loads(reminder.done_keys or "[]"))
+        except ValueError:
+            done = set()
+        for key, registration, values in _events(db, reminder, now_local, now_utc):
+            person = registration.candidate
+            if key in done or person is None:
+                continue
+            done.add(key)
+            try:
+                delivered = _deliver(db, reminder, person, registration.id, values)
+            except Exception:
+                db.rollback()
+                logger.exception("The reminder %s could not go to candidate %s.", reminder.id, person.id)
+                delivered = False
+            if delivered:
+                reminder.sent_count, reminder.times, reminder.sent_at = (reminder.sent_count or 0) + 1, (reminder.times or 0) + 1, now_utc
+                went += 1
+            else:
+                reminder.failed_count = (reminder.failed_count or 0) + 1
+            if went >= limit:
+                break
+        reminder.done_keys = json.dumps(sorted(done)[-4000:])
+        db.commit()
+    return went
+
+
+_SENDING = threading.Lock()      # the 10-second pass and the minute pass never send the same reminder twice
+
+
+def send_scheduled(db: Session, now: datetime | None = None) -> int:
+    """Only the reminders at a time (also every 10 seconds: a timer in seconds goes on time)."""
+    if not _SENDING.acquire(blocking=False):
+        return 0                                 # the other pass is sending them right now
+    try:
+        now = now or datetime.utcnow()
+        due = (db.query(AdminReminder).filter(AdminReminder.status == "scheduled", AdminReminder.send_at <= now)
+               .order_by(AdminReminder.send_at.asc()).limit(MOST_AT_ONCE).all())
+        for reminder in due:
+            send(db, reminder)
+        return len(due)
+    finally:
+        _SENDING.release()
+
+
 def send_due(db: Session, now: datetime | None = None) -> int:
     """Send the reminders whose time has come. Returns how many reminders went."""
-    now = now or datetime.utcnow()
-    due = (db.query(AdminReminder).filter(AdminReminder.status == "scheduled", AdminReminder.send_at <= now)
-           .order_by(AdminReminder.send_at.asc()).limit(MOST_AT_ONCE).all())
-    for reminder in due:
-        send(db, reminder)
+    count = send_scheduled(db, now)
     answer_absences(db)
     answer_sessions(db)
-    return len(due)
+    answer_events(db)
+    return count
+
+
+def pause(db: Session, reminder: AdminReminder, on: bool) -> str:
+    """Switch an automatic reminder off (it waits, nothing is sent) or on again."""
+    if on and reminder.status == "paused":
+        reminder.status = "watching" if reminder.repeat in WATCHING else "scheduled"
+        if reminder.status == "scheduled" and reminder.send_at <= datetime.utcnow():
+            step = every_of(reminder)
+            while step is not None and reminder.send_at <= datetime.utcnow():
+                reminder.send_at = step.after(reminder.send_at)
+    elif not on and reminder.status in ("watching", "scheduled"):
+        reminder.status = "paused"
+    db.commit()
+    return reminder.status
+
+
+def set_offset(db: Session, reminder: AdminReminder, duration) -> None:
+    """Its timer: how often (every) or how long before / after what it waits for."""
+    from app.services import durations
+
+    if reminder.repeat == "every" or reminder.repeat in OLD_REPEATS:
+        durations.checked(duration, least=durations.Duration(1, "minutes"), most=durations.Duration(12, "months"))
+        reminder.repeat, reminder.every = "every", duration.code
+    elif reminder.repeat in WATCHING:
+        durations.checked(duration, most=durations.Duration(6, "months"), zero=reminder.repeat == "absence")
+        reminder.offset = duration.code
+        if reminder.repeat == "session":
+            durations.checked(duration, least=durations.Duration(1, "minutes"))
+            reminder.hours_before = max(1, -(-duration.seconds // 3600))
+    else:
+        raise ValueError("This reminder goes once: change its day instead.")
+    db.commit()
+
+
+def rules(db: Session) -> list[AdminReminder]:
+    """The admin's reminders that go by themselves again and again: shown with the automatic ones."""
+    return (db.query(AdminReminder).filter(AdminReminder.status.in_(("watching", "scheduled", "sending", "paused")),
+                                           AdminReminder.repeat != "once").order_by(AdminReminder.created_at.asc()).all())
 
 
 def upcoming(db: Session) -> list[AdminReminder]:

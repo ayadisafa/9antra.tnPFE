@@ -157,7 +157,11 @@
     <a class="st-tile" href="#identity" data-words="name and icon what the application is called" style="--i:6;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("identity") }}</span><b>Name and icon</b><span>What the application is called</span></a>
     <a class="st-tile" href="#centre" data-words="your centre official name cheque beneficiary rib bank tax number phone address payment" style="--i:7;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("data") }}</span><b>Your centre</b><span>Official name, cheques, RIB, phone, address</span></a>
     <a class="st-tile" href="#address" data-words="address for candidates the link candidates open from their emails" style="--i:7;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("link") }}</span><b>Address for candidates</b><span>The link candidates open from their emails</span></a>
-    <a class="st-tile" href="#whatsapp" data-words="whatsapp business meta reminders messages answers" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span><b>WhatsApp</b><span>Messages and answers on WhatsApp</span></a>
+    <a class="st-tile" href="#whatsapp" data-words="whatsapp business meta reminders messages answers delivered read" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("whatsapp") }}</span><b>WhatsApp</b><span>Messages and answers on WhatsApp</span></a>
+    <a class="st-tile" href="#sms" data-words="sms android iphone shortcut text messages phone received delivered" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("listen") }}</span><b>SMS</b><span>From your Android phone or your iPhone</span></a>
+    <a class="st-tile" href="#facebook" data-words="facebook page token posts videos reviews meta" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("posts") }}</span><b>Facebook</b><span>The page's posts, videos and reviews</span></a>
+    <a class="st-tile" href="#linkedin" data-words="linkedin page token posts organization" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("news") }}</span><b>LinkedIn</b><span>The page's posts</span></a>
+    <a class="st-tile" href="#monthly" data-words="monthly payments month price reminder pause grace second month" style="--i:8;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("payments") }}</span><b>Monthly payments</b><span>Each month is paid to continue</span></a>
     <a class="st-tile" href="#rules" data-words="assistant rules may not answer instructions chatbot" style="--i:13;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("assistant") }}</span><b>Assistant's rules</b><span>What it may and may not answer</span></a>
     <a class="st-tile" href="#google" data-words="weekly answers google form and firebase" style="--i:9;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("quiz") }}</span><b>Weekly answers</b><span>Google Form and Firebase</span></a>
     <a class="st-tile" href="/data" data-words="all the data change any value, add or remove a record" style="--i:10;"><span class="st-tile-pic" aria-hidden="true">{{ art.scene("data") }}</span><b>All the data</b><span>Change any value, add or remove a record</span></a>
@@ -230,6 +234,19 @@
           days (or more) after the end of the first, with a professor free at those hours. They are told so, and the assistant answers it.
           When their first class ends later than planned (a session put a week later), they move by themselves to the next class of their next program.
         </div>
+        <div class="st-switch-help mt-2" id="teach-rule">
+          <label class="d-inline-flex align-items-center gap-2 m-0"><input type="checkbox" name="professor_program_requests" value="1" {{ 'checked' if settings.professor_program_requests }}>
+          <b>Professors may ask to teach a program.</b></label> A professor never adds a program alone: you add it on the <a href="/professors">Professors page</a>.
+          Ticked, they can also ask from their profile, and each request waits for your approval.
+        </div>
+        <div class="st-switch-help mt-2" id="absence-decision">
+          <b>A professor asks to be away.</b> For each of their sessions in that period, the application looks for a colleague who teaches it, is not away and has no class at those hours.
+          <select name="absence_decision" class="form-select form-select-sm d-inline-block w-auto" aria-label="Who decides an absence request">
+            <option value="nobody" {{ 'selected' if (settings.absence_decision or 'nobody') == 'nobody' }}>Accepted alone when someone is free for each session; I decide the others</option>
+            <option value="always" {{ 'selected' if settings.absence_decision == 'always' }}>I decide every request</option>
+          </select>
+          The requests wait on the <a href="/professors#absences">Professors page</a>; a refusal is sent to the professor with one click to answer.
+        </div>
         <div class="st-switch-help mt-2" id="replacement-fallback">
           <b>A professor away, and nobody can replace them.</b> The professors who teach the program and are free are asked one by one first. If none can:
           <select name="replacement_fallback" class="form-select form-select-sm d-inline-block w-auto" aria-label="When nobody can replace them">
@@ -246,24 +263,18 @@
         </div>
 
         <div class="st-section">When a new class starts</div>
-        <label class="st-option">
-          <input class="form-check-input me-2" type="radio" name="class_start_mode" value="{{ modes.after_days }}" {% if settings.class_start_mode != modes.min_enrollment %}checked{% endif %}>
-          <span class="opt-title">A number of days after it is created</span>
-          <div class="opt-help">The start date is known at once, so the candidate receives it in the payment email.</div>
-          <div class="opt-fields">
-            Start <input name="default_class_start_days" type="number" min="0" max="365" value="{{ settings.default_class_start_days }}" class="form-control form-control-sm" aria-label="Days after creation" required> days after the class is created, on the first session day.
-          </div>
-        </label>
-        <label class="st-option">
-          <input class="form-check-input me-2" type="radio" name="class_start_mode" value="{{ modes.min_enrollment }}" {% if settings.class_start_mode == modes.min_enrollment %}checked{% endif %}>
-          <span class="opt-title">When the class has enough candidates</span>
-          <div class="opt-help">The class waits without a date. Once the minimum is reached the date is set and everyone enrolled is emailed.</div>
-          <div class="opt-fields">
-            Start once at least <input name="min_students_to_start" type="number" min="1" value="{{ settings.min_students_to_start }}" class="form-control form-control-sm" aria-label="Minimum candidates" required> candidates are enrolled,
-            <input name="min_start_notice_days" type="number" min="0" max="60" value="{{ settings.min_start_notice_days }}" class="form-control form-control-sm" aria-label="Notice days" required> days later, on the first session day.
-            <div class="form-text">The notice leaves time for reminders: with 3 days, the 3-day and 1-day reminders are sent; a 7-day reminder would be skipped.</div>
-          </div>
-        </label>
+        <div class="st-rule-fixed">
+          <i class="bi bi-calendar2-week" aria-hidden="true"></i>
+          <div><b>Always in the first week of the coming month</b>, on its first session day. Prices are for a month, so every session (class) starts with a month.
+            Once it has started, paid candidates wait for the next one; only you can add someone to a class that runs.
+            <span class="d-block mt-1">Another date only when you choose it for one class: its <b>Parameters</b> › When it starts.</span></div>
+          <input type="hidden" name="class_start_mode" value="{{ modes.next_month }}">
+          <input type="hidden" name="default_class_start_days" value="{{ settings.default_class_start_days if settings.default_class_start_days is not none else 10 }}">
+          <input type="hidden" name="min_students_to_start" value="{{ settings.min_students_to_start or 1 }}">
+          <input type="hidden" name="min_start_notice_days" value="{{ settings.min_start_notice_days if settings.min_start_notice_days is not none else 3 }}">
+        </div>
+        <style>.st-rule-fixed { display:flex; gap:12px; align-items:flex-start; background:var(--berry-subtle, #fdf2f7); border-radius:16px; padding:12px 14px; font-size:.86rem; }
+               .st-rule-fixed > i { font-size:1.4rem; color:var(--primary-berry); }</style>
 
         <div class="st-section">Size and schedule of a new class</div>
         <div class="row g-3">
@@ -322,6 +333,32 @@
       </form>
     </div>
   </details>
+  <details class="st-card st-fold" id="monthly" data-tab-of="settings" data-tab-panel="classes" data-fold style="--i:1;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic" aria-hidden="true">{{ art.scene("payments") }}</span>
+      <span class="st-fold-text"><span class="st-title">Monthly payments</span><span class="st-sub">Prices are for one month: each month is paid to continue.</span></span>
+      <span class="st-fold-state"><span class="st-state ok"><i class="bi bi-calendar2-month"></i>{{ settings.month_remind_days if settings.month_remind_days is not none else 5 }} days before</span></span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <ol class="st-sub ps-3 mb-3" style="line-height:1.6;">
+        <li><b>The price of a program is the price of one month</b> (online or on site). A program lasts its duration in months: 60 days = 2 months, 180 days = 6.</li>
+        <li><b>The first month</b> is paid to join a class, as before.</li>
+        <li><b>Near the end of each month</b> they are asked once whether they continue (email template “Continue with the next month?”, one click or a “oui” / “non” reply), unless they already paid it. Yes, or no answer: when the month starts, it is added to what they owe. No: they stop after this month, nothing more is owed.</li>
+        <li><b>One month or the whole program</b>: on the candidate's file, record one month or every month at once.</li>
+        <li><b>Not paid some days into the month:</b> their access pauses (no session link, their questions and course files wait); they are told once, you get one notification. Paying starts it again at once, and they are told.</li>
+        <li>A candidate who changes from online to on site (or the other way) pays the new price from the next month.</li>
+      </ol>
+      <form method="post" action="/settings/monthly" class="d-flex flex-wrap gap-3 align-items-end">
+        <label class="small fw-bold">Reminder, days before the month<input name="remind_days" type="number" min="0" max="30" value="{{ settings.month_remind_days if settings.month_remind_days is not none else 5 }}" class="form-control form-control-sm" style="width:90px"></label>
+        <label class="small fw-bold">Days of grace before the pause<input name="grace_days" type="number" min="0" max="30" value="{{ settings.month_grace_days if settings.month_grace_days is not none else 3 }}" class="form-control form-control-sm" style="width:90px"></label>
+        <label class="small d-flex align-items-center gap-2"><input type="checkbox" name="pause_on" value="1" {{ 'checked' if settings.month_pause_on is not false }}> Pause the access of a month not paid</label>
+        <input type="hidden" name="sent" value="1">
+        <button class="btn btn-sm btn-berry rounded-pill px-3">Save</button>
+      </form>
+      <div class="st-sub mt-2">Who pays which month, and the months to decide, are on the <a href="/payments#monthly">Payments page</a>. The words of the three emails are in <a href="/inbox/templates">Email templates</a> (Payment).</div>
+    </div>
+  </details>
   <details class="st-card st-fold" id="receives" data-tab-of="settings" data-tab-panel="classes" data-fold style="--i:1;">
     <summary class="st-fold-head">
       <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-envelope-paper-heart"></i></span>
@@ -340,6 +377,28 @@
     </div>
   </details>
   <div class="st-group" data-tab-of="settings" data-tab-panel="messages"><i class="bi bi-chat-dots"></i>Emails and messages</div>
+  <section class="st-card st-links" id="connections" data-tab-of="settings" data-tab-panel="messages">
+    <div class="st-title mb-1"><i class="bi bi-diagram-3 me-1" style="color:var(--primary-berry);"></i>Every way of writing, at a glance</div>
+    <div class="st-sub mb-2">What each one does today, and where to set it. A way that is not connected still works by hand: the message waits in the inbox with a button that opens your phone, written.</div>
+    <div class="st-link-grid">
+      <a class="st-link {{ 'is-on' if smtp_ready else '' }}" href="#email"><i class="bi bi-envelope-fill"></i><b>Email</b><span>{{ 'Sends and reads by itself' if smtp_ready and mailbox_ready else 'Sends by itself' if smtp_ready else 'Not connected' }}</span></a>
+      <a class="st-link {{ 'is-on' if wa.configured else '' }}" href="#whatsapp"><i class="bi bi-whatsapp"></i><b>WhatsApp</b><span>{{ 'Sends, receives, says delivered / read' if wa.receives else 'Sends by itself' if wa.configured else 'One click per message' }}</span></a>
+      <a class="st-link {{ 'is-on' if sm.configured else '' }}" href="#sms"><i class="bi bi-android2"></i><b>SMS, Android</b><span>{{ 'Sends, receives, says delivered' if sm.configured and sm.receives else 'Sends by itself' if sm.configured else 'Not connected' }}</span></a>
+      <a class="st-link {{ 'is-on' if iphone_sms.address else '' }}" href="#iphone-sms"><i class="bi bi-apple"></i><b>SMS, iPhone</b><span>{{ 'One tap sends; SMS received come in' if iphone_sms.address else 'Needs Tailscale on the iPhone' }}</span></a>
+      <a class="st-link {{ 'is-on' if fb.configured else '' }}" href="#facebook"><i class="bi bi-facebook"></i><b>Facebook page</b><span>{{ 'Posts, videos and reviews read' if fb.configured else 'Only the picture (icon)' }}</span></a>
+      <a class="st-link {{ 'is-on' if li.configured else '' }}" href="#linkedin"><i class="bi bi-linkedin"></i><b>LinkedIn page</b><span>{{ 'Posts read and learnt' if li.configured else 'Not connected' }}</span></a>
+    </div>
+    <style>
+      .st-link-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
+      .st-link { display:grid; grid-template-columns:30px 1fr; column-gap:8px; align-items:center; padding:10px 12px; border-radius:14px; border:1px solid var(--border-color);
+                 background:#faf8fd; text-decoration:none; color:inherit; transition:transform .15s ease, border-color .15s ease; }
+      .st-link:hover { transform:translateY(-2px); border-color:var(--primary-berry); color:inherit; }
+      .st-link i { grid-row:span 2; width:30px; height:30px; border-radius:10px; display:grid; place-items:center; background:#ece8f3; color:#6b6480; }
+      .st-link.is-on i { background:var(--mint-subtle, #e9f9ef); color:#15803d; }
+      .st-link b { font-size:.82rem; color:var(--ink-text); } .st-link span { font-size:.7rem; color:var(--muted); line-height:1.3; }
+      @media (prefers-reduced-motion: reduce) { .st-link { transition:none; } }
+    </style>
+  </section>
   <details class="st-card st-fold" id="email" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:2;">
     <summary class="st-fold-head">
       <span class="st-fold-pic" aria-hidden="true">{{ art.scene("inbox") }}</span>
@@ -680,7 +739,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
           <li><strong>The phone number ID.</strong> WhatsApp → API Setup: add your business number, then copy its <em>Phone number ID</em>.</li>
           <li><strong>A permanent token.</strong> Business settings → System users → add one, give it the app with <em>whatsapp_business_messaging</em>, then “Generate token”. <a href="https://business.facebook.com/settings/system-users" target="_blank" rel="noopener noreferrer">Open</a></li>
           <li><strong>The app secret.</strong> App settings → Basic → App secret → Show.</li>
-          <li><strong>Receive messages.</strong> WhatsApp → Configuration → Webhook: paste the callback URL and the verify token above, then subscribe to <em>messages</em>.</li>
+          <li><strong>Receive messages.</strong> WhatsApp → Configuration → Webhook: paste the callback URL and the verify token above, then subscribe to <em>messages</em>. The same subscription brings what became of each message you send: <em>delivered</em> and <em>read</em> show under it in the inbox, a failure goes to “Didn't reach them”.</li>
           <li><strong>Reminders to people who did not write first</strong> need a message Meta approved (one variable: the text). Create it under Message templates and write its name above.</li>
         </ol>
       </details>
@@ -731,6 +790,71 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
           <li>Add <strong>Repeat with Each</strong>. Inside it: <strong>Get Dictionary Value</strong> <code>number</code> of the Repeat Item, then <code>text</code> of the Repeat Item, then <strong>Send Message</strong> with that text to that number (open its arrow and turn off “Show When Run”).</li>
           <li>Still inside: <strong>Get Contents of URL</strong>, method POST, to the same link with <code>/sent/</code> and the Repeat Item's <code>id</code> instead of <code>/waiting</code>.</li>
           <li>Put the shortcut on your home screen, or in Automation choose a time of day and “Run Immediately”. If your iPhone still asks before sending, that is Apple's rule.</li>
+        </ol>
+      </details>
+      <details class="mt-2" id="iphone-sms-in">
+        <summary class="st-sub" style="cursor:pointer;"><strong>Receive on the application the SMS that come to your iPhone (about 3 minutes)</strong></summary>
+        <div class="st-sub mt-2">The candidates' SMS to your iPhone then arrive in the inbox (SMS) and the assistant reads them, like emails. Apple gives a shortcut the SMS and iMessages only, not WhatsApp. The computer must be on, with Tailscale.</div>
+        <code class="st-sub d-block my-2" id="iphone-in-link" data-no-i18n style="word-break:break-all;">{{ (iphone_sms.address or 'https://<the private Tailscale address>') ~ '/phone-sms/' ~ iphone_sms.token ~ '/received' }}</code>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li>Open <strong>Shortcuts</strong> → <strong>Automation</strong> → <strong>+</strong> → <strong>Message</strong> (“When I get a message”). Leave the sender empty (any message) and choose <strong>Run Immediately</strong>; turn off “Notify When Run”.</li>
+          <li>Add the action <strong>Get Contents of URL</strong> with the link above; open its arrow: Method <strong>POST</strong>, Request Body <strong>JSON</strong>.</li>
+          <li>Add two fields: <code>number</code> = <em>Shortcut Input › Sender</em>, and <code>text</code> = <em>Shortcut Input › Content</em>. Done.</li>
+          <li>Send yourself an SMS from another phone: it appears in the inbox within a minute. An SMS from someone who is not a candidate is kept apart (the assistant never answers strangers by itself).</li>
+        </ol>
+      </details>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="facebook" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:6;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-facebook"></i></span>
+      <span class="st-fold-text"><span class="st-title">Facebook page</span><span class="st-sub">Its posts, videos and reviews, read with the website and learnt by the assistant.</span></span>
+      <span class="st-fold-state">{% if fb.configured %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>{% else %}<span class="st-state off"><i class="bi bi-image"></i>Picture only</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">Facebook gives a page's posts, videos and reviews only with the page's own access token, made by an admin of the page. With it, they are read every six hours with the website, analysed, and the assistant learns them; reviews join “What people say” on the dashboard. The application never reads Facebook's pages themselves.</div>
+      <form method="post" action="/settings/facebook" class="row g-2 align-items-end" autocomplete="off">
+        <div class="col-md-8"><label class="form-label small fw-bold mb-1">Page access token {% if fb.has_token %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="token" type="password" autocomplete="new-password" placeholder="{{ '••••••  leave empty to keep it' if fb.has_token else 'EAA…' }}"></div>
+        <div class="col-md-4"><label class="form-label small fw-bold mb-1">Page ID</label><input class="form-control form-control-sm" name="page_id" value="{{ fb.page_id }}" placeholder="1234567890" inputmode="numeric"></div>
+        <div class="col-12 d-flex gap-2"><button class="btn btn-sm btn-berry rounded-pill px-3">Save</button>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill" formaction="/settings/facebook/test" formnovalidate {{ 'disabled' if not fb.configured }}><i class="bi bi-plug me-1"></i>Test the connection</button></div>
+      </form>
+      <details class="mt-2">
+        <summary class="st-sub" style="cursor:pointer;"><strong>How to get them (about 15 minutes, as an admin of the page)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li><strong>The page ID.</strong> On your Facebook page: About → Page transparency → <em>Page ID</em> (only digits). Write it above.</li>
+          <li><strong>An app.</strong> On Meta for Developers, “Create app”, type <em>Business</em>. You can use the same app as WhatsApp. <a href="https://developers.facebook.com/apps" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>The rights.</strong> Open the Graph API Explorer, choose your app, then “Get Page Access Token” and tick <em>pages_read_engagement</em>, <em>pages_read_user_content</em> and <em>pages_show_list</em>. <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>A token that lasts.</strong> The Explorer's token lasts an hour: in the Access Token Debugger, press “Extend Access Token”, then ask the page's token again with it (it then does not expire). Or make it from a system user in Business settings, as for WhatsApp. <a href="https://developers.facebook.com/tools/debug/accesstoken/" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>Paste it above</strong>, save, then “Test the connection”: it shows the page's name.</li>
+        </ol>
+      </details>
+    </div>
+  </details>
+  <details class="st-card st-fold" id="linkedin" data-tab-of="settings" data-tab-panel="messages" data-fold style="--i:6;">
+    <summary class="st-fold-head">
+      <span class="st-fold-pic is-icon" aria-hidden="true"><i class="bi bi-linkedin"></i></span>
+      <span class="st-fold-text"><span class="st-title">LinkedIn page</span><span class="st-sub">Its posts, read with the website, analysed and learnt.</span></span>
+      <span class="st-fold-state">{% if li.configured %}<span class="st-state ok"><i class="bi bi-check-circle-fill"></i>Connected</span>{% else %}<span class="st-state off"><i class="bi bi-x-circle-fill"></i>Not connected</span>{% endif %}</span>
+      <i class="bi bi-chevron-down st-fold-chev" aria-hidden="true"></i>
+    </summary>
+    <div class="st-fold-body">
+      <div class="st-sub mb-2">LinkedIn gives a page's posts only to an application it approved (its “Community Management API”), with a token made by an admin of the page. The application never reads LinkedIn's pages themselves. Until it is connected, paste a post in Inbox › Knowledge: it is learnt with its source.</div>
+      <form method="post" action="/settings/linkedin" class="row g-2 align-items-end" autocomplete="off">
+        <input type="hidden" name="back" value="/settings#linkedin">
+        <div class="col-md-8"><label class="form-label small fw-bold mb-1">Access token {% if li.has_token %}<span class="text-muted">(kept)</span>{% endif %}</label><input class="form-control form-control-sm" name="token" type="password" autocomplete="new-password" placeholder="{{ '••••••  leave empty to keep it' if li.has_token else 'AQV…' }}"></div>
+        <div class="col-md-4"><label class="form-label small fw-bold mb-1">Page number</label><input class="form-control form-control-sm" name="organization" value="{{ li.organization }}" placeholder="12345678" inputmode="numeric"></div>
+        <div class="col-12"><button class="btn btn-sm btn-berry rounded-pill px-3">Save</button></div>
+      </form>
+      <details class="mt-2">
+        <summary class="st-sub" style="cursor:pointer;"><strong>How to get them (LinkedIn reviews the request: a few days)</strong></summary>
+        <ol class="st-sub mt-2 mb-0" style="padding-left:20px; line-height:1.6;">
+          <li><strong>The page number.</strong> Open your LinkedIn page as its admin: the address shows <code>/company/<b>12345678</b>/admin</code>. Write the digits above.</li>
+          <li><strong>An application.</strong> On LinkedIn Developers, “Create app”, link it to the 9antra page, and have the page verify it. <a href="https://www.linkedin.com/developers/apps" target="_blank" rel="noopener noreferrer">Open</a></li>
+          <li><strong>The right to read the page.</strong> In the app's Products, ask for the <em>Community Management API</em> and fill LinkedIn's form; they answer by email.</li>
+          <li><strong>The token.</strong> Once approved, Auth → OAuth 2.0 tools → create a token with <em>r_organization_social</em>, signed in as an admin of the page. Paste it above and save.</li>
+          <li>A LinkedIn token lasts about two months: when the posts stop coming, make a new one the same way.</li>
         </ol>
       </details>
     </div>
@@ -989,7 +1113,7 @@ Verify token: {{ wa.verify_token or "(save once: it is made for you)" }}</div>
       <div class="d-flex flex-wrap gap-2">
         <a href="/account" class="btn btn-sm btn-outline-secondary">Change my password</a>
         <a href="/settings/team" class="btn btn-sm btn-primary fw-semibold" style="background:var(--primary-berry); border-color:var(--primary-berry);">Team and access: who sees what</a>
-        <a href="/classes/?tab=professors" class="btn btn-sm btn-light fw-semibold">Professors' access</a>
+        <a href="/professors" class="btn btn-sm btn-light fw-semibold">Professors' access</a>
         <a href="/data" class="btn btn-sm btn-light fw-semibold">All the data: change any value</a>
       </div>
     </div>

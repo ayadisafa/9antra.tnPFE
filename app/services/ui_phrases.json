@@ -3758,5 +3758,465 @@
 "Waiting questions that lacked them are read again.": [
 "Les questions en attente qui en manquaient sont relues.",
 "الأسئلة المنتظرة التي كانت تنقصها تُقرأ من جديد."
+],
+"Absence saved for {0}: {1}.": [
+"Absence enregistrée pour {0} : {1}.",
+"تم تسجيل غياب {0}: {1}."
+],
+"This absence was already noted.": [
+"Cette absence était déjà notée.",
+"هذا الغياب مسجّل من قبل."
+],
+"{0} is now followed: {1}.": [
+"{0} se suit désormais : {1}.",
+"يُتابَع {0} الآن: {1}."
+],
+"{0} session(s) need a replacement: {1} professor(s) asked to confirm, {2} with nobody free (choose on the class).": [
+"{0} séance(s) à remplacer : {1} formateur(s) sollicité(s), {2} sans personne de libre (choisissez sur la classe).",
+"{0} حصة تحتاج إلى تعويض: طُلب من {1} أستاذ التأكيد، و{2} بلا أحد متاح (اختر من صفحة القسم)."
+],
+"as its candidates chose": [
+"comme ses candidats l'ont choisi",
+"كما اختار مترشحوه"
+],
+"online": [
+"en ligne",
+"عن بعد"
+],
+"on site": [
+"en présentiel",
+"حضوريا"
+],
+"online and on site": [
+"en ligne et en présentiel",
+"عن بعد وحضوريا"
+],
+"Accepted; {0} was told.": [
+"Acceptée ; {0} est prévenu(e).",
+"تم القبول؛ أُعلم {0}."
+],
+"Refused; {0} was told and can answer with one click.": [
+"Refusée ; {0} est prévenu(e) et peut répondre en un clic.",
+"تم الرفض؛ أُعلم {0} ويمكنه الرد بنقرة واحدة."
+],
+"The absence of {0} is removed.": [
+"L'absence de {0} est supprimée.",
+"تم حذف غياب {0}."
+],
+"This request is already decided.": [
+"Cette demande est déjà tranchée.",
+"تم البت في هذا الطلب من قبل."
+],
+"{0} session(s) look for a replacement, {1} with nobody free: choose for them on the class.": [
+"{0} séance(s) cherchent un remplaçant, {1} sans personne de libre : choisissez pour elles sur la classe.",
+"{0} حصة تبحث عن معوّض، {1} منها بلا أحد متاح: اختر لها من صفحة القسم."
+],
+"{0} session(s) look for a replacement.": [
+"{0} séance(s) cherchent un remplaçant.",
+"{0} حصة تبحث عن معوّض."
+],
+"You already asked for this absence.": [
+"Vous avez déjà demandé cette absence.",
+"لقد طلبت هذا الغياب من قبل."
+],
+"Sent to the admin: you get their answer here, by email and in your messages.": [
+"Envoyée à l'administration : vous recevez la réponse ici, par email et dans vos messages.",
+"أُرسل إلى الإدارة: ستصلك الإجابة هنا وعبر البريد الإلكتروني وفي رسائلك."
+],
+"Accepted: a colleague is asked to replace you for each of your {0} session(s).": [
+"Acceptée : un collègue est sollicité pour vous remplacer à chacune de vos {0} séance(s).",
+"تم القبول: طُلب من زميل تعويضك في كل حصة من حصصك الـ{0}."
+],
+"Accepted: you have no session in that period.": [
+"Acceptée : vous n'avez aucune séance pendant cette période.",
+"تم القبول: ليست لديك أي حصة في هذه الفترة."
+],
+"Your request is taken back.": [
+"Votre demande est retirée.",
+"تم سحب طلبك."
+],
+"The admin already answered this request.": [
+"L'administration a déjà répondu à cette demande.",
+"أجابت الإدارة عن هذا الطلب من قبل."
+],
+"The last day is before the first.": [
+"Le dernier jour est avant le premier.",
+"اليوم الأخير قبل اليوم الأول."
+],
+"An absence of more than {0} days: change their availability instead (Edit the professor).": [
+"Une absence de plus de {0} jours : changez plutôt sa disponibilité (Modifier le formateur).",
+"غياب يتجاوز {0} يوما: غيّر بالأحرى فترة توفّره (تعديل الأستاذ)."
+],
+"Give both hours, or none for whole days.": [
+"Indiquez les deux heures, ou aucune pour des journées entières.",
+"اذكر الساعتين معا، أو لا شيء للأيام الكاملة."
+],
+"nobody is free to replace them for {0} of their {1} sessions": [
+"personne n'est libre pour le remplacer à {0} de ses {1} séances",
+"لا أحد متاح لتعويضه في {0} من حصصه الـ{1}"
+],
+"every request waits for you (Settings › Classes)": [
+"chaque demande vous attend (Paramètres › Classes)",
+"كل طلب ينتظرك (الإعدادات › الأقسام)"
+],
+"{0}: {1}. Accepted by {2}.": [
+"{0} : {1}. Acceptée par {2}.",
+"{0}: {1}. قبله {2}."
+],
+"{0}: {1}. Refused by {2}; they were told and can answer.": [
+"{0} : {1}. Refusée par {2} ; il/elle est prévenu(e) et peut répondre.",
+"{0}: {1}. رفضه {2}؛ أُعلم ويمكنه الرد."
+],
+"Choose the first day away.": [
+"Choisissez le premier jour d'absence.",
+"اختر أول يوم غياب."
+],
+"Choose the last day away.": [
+"Choisissez le dernier jour d'absence.",
+"اختر آخر يوم غياب."
+],
+"The hours are not valid.": [
+"Les heures ne sont pas valides.",
+"الساعات غير صالحة."
+],
+"{0} will be there ({1}): they answered the refusal.": [
+"{0} sera là ({1}) : réponse au refus.",
+"سيكون {0} حاضرا ({1}): ردّ على الرفض."
+],
+"{0} still cannot come ({1}): “{2}”. Accept or refuse it.": [
+"{0} ne peut toujours pas venir ({1}) : « {2} ». Acceptez ou refusez.",
+"لا يزال {0} غير قادر على الحضور ({1}): «{2}». اقبل أو ارفض."
+],
+"The absence was taken back: no replacement needed.": [
+"L'absence est retirée : plus besoin de remplaçant.",
+"تم سحب الغياب: لا حاجة إلى معوّض."
+],
+"Accept or refuse it.": [
+"Acceptez ou refusez.",
+"اقبل أو ارفض."
+],
+"{0}: {1}. Accepted by itself: someone can replace them for each of their {2} sessions; they are being asked.": [
+"{0} : {1}. Acceptée d'elle-même : quelqu'un peut le remplacer à chacune de ses {2} séances ; ils sont sollicités.",
+"{0}: {1}. قُبل تلقائيا: يوجد من يعوّضه في كل حصة من حصصه الـ{2}؛ يجري سؤالهم."
+],
+"{0}: {1}. No session in that period: nothing to replace.": [
+"{0} : {1}. Aucune séance pendant cette période : rien à remplacer.",
+"{0}: {1}. لا توجد حصة في هذه الفترة: لا شيء للتعويض."
+],
+"{0}: month {1} of {2} ({3}) is not paid; their access is paused until they pay.": [
+"{0} : le mois {1} de {2} ({3}) n'est pas payé ; son accès est en pause jusqu'au paiement.",
+"{0}: الشهر {1} من {2} ({3}) غير مدفوع؛ وصوله موقوف إلى حين الدفع."
+],
+"Not given classes": [
+"Ne reçoit pas de classes",
+"لا تُسند إليه أقسام"
+],
+"Asked to be away {0}: waiting for the admin's answer.": [
+"Absence demandée {0} : en attente de la réponse de l'administration.",
+"طلب غياب {0}: في انتظار رد الإدارة."
+],
+"Asks to be away {0}: accept or refuse it.": [
+"Demande une absence {0} : acceptez ou refusez.",
+"يطلب الغياب {0}: اقبل أو ارفض."
+],
+"Decide": [
+"Décider",
+"قرّر"
+],
+"Away until {0}": [
+"Absent(e) jusqu'au {0}",
+"غائب حتى {0}"
+],
+"From {0}": [
+"À partir du {0}",
+"ابتداء من {0}"
+],
+"Until {0} only": [
+"Jusqu'au {0} seulement",
+"حتى {0} فقط"
+],
+"Available": [
+"Disponible",
+"متاح"
+],
+"{0}: {1} DT a month online, {2} DT a month on site.": [
+"{0} : {1} DT par mois en ligne, {2} DT par mois en présentiel.",
+"{0}: {1} دينار في الشهر عن بعد، {2} دينار في الشهر حضوريا."
+],
+"They ask from their space (a day or a period), or you note it (Professors › Absence). Someone free for each session: accepted, and asked to replace them. Nobody free: you accept or refuse on Professors › Absences.": [
+"Il la demande depuis son espace (un jour ou une période), ou vous la notez (Formateurs › Absence). Quelqu'un de libre pour chaque séance : acceptée, et il est sollicité pour le remplacer. Personne de libre : vous acceptez ou refusez dans Formateurs › Absences.",
+"يطلبه من فضائه (يوما أو فترة)، أو تسجّله أنت (المكوّنون › غياب). يوجد متاح لكل حصة: يُقبل ويُطلب منه التعويض. لا أحد متاح: تقبل أو ترفض في المكوّنون › الغيابات."
+],
+"They ask from their space, or you note it: Professors › “Note an absence” (first and last day, the hours if not whole days, the reason).": [
+"Il la demande depuis son espace, ou vous la notez : Formateurs › « Noter une absence » (premier et dernier jour, les heures si ce ne sont pas des journées entières, la raison).",
+"يطلبه من فضائه، أو تسجّله أنت: المكوّنون › «تسجيل غياب» (أول يوم وآخر يوم، والساعات إن لم تكن أياما كاملة، والسبب)."
+],
+"For each of their sessions then, a professor who teaches the program, is not away and has no class at those hours is asked, one at a time, by a private link.": [
+"Pour chacune de ses séances, un formateur qui enseigne la formation, n'est pas absent et n'a pas de cours à ces heures est sollicité, un à la fois, par un lien privé.",
+"لكل حصة من حصصه، يُسأل مكوّن يدرّس البرنامج وغير غائب وليس لديه درس في تلك الساعات، واحدا تلو الآخر، برابط خاص."
+],
+"Nobody free for a session: the request waits for you on Professors › Absences: accept (then choose another professor, another day or a week later) or refuse with a word.": [
+"Personne de libre pour une séance : la demande vous attend dans Formateurs › Absences : acceptez (puis choisissez un autre formateur, un autre jour ou une semaine plus tard) ou refusez avec un mot.",
+"لا أحد متاح لحصة: ينتظرك الطلب في المكوّنون › الغيابات: اقبل (ثم اختر مكوّنا آخر أو يوما آخر أو بعد أسبوع) أو ارفض مع كلمة."
+],
+"Refused: they get a message with one click to answer “I will be there” or “I still cannot come”; the second comes back to you.": [
+"Refusée : il reçoit un message avec un clic pour répondre « Je serai là » ou « Je ne peux toujours pas venir » ; la seconde réponse vous revient.",
+"عند الرفض: تصله رسالة بنقرة واحدة للرد «سأكون حاضرا» أو «لا أزال غير قادر على الحضور»؛ والرد الثاني يعود إليك."
+],
+"No professor teaches its program yet: add one to it in Professors › Who teaches each program.": [
+"Aucun formateur n'enseigne encore sa formation : ajoutez-en un dans Formateurs › Qui enseigne chaque formation.",
+"لا مكوّن يدرّس برنامجه بعد: أضف واحدا في المكوّنون › من يدرّس كل برنامج."
+],
+"{0} continues with month {1} of {2} ({3}, from {4}).": [
+"{0} continue avec le mois {1} de {2} ({3}, à partir du {4}).",
+"يواصل {0} مع الشهر {1} من {2} ({3}، ابتداء من {4})."
+],
+"{0} stops after month {1} of {2}: nothing more is owed; their sessions end on {3}.": [
+"{0} s'arrête après le mois {1} de {2} : rien de plus n'est dû ; ses séances se terminent le {3}.",
+"يتوقف {0} بعد الشهر {1} من {2}: لا شيء آخر مستحق؛ تنتهي حصصه في {3}."
+],
+"A new class starts in the first week of the next month, on its first session day; once it has started, only you can add a candidate to it.": [
+"Une nouvelle classe commence dans la première semaine du mois suivant, à son premier jour de séance ; une fois commencée, vous seul pouvez y ajouter un candidat.",
+"يبدأ القسم الجديد في الأسبوع الأول من الشهر الموالي، في أول يوم حصة له؛ وبعد بدايته أنت وحدك يمكنك إضافة مترشح إليه."
+],
+"Approved; they were told.": [
+"Approuvée ; il est prévenu.",
+"تمت الموافقة؛ أُعلم بذلك."
+],
+"Refused; they were told.": [
+"Refusée ; il est prévenu.",
+"تم الرفض؛ أُعلم بذلك."
+],
+"Sent to the admin: you are told when they answer.": [
+"Envoyée à l'administration : vous êtes prévenu dès sa réponse.",
+"أُرسل إلى الإدارة: يتم إعلامك عند ردها."
+],
+"Choose the program.": [
+"Choisissez la formation.",
+"اختر البرنامج."
+],
+"{0} paused: a month not paid": [
+"{0} en pause : un mois non payé",
+"{0} موقوف: شهر غير مدفوع"
+],
+"No session link, their questions and files wait until they pay: {0}.": [
+"Pas de lien de séance, leurs questions et fichiers attendent le paiement : {0}.",
+"لا رابط حصة، وأسئلتهم وملفاتهم تنتظر الدفع: {0}."
+],
+"{0} owe their new month": [
+"{0} doivent leur nouveau mois",
+"{0} عليهم شهرهم الجديد"
+],
+"Their month has started; their access pauses at the end of the days of grace: {0}.": [
+"Leur mois a commencé ; leur accès se met en pause à la fin des jours de grâce : {0}.",
+"بدأ شهرهم؛ يُوقف وصولهم في نهاية أيام المهلة: {0}."
+],
+"{0} absence requests to decide": [
+"{0} demandes d'absence à trancher",
+"{0} طلبات غياب تنتظر قرارك"
+],
+"Nobody can replace them for some sessions: accept or refuse ({0}).": [
+"Personne ne peut les remplacer pour certaines séances : acceptez ou refusez ({0}).",
+"لا أحد يمكنه تعويضهم في بعض الحصص: اقبل أو ارفض ({0})."
+],
+"{0} requests to teach a program": [
+"{0} demandes pour enseigner une formation",
+"{0} طلبات لتدريس برنامج"
+],
+"Ask the admin": [
+"Demander à l'administration",
+"اطلب من الإدارة"
+],
+"Only the admin adds a program you teach: write to them in Messages.": [
+"Seule l'administration ajoute une formation que vous enseignez : écrivez-lui dans Messages.",
+"الإدارة وحدها تضيف برنامجا تدرّسه: اكتب إليها في الرسائل."
+],
+"You already teach {0}.": [
+"Vous enseignez déjà {0}.",
+"أنت تدرّس {0} من قبل."
+],
+"{0} asks to teach {1}: approve or refuse it.": [
+"{0} demande à enseigner {1} : approuvez ou refusez.",
+"{0} يطلب تدريس {1}: وافق أو ارفض."
+],
+"then every {0}": [
+"puis tous les {0}",
+"ثم كل {0}"
+],
+"“{0}” is set up: it goes by itself, {1}. Change its words or its timer below.": [
+"« {0} » est en place : il part tout seul, {1}. Changez son texte ou son délai ci-dessous.",
+"«{0}» جاهز: يُرسل وحده، {1}. غيّر نصه أو توقيته أدناه."
+],
+"Its words are saved.": [
+"Son texte est enregistré.",
+"تم حفظ نصه."
+],
+"Saved: each candidate of {0} receives it {1}, once each time. It is with the automatic reminders.": [
+"Enregistré : chaque candidat de {0} le reçoit {1}, une fois à chaque fois. Il est avec les rappels automatiques.",
+"تم الحفظ: يتلقاه كل مترشح من {0} {1}، مرة في كل مناسبة. وهو مع التذكيرات التلقائية."
+],
+"{0} candidates were absent in the last 30 days ({1} absences): a kind word the same day brings them back.": [
+"{0} candidats ont été absents ces 30 derniers jours ({1} absences) : un mot gentil le jour même les fait revenir.",
+"{0} مترشحين تغيبوا خلال آخر 30 يوما ({1} غيابات): كلمة لطيفة في نفس اليوم تعيدهم."
+],
+"{0} arrived late and {1} never opened their link lately: a reminder 30 minutes before helps.": [
+"{0} sont arrivés en retard et {1} n'ont jamais ouvert leur lien ces derniers temps : un rappel 30 minutes avant aide.",
+"{0} تأخروا و{1} لم يفتحوا رابطهم مؤخرا: تذكير قبل 30 دقيقة يساعد."
+],
+"{0} weekly questions were not answered this month.": [
+"{0} questions de la semaine sont restées sans réponse ce mois-ci.",
+"{0} من أسئلة الأسبوع بقيت بلا إجابة هذا الشهر."
+],
+"{0} classes start within three weeks: {1}.": [
+"{0} classes commencent d'ici trois semaines : {1}.",
+"{0} أقسام تبدأ خلال ثلاثة أسابيع: {1}."
+],
+"{0} classes end within three weeks: {1}.": [
+"{0} classes se terminent d'ici trois semaines : {1}.",
+"{0} أقسام تنتهي خلال ثلاثة أسابيع: {1}."
+],
+"Their end is near: a reminder two weeks before keeps the projects on time.": [
+"La fin approche : un rappel deux semaines avant garde les projets à l'heure.",
+"النهاية قريبة: تذكير قبل أسبوعين يُبقي المشاريع في وقتها."
+],
+"{0} classes are halfway or more: ask how it goes before doubts grow.": [
+"{0} classes sont à mi-parcours ou plus : demandez comment ça se passe avant que les doutes grandissent.",
+"{0} أقسام في منتصف الطريق أو أكثر: اسأل كيف تسير الأمور قبل أن تكبر الشكوك."
+],
+"{0} candidates finished a program and have no other one yet.": [
+"{0} candidats ont terminé une formation et n'en ont pas encore d'autre.",
+"{0} مترشحين أنهوا برنامجا وليس لديهم آخر بعد."
+],
+"Classes are ending: tell them how they receive their certificate.": [
+"Des classes se terminent : dites-leur comment ils reçoivent leur attestation.",
+"أقسام توشك على الانتهاء: أخبرهم كيف يتسلمون شهادتهم."
+],
+"{0} people registered in the last 30 days.": [
+"{0} personnes se sont inscrites ces 30 derniers jours.",
+"{0} أشخاص سجلوا خلال آخر 30 يوما."
+],
+"Common in training centres: {0}": [
+"Courant dans les centres de formation : {0}",
+"شائع في مراكز التكوين: {0}"
+],
+"Ready for the first session": [
+"Prêt pour la première séance",
+"جاهز للحصة الأولى"
+],
+"The days before a start are when candidates drop out quietly: what to bring, where, at what time.": [
+"C'est dans les jours avant le début que des candidats abandonnent sans rien dire : quoi apporter, où, à quelle heure.",
+"في الأيام التي تسبق البداية ينسحب بعض المترشحين بصمت: ماذا يحضرون، وأين، وفي أي ساعة."
+],
+"Before each session: what to prepare": [
+"Avant chaque séance : quoi préparer",
+"قبل كل حصة: ما يجب تحضيره"
+],
+"A short nudge the day before keeps the class at the same pace.": [
+"Un petit rappel la veille garde la classe au même rythme.",
+"تذكير قصير في اليوم السابق يُبقي القسم على نفس الإيقاع."
+],
+"Starts in 30 minutes": [
+"Ça commence dans 30 minutes",
+"تبدأ بعد 30 دقيقة"
+],
+"For classes where people come late or never open their link.": [
+"Pour les classes où l'on arrive en retard ou n'ouvre jamais son lien.",
+"للأقسام التي يتأخر فيها البعض أو لا يفتحون رابطهم أبدا."
+],
+"We missed you": [
+"Vous nous avez manqué",
+"افتقدناك"
+],
+"Two absences in a row is the first sign of a drop-out: a kind word the same day brings people back.": [
+"Deux absences de suite sont le premier signe d'un abandon : un mot gentil le jour même fait revenir.",
+"غيابان متتاليان أول علامة على الانقطاع: كلمة لطيفة في نفس اليوم تعيدهم."
+],
+"Weekly questions waiting": [
+"Questions de la semaine en attente",
+"أسئلة الأسبوع في الانتظار"
+],
+"The weekly questions measure what was understood: a reminder doubles the answers.": [
+"Les questions de la semaine mesurent ce qui a été compris : un rappel double les réponses.",
+"أسئلة الأسبوع تقيس ما فُهم: التذكير يضاعف الإجابات."
+],
+"How is it going? (mid-program)": [
+"Comment ça se passe ? (mi-parcours)",
+"كيف تسير الأمور؟ (منتصف البرنامج)"
+],
+"Halfway is where doubts appear: asking early keeps candidates and gives you their feedback.": [
+"C'est à mi-parcours que les doutes apparaissent : demander tôt garde les candidats et vous donne leur avis.",
+"في منتصف الطريق تظهر الشكوك: السؤال مبكرا يحافظ على المترشحين ويمنحك آراءهم."
+],
+"The last week": [
+"La dernière semaine",
+"الأسبوع الأخير"
+],
+"The final stretch: the project, the last session, what comes next.": [
+"La dernière ligne droite : le projet, la dernière séance, la suite.",
+"المرحلة الأخيرة: المشروع، الحصة الأخيرة، وما بعدها."
+],
+"Project to hand in": [
+"Projet à rendre",
+"مشروع للتسليم"
+],
+"Projects handed in on time make the certificates and the success stories.": [
+"Des projets rendus à temps font les attestations et les belles réussites.",
+"المشاريع المسلّمة في وقتها تصنع الشهادات وقصص النجاح."
+],
+"Your certificate": [
+"Votre attestation",
+"شهادتك"
+],
+"Tell them how and when they receive their certificate: it is what they share on LinkedIn.": [
+"Dites-leur comment et quand ils reçoivent leur attestation : c'est ce qu'ils partagent sur LinkedIn.",
+"أخبرهم كيف ومتى يتسلمون شهادتهم: هذا ما يشاركونه على LinkedIn."
+],
+"What comes next": [
+"La suite",
+"ما بعد ذلك"
+],
+"The best moment to propose the next program is just after a success.": [
+"Le meilleur moment pour proposer la formation suivante, c'est juste après une réussite.",
+"أفضل وقت لاقتراح البرنامج الموالي هو مباشرة بعد النجاح."
+],
+"Opportunities for alumni": [
+"Des opportunités pour les anciens",
+"فرص للخريجين"
+],
+"Keeping in touch a month later brings success stories, reviews and new registrations.": [
+"Garder le contact un mois après apporte des réussites, des avis et de nouvelles inscriptions.",
+"البقاء على تواصل بعد شهر يجلب قصص نجاح وآراء وتسجيلات جديدة."
+],
+"Documents to complete": [
+"Documents à compléter",
+"وثائق للاستكمال"
+],
+"A complete file the first week avoids chasing papers at the certificate.": [
+"Un dossier complet dès la première semaine évite de courir après les papiers au moment de l'attestation.",
+"ملف مكتمل من الأسبوع الأول يغني عن ملاحقة الأوراق عند الشهادة."
+],
+"News of the week": [
+"Les nouvelles de la semaine",
+"أخبار الأسبوع"
+],
+"One message a week (events, workshops, tips) keeps the community alive.": [
+"Un message par semaine (événements, ateliers, astuces) fait vivre la communauté.",
+"رسالة في الأسبوع (فعاليات، ورشات، نصائح) تُبقي المجتمع حيا."
+],
+"Assessment day": [
+"Jour d'évaluation",
+"يوم التقييم"
+],
+"A date not to miss: the place, the time, what to bring.": [
+"Une date à ne pas manquer : le lieu, l'heure, quoi apporter.",
+"موعد لا يُفوَّت: المكان، الساعة، وما يجب إحضاره."
+],
+"No session (holiday)": [
+"Pas de séance (congé)",
+"لا حصة (عطلة)"
+],
+"So nobody comes for nothing.": [
+"Pour que personne ne se déplace pour rien.",
+"حتى لا يأتي أحد بلا فائدة."
 ]
 }

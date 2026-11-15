@@ -472,6 +472,7 @@ def profile_data(db: Session, candidate_id: str) -> dict:
             "registered": utc_to_local(registration.registration_date),
             "days_waiting": (local_time.date() - utc_to_local(registration.registration_date).date()).days
             if registration.registration_date else None,
+            "months": __import__("app.services.monthly", fromlist=["plan"]).plan(registration),
         })
     for card in program_cards:
         card["group"] = payment_group_of(card)

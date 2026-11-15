@@ -224,7 +224,7 @@ check("a reminder to a professor, by email, with their name", any(item["to_email
       [item["subject"] for item in mailed])
 page = admin.get("/reminders")
 check("the page: once, every week, every month, at each absence; the professors", 'name="repeat"' in page.text and 'value="absence"' in page.text
-      and 'name="to_professor"' in page.text and "Waiting for an absence" in page.text)
+      and 'name="to_professor"' in page.text and "after each absence" in page.text)
 
 # ---- E. The questions after a session, written in the email ----
 quiz = Quiz(candidate_id=sana.id, registration_id=registration.id, course_name=f"{python.name} — séance du 24/10", kind="session", class_group_id=group.id,

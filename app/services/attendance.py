@@ -20,12 +20,17 @@ STATUSES = ("present", "late", "absent")
 LABELS = {"present": "Present", "late": "Late", "absent": "Absent"}
 
 
-def members(db: Session, class_id: str) -> list[Registration]:
+def members(db: Session, class_id: str, on=None) -> list[Registration]:
+    """The class's candidates; with `on` (a session's day), without those whose chosen months ended before it."""
     rows = (
         db.query(Registration)
         .filter(Registration.class_group_id == class_id, Registration.status != RegistrationStatus.CANCELLED)
         .all()
     )
+    if on is not None:
+        from app.services import monthly
+
+        rows = [row for row in rows if not monthly.ended_before(row, on)]
     rows.sort(key=lambda item: ((item.candidate.full_name or item.candidate.email or "") if item.candidate else "").lower())
     return rows
 

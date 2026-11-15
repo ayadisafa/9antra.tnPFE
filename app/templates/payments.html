@@ -35,13 +35,129 @@
   <div class="ui-stat"><div class="ui-stat-ico"><i class="bi bi-person-check"></i></div><div><div class="ui-stat-num">{{ totals.to_decide }}</div><div class="ui-stat-label">Waiting for your decision</div></div></div>
 </div>
 
+{% set m = monthly %}
+{% set state_words = {'paused': 'Paused until they pay', 'owed': 'Month owed, days of grace', 'asked': 'Asked: no answer yet', 'stopping': 'Stops after this month',
+                      'continues': 'Continues', 'ahead': 'Paid ahead', 'ok': 'Up to date', 'ended': 'Stopped after their months'} %}
+{% set state_tone = {'paused': 'bad', 'owed': 'warn', 'asked': 'info', 'stopping': 'muted', 'continues': 'ok', 'ahead': 'ok', 'ok': 'ok', 'ended': 'muted'} %}
+<section class="ui-card mb-4" id="monthly">
+  <div class="ui-card-head">
+    <div><div class="ui-card-title"><i class="bi bi-calendar2-month"></i>Month by month</div>
+      <div class="ui-card-sub">Prices are for one month. Near the end of each month they are asked whether they continue; a month begun and not paid
+        {% if m.pause_on %}pauses their access {{ m.grace_days }} day{{ 's' if m.grace_days != 1 }} after it starts, until they pay{% else %}does not pause their access{% endif %}.
+        <a href="/settings#monthly" class="ui-link">Change</a></div></div>
+    {% if m.due_total %}<span class="ui-chip bad"><i class="bi bi-cash-coin"></i>{{ '%.0f' | format(m.due_total) }} DT owed</span>{% endif %}
+  </div>
+  <div class="mb-filters" id="mbFilters" role="group" aria-label="Show">
+    <button type="button" class="ui-pill is-active" data-state="all">All <b>{{ m.rows | length }}</b></button>
+    {% for key in ('paused', 'owed', 'asked', 'stopping', 'continues', 'ahead', 'ok', 'ended') if m.counts[key] %}
+    <button type="button" class="ui-pill mb-pill-{{ state_tone[key] }}" data-state="{{ key }}">{{ state_words[key] }} <b>{{ m.counts[key] }}</b></button>
+    {% endfor %}
+  </div>
+  {% if m.before %}
+  <div class="mm-block is-decide mb-3">
+    <div class="mm-title"><i class="bi bi-question-circle-fill"></i>Started before monthly payments: you decide <span class="ui-chip warn">{{ m.before | length }}</span></div>
+    {% for item in m.before %}
+    <div class="mm-row">
+      <a href="/candidate/{{ item.candidate.id }}#programs" class="mm-who" data-no-i18n>{{ item.candidate.full_name or item.candidate.email }}</a>
+      <span class="mm-what"><span data-no-i18n>{{ item.registration.program_name }}</span> · month {{ item.number }} of {{ item.months }} · since {{ item.starts.strftime('%d/%m/%Y') }}</span>
+      <span class="mm-do">
+        <form method="post" action="/payments/monthly/{{ item.registration.id }}"><input type="hidden" name="number" value="{{ item.number }}"><input type="hidden" name="choice" value="charge"><button class="ui-btn sm primary">Add {{ '%.0f' | format(item.price) }} DT to pay</button></form>
+        <form method="post" action="/payments/monthly/{{ item.registration.id }}"><input type="hidden" name="number" value="{{ item.number }}"><input type="hidden" name="choice" value="free"><button class="ui-btn sm ghost">Leave it free</button></form>
+      </span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="mb-list" id="live-monthly-rows" data-live-region>
+    {% for row in m.rows %}
+    {% set reg = row.registration %}
+    <div class="mb-row is-{{ row.state }}" data-state="{{ row.state }}" style="--i:{{ loop.index0 }};">
+      <div class="mb-who">
+        {{ ui.avatar(row.candidate.full_name or row.candidate.email, 38) }}
+        <div style="min-width:0;"><a href="/candidate/{{ row.candidate.id }}#programs" class="mb-name" data-no-i18n>{{ row.candidate.full_name or row.candidate.email }}</a>
+          <div class="mb-sub"><span data-no-i18n>{{ reg.program_name }}</span>{% if row.class %} · <a href="/classes/{{ row.class.id }}" data-no-i18n>{{ row.class.name }}</a>{% endif %}</div></div>
+      </div>
+      <div class="mb-months" aria-label="Months">
+        {% for month in row.plan.months %}
+        <span class="mb-month is-{{ month.state | replace(' ', '-') }} {{ 'is-now' if month.now }}" title="{{ month.starts.strftime('%d/%m/%Y') if month.starts else '' }}">
+          <i class="bi {{ 'bi-check-lg' if month.state == 'paid' else 'bi-exclamation-lg' if month.state == 'due' else 'bi-dash' if month.state == 'not taken' else 'bi-circle' }}"></i>M{{ month.number }}</span>
+        {% endfor %}
+      </div>
+      <div class="mb-state">
+        <span class="ui-chip {{ state_tone[row.state] }}">{{ state_words[row.state] }}</span>
+        <div class="mb-sub">{% if row.state in ('paused', 'owed') %}Month {{ row.plan.counted }}{% if row.since %} since {{ row.since.strftime('%d/%m') }}{% endif %}
+          {% elif row.next and row.next_starts %}Month {{ row.next }} on {{ row.next_starts.strftime('%d/%m') }}
+          {% elif row.state == 'ended' %}Since {{ row.since.strftime('%d/%m') if row.since else '' }}{% endif %}</div>
+      </div>
+      <div class="mb-do">
+        {% if row.due > 0.01 %}
+        <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record {{ '%.0f'|format(row.due) }} DT paid by {{ row.candidate.full_name or row.candidate.email }}?" class="m-0">
+          <input type="hidden" name="amount" value="{{ row.due }}"><input type="hidden" name="method" value="manual"><input type="hidden" name="back" value="/payments#monthly">
+          <button class="ui-btn sm primary"><i class="bi bi-check2-circle"></i>{{ '%.0f'|format(row.due) }} DT paid</button></form>
+        {% endif %}
+        {% if row.candidate.phone %}<a class="ui-btn sm ghost" href="https://wa.me/{{ row.candidate.phone | replace('+', '') | replace(' ', '') }}" target="_blank" rel="noopener" title="WhatsApp" aria-label="WhatsApp"><i class="bi bi-whatsapp"></i></a>{% endif %}
+        <a class="ui-btn sm ghost" href="/candidate/{{ row.candidate.id }}#programs" title="Their file" aria-label="Their file"><i class="bi bi-person-vcard"></i></a>
+      </div>
+    </div>
+    {% else %}
+    <div class="ui-card-sub py-2">Nobody follows a program month by month yet.</div>
+    {% endfor %}
+  </div>
+  <style>
+    .mb-filters { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+    .mb-filters b { margin-left:4px; }
+    .mb-pill-bad { border-color:#fecdd3 !important; } .mb-pill-warn { border-color:#fcd34d !important; }
+    .mb-list { display:grid; gap:8px; }
+    .mb-row { display:grid; grid-template-columns:minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1.1fr) auto; gap:14px; align-items:center; padding:10px 12px;
+              border:1px solid var(--border-color); border-radius:16px; background:#fff; transition:border-color .15s ease, transform .15s ease; }
+    .mb-row:hover { border-color:color-mix(in srgb, var(--primary-berry) 40%, var(--border-color)); transform:translateY(-1px); }
+    .mb-row.is-paused { box-shadow:inset 4px 0 0 #e11d48; } .mb-row.is-owed { box-shadow:inset 4px 0 0 #f59e0b; } .mb-row.is-asked { box-shadow:inset 4px 0 0 #0ea5e9; }
+    .mb-row.is-ended { opacity:.72; }
+    .mb-who { display:flex; gap:10px; align-items:center; min-width:0; }
+    .mb-name { font-weight:800; color:var(--ink-text); text-decoration:none; font-size:.88rem; } .mb-name:hover { color:var(--primary-berry); }
+    .mb-sub { font-size:.72rem; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; } .mb-sub a { color:inherit; }
+    .mb-months { display:flex; gap:4px; flex-wrap:wrap; }
+    .mb-month { display:inline-flex; align-items:center; gap:2px; font-size:.7rem; font-weight:800; border-radius:999px; padding:3px 8px 3px 5px; background:#f4f1f9; color:#6b6480; }
+    .mb-month.is-paid { background:var(--mint-subtle, #e9f9ef); color:#15803d; } .mb-month.is-due { background:#fff1f2; color:#be123c; }
+    .mb-month.is-not-taken { background:#f4f4f5; color:#a1a1aa; text-decoration:line-through; } .mb-month.is-now { box-shadow:0 0 0 2px var(--primary-berry); }
+    .mb-state .ui-chip { white-space:nowrap; }
+    .mb-do { display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+    @media (max-width: 991px) { .mb-row { grid-template-columns:1fr 1fr; } .mb-do { grid-column:1 / -1; justify-content:flex-start; } }
+    @media (max-width: 575px) { .mb-row { grid-template-columns:1fr; } }
+    @media (prefers-reduced-motion: no-preference) { .mb-row { animation:mbIn .35s ease both; animation-delay:calc(min(var(--i), 12) * 35ms); } }
+    @keyframes mbIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+    .mm-block { background:#faf8fd; border-radius:16px; padding:12px 14px; }
+    .mm-block.is-decide { background:#fffbeb; border:1px solid #fcd34d; }
+    .mm-title { font-weight:800; font-size:.84rem; color:var(--ink-text); display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+    .mm-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:6px 0; border-top:1px solid var(--border-color); font-size:.8rem; }
+    .mm-who { font-weight:700; color:var(--ink-text); text-decoration:none; } .mm-what { color:#5b5670; } .mm-do { display:flex; gap:6px; margin-inline-start:auto; } .mm-do form { margin:0; }
+  </style>
+  <script>
+  (() => {
+    const bar = document.getElementById("mbFilters");
+    if (!bar) return;
+    const apply = () => {
+      const state = (bar.querySelector(".is-active") || {}).dataset?.state || "all";
+      document.querySelectorAll("#live-monthly-rows .mb-row").forEach(row => row.classList.toggle("d-none", state !== "all" && row.dataset.state !== state));
+    };
+    bar.addEventListener("click", event => {
+      const pill = event.target.closest("[data-state]");
+      if (!pill) return;
+      bar.querySelectorAll(".ui-pill").forEach(item => item.classList.toggle("is-active", item === pill));
+      apply();
+    });
+    document.addEventListener("live:refreshed", apply);
+  })();
+  </script>
+</section>
+
 {% import "_proofs.html" as proofs_ui with context %}
 <section class="mb-4" id="proofs">
   <div class="d-flex align-items-center gap-2 mb-2">
     <h3 class="h6 fw-bold mb-0"><i class="bi bi-receipt"></i> Payment proofs to check</h3>
     <span class="ui-chip {{ 'warn' if proofs else 'muted' }}">{{ proofs | length }}</span>
   </div>
-  <p class="small text-muted mb-2">Cheques, receipts, transfers and invoices candidates send by email or WhatsApp are read here: amount, bank, RIB, date, reference, and for a cheque who it is made out to, the amount in words and its number. A photo cannot prove a proof is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set or not centre_names_set %} <a href="/settings#centre">Write the centre's RIB and the names a cheque is made out to in Settings</a> to check them.{% endif %}</p>
+  <p class="small text-muted mb-2">Cheques, receipts, transfers and invoices candidates send by email or WhatsApp (Business number connected) are read here by themselves; one that came to your own WhatsApp, drop it below: amount, bank, RIB, date, reference, and for a cheque who it is made out to, the amount in words and its number. A photo cannot prove a proof is genuine: the checks say whether what it shows is consistent. You confirm (the payment is recorded) or refuse.{% if not centre_ribs_set or not centre_names_set %} <a href="/settings#centre">Write the centre's RIB and the names a cheque is made out to in Settings</a> to check them.{% endif %}</p>
   <form method="post" action="/payments/proofs/upload" enctype="multipart/form-data" class="pf-drop" id="proof-drop">
     <div class="pf-drop-art" aria-hidden="true"><span class="pf-drop-cheque"><i></i><i></i><i></i><b>DT</b></span><span class="pf-drop-scan"></span></div>
     <div class="pf-drop-text">
@@ -49,6 +165,12 @@
       <span>Drop photos or PDFs here, or choose them. Each one is read and checked: who it is made out to, the amount in figures and in words, the date, the bank, the RIB, the number of the cheque.</span>
       <div class="pf-drop-do">
         <label class="ui-btn sm primary pf-drop-pick"><i class="bi bi-camera"></i><span>Choose photos</span><input type="file" name="files" accept="image/*,application/pdf" multiple required></label>
+        <select name="came_by" aria-label="Where it came from">
+          <option value="">Where it came from</option>
+          <option value="whatsapp">WhatsApp, on my phone</option>
+          <option value="email">Email</option>
+          <option value="hand">Given at the centre</option>
+        </select>
         <select name="candidate_id" aria-label="Who paid">
           <option value="">Who paid? Found from the name on it when it can be</option>
           {% for person in who_paid %}<option value="{{ person.id }}">{{ person.full_name or person.email }}</option>{% endfor %}

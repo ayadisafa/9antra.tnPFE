@@ -341,7 +341,7 @@ def register(db: Session, person: Candidate, program: Program, fr: bool = False)
         reply = (f"{name} est déjà inscrit(e) en {program.name} ({state}{where})." if fr
                  else f"{name} is already registered in {program.name} ({state}{where}).")
         return {"reply": reply, "source": "system", "links": [_link(f"Open {name}", f"/candidate/{person.id}#registration-{item.id}")]}
-    price = f"{program.price_online or 0:.0f} DT online, {program.price_onsite or 0:.0f} DT on site"
+    price = f"{program.price_online or 0:.0f} DT a month online, {program.price_onsite or 0:.0f} DT a month on site"
     reply = (f"{name} n'est pas encore inscrit(e) en {program.name} ({price}). Sa page s'ouvre avec {program.name} déjà choisi : "
              "choisissez en ligne ou sur place, puis « Add »." if fr else
              f"{name} is not registered in {program.name} yet ({price}). Their page opens with {program.name} already chosen: "

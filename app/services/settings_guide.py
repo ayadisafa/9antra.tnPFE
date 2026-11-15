@@ -48,7 +48,10 @@ def plain_words(db: Session, request=None, model_ready: bool | None = None) -> l
         lines.append(("Each new class gets a professor of its speciality who is free at those hours, when there is one.", "ok"))
     else:
         lines.append(("New classes are made without a professor: you choose one.", "warn"))
-    if settings.class_start_mode == START_MIN_ENROLLMENT:
+    if settings.class_start_mode == "next_month":
+        lines.append(("A new class starts in the first week of the next month, on its first session day; once it has started, "
+                      "only you can add a candidate to it.", "ok"))
+    elif settings.class_start_mode == START_MIN_ENROLLMENT:
         lines.append((f"A new class waits until {settings.min_students_to_start} candidates are in it, then starts "
                       f"{settings.min_start_notice_days} days later, on its first session day.", "ok"))
     else:

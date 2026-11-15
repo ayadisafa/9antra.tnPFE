@@ -25,6 +25,21 @@ async def receive(request: Request):
         payload = json.loads(body or b"{}")
     except ValueError:
         return JSONResponse({"ok": False}, status_code=400)
+    from app.services import delivery
+
+    status = delivery.from_sms(payload)
+    if status is not None:
+        # What became of an SMS sent: delivered or failed (services/delivery.py).
+        db = SessionLocal()
+        try:
+            delivery.update(db, status["id"], status["state"], when=status["when"], reason=status["reason"])
+            db.commit()
+        except Exception:
+            db.rollback()
+            logger.exception("An SMS status could not be kept.")
+        finally:
+            db.close()
+        return {"ok": True, "kept": 0}
     item = sms.from_webhook(payload)
     if item is None:
         return {"ok": True, "kept": 0}

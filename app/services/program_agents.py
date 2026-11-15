@@ -84,7 +84,7 @@ def answer(db: Session, program, text: str, *, lang: str | None = None) -> dict 
         lines, plain = [], (text or "").lower()
         asked = _words(text)
         if re.search(r"prix|price|co[uû]t|cost|combien|how much|tarif|9adech|قداش|سعر", plain):
-            lines.append(_t("{0}: {1} DT online, {2} DT on site.", program.name, f"{program.price_online or 0:g}", f"{program.price_onsite or 0:g}"))
+            lines.append(_t("{0}: {1} DT a month online, {2} DT a month on site.", program.name, f"{program.price_online or 0:g}", f"{program.price_onsite or 0:g}"))
         if re.search(r"quand|when|commence|start|d[ée]but|date|session|wa9tech|متى", plain):
             upcoming = [item for item in social_content.next_sessions(db, most=8) if item["program_id"] == program.id]
             lines.append(_t("Its next session starts on {0}.", upcoming[0]["starts"].strftime("%d/%m/%Y")) if upcoming

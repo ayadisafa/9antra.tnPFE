@@ -16,10 +16,10 @@ MOST_HOURS = 24 * 14
 
 
 def reminder_hours(db: Session) -> int:
-    from app.services.settings_service import get_settings
+    """The payment reminder's timer in whole hours (its timer may be in any unit: services/timings.py)."""
+    from app.services import timings
 
-    hours = getattr(get_settings(db), "payment_reminder_hours", None) or REMINDER_HOURS
-    return max(1, min(MOST_HOURS, int(hours)))
+    return max(1, -(-timings.get(db, "payment_reminder").seconds // 3600))
 
 
 def set_reminder_hours(db: Session, hours) -> int:
@@ -30,6 +30,7 @@ def set_reminder_hours(db: Session, hours) -> int:
     except (TypeError, ValueError):
         hours = REMINDER_HOURS
     get_settings(db).payment_reminder_hours = max(1, min(MOST_HOURS, hours))
+    get_settings(db).payment_reminder_after = f"{max(1, min(MOST_HOURS, hours))}h"
     db.commit()
     return reminder_hours(db)
 

@@ -92,7 +92,7 @@ def links_for(db: Session, class_group: ClassGroup, session: ClassSession) -> di
     existing = {row.registration_id: row for row in db.query(SessionJoin).filter(SessionJoin.session_id == session.id).all()}
     made = False
     mode = mode_of(db, class_group)
-    for registration in attendance.members(db, class_group.id):
+    for registration in attendance.members(db, class_group.id, on=session.session_date):
         if registration.id not in existing and follows_online(db, class_group, registration, mode):
             row = SessionJoin(
                 session_id=session.id, registration_id=registration.id, candidate_id=registration.candidate_id,
@@ -145,6 +145,12 @@ def enter(db: Session, join: SessionJoin, now: datetime | None = None) -> dict:
     found = {"state": "gone", "url": None, "session": session, "class_group": class_group, "registration": registration}
     if session is None or registration is None or class_group is None or registration.class_group_id != class_group.id:
         return found
+    from app.services import monthly
+
+    if monthly.paused(registration):
+        return {**found, "state": "paused"}      # a month not paid: they come back once it is (services/monthly.py)
+    if monthly.ended_before(registration, session.session_date):
+        return {**found, "state": "ended"}       # they chose to stop after their months
     state = door(session, class_group, now)
     if state != "open":
         return {**found, "state": state}
@@ -184,6 +190,11 @@ def send_links(db: Session, class_group: ClassGroup, session: ClassSession, base
         if candidate is None or not candidate.email or (join.sent_at is not None and not again):
             outcome["skipped"] += 1
             continue
+        from app.services import monthly
+
+        if monthly.paused(registration):
+            outcome["skipped"] += 1         # a month not paid: the link waits for the payment (services/monthly.py)
+            continue
         message = email_templates.send(
             db, "session_link", candidate=candidate, registration=registration, manual=manual,
             values={
@@ -221,7 +232,7 @@ def send_due(db: Session, base_url: str, now: datetime | None = None) -> int:
         if mode_of(db, class_group) == "onsite":
             continue                        # in the room: no link
         start, end = hours_of(session, class_group)
-        if not (start - SEND_BEFORE <= now <= end):
+        if not (start - __import__("app.services.timings", fromlist=["get"]).get(db, "session_link").delta <= now <= end):
             continue
         from app.services.enrollment_service import hold_reasons
 
@@ -279,7 +290,8 @@ def ask_links_due(db: Session, base_url: str, now: datetime | None = None) -> di
             class_group.link_asked_at = datetime.utcnow()
             db.commit()                     # kept first: never asked twice
             try:
-                team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant")
+                team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant",
+                                   subject=f"Le lien de réunion de {class_group.name}")
             except Exception:
                 db.rollback()
             done["asked"] += 1
@@ -324,7 +336,7 @@ def after_sessions(db: Session, base_url: str, now: datetime | None = None) -> d
             continue
         if not (session.start_time or class_group.start_time) or door(session, class_group, now) != "closed":
             continue
-        members = attendance.members(db, class_group.id)
+        members = attendance.members(db, class_group.id, on=session.session_date)
         marks = attendance.marks_of(db, session.id)
         joins = {row.registration_id: row for row in db.query(SessionJoin).filter(SessionJoin.session_id == session.id).all()}
         if session.meeting_url and any(row.sent_at for row in joins.values()):
@@ -355,7 +367,8 @@ def after_sessions(db: Session, base_url: str, now: datetime | None = None) -> d
                                  link=f"{base_url.rstrip('/')}/classes/{class_group.id}/attendance?session={session.id}")
         session.sheet_asked_at = datetime.utcnow()
         db.commit()            # kept first: the professor is never asked twice, whatever happens next
-        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant")
+        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant",
+                           subject=f"La feuille de présence de {class_group.name}")
         done["asked"] += 1
     return done
 

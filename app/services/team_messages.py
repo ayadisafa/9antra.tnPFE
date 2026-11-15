@@ -257,22 +257,39 @@ def mark_sent(db: Session, message_id: str, *, cancelled: bool = False) -> TeamM
 # Sending
 # ------------------------------------------------------------------
 
-def _email(db: Session, found: dict, text: str, author: str) -> tuple[str | None, str | None]:
-    """(problem, message id)."""
-    from app.services import email_threads
+def _email(db: Session, found: dict, text: str, author: str, *, subject: str | None = None, cta=None, rows=None) -> tuple[str | None, str | None]:
+    """(problem, message id). The email is laid out like the candidates' ones (Settings, Email design): the centre's
+    header, the text, its details as a table, one button for what to do, signed by who wrote it."""
+    from app.services import brand, email_layout, email_threads
     from app.services.email_service import new_message_id
     from app.services.settings_service import get_settings
-    from app.services import brand
 
     if not email_threads.smtp_configured():
         return "No email account is connected (Settings, Email).", None
-    centre = brand.view(get_settings(db))["name"]
+    settings = get_settings(db)
+    centre = brand.view(settings)["name"]
+    look = email_layout.branding(settings)
     message_id = new_message_id()
-    body = f"{text}\n\n— {author}, {centre}"
-    page = ('<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.55;color:#24212b">'
-            + html.escape(body).replace("\n", "<br>") + "</div>")
-    problem, _ = email_threads._attempt(found["email"], f"Message — {centre}", body, page, message_id, None, None)
+    title = (subject or "").strip() or f"Message — {centre}"
+    # Written by the application: signed by the centre's team; by a person: their name, then the centre.
+    signature = f"L'équipe {centre}" if author in ("The assistant", "system", "Assistant") else f"{author}\n{centre}"
+    page = email_layout.render_email(title=title, body_html=email_layout.text_to_html(text, look["accent"]), rows=rows or None,
+                                     cta=cta, signature=signature, footer_note=look["footer_note"], accent=look["accent"],
+                                     preheader=email_layout.strip_marks(text)[:140],
+                                     footer=f"Vous recevez ce message en tant que membre de l'équipe de {centre}. Vous pouvez répondre directement à cet email.")
+    plain = email_layout.render_plain(text=text, rows=rows or None, cta=cta, signature=signature)
+    problem, _ = email_threads._attempt(found["email"], title, plain, page, message_id, None, None)
     return problem, message_id
+
+
+def _short(text: str, rows=None, cta=None) -> str:
+    """The same message for the application, WhatsApp and SMS: its details and its link written under the text."""
+    lines = [text]
+    if rows:
+        lines.append("\n".join(f"{label} : {value}" for label, value in rows))
+    if cta and cta[0] and cta[1]:
+        lines.append(f"{cta[0]} : {cta[1]}")
+    return "\n\n".join(line for line in lines if line)
 
 
 def _within_window(db: Session, key: str) -> bool:
@@ -282,14 +299,19 @@ def _within_window(db: Session, key: str) -> bool:
     return bool(last and last[0] >= utcnow() - timedelta(hours=23, minutes=50))
 
 
-def send(db: Session, key: str, text: str, channels, *, author: str) -> list[TeamMessage]:
-    """Write to someone of the team, by each chosen way they can be reached. Returns the copies kept."""
+def send(db: Session, key: str, text: str, channels, *, author: str, subject: str | None = None, cta=None,
+         rows=None) -> list[TeamMessage]:
+    """Write to someone of the team, by each chosen way they can be reached. Returns the copies kept.
+    `subject` titles the email; `rows` [(label, value)] are its details; `cta` (label, address) its one button. The
+    application, WhatsApp and SMS get the same words with the details and the address written under them."""
     from app.services import whatsapp
 
     found = person(db, key)
     text = (text or "").strip()
     if found is None or not text:
         return []
+    words = text
+    text = _short(text, rows, cta)
     wanted = [channel for channel in CHANNELS if channel in set(channels or []) and channel in found["ways"]]
     if not wanted:
         wanted = [found["ways"][0]] if found["ways"] else []
@@ -297,7 +319,7 @@ def send(db: Session, key: str, text: str, channels, *, author: str) -> list[Tea
     for channel in wanted:
         row = TeamMessage(person=key, direction="out", channel=channel, body=text[:4000], author=author, batch=batch, status="sent")
         if channel == "email":
-            problem, row.message_id = _email(db, found, text, author)
+            problem, row.message_id = _email(db, found, words, author, subject=subject, cta=cta, rows=rows)
             if problem:
                 row.status, row.error = "failed", problem[:500]
         elif channel == "whatsapp":

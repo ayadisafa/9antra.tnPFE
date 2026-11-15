@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Votre formation · {{ app_name or '9antra' }}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:540px; margin:0 auto; padding:22px 16px 48px; }
+    .brand { font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:18px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:24px; padding:28px clamp(18px, 5vw, 32px); box-shadow:0 22px 44px -30px rgba(36,26,56,.35); animation:rise .35s ease both; }
+    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .card { animation:none; } }
+    .center { text-align:center; }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 11px; border-radius:999px; }
+    h1 { font-size:1.4rem; line-height:1.25; margin:14px 0 6px; }
+    .lead { color:var(--muted); font-size:.95rem; margin:0; }
+    .facts { background:#faf8fd; border-radius:16px; padding:14px 16px; margin:18px 0 0; display:grid; gap:6px; font-size:.92rem; }
+    .steps { display:flex; gap:6px; margin:16px 0 0; }
+    .step { flex:1; height:8px; border-radius:99px; background:var(--line); }
+    .step.done { background:var(--berry); } .step.next { background:repeating-linear-gradient(45deg, var(--berry-soft), var(--berry-soft) 4px, #f3d6e5 4px, #f3d6e5 8px); }
+    .choice { margin-top:20px; display:grid; gap:10px; }
+    .choice form { margin:0; }
+    button { width:100%; border:0; border-radius:14px; padding:14px 16px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; }
+    .yes { background:var(--berry); color:#fff; } .yes:hover { background:var(--berry-dark); }
+    .no { background:#fff; color:var(--ink); border:1.5px solid var(--line); } .no:hover { border-color:var(--berry); }
+    .said { margin-top:14px; background:var(--mint-soft); color:#14532d; border-radius:12px; padding:10px 12px; font-size:.9rem; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">{{ app_name or '9antra' }}</div>
+  {% if registration and done %}
+  <div class="card center">
+    <span class="eyebrow">C'est noté</span>
+    {% if done.yes %}
+    <h1>Merci {{ first }}, on continue !</h1>
+    <p class="lead">Le mois {{ done.number }} de « {{ program }} » commence le {{ begins }}. Le montant de {{ price }} est à régler avant cette date (virement ou espèces au centre) ; envoyez-nous la photo du reçu par email ou sur WhatsApp.</p>
+    {% else %}
+    <h1>Merci {{ first }} pour votre réponse</h1>
+    <p class="lead">Votre formation « {{ program }} » s'arrête à la fin du mois {{ done.number - 1 }} : rien de plus n'est à payer. Vous changez d'avis ? Revenez sur ce lien avant le {{ begins }}.</p>
+    {% endif %}
+  </div>
+  {% elif registration and number %}
+  <div class="card">
+    <span class="eyebrow">Mois {{ previous }} sur {{ total }} : bientôt terminé</span>
+    <h1>Bonjour {{ first }}, vous continuez avec le mois {{ number }} ?</h1>
+    <p class="lead">Votre formation « {{ program }} » se règle mois par mois.</p>
+    <div class="steps" aria-hidden="true">{% for month in range(1, total + 1) %}<span class="step {{ 'done' if month < number else 'next' if month == number else '' }}"></span>{% endfor %}</div>
+    <div class="facts">
+      <div>Le mois {{ number }} commence le <b>{{ begins }}</b></div>
+      <div>Montant du mois : <b>{{ price }}</b></div>
+    </div>
+    {% if answer %}<div class="said">Votre réponse : {{ 'vous continuez' if answer == 'yes' else 'vous vous arrêtez après ce mois' }}. Vous pouvez encore changer d'avis.</div>{% endif %}
+    <div class="choice">
+      <form method="post"><input type="hidden" name="answer" value="yes"><button class="yes">Oui, je continue</button></form>
+      <form method="post"><input type="hidden" name="answer" value="no"><button class="no">Non, je m'arrête après ce mois</button></form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card center">
+    <span class="eyebrow">Lien expiré</span>
+    <h1>Ce choix n'est plus ouvert</h1>
+    <p class="lead">Le mois a peut-être déjà commencé. Une question ? Répondez à notre dernier email, nous vous aidons.</p>
+  </div>
+  {% endif %}
+  <p class="foot">{{ app_name or '9antra' }} · ce lien est à vous seul(e).</p>
+</div>
+</body>
+</html>

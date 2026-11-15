@@ -49,13 +49,39 @@
         <div class="row g-3">
           <div class="col-md-7 ui-field"><label for="tp-name">Name</label><input class="form-control" id="tp-name" name="name" value="{{ professor.name }}" required></div>
           <div class="col-md-5 ui-field"><label for="tp-phone">Phone</label><input class="form-control" id="tp-phone" name="phone" value="{{ professor.phone or '' }}"></div>
-          <div class="col-12 ui-field"><label for="tp-specialties">What I teach</label><input class="form-control" id="tp-specialties" name="specialties" value="{{ specialties | join(', ') }}" placeholder="DevOps, Python"><div class="ui-hint">Separated by commas.</div></div>
+
         </div>
         <div class="d-flex gap-2 mt-3">
           <button class="ui-btn primary">Save</button>
           <a class="ui-btn" href="/account"><i class="bi bi-lock"></i>Change my password</a>
         </div>
       </form>
+    </section>
+
+    <section class="ui-card mt-3" id="teach">
+      <div class="ui-card-head"><div><div class="ui-card-title"><i class="bi bi-mortarboard"></i>What I teach</div>
+        <div class="ui-card-sub">Only the admin adds a program you teach.{% if can_ask %} You can ask for one: they approve it.{% else %} To teach another one, write to them in <a href="/account/messages">Messages</a>.{% endif %}</div></div></div>
+      <div class="d-flex flex-wrap gap-1 mb-3">
+        {% for specialty in specialties %}<span class="ui-chip brand" data-no-i18n>{{ specialty }}</span>{% else %}<span class="ui-chip muted">No program yet</span>{% endfor %}
+      </div>
+      {% for item in my_requests %}
+      <div class="d-flex gap-2 align-items-center flex-wrap small py-1">
+        <span class="ui-chip {{ 'warn' if item.request.status == 'requested' else 'ok' if item.request.status == 'approved' else 'bad' }}">{{ {'requested': 'Waiting for the admin', 'approved': 'Approved', 'refused': 'Refused'}[item.request.status] }}</span>
+        <b data-no-i18n>{{ item.program.name }}</b>
+        {% if item.request.decision_note %}<span class="text-muted" data-no-i18n>“{{ item.request.decision_note }}”</span>{% endif %}
+      </div>
+      {% endfor %}
+      {% if can_ask and askable %}
+      <form method="post" action="/teacher/teach-request" class="d-grid gap-2 mt-2" style="background:#faf8fd; border-radius:16px; padding:12px;">
+        <label class="small fw-bold" for="tp-ask">Ask to teach a program</label>
+        <select id="tp-ask" name="program_id" class="form-select form-select-sm" required>
+          <option value="">Choose the program</option>
+          {% for program in askable %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
+        </select>
+        <textarea name="note" rows="2" maxlength="600" class="form-control form-control-sm" placeholder="Why you can teach it (your experience), if you wish"></textarea>
+        <button class="ui-btn sm primary justify-self-start" style="justify-self:start;"><i class="bi bi-send"></i>Ask the admin</button>
+      </form>
+      {% endif %}
     </section>
   </div>
 </div>

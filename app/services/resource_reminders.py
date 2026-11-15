@@ -43,6 +43,7 @@ def save_settings(db: Session, *, on: bool, days, text: str) -> dict:
         days = DEFAULT_DAYS
     settings.resource_reminder_on = bool(on)
     settings.resource_reminder_days = max(1, min(14, days))
+    settings.resource_reminder_before = f"{max(1, min(14, days))}d"     # the timer (services/timings.py) follows
     text = (text or "").strip()
     settings.resource_reminder_text = None if not text or text == DEFAULT_TEXT.strip() else text[:3000]
     db.commit()
@@ -62,9 +63,15 @@ def due(db: Session, today: date | None = None) -> list[dict]:
     from app.models.course_material import ClassMaterial
     from app.services import team_messages
 
+    from datetime import datetime as _datetime
+
+    from app.services import timings
+    from app.services.schedule_utils import local_now
+
     today = today or date.today()
     plan = settings_of(db)
-    horizon = today + timedelta(days=plan["days"])
+    reach = local_now() + timings.get(db, "resources").delta       # its timer, in any unit
+    horizon = max(today, reach.date())
     found, seen = [], set()
     sessions = (db.query(ClassSession).filter(ClassSession.session_date >= today, ClassSession.session_date <= horizon)
                 .order_by(ClassSession.session_date.asc()).all())
@@ -107,7 +114,8 @@ def send_due(db: Session, today: date | None = None, base_url: str = "") -> int:
         })
         db.add(ResourceReminder(class_group_id=group.id, week_number=item["week"], professor_id=professor.id))
         db.commit()            # kept first: a reminder is never sent twice, whatever happens next
-        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant")
+        team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp"], author="The assistant",
+                           subject=f"Les ressources de la semaine {item['week']} · {group.name}")
         count += 1
     return count
 

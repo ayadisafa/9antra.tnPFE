@@ -26,9 +26,9 @@ EVERY = 60                       # seconds between two tidy-ups from the pages
 # What needs the admin until it is handled.
 NEEDS_YOU = {"EMAIL_QUESTION", "CANDIDATE_EMAIL", "NEW_REGISTRATION", "REGISTRATION_REQUEST", "ASSIGNMENT_PENDING",
              "PROGRAM_PROPOSAL", "PROGRAM_APPROVAL", "TEAM_MESSAGE", "EMAIL_CONFIG", "EMAIL_FAILED", "PAYMENT_PROOF", "BIAS_ALERT",
-             "REVIEW_LOW", "MEETING_LINK", "REPLACEMENT"}
+             "REVIEW_LOW", "MEETING_LINK", "REPLACEMENT", "ABSENCE_REQUEST", "MONTH_UNPAID", "MODE_CHANGE", "TEACH_REQUEST"}
 # What opening its page does not close: it waits for the thing to be done (someone not happy waits for a call).
-STAYS_OPEN = {"REVIEW_LOW", "MEETING_LINK", "REPLACEMENT"}
+STAYS_OPEN = {"REVIEW_LOW", "MEETING_LINK", "REPLACEMENT", "ABSENCE_REQUEST", "MONTH_UNPAID", "MODE_CHANGE", "TEACH_REQUEST"}
 # Words of a CANDIDATE_EMAIL notification that only reports what the system did by itself.
 _REPORTS = ("corrected itself",)
 
@@ -115,7 +115,27 @@ def settled(db: Session, notification: Notification) -> bool:
         from app.services.replacements import SessionReplacement
 
         row = db.get(SessionReplacement, query.get("replacement") or "")
-        return row is None or row.status in ("accepted", "past")
+        return row is None or row.status in ("accepted", "past", "moved", "postponed", "cancelled", "dropped")
+    if category == "ABSENCE_REQUEST":
+        from app.models.professor_absence import ProfessorAbsence
+        from app.services import absences
+
+        absence = db.get(ProfessorAbsence, query.get("absence") or "")
+        return absence is None or absences.state(absence) not in absences.WAITING
+    if category == "MONTH_UNPAID":
+        from app.services import monthly
+
+        registration = db.get(Registration, notification.registration_id) if notification.registration_id else None
+        return registration is None or not monthly.owes_now(registration)
+    if category == "TEACH_REQUEST":
+        from app.services.teach_requests import TeachRequest
+
+        row = db.get(TeachRequest, query.get("teach") or "")
+        return row is None or row.status != "requested"
+    if category == "MODE_CHANGE":
+        from app.services import mode_change
+
+        return mode_change.settled(db, notification)
     if category == "EMAIL_FAILED":
         from app.services import reach
 

@@ -244,8 +244,8 @@ def place_facts(db: Session, path: str, lang: str) -> str | None:
             parts.append(f"{weeks} semaines" if fr else f"{weeks} weeks")
         prices = [value for value in (program.price_online, program.price_onsite) if value]
         if prices:
-            parts.append((f"{_money(program.price_online or 0)} en ligne, {_money(program.price_onsite or 0)} en présentiel" if fr
-                          else f"{_money(program.price_online or 0)} online, {_money(program.price_onsite or 0)} on site"))
+            parts.append((f"{_money(program.price_online or 0)} par mois en ligne, {_money(program.price_onsite or 0)} par mois en présentiel" if fr
+                          else f"{_money(program.price_online or 0)} a month online, {_money(program.price_onsite or 0)} a month on site"))
         parts.append((f"{len(registrations)} inscrit{'s' if len(registrations) != 1 else ''} dont {paid} payé{'s' if paid != 1 else ''}" if fr
                       else f"{len(registrations)} registered, {paid} paid"))
         if running:
@@ -296,7 +296,7 @@ def _place_facts_ar(db: Session, path: str) -> str | None:
         if weeks:
             parts.append(f"{weeks} أسابيع")
         if program.price_online or program.price_onsite:
-            parts.append(f"{_money(program.price_online or 0)} عن بعد، {_money(program.price_onsite or 0)} حضوري")
+            parts.append(f"{_money(program.price_online or 0)} في الشهر عن بعد، {_money(program.price_onsite or 0)} في الشهر حضوري")
         parts.append(f"{len(registrations)} مسجّلون منهم {paid} دفعوا")
         if running:
             parts.append(f"أقسام جارية: {running}")

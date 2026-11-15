@@ -118,6 +118,34 @@ class SystemSettings(Base):
     # A professor away and nobody to replace them: "ask" (the admin chooses another professor, another day or a week
     # later) or "postpone" (the session goes a week later by itself, with every session after it).
     replacement_fallback = Column(String, nullable=True, default="ask")
+    # A professor asks to be away: "nobody" (the admin decides only when nobody can replace them for a session; else it
+    # is accepted and the replacements are asked) or "always" (the admin decides every request). services/absences.py.
+    absence_decision = Column(String, nullable=True, default="nobody")
+    # Professors may ask to teach a program (the admin approves each request); off: only the admin adds what they teach.
+    professor_program_requests = Column(Boolean, nullable=True, default=False)
+    # The timer of each automatic reminder, in any unit ("45s", "30min", "24h", "7d", "2w", "1mo"): services/timings.py.
+    payment_reminder_after = Column(String, nullable=True)
+    session_reminder_before = Column(String, nullable=True)
+    session_link_before = Column(String, nullable=True)
+    level_reminder_after = Column(String, nullable=True)
+    resource_reminder_before = Column(String, nullable=True)
+    question_remind_after = Column(String, nullable=True)
+    question_admin_after = Column(String, nullable=True)
+    # The timer of each automatic reminder, in any unit ("45s", "30min", "24h", "7d", "2w", "1mo"): services/timings.py.
+    payment_reminder_after = Column(String, nullable=True)
+    session_reminder_before = Column(String, nullable=True)
+    session_link_before = Column(String, nullable=True)
+    level_reminder_after = Column(String, nullable=True)
+    resource_reminder_before = Column(String, nullable=True)
+    question_remind_after = Column(String, nullable=True)
+    question_admin_after = Column(String, nullable=True)
+    rules_applied_at = Column(DateTime, nullable=True)   # the monthly and next-month rules applied to what existed (once)
+    # Prices are for one month (services/monthly.py): one reminder this many days before a month starts; a month not
+    # paid this many days after it started pauses the candidate's access (links, files, questions) until they pay.
+    month_remind_days = Column(Integer, nullable=True, default=5)
+    month_grace_days = Column(Integer, nullable=True, default=3)
+    month_pause_on = Column(Boolean, nullable=True, default=True)
+    monthly_since = Column(DateTime, nullable=True)      # months that started before this are never charged by themselves
     # The secret of the iPhone's link that sends the waiting SMS from the iPhone (services/phone_sms.py).
     phone_sms_token = Column(String, nullable=True)
     # After each session, its questions go this many hours after it ends (services/session_check.py).

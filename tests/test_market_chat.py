@@ -180,7 +180,7 @@ check("which classes cannot start, and why", "P-20261001-2" in found["reply"] an
 found = ask("who can teach Python?")
 check("who can teach a program", "amira" in found["reply"] and "Python" in found["reply"], found["reply"])
 found = ask("How much is DevOps?")
-check("the price of a program", "390 DT online" in found["reply"] and "490 DT on site" in found["reply"] and found["links"][0]["url"] == f"/programs/{devops.id}", found["reply"][:120])
+check("the price of a program (a month)", "390 DT a month online" in found["reply"] and "490 DT a month on site" in found["reply"] and found["links"][0]["url"] == f"/programs/{devops.id}", found["reply"][:120])
 found = ask("What should we add to DevOps?")
 check("what to add to a program, from the offers", "Add AWS" in found["reply"] and f"/programs/{devops.id}#market" in [link["url"] for link in found["links"]], found["reply"][:160])
 found = ask("how do I create a class?")

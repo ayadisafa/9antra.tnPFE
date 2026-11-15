@@ -629,6 +629,42 @@ def snooze(db: Session, key: str, days: int = SNOOZE_DAYS) -> None:
     db.commit()
 
 
+def monthly_advice(db: Session) -> list[Advice]:
+    """Months not paid (paused, or in their days of grace), and the absence and teaching requests that wait."""
+    from app.services import absences, monthly, teach_requests
+
+    found = []
+    rows = monthly.follow_rows(db)
+    paused = [row for row in rows if row["state"] == "paused"]
+    owed = [row for row in rows if row["state"] == "owed"]
+    if paused:
+        names = ", ".join(dict.fromkeys(_name(row["candidate"]) for row in paused))
+        found.append(Advice(key=f"month-paused:{len(paused)}:{paused[0]['registration'].id}", priority=88, tone="urgent", icon="bi-pause-circle",
+                            title=_t("{0} paused: a month not paid", _plural(len(paused), "candidate")),
+                            why=_t("No session link, their questions and files wait until they pay: {0}.", names),
+                            action=_go("Month by month", "/payments#monthly")))
+    if owed:
+        names = ", ".join(dict.fromkeys(_name(row["candidate"]) for row in owed))
+        found.append(Advice(key=f"month-owed:{len(owed)}:{owed[0]['registration'].id}", priority=70, tone="important", icon="bi-hourglass-split",
+                            title=_t("{0} owe their new month", _plural(len(owed), "candidate")),
+                            why=_t("Their month has started; their access pauses at the end of the days of grace: {0}.", names),
+                            action=_go("Month by month", "/payments#monthly")))
+    waiting = absences.waiting(db)
+    if waiting:
+        found.append(Advice(key=f"absence-requests:{len(waiting)}:{waiting[0]['absence'].id}", priority=86, tone="urgent", icon="bi-calendar-x",
+                            title=_t("{0} absence requests to decide", len(waiting)),
+                            why=_t("Nobody can replace them for some sessions: accept or refuse ({0}).",
+                                   ", ".join(dict.fromkeys(item["professor"].name for item in waiting))),
+                            action=_go("Decide", "/professors#absences")))
+    asks = teach_requests.waiting(db)
+    if asks:
+        found.append(Advice(key=f"teach-requests:{len(asks)}:{asks[0]['request'].id}", priority=60, tone="important", icon="bi-mortarboard",
+                            title=_t("{0} requests to teach a program", len(asks)),
+                            why=", ".join(f"{item['professor'].name} → {item['program'].name}" for item in asks[:4]),
+                            action=_go("Decide", "/professors#teach-requests")))
+    return found
+
+
 def for_dashboard(db: Session) -> list[Advice]:
     """Everything that needs the admin, most pressing first."""
     now_utc, now_local = datetime.utcnow(), local_now()
@@ -637,6 +673,7 @@ def for_dashboard(db: Session) -> list[Advice]:
     items += team_advice(db)
     items += sheets_advice(db, now_local)
     items += placement_advice(db)
+    items += monthly_advice(db)
 
     candidates = (
         db.query(Candidate)

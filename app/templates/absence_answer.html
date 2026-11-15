@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Votre absence · {{ app_name or '9antra' }}</title>
+  <style>
+    :root { --berry:#a42c67; --berry-dark:#8b2355; --berry-soft:#fdf2f7; --ink:#241a38; --muted:#77718c; --line:#ebe5f3; --mint:#15803d; --mint-soft:#e9f9ef; --rose:#be123c; --rose-soft:#fff1f2; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:"Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Arial, sans-serif; background:#f6f3fb; color:var(--ink); line-height:1.5; }
+    .wrap { max-width:540px; margin:0 auto; padding:22px 16px 48px; }
+    .brand { display:flex; align-items:center; gap:10px; font-weight:800; font-size:1.05rem; color:var(--berry); margin-bottom:18px; }
+    .card { background:#fff; border:1px solid var(--line); border-radius:24px; padding:28px clamp(18px, 5vw, 32px); box-shadow:0 22px 44px -30px rgba(36,26,56,.35); animation:rise .35s ease both; }
+    @keyframes rise { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .card { animation:none; } }
+    .center { text-align:center; }
+    .eyebrow { display:inline-block; font-size:.74rem; font-weight:700; color:var(--berry); background:var(--berry-soft); padding:4px 11px; border-radius:999px; }
+    h1 { font-size:1.4rem; line-height:1.25; margin:14px 0 6px; }
+    .lead { color:var(--muted); font-size:.95rem; margin:0; }
+    .facts { background:#faf8fd; border-radius:16px; padding:14px 16px; margin:18px 0 0; display:grid; gap:6px; font-size:.92rem; }
+    .said { margin-top:12px; background:var(--rose-soft); color:#7f1d1d; border-left:4px solid var(--rose); border-radius:12px; padding:12px 14px; font-size:.92rem; }
+    .sessions { margin:10px 0 0; padding-left:18px; font-size:.88rem; color:var(--ink); }
+    .choice { margin-top:20px; display:grid; gap:12px; }
+    .choice form { margin:0; display:grid; gap:8px; }
+    textarea { width:100%; border:1.5px solid var(--line); border-radius:14px; padding:12px; font:inherit; font-size:.95rem; resize:vertical; min-height:90px; }
+    textarea:focus { outline:none; border-color:var(--berry); }
+    button { width:100%; border:0; border-radius:14px; padding:14px 16px; font:inherit; font-weight:700; font-size:1rem; cursor:pointer; }
+    .yes { background:var(--berry); color:#fff; } .yes:hover { background:var(--berry-dark); }
+    .no { background:#fff; color:var(--ink); border:1.5px solid var(--line); } .no:hover { border-color:var(--berry); }
+    .or { text-align:center; color:var(--muted); font-size:.8rem; }
+    .error { margin-top:14px; background:var(--rose-soft); color:var(--rose); border-radius:12px; padding:10px 12px; font-size:.9rem; font-weight:600; }
+    .foot { text-align:center; color:var(--muted); font-size:.8rem; margin-top:22px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">{{ app_name or '9antra' }}</div>
+  {% if done == "come" %}
+  <div class="card center">
+    <span class="eyebrow">C'est noté</span>
+    <h1>Merci {{ first }} !</h1>
+    <p class="lead">Vous serez là {{ period }} : vos séances ont lieu comme prévu. L'équipe est prévenue.</p>
+  </div>
+  {% elif done == "insists" %}
+  <div class="card center">
+    <span class="eyebrow">Votre réponse est envoyée</span>
+    <h1>Merci {{ first }}</h1>
+    <p class="lead">L'équipe relit votre demande avec ce que vous avez écrit et vous répond très vite, par email et dans votre espace.</p>
+  </div>
+  {% elif absence %}
+  <div class="card">
+    <span class="eyebrow">Votre demande d'absence</span>
+    <h1>Bonjour {{ first }}, pouvez-vous être là ?</h1>
+    <p class="lead">Votre demande d'absence n'a pas pu être acceptée{% if check and check.nobody %} : aucun collègue n'est libre pour vous remplacer{% endif %}.</p>
+    <div class="facts">
+      <div>Période : <b>{{ period }}</b></div>
+      {% if absence.reason %}<div>Votre raison : <b>{{ absence.reason }}</b></div>{% endif %}
+      {% if check and check.sessions %}<div>Vos séances de cette période :
+        <ul class="sessions">{% for row in check.sessions %}<li>{{ row.session.session_date.strftime('%d/%m') }} · {{ row.class.name }}{% if row.nobody %} · <b>sans remplaçant</b>{% endif %}</li>{% endfor %}</ul></div>{% endif %}
+    </div>
+    {% if absence.decision_note %}<div class="said">{{ absence.decision_note }}</div>{% endif %}
+    {% if done == "needs-words" %}<div class="error">Dites-nous en quelques mots pourquoi vous ne pourrez pas venir.</div>{% endif %}
+    <div class="choice">
+      <form method="post"><input type="hidden" name="answer" value="come"><button class="yes">Je serai là</button></form>
+      <div class="or">ou</div>
+      <form method="post">
+        <input type="hidden" name="answer" value="cannot">
+        <textarea name="words" maxlength="800" placeholder="Je ne peux vraiment pas venir parce que…" aria-label="Pourquoi vous ne pourrez pas venir" required></textarea>
+        <button class="no">Je ne peux toujours pas venir</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <div class="card center">
+    <span class="eyebrow">Lien expiré</span>
+    <h1>Cette demande n'est plus ouverte</h1>
+    <p class="lead">Vous y avez peut-être déjà répondu, ou l'équipe l'a reprise avec vous. Merci !</p>
+  </div>
+  {% endif %}
+  <p class="foot">{{ app_name or '9antra' }} · ce lien est à vous seul(e).</p>
+</div>
+</body>
+</html>

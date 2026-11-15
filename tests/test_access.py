@@ -159,7 +159,7 @@ check("account: the name can be changed", db.query(User).first().name == "Safa A
 # ======================================================================
 # C. Professors: their card, their access
 # ======================================================================
-status_page = admin.get("/classes/?tab=professors")
+status_page = admin.get("/professors")
 check("professors: the page opens with a card each", status_page.status_code == 200 and "Rami Jlassi" in status_page.text and "No access yet" in status_page.text and "Give access" in status_page.text, status_page.status_code)
 response = admin.post(f"/classes/professors/{rami_id}/edit", data={"name": "Rami  Jlassi", "email": "Rami@Example.com", "phone": " 55 111 222 ", "specialties": "DevOps, Python, DevOps", "is_available": "true", "available_from": "", "available_until": ""}, follow_redirects=False)
 db.expire_all(); rami = db.get(Professor, rami_id)
@@ -175,7 +175,7 @@ check("access: an address already used is refused", "error=" in response.headers
 response = admin.post(f"/classes/professors/{rami_id}/access", data={"email": "rami@example.com", "password": "rami-first-pass"}, follow_redirects=False)
 prof_account = db.query(User).filter(User.role == "professor").first()
 check("access: the professor gets an account tied to their profile", response.status_code == 303 and prof_account is not None and prof_account.professor_id == rami_id and prof_account.name == "Rami Jlassi")
-check("access: their card now says they can sign in", "Signs in with" in admin.get("/classes/?tab=professors").text and "never signed in yet" in admin.get("/classes/?tab=professors").text)
+check("access: their card now says they can sign in", "Signs in with" in admin.get("/professors").text and "never signed in yet" in admin.get("/professors").text)
 
 prof = TestClient(main.app, base_url="http://127.0.0.1:8000", headers=HTML)
 response = prof.post("/login", data={"email": "rami@example.com", "password": "rami-first-pass", "next": "/candidate/all"}, follow_redirects=False)
@@ -205,10 +205,11 @@ check("professor: they open their own file, not another class's", prof.get(f"/cl
 response = prof.get("/teacher/profile")
 check("professor: their profile opens", response.status_code == 200 and "rami@example.com" in response.text and "55 111 222" in response.text)
 prof.post("/teacher/profile", data={"name": "Rami J.", "phone": "98 765 432", "specialties": "DevOps, Kubernetes"}); db.expire_all()
-check("professor: they change their own details, and their classes follow", db.get(Professor, rami_id).phone == "98 765 432" and db.get(ClassGroup, mine_id).professor_name == "Rami J." and db.get(Professor, rami_id).specialties == "DevOps, Kubernetes")
+check("professor: they change their own details, and their classes follow; what they teach stays the admin's",
+      db.get(Professor, rami_id).phone == "98 765 432" and db.get(ClassGroup, mine_id).professor_name == "Rami J." and "Kubernetes" not in (db.get(Professor, rami_id).specialties or ""))
 response = prof.post("/account/password", data={"current": "rami-first-pass", "password": "rami-own-password", "confirmation": "rami-own-password"}, follow_redirects=False)
 check("professor: they change their password themselves", "notice=" in response.headers["location"] and prof.get("/teacher").status_code == 200)
-check("admin: the professor's space is not theirs: they go to the professors page", admin.get("/teacher", follow_redirects=False).headers["location"] == "/classes/?tab=professors")
+check("admin: the professor's space is not theirs: they go to the professors page", admin.get("/teacher", follow_redirects=False).headers["location"] == "/professors")
 
 # ======================================================================
 # D. Presence
@@ -275,7 +276,9 @@ check("parameters: a mistake comes back with the class's name and the reason", "
 admin.post(f"/classes/{mine_id}/parameters", data={**base_form, "symbol": "🚀", "color": "#1d4ed8"})
 page = admin.get("/classes/")
 check("classes: the page shows each class with its symbol, places and buttons", page.status_code == 200 and "🚀" in page.text and 'class="cg-meter"' in page.text and 'aria-label="Parameters"' in page.text and f"/classes/{mine_id}/attendance" in page.text and "3 of 24 taken" in page.text)
-check("classes: professors show what they teach and how much", "pf-card" in page.text and "Hours / week" in page.text and "98 765 432" in page.text)
+professors_page = admin.get("/professors")
+check("professors (their own page now): what they teach and how much", "pf-card" in professors_page.text and "Hours / week" in professors_page.text
+      and "98 765 432" in professors_page.text)
 check("classes: the class page shows its symbol and the same form", "🚀" in admin.get(f"/classes/{mine_id}").text and "data-class-parameters" in admin.get(f"/classes/{mine_id}").text)
 
 # ======================================================================

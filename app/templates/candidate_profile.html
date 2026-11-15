@@ -6,6 +6,16 @@
 {% block live_topics %}candidate:{{ candidate.id }}{% endblock %}
 
 {% block extra_head %}
+<style>
+  .cp-months { display:flex; flex-wrap:wrap; gap:5px; align-items:center; margin-top:8px; }
+  .cp-month { display:inline-flex; align-items:center; gap:3px; font-size:.7rem; font-weight:700; border-radius:999px; padding:2px 9px 2px 6px; background:#f4f1f9; color:#6b6480; }
+  .cp-month.is-paid { background:var(--mint-subtle, #e9f9ef); color:#15803d; }
+  .cp-month.is-due { background:#fff1f2; color:#be123c; }
+  .cp-month.is-now { box-shadow:0 0 0 2px var(--primary-berry); }
+  .cp-paused { display:flex; gap:10px; align-items:flex-start; margin-top:10px; padding:10px 12px; border-radius:14px; background:#fff1f2; color:#881337; font-size:.8rem; }
+  .cp-paused i { font-size:1.2rem; color:#e11d48; } .cp-paused.is-ended { background:#f4f4f5; color:#3f3f46; } .cp-paused.is-ended i { color:#71717a; }
+  .cp-month.is-not-taken { background:#f4f4f5; color:#a1a1aa; text-decoration:line-through; }
+</style>
 {% include "_ui.html" %}
 <style>
   .cp-back { color:var(--muted); font-size:.82rem; font-weight:700; text-decoration:none; }
@@ -347,6 +357,26 @@
                 <div class="ui-bar flex-grow-1 {{ 'is-full' if card.is_paid }}"><span style="width:{{ card.paid_pct }}%;"></span></div>
                 <span class="cp-meta text-nowrap fw-bold">{{ "%.0f"|format(card.paid) }} / {{ "%.0f"|format(card.total) }} DT</span>
               </div>
+              {% set plan = card.months %}
+              {% if plan and plan.paused %}
+              <div class="cp-paused"><i class="bi bi-pause-circle-fill"></i><div><b>Access paused: month {{ plan.counted }} is not paid ({{ "%.0f"|format(card.due) }} DT).</b>
+                No session link, their questions and files wait. Recording the payment starts it again at once, and they are told.</div></div>
+              {% elif plan and plan.ended %}
+              <div class="cp-paused is-ended"><i class="bi bi-flag-fill"></i><div><b>They stopped after {{ plan.count }} month{{ 's' if plan.count != 1 }}.</b> The later sessions of the class are not theirs.</div></div>
+              {% endif %}
+              {% if plan and plan.count > 1 %}
+              <div class="cp-months" aria-label="Month by month">
+                {% for month in plan.months %}
+                <span class="cp-month is-{{ month.state }} {{ 'is-now' if month.now }}" title="{{ month.starts.strftime('%d/%m/%Y') if month.starts else '' }}">
+                  <i class="bi {{ 'bi-check2' if month.state == 'paid' else 'bi-exclamation' if month.state == 'due' else 'bi-dot' }}"></i>Month {{ month.number }}{% if month.starts %} · {{ month.starts.strftime('%d/%m') }}{% endif %}</span>
+                {% endfor %}
+                <span class="cp-meta">{{ "%.0f"|format(plan.price) }} DT a month · {{ "%.0f"|format(plan.total) }} DT in all</span>
+                {% if plan.paused %}<span class="ui-chip bad"><i class="bi bi-pause-circle"></i>Paused until they pay</span>{% endif %}
+                {% if plan.ended %}<span class="ui-chip muted"><i class="bi bi-flag"></i>Stopped after their months</span>
+                {% elif plan.answer == 'no' %}<span class="ui-chip warn"><i class="bi bi-flag"></i>Stops after this month</span>
+                {% elif plan.answer == 'yes' %}<span class="ui-chip ok"><i class="bi bi-arrow-right-circle"></i>Continues next month</span>{% endif %}
+              </div>
+              {% endif %}
             </div>
           </div>
 
@@ -369,12 +399,24 @@
             {% if card.due > 0 %}
             <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record the full payment of {{ '%.0f'|format(card.due) }} DT for {{ card.name }}? The candidate gets a confirmation email{{ '' if card.class else ' and a place in a class' }}.">
               <input type="hidden" name="amount" value="{{ card.due }}"><input type="hidden" name="method" value="manual">
-              <button class="ui-btn good sm"><i class="bi bi-check2-circle"></i>Paid in full ({{ "%.0f"|format(card.due) }} DT)</button>
+              <button class="ui-btn good sm"><i class="bi bi-check2-circle"></i>{% if card.months and card.months.program_months > 1 %}1 month paid{% else %}Paid in full{% endif %} ({{ "%.0f"|format(card.due) }} DT)</button>
             </form>
+            {% if reg.program_id and card.months and card.months.program_months > 1 and card.months.total > card.due + card.paid + 0.01 %}
+            {% set whole = card.months.total - card.paid %}
+            <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record {{ '%.0f'|format(whole) }} DT for the whole program ({{ card.months.program_months }} months) of {{ card.name }}?">
+              <input type="hidden" name="amount" value="{{ whole }}"><input type="hidden" name="method" value="manual">
+              <button class="ui-btn good sm"><i class="bi bi-check2-all"></i>The {{ card.months.program_months }} months paid ({{ "%.0f"|format(whole) }} DT)</button>
+            </form>
+            {% endif %}
             <form method="post" action="/payment/confirm/{{ reg.id }}">
               <input class="form-control form-control-sm" type="number" name="amount" min="0.01" step="0.01" max="{{ card.due }}" placeholder="Part paid, DT" aria-label="Amount paid in DT" style="width:128px;" required>
               <input type="hidden" name="method" value="manual">
               <button class="ui-btn sm">Record</button>
+            </form>
+            {% elif reg.program_id and reg.class_group_id and card.months and card.months.count > 1 and card.months.price > 0 and card.months.paid < card.months.count %}
+            <form method="post" action="/payment/confirm/{{ reg.id }}" data-confirm="Record {{ '%.0f'|format(card.months.price) }} DT for the next month of {{ card.name }}, paid ahead?">
+              <input type="hidden" name="amount" value="{{ card.months.price }}"><input type="hidden" name="method" value="manual">
+              <button class="ui-btn sm"><i class="bi bi-calendar-plus"></i>Next month paid ahead ({{ "%.0f"|format(card.months.price) }} DT)</button>
             </form>
             {% elif not reg.program_id %}
             <form method="post" action="/candidate/registrations/{{ reg.id }}/program" title="This name matched no program: say which one it is and its price is set">

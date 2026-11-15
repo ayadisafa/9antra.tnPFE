@@ -366,7 +366,7 @@ _LOOKED_AT = {"money_received": ("Payments", "/payments", "payments"), "not_paid
               "registrations": ("Candidates", "/candidate/all", "candidates"), "candidate": ("Candidates", "/candidate/all", "candidates"),
               "best_candidates": ("Candidates", "/candidate/all", "candidates"), "classes": ("Classes", "/classes/", "classes"),
               "class_detail": ("Classes", "/classes/", "classes"), "sessions": ("Classes", "/classes/", "sessions"),
-              "professors": ("Professors", "/classes/?tab=professors", "classes"), "may_drop_out": ("Who may drop out", "/#live-dashboard-risk", "feelings"),
+              "professors": ("Professors", "/professors", "classes"), "may_drop_out": ("Who may drop out", "/#live-dashboard-risk", "feelings"),
               "messages": ("Inbox", "/inbox", "inbox"), "reviews": ("Programs", "/programs/all", "feelings"), "programs": ("Programs", "/programs/all", "programs"),
               "automatic": ("What the application does by itself", "/system#automatic", "settings"), "marketing": ("Social media", "/social", "posts"),
               "trends": ("The journal", "/journal", "news"), "overview": ("Dashboard", "/", "data"),

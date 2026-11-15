@@ -93,13 +93,19 @@
       <div class="rb-when">
         <i class="bi bi-clock-history"></i>
         {% if item.timing %}
-        <form method="post" action="/reminders/auto/{{ item.key }}/timing" class="rb-time">
-          {% if item.timing.kind == 'hours' or item.timing.single %}
-          <input type="number" name="value" min="{{ item.timing.least }}" max="{{ item.timing.most }}" value="{{ item.timing.value }}" aria-label="{{ item.timing.after }}">
-          {% else %}
-          <input type="text" name="value" value="{{ item.timing.value }}" inputmode="numeric" pattern="[0-9 ,;]+" maxlength="40" aria-label="{{ item.timing.after }}" style="width:110px;">
-          {% endif %}
-          <span>{{ item.timing.after }}</span>
+        <form method="post" action="/reminders/auto/{{ item.key }}/timing" class="rb-time {{ 'is-multi' if item.timing.multi or item.timing.rows | length > 1 }}">
+          <div class="rb-rows">
+            {% if item.timing.lead %}<span class="rb-lead">{{ item.timing.lead }}</span>{% endif %}
+            {% for row in item.timing.rows %}
+            <span class="rb-row">
+              {% if row.label %}<span class="rb-row-label">{{ row.label }}</span>{% endif %}
+              <input type="number" name="value" min="0" max="99999" value="{{ row.value }}" aria-label="{{ item.timing.after or 'Every' }}" {{ 'placeholder=+' if item.timing.multi and row.value == '' }}>
+              <select name="unit" aria-label="Unit">{% for unit in (item.timing.units or units) %}<option value="{{ unit }}" {{ 'selected' if row.unit == unit }}>{{ unit }}</option>{% endfor %}</select>
+              {% if row.field %}<input type="hidden" name="field" value="{{ row.field }}">{% endif %}
+            </span>
+            {% endfor %}
+            {% if item.timing.after %}<span class="rb-after">{{ item.timing.after }}</span>{% endif %}
+          </div>
           <button class="rb-save" aria-label="Save the timing"><i class="bi bi-check2"></i></button>
         </form>
         {% else %}<span>{{ item.when }}</span>{% endif %}
@@ -111,8 +117,22 @@
         {% if item.sent is not none %}<span class="ui-chip"><i class="bi bi-send-check"></i>{{ item.sent }} <span>in 30 days</span></span>{% endif %}
       </div>
       <div class="rb-foot">
+        {% if item.rule %}
+        <details class="rb-words">
+          <summary class="ui-btn sm"><i class="bi bi-brush"></i>Its words</summary>
+          <form method="post" action="/reminders/{{ item.rule.id }}/words" class="d-grid gap-2 mt-2">
+            <input class="form-control form-control-sm" name="subject" value="{{ item.rule.subject }}" maxlength="200" aria-label="Subject">
+            <textarea class="form-control form-control-sm" name="body" rows="6" aria-label="Message">{{ item.rule.body }}</textarea>
+            <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Save the words</button>
+          </form>
+        </details>
+        <form method="post" action="/reminders/{{ item.rule.id }}/cancel" data-confirm="Stop this reminder for good? Nothing more is sent.">
+          <button class="ui-btn ghost sm danger"><i class="bi bi-trash3"></i>Delete</button></form>
+        <span class="rb-mine"><i class="bi bi-magic"></i>Set up by you · {{ item.rule.audience_label }}</span>
+        {% else %}
         <a class="ui-btn sm" href="{{ item.edit }}"><i class="bi bi-brush"></i>{{ 'Its words and its design' if item.key not in ('resources', 'course_questions') else 'Change it' }}</a>
-        {% if item.key != 'course_questions' %}
+        {% endif %}
+        {% if item.key != 'course_questions' and not item.rule %}
         <form method="post" action="/reminders/auto/{{ item.key }}/reset" data-confirm="Put this reminder back as it was at first (its words, its design and its timing)?">
           <button class="ui-btn ghost sm"><i class="bi bi-arrow-counterclockwise"></i>The original</button></form>
         {% endif %}
@@ -137,7 +157,14 @@
   .rb-when { display:flex; gap:8px; align-items:center; flex-wrap:wrap; font-size:.8rem; font-weight:700; color:var(--ink-text); background:var(--gold-subtle, #fff7e8); border-radius:12px; padding:7px 10px; }
   .rb-when > i { color:var(--accent-gold-dark, #b45309); }
   .rb-time { display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin:0; }
-  .rb-time input { width:72px; border:1px solid var(--border-color); border-radius:10px; padding:3px 8px; font-weight:700; font-size:.82rem; background:#fff; }
+  .rb-time input { width:64px; border:1px solid var(--border-color); border-radius:10px; padding:3px 8px; font-weight:700; font-size:.82rem; background:#fff; }
+  .rb-time select { border:1px solid var(--border-color); border-radius:10px; padding:3px 6px; font-weight:700; font-size:.78rem; background:#fff; color:var(--ink-text); }
+  .rb-rows { display:flex; gap:6px; align-items:center; flex-wrap:wrap; min-width:0; flex:1; }
+  .rb-row { display:inline-flex; gap:4px; align-items:center; }
+  .rb-row-label, .rb-lead, .rb-after { font-weight:600; color:#5b5670; font-size:.74rem; }
+  .rb-time.is-multi .rb-rows { gap:6px 10px; }
+  .rb-words { width:100%; } .rb-words summary { list-style:none; display:inline-flex; } .rb-words summary::-webkit-details-marker { display:none; }
+  .rb-mine { font-size:.68rem; font-weight:800; color:var(--primary-berry); display:inline-flex; gap:4px; align-items:center; margin-inline-start:auto; }
   .rb-time { flex-wrap:nowrap; min-width:0; flex:1; } .rb-time span { font-weight:600; color:#5b5670; min-width:0; font-size:.76rem; line-height:1.3; } .rb-save { flex:none; }
   .rb-save { width:28px; height:28px; border-radius:50%; border:0; background:var(--primary-berry); color:#fff; display:grid; place-items:center; cursor:pointer; }
   .rb-chips { display:flex; gap:5px; flex-wrap:wrap; } .rb-chips:empty { display:none; }
@@ -177,6 +204,50 @@
   <div><b><i class="bi bi-3-circle-fill"></i>Shape it</b>Pick a look, and add coloured squares for what must be seen: a date, a place, a list.</div>
   <div><b><i class="bi bi-4-circle-fill"></i>Choose when</b>It goes once, at that time, and stays in each candidate's discussion.</div>
 </div>
+
+{% if recommended %}
+<section id="suggested" class="mb-4">
+  <h3 class="rm-h"><i class="bi bi-magic"></i>Suggested for your centre</h3>
+  <p class="rm-p">From how your candidates behave (absences, late arrivals, links never opened, questions not answered, classes starting or ending) and what training centres send. One click sets it up with its words and its timer; it then goes by itself and joins the reminders above.</p>
+  <div class="rk-grid">
+    {% for item in recommended %}
+    {% set kind = item.kind %}
+    <article class="rk-card" style="--i:{{ loop.index0 }};">
+      <div class="rk-top"><span class="rb-ico m-{{ kind.motion }} rk-ico" aria-hidden="true"><i class="bi {{ kind.icon }}"></i></span>
+        <div><b>{{ kind.name }}</b><span class="rk-when"><i class="bi bi-clock-history"></i>{{ kind.when }}</span></div></div>
+      <span class="rk-tag {{ 'is-seen' if item.seen }}"><i class="bi {{ 'bi-graph-up-arrow' if item.seen else 'bi-building' }}"></i>{{ 'From how your candidates behave' if item.seen else 'What training centres do' }}</span>
+      <p class="rk-why">{{ item.why }}</p>
+      <div class="rk-do">
+        {% if kind.trigger != 'once' %}
+        <form method="post" action="/reminders/kinds/{{ kind.key }}/setup" class="m-0"><input type="hidden" name="channel" value="{{ item.channel }}">
+          <button class="ui-btn sm primary"><i class="bi bi-lightning-charge"></i>Set it up</button></form>
+        {% endif %}
+        <a class="ui-btn sm" href="/reminders?kind={{ kind.key }}#new"><i class="bi bi-sliders"></i>Adjust first</a>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  <style>
+    .rk-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(270px, 1fr)); gap:12px; }
+    .rk-card { position:relative; background:#fff; border:1px dashed color-mix(in srgb, var(--primary-berry) 45%, var(--border-color)); border-radius:18px; padding:13px 14px; display:flex; flex-direction:column; gap:8px; }
+    .rk-card:hover { border-style:solid; box-shadow:var(--shadow-soft); }
+    .rk-top { display:flex; gap:10px; align-items:center; } .rk-top b { display:block; font-size:.88rem; color:var(--ink-text); line-height:1.25; }
+    .rk-when { display:inline-flex; gap:4px; align-items:center; font-size:.7rem; font-weight:700; color:var(--muted); }
+    .rk-why { font-size:.78rem; color:#4a445e; margin:0; line-height:1.45; }
+    .rk-tag { align-self:flex-start; display:inline-flex; gap:5px; align-items:center; font-size:.64rem; font-weight:800; text-transform:uppercase; letter-spacing:.04em; color:#8a84a0; background:#f4f2f8; border-radius:99px; padding:2px 9px; }
+    .rk-tag.is-seen { color:var(--primary-berry); background:color-mix(in srgb, var(--primary-berry) 10%, #fff); }
+    .rk-do { display:flex; gap:6px; margin-top:auto; flex-wrap:wrap; }
+    @media (prefers-reduced-motion: no-preference) {
+      .rk-card { animation:rbIn .45s cubic-bezier(.2,.8,.2,1) both; animation-delay:calc(var(--i, 0) * 60ms); }
+      .rk-ico.m-ring i { display:inline-block; transform-origin:50% 8%; animation:rbRing 2.6s ease-in-out infinite; }
+      .rk-ico.m-pulse i { display:inline-block; animation:rbPulse 1.9s ease-in-out infinite; }
+      .rk-ico.m-flip i { display:inline-block; animation:rbFlip 3.2s ease-in-out infinite; }
+      .rk-ico.m-swing i { display:inline-block; transform-origin:30% 30%; animation:rbSwing 2.4s ease-in-out infinite; }
+      .rk-ico.m-bounce i { display:inline-block; animation:rbBounce 2s ease-in-out infinite; }
+    }
+  </style>
+</section>
+{% endif %}
 
 {% if suggestions %}
 <h3 class="rm-h"><i class="bi bi-lightbulb-fill"></i>Reminders worth sending</h3>
@@ -228,8 +299,14 @@
       <div id="rm-smart-person" aria-live="polite"></div>
       {% if smart %}<div class="ui-chip ok mt-2" style="white-space:normal;"><i class="bi bi-stars"></i>Filled from a smart suggestion: the day and hour are when they usually write. {{ smart.measure }}</div>{% endif %}
 
-      <div class="rm-label">Start from an idea</div>
-      <div class="rm-ideas">{% for idea in ideas %}<button type="button" class="rm-idea {{ 'is-on' if chosen and chosen.key == idea.key }}" data-idea="{{ idea.key }}"><i class="bi {{ idea.icon }}"></i>{{ idea.name }}</button>{% endfor %}</div>
+      <div class="rm-label">What kind of reminder</div>
+      <div class="rm-ideas rm-kinds">
+        {% for item in catalogue %}<button type="button" class="rm-idea {{ 'is-on' if kind and kind.key == item.key }}" data-kind="{{ item.key }}" title="{{ item.purpose }}">
+          <i class="bi {{ item.icon }}"></i>{{ item.name }}{% if item.running %} <span class="ui-chip ok" style="font-size:.6rem; padding:1px 6px;">set up</span>{% endif %}</button>{% endfor %}
+      </div>
+      <div class="ui-chip info mt-2" id="rm-kind-purpose" style="white-space:normal;" {{ 'hidden' if not kind }}><i class="bi bi-info-circle"></i><span>{{ kind.purpose if kind }}</span></div>
+      {% for item in catalogue %}<span hidden data-kind-purpose="{{ item.key }}">{{ item.purpose }}</span>{% endfor %}
+      <input type="hidden" name="kind" value="{{ kind.key if kind }}">
 
       <div class="rm-label">Or say what it is about: I write it</div>
       <div class="rm-ai">
@@ -278,14 +355,21 @@
       <div class="rm-label">How often</div>
       <div class="rm-repeat" role="radiogroup" aria-label="How often">
         {% for key, name in repeats.items() %}
-        <label class="rm-rep"><input type="radio" name="repeat" value="{{ key }}" {{ 'checked' if key == 'once' }}>
-          <span><i class="bi {{ {'once': 'bi-1-circle', 'daily': 'bi-sun', 'weekly': 'bi-calendar-week', 'monthly': 'bi-calendar-month', 'session': 'bi-easel', 'absence': 'bi-person-x'}[key] }}"></i>{{ name }}</span></label>
+        <label class="rm-rep"><input type="radio" name="repeat" value="{{ key }}" {{ 'checked' if key == (kind.trigger if kind else 'once') }}>
+          <span><i class="bi {{ trigger_words[key][1] }}"></i>{{ name }}</span></label>
         {% endfor %}
       </div>
-      <div class="form-text" id="rm-repeat-help">Every day, week or month: it goes again at the same hour, until the last day you choose (or until you stop it). Before each of their sessions: it goes to each candidate the number of hours you choose before each of their sessions; the buttons below write that session's day, hour and topic. Each time a candidate is marked absent: it waits, and goes to that candidate the moment their absence is marked.</div>
+      <div class="rm-when mt-2" id="rm-timer" hidden>
+        <span id="rm-timer-lead" style="font-size:.84rem;">Every</span>
+        <input class="form-control" type="number" name="amount" min="0" max="99999" value="{{ kind_offset[0] if kind else '' }}" style="max-width:100px;" aria-label="How much time">
+        <select class="form-select" name="unit" style="max-width:130px;" aria-label="Unit">{% for unit in units %}<option value="{{ unit }}" {{ 'selected' if (kind_offset[1] if kind else 'days') == unit }}>{{ unit }}</option>{% endfor %}</select>
+        <span id="rm-timer-after" style="font-size:.84rem;"></span>
+      </div>
+      {% for key, words in trigger_words.items() %}<span hidden data-trigger-words="{{ key }}">{{ words[0] }}</span>{% endfor %}
+      <span hidden id="rm-offset-defaults" data-defaults='{{ offset_defaults | tojson }}'></span>
+      <div class="form-text" id="rm-repeat-help">Again and again: it goes every so often (seconds to months), until the last day you choose or until you stop it. The others wait for something to happen (a session, an absence, a class starting or ending, questions not answered, a registration) and go to each candidate it concerns, once each time, the time you choose before or after. They then sit with the automatic reminders, where you can switch them off.</div>
       <div class="rm-when mt-2" id="rm-hours" hidden>
-        <input class="form-control" type="number" name="hours_before" value="24" min="1" max="168" style="max-width:100px;" aria-label="Hours before each session">
-        <span style="font-size:.84rem;">hours before each session</span>
+        <span style="font-size:.84rem;">Write in it:</span>
         <button type="button" class="rm-idea" data-insert="{session_date} à {session_time}"><i class="bi bi-calendar-event"></i>The session's day and hour</button>
         <button type="button" class="rm-idea" data-insert="{session_topic}"><i class="bi bi-journal-text"></i>Its topic</button>
       </div>
@@ -295,6 +379,9 @@
         <input class="form-control" type="date" name="date" value="{{ default_date }}" style="max-width:170px;" aria-label="Day">
         <input class="form-control" type="time" name="time" value="{{ default_time }}" style="max-width:120px;" aria-label="Hour">
         <label style="font-size:.84rem;"><input type="radio" name="when" value="now"> Now</label>
+        <label style="font-size:.84rem;"><input type="radio" name="when" value="in"> In</label>
+        <input class="form-control" type="number" name="in_amount" min="1" max="99999" value="10" style="max-width:90px;" aria-label="In how much time">
+        <select class="form-select" name="in_unit" style="max-width:120px;" aria-label="Unit">{% for unit in units %}<option value="{{ unit }}" {{ 'selected' if unit == 'minutes' }}>{{ unit }}</option>{% endfor %}</select>
       </div>
       <div id="rm-more"></div>
       <button type="button" class="rm-idea mt-2" id="rm-more-add"><i class="bi bi-plus-circle"></i>Another time</button>
@@ -337,8 +424,8 @@
     <h3 class="rm-h"><i class="bi bi-alarm"></i>Planned</h3>
     {% for row in upcoming %}
     <div class="rm-row">
-      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b>{% if (row.reminder.repeat or 'once') != 'once' %}<span class="rm-chip-rep"><i class="bi bi-arrow-repeat"></i>{{ repeats.get(row.reminder.repeat, '') }}</span>{% endif %}
-        <span class="meta">{% if row.reminder.status == 'watching' and row.reminder.repeat == 'session' %}<span>{{ row.reminder.hours_before }} h before each session</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% elif row.reminder.status == 'watching' %}<span>Waiting for an absence</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% else %}{{ row.when.strftime('%a %d %b, %H:%M') }}{% endif %} · {{ row.reminder.audience_label }}{% if row.reminder.status != 'watching' %} · {{ row.people }}{% endif %}</span></div>
+      <div style="min-width:0; flex:1;"><b>{{ row.reminder.subject }}</b>{% if (row.reminder.repeat or 'once') != 'once' %}<span class="rm-chip-rep"><i class="bi bi-arrow-repeat"></i>{{ row.waits_for or repeats.get(row.reminder.repeat, '') }}</span>{% endif %}
+        <span class="meta">{% if row.reminder.status == 'watching' %}<span>{{ row.waits_for }}</span>{% if row.reminder.times %} · <span>sent</span> {{ row.reminder.times }}×{% endif %}{% else %}{{ row.when.strftime('%a %d %b, %H:%M') }}{% endif %} · {{ row.reminder.audience_label }}{% if row.reminder.status != 'watching' %} · {{ row.people }}{% endif %}</span></div>
       {% if row.reminder.status != 'watching' %}<form method="post" action="/reminders/{{ row.reminder.id }}/send-now" data-confirm="Send this reminder now?"><button class="ui-btn sm">Send now</button></form>{% endif %}
       {% if row.reminder.times %}<form method="post" action="/reminders/{{ row.reminder.id }}/reset" data-confirm="Start this reminder again from now, as if just written?"><button class="ui-btn ghost sm icon" aria-label="Start it again" title="Start it again"><i class="bi bi-arrow-counterclockwise"></i></button></form>{% endif %}
       <form method="post" action="/reminders/{{ row.reminder.id }}/cancel" data-confirm="Stop this reminder? Nothing more will be sent."><button class="ui-btn ghost sm icon danger" aria-label="Stop this reminder"><i class="bi bi-x-lg"></i></button></form>
@@ -363,7 +450,7 @@
 
 <script>
 (function () {
-  const ideas = {{ ideas | tojson }};
+  const kinds = {{ catalogue | tojson }};
   const form = document.getElementById("rm-form"), body = document.getElementById("rm-body");
   const audience = document.getElementById("rm-audience");
   function showTarget() {
@@ -405,13 +492,28 @@
     }, 350);
   }
   form.addEventListener("input", preview);
+  const WATCHING = ["session", "absence", "start", "after_start", "end", "after_end", "unanswered", "registered"];
+  const defaults = JSON.parse(document.getElementById("rm-offset-defaults").dataset.defaults || "{}");
+  let lastRepeat = null;
   function showRepeat() {
     const chosen = (form.querySelector('input[name="repeat"]:checked') || {}).value || "once";
+    const watching = WATCHING.indexOf(chosen) >= 0;
     document.getElementById("rm-until").hidden = chosen === "once";
-    document.getElementById("rm-when").hidden = chosen === "absence" || chosen === "session";
-    document.getElementById("rm-when-label").hidden = chosen === "absence" || chosen === "session";
+    document.getElementById("rm-when").hidden = watching;
+    document.getElementById("rm-when-label").hidden = watching;
     document.getElementById("rm-hours").hidden = chosen !== "session";
-    document.getElementById("rm-more").hidden = document.getElementById("rm-more-add").hidden = chosen === "absence" || chosen === "session";
+    document.getElementById("rm-more").hidden = document.getElementById("rm-more-add").hidden = watching;
+    // One timer, a number and its unit: how often, or how long before / after what it waits for.
+    const timer = document.getElementById("rm-timer");
+    timer.hidden = chosen === "once";
+    document.getElementById("rm-timer-lead").textContent = chosen === "every" ? "Every" : "";
+    const words = document.querySelector('[data-trigger-words="' + chosen + '"]');
+    document.getElementById("rm-timer-after").textContent = chosen === "every" ? "" : (words ? words.textContent : "");
+    if (chosen !== lastRepeat && lastRepeat !== null && defaults[chosen]) {
+      form.amount.value = defaults[chosen][0]; form.unit.value = defaults[chosen][1];
+    }
+    if (chosen === "every" && !form.amount.value) { form.amount.value = 1; form.unit.value = "weeks"; }
+    lastRepeat = chosen;
   }
   // The same reminder at other times too: one row per time, each one goes on its own.
   document.getElementById("rm-more-add").addEventListener("click", function () {
@@ -441,13 +543,21 @@
   });
   form.addEventListener("change", function () { showTarget(); showRepeat(); preview(); });
   showRepeat();
-  document.querySelectorAll("[data-idea]").forEach(function (button) {
+  // A kind fills its words, what it waits for and its time; who receives it stays as chosen.
+  document.querySelectorAll("[data-kind]").forEach(function (button) {
     button.addEventListener("click", function () {
-      const idea = ideas.find(function (item) { return item.key === button.dataset.idea; });
-      if (!idea) return;
-      form.subject.value = idea.subject; form.title.value = idea.title; body.value = idea.body;
-      form.querySelectorAll('input[name="style"]').forEach(function (radio) { radio.checked = radio.value === idea.style; });
-      document.querySelectorAll("[data-idea]").forEach(function (other) { other.classList.toggle("is-on", other === button); });
+      const kind = kinds.find(function (item) { return item.key === button.dataset.kind; });
+      if (!kind) return;
+      form.subject.value = kind.subject; form.title.value = kind.title || ""; body.value = kind.body;
+      form.querySelectorAll('input[name="style"]').forEach(function (radio) { radio.checked = radio.value === "brand"; });
+      form.elements.kind.value = kind.key;
+      const repeat = form.querySelector('input[name="repeat"][value="' + kind.trigger + '"]');
+      if (repeat) { repeat.checked = true; lastRepeat = kind.trigger; showRepeat(); }
+      if (kind.trigger !== "once") { form.amount.value = kind.amount; form.unit.value = kind.unit; }
+      const purpose = document.getElementById("rm-kind-purpose");
+      purpose.querySelector("span").textContent = document.querySelector('[data-kind-purpose="' + kind.key + '"]').textContent;
+      purpose.hidden = false;
+      document.querySelectorAll("[data-kind]").forEach(function (other) { other.classList.toggle("is-on", other === button); });
       preview();
     });
   });

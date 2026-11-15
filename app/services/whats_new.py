@@ -111,10 +111,10 @@ RELEASES = [
             {"icon": "bi-arrow-left-right", "title": "A professor away: a replacement for that day only",
              "text": "When you note an absence, each of their sessions that day asks a professor who teaches it and is free then to "
                      "confirm, with a private link. Yes: they replace for that session only. No, or no answer in time: the next one "
-                     "is asked. You get one notification until it is settled.", "url": "/classes/?tab=professors"},
+                     "is asked. You get one notification until it is settled.", "url": "/professors"},
             {"icon": "bi-lock", "title": "One class at a time at the same hours",
              "text": "A professor whose class still runs is never given another class at the same hours until the whole class is "
-                     "over, even when it runs past its planned end.", "url": "/classes/?tab=professors"},
+                     "over, even when it runs past its planned end.", "url": "/professors"},
         ],
     },
     {
@@ -123,7 +123,7 @@ RELEASES = [
             {"icon": "bi-person-check", "title": "A free professor takes the class, and is told",
              "text": "A class waiting for a professor takes the first one who teaches its program and is free on its start day: no other "
                      "class at its hours, not away that day. They are told at once in the application, by email, WhatsApp and SMS, "
-                     "with the class's code, its hours and their space.", "url": "/classes/?tab=professors"},
+                     "with the class's code, its hours and their space.", "url": "/professors"},
             {"icon": "bi-easel", "title": "Reminders every day, or before each session",
              "text": "Your own reminders can now go every day, or a number of hours before each of the candidates' sessions, naming "
                      "that session's day, hour and topic. “Reset” starts a reminder again, as if just written, even a stopped one.",

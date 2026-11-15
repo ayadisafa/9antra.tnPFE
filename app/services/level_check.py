@@ -25,7 +25,7 @@ import secrets
 from datetime import datetime, timedelta
 
 from sqlalchemy import or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from app.models.classgroup import ClassGroup, ClassStatus
 from app.models.notification import Notification
@@ -638,7 +638,7 @@ def remind_due(db: Session, base_url: str, now: datetime | None = None, limit: i
     waiting = (
         db.query(Quiz)
         .filter(Quiz.kind == KIND, Quiz.angle == FORMAT, Quiz.sent_at.isnot(None), Quiz.completed_at.is_(None),
-                Quiz.reminded_at.is_(None), Quiz.sent_at <= now - REMIND_AFTER)
+                Quiz.reminded_at.is_(None), Quiz.sent_at <= now - remind_after(db))
         .limit(limit)
         .all()
     )
@@ -659,7 +659,14 @@ def remind_due(db: Session, base_url: str, now: datetime | None = None, limit: i
     return sent
 
 
-def reminder_view(quiz: Quiz | None, on: bool, now: datetime | None = None) -> dict | None:
+def remind_after(db: Session) -> timedelta:
+    """How long without an answer before the one reminder (services/timings.py)."""
+    from app.services import timings
+
+    return timings.get(db, "level_reminder").delta
+
+
+def reminder_view(quiz: Quiz | None, on: bool, now: datetime | None = None, after: timedelta = REMIND_AFTER) -> dict | None:
     """What the page says about the reminder of a level check that was sent and not answered."""
     if quiz is None or quiz.sent_at is None or quiz.completed_at is not None:
         return None
@@ -667,7 +674,7 @@ def reminder_view(quiz: Quiz | None, on: bool, now: datetime | None = None) -> d
         return {"state": "done", "text": f"Reminded once, {quiz.reminded_at:%d %b}"}
     if not on:
         return {"state": "off", "text": "No reminder: you stopped them"}
-    due = quiz.sent_at + REMIND_AFTER
+    due = quiz.sent_at + after
     now = now or datetime.utcnow()
     return {"state": "planned", "text": "One reminder " + ("in the next minutes" if due <= now else f"on {due:%d %b}")}
 
@@ -763,7 +770,7 @@ def row_for(registration: Registration, quiz: Quiz | None, reminders: bool = Tru
         "state": state_of(quiz),
         "result": result_of(quiz) if quiz is not None else None,
         "detail": answers_of(quiz) if quiz is not None else None,
-        "reminder": reminder_view(quiz, reminders),
+        "reminder": reminder_view(quiz, reminders, after=remind_after(session) if (session := object_session(registration)) else REMIND_AFTER),
         "has_email": bool(candidate and candidate.email),
     }
 
@@ -790,7 +797,7 @@ def overview(db: Session) -> dict:
         "levels": levels,
         "answered": sum(levels.values()),
         "reminders_on": on,
-        "remind_after_days": REMIND_AFTER.days,
+        "remind_after_days": __import__("app.services.timings", fromlist=["get"]).get(db, "level_reminder").label(),
     }
 
 

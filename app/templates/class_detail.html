@@ -487,14 +487,15 @@
       <div class="d-flex justify-content-between align-items-start mb-3">
         <div>
           <div class="cd-card-title">Candidates</div>
-          <div class="cd-card-sub">Everyone enrolled, with the reminders sent before the first session. Select a candidate to change their class.</div>
+          <div class="cd-card-sub">Everyone enrolled, with where their month stands and the reminders sent before the first session. Select a candidate to change their class.{% if status != 'not_started' %} Once a class has started, only you can add someone to it.{% endif %}</div>
+          {% if runs_months %}<div class="cd-card-sub mt-1" style="color:#9a3412;"><i class="bi bi-exclamation-triangle-fill"></i> This class runs into {{ runs_months }} months, but its program lasts {{ (cls.program.total_duration_days or 30) // 30 }} months: the extra month is not charged. Change the program's duration or the class's weeks.</div>{% endif %}
         </div>
         <span class="badge rounded-pill text-bg-light">{{ summary.enrolled }} / {{ summary.capacity }}</span>
       </div>
       {% if members %}
       <div class="table-responsive">
         <table class="table cd-table align-middle mb-0">
-          <thead><tr><th>Candidate</th><th>Mode</th><th>Paid</th><th>Reminders</th><th></th></tr></thead>
+          <thead><tr><th>Candidate</th><th>Mode</th><th>This month</th><th>Reminders</th><th></th></tr></thead>
           <tbody>
             {% for member in members %}
             {% set reg = member.registration %}
@@ -509,7 +510,11 @@
                 </div>
               </td>
               <td>{{ (reg.delivery_mode or 'online') | capitalize }}</td>
-              <td class="text-nowrap">{{ "%.0f"|format(reg.paid_amount or 0) }} DT</td>
+              {% set month_words = {'paused': 'Paused: not paid', 'owed': 'Owed, days of grace', 'asked': 'Asked to continue', 'stopping': 'Stops after this month',
+                                    'continues': 'Continues', 'ahead': 'Paid ahead', 'ok': 'Paid', 'ended': 'Stopped'} %}
+              {% set month_tone = {'paused': 'bad', 'owed': 'warn', 'asked': 'info', 'stopping': 'muted', 'continues': 'ok', 'ahead': 'ok', 'ok': 'ok', 'ended': 'muted'} %}
+              <td class="text-nowrap"><span class="ui-chip {{ month_tone[member.month_state] }}">{{ month_words[member.month_state] }}</span>
+                <div class="cd-card-sub">{% if member.month_plan.program_months > 1 %}Month {{ member.month_plan.running or 1 }} of {{ member.month_plan.program_months }} · {% endif %}{{ "%.0f"|format(reg.paid_amount or 0) }} DT paid</div></td>
               <td>
                 <div class="d-flex flex-wrap gap-1">
                   {% for reminder in member.reminders %}

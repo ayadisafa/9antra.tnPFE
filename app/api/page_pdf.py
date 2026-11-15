@@ -727,7 +727,7 @@ def levels_pdf(request: Request, db: Session = Depends(get_db)):
     blocks = [
         {"kind": "figures", "items": [("Ready to send", str(view["counts"].get("ready", 0)), "", "muted"), ("Sent, waiting", str(view["counts"].get("sent", 0)), "", "warn"),
                                       ("Answered", str(view["counts"].get("answered", 0)), "", "ok"),
-                                      ("Reminder", "on" if view["reminders_on"] else "off", f"once, after {view['remind_after_days']} days", "info")]},
+                                      ("Reminder", "on" if view["reminders_on"] else "off", f"once, after {view['remind_after_days']}", "info")]},
         {"kind": "hbars", "title": "Levels found", "rows": [(names.get(key, key), count) for key, count in view["levels"].items()], "empty": "No level check answered yet."},
         {"kind": "table", "title": "Every paid candidate", "columns": ["Candidate", "Program", "Class", "State", "Level found"], "widths": [2.6, 2.8, 2.2, 1.4, 1.8],
          "rows": [[{"text": row["name"], "bold": True}, row["program"], row["class_group"].name if row["class_group"] else "No class yet",

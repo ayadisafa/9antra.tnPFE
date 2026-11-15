@@ -319,8 +319,9 @@ def _system_chunks(db: Session) -> list[dict]:
         if program.description:
             lines.append(program.description.strip())
         lines.append(
-            f"Prix (price) : {_money(program.price_online)} en ligne (online, à distance), "
-            f"{_money(program.price_onsite)} en présentiel (onsite)."
+            f"Prix (price) par mois : {_money(program.price_online)} par mois en ligne (online, à distance), "
+            f"{_money(program.price_onsite)} par mois en présentiel (onsite). Les prix sont mensuels : le premier mois se paie "
+            f"pour commencer, puis chaque mois avant de le commencer."
         )
         if weeks:
             duration = f"Durée (duration) : {weeks} semaines (weeks)"
@@ -390,7 +391,10 @@ def _system_chunks(db: Session) -> list[dict]:
 
     reminder_days = parse_reminder_days(settings.training_reminder_days)
     reminders = ", ".join(str(day) for day in reminder_days) or "7, 3, 1"
-    if settings.class_start_mode == "min_enrollment":
+    if settings.class_start_mode == "next_month":
+        start_rule = ("Une nouvelle classe (session) démarre toujours dans la première semaine du mois suivant, le premier jour de séance ; "
+                      "les prix sont mensuels.")
+    elif settings.class_start_mode == "min_enrollment":
         start_rule = (
             f"Une nouvelle classe démarre lorsqu'au moins {settings.min_students_to_start} candidats sont inscrits ; "
             f"la date est alors fixée environ {settings.min_start_notice_days} jours plus tard et envoyée par email."

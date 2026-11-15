@@ -127,7 +127,7 @@ check("resources: a program's page and its PDF", any(item["url"] == f"/programs/
       and any(item["url"] == f"/programs/{program.id}/pdf" for item in answer["resources"]), answer["resources"])
 
 # ---- E. Who teaches each program (as many professors as you like) ----
-page = admin.get("/classes/?tab=professors").text
+page = admin.get("/professors").text
 check("professors: who teaches each program, no target", 'id="coverage"' in page and "Who teaches each program" in page and "3 for each" not in page)
 check("professors: places to name are no longer made", admin.post("/classes/professors/fill", data={"program_id": program.id}).status_code in (404, 405))
 other = db.query(Program).order_by(Program.name.desc()).first()

@@ -50,7 +50,8 @@ logger = logging.getLogger(__name__)
 START_AFTER_DAYS = "days_after_creation"
 START_MIN_ENROLLMENT = "min_enrollment"
 START_FIXED_DATE = "fixed_date"
-START_MODES = (START_AFTER_DAYS, START_MIN_ENROLLMENT, START_FIXED_DATE)
+START_NEXT_MONTH = "next_month"            # the first session day in the first week of the next month
+START_MODES = (START_AFTER_DAYS, START_MIN_ENROLLMENT, START_FIXED_DATE, START_NEXT_MONTH)
 
 MAX_REMINDER_ATTEMPTS = 3
 CATCH_UP_GAP = timedelta(hours=24)          # another reminder this close: no catch-up needed
@@ -352,17 +353,18 @@ def able_to_take(db: Session, class_group: ClassGroup, exclude_id: str | None = 
 
 
 def absent_on(db: Session, professor_id: str, day: date | None, start: time | None = None, end: time | None = None) -> bool:
-    """Whether a professor is away that day (the whole day, or hours that cross the class's)."""
+    """Whether a professor is away that day (the whole day, or hours that cross the class's): an absence accepted, or
+    asked and not decided yet (they are not given more to teach meanwhile). See services/absences.py."""
+    from sqlalchemy import or_
+
     from app.models.professor_absence import ProfessorAbsence
+    from app.services import absences
 
     if day is None:
         return False
-    for absence in db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == professor_id, ProfessorAbsence.absence_date == day).all():
-        if not (absence.start_time and absence.end_time and start and end):
-            return True
-        if max(start, absence.start_time) < min(end, absence.end_time):
-            return True
-    return False
+    rows = (db.query(ProfessorAbsence).filter(ProfessorAbsence.professor_id == professor_id, ProfessorAbsence.absence_date <= day,
+                                              or_(ProfessorAbsence.end_date >= day, ProfessorAbsence.absence_date == day)).all())
+    return any(absences.state(absence) in absences.AWAY and absences.covers(absence, day, start, end) for absence in rows)
 
 
 def tell_professor(db: Session, class_group: ClassGroup, professor: Professor) -> int:
@@ -380,7 +382,8 @@ def tell_professor(db: Session, class_group: ClassGroup, professor: Professor) -
             + (f", première séance le {format_date_fr(start)} à {start:%H:%M}" if start else "") + ". "
             + f"{count} candidat(s) inscrit(s) pour l'instant. Tout est dans votre espace : {public_base_url(db)}/teacher")
     try:
-        return len(team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant"))
+        return len(team_messages.send(db, f"professor:{professor.id}", text, ["app", "email", "whatsapp", "sms"], author="The assistant",
+                                      subject=f"Une classe pour vous : {class_group.name}"))
     except Exception:
         db.rollback()
         logger.exception("The professor %s could not be told of class %s.", professor.id, class_group.id)
@@ -482,12 +485,38 @@ def planned_start_after_days(class_group: ClassGroup, now: datetime | None = Non
     return datetime.combine(first_day, class_group.start_time or time(0, 0))
 
 
+FIRST_WEEK_DAYS = 7
+
+
+def first_week_on_or_after(day: date, days: list[int]) -> date:
+    """The first session day in the first week of a month, on or after `day` (that month's, else the next one's)."""
+    first = date(day.year, day.month, 1)
+    start = first_session_on_or_after(first, days)
+    if start < day:
+        first = date(day.year + day.month // 12, day.month % 12 + 1, 1)
+        start = first_session_on_or_after(first, days)
+    return start
+
+
+def planned_start_next_month(class_group: ClassGroup, now: datetime | None = None) -> datetime:
+    """The first session day in the first week of the month after the class was created (prices are for a month); a
+    class created long ago and still not started takes the coming month instead, never a day already past."""
+    now = now or local_now()
+    days = parse_days(class_group.days_of_week)
+    for anchor in ((utc_to_local(class_group.created_at) or now).date(), now.date()):
+        first = date(anchor.year + anchor.month // 12, anchor.month % 12 + 1, 1)
+        start = datetime.combine(first_session_on_or_after(first, days), class_group.start_time or time(0, 0))
+        if start > now:
+            return start
+    return start
+
+
 def create_class(db: Session, program: Program, *, settings=None,
                  professor: Professor | None = None, pick_professor: bool | None = None,
                  start_date: date | None = None, capacity: int | None = None,
                  total_weeks: int | None = None, days_of_week: str | None = None,
                  start_time: time | None = None, end_time: time | None = None,
-                 auto_created: bool = False) -> ClassGroup:
+                 auto_created: bool = False, rule_date: bool = False) -> ClassGroup:
     """Create a class using the admin defaults; explicit arguments override them."""
     from app.services.class_service import generate_unique_class_name
 
@@ -521,11 +550,12 @@ def create_class(db: Session, program: Program, *, settings=None,
         days_of_week=format_days(days),
         start_time=start_time,
         end_time=end_time,
-        start_mode=START_FIXED_DATE if start_date else (settings.class_start_mode or START_AFTER_DAYS),
+        # The rule: the first week of the coming month. Another date only when the admin gives one.
+        start_mode=START_NEXT_MONTH if (rule_date or not start_date) else START_FIXED_DATE,
         start_delay_days=settings.default_class_start_days if settings.default_class_start_days is not None else 10,
         min_students_to_start=settings.min_students_to_start or 5,
         min_start_notice_days=settings.min_start_notice_days if settings.min_start_notice_days is not None else 3,
-        reminder_days=format_reminder_days(parse_reminder_days(settings.training_reminder_days)),
+        reminder_days=settings.training_reminder_days or "7,3,1",
         auto_created=auto_created,
         status=ClassStatus.NOT_STARTED,
         created_at=datetime.utcnow(),
@@ -539,6 +569,8 @@ def create_class(db: Session, program: Program, *, settings=None,
         class_group.start_date = datetime.combine(start_date, start_time or time(0, 0))
     elif class_group.start_mode == START_AFTER_DAYS:
         class_group.start_date = planned_start_after_days(class_group, now)
+    elif class_group.start_mode == START_NEXT_MONTH:
+        class_group.start_date = planned_start_next_month(class_group, now)
 
     if professor is None and (settings.auto_assign_professor if pick_professor is None else pick_professor):
         professor = find_available_professor(
@@ -567,8 +599,10 @@ def plan_reminders(db: Session, registration: Registration, class_group: ClassGr
     """Keep the registration's reminders in line with the class start and its reminder days."""
     now = now or local_now()
     anchor = reminder_anchor(class_group) if class_group else None
-    offsets = parse_reminder_days(class_group.reminder_days) if class_group else []
-    wanted = {f"training_{days}d": days for days in offsets} if anchor else {}
+    from app.services.settings_service import parse_reminder_offsets
+
+    offsets = parse_reminder_offsets(class_group.reminder_days) if class_group else []
+    wanted = {f"training_{item.code}": item for item in offsets} if anchor else {}
     db.flush()
 
     existing = {
@@ -582,11 +616,11 @@ def plan_reminders(db: Session, registration: Registration, class_group: ClassGr
         if key not in wanted and reminder.status != "sent":
             db.delete(reminder)
 
-    for key, days in wanted.items():
-        planned_for = anchor - timedelta(days=days)
+    for key, offset in wanted.items():
+        planned_for = offset.before(anchor)
         status = "planned" if planned_for > now else "skipped"
         strategy = (
-            f"Reminder {days} day(s) before the first session of {class_group.name} "
+            f"Reminder {offset.label()} before the first session of {class_group.name} "
             f"({anchor:%d/%m/%Y %H:%M})."
         )
         reminder = existing.get(key)
@@ -1068,8 +1102,8 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
             class_group = find_open_class(db, registration, now, starts_from=after)
             if class_group is None:
                 program = db.get(Program, registration.program_id)
-                class_group = create_class(db, program, settings=settings, auto_created=True,
-                                           start_date=first_session_on_or_after(after, default_schedule(db, program, settings)[0]))
+                class_group = create_class(db, program, settings=settings, auto_created=True, rule_date=True,
+                                           start_date=first_week_on_or_after(after, default_schedule(db, program, settings)[0]))
                 created = True
             waits_for, current = current, None
         if current is not None:
@@ -1099,8 +1133,8 @@ def enroll_paid_registration(db: Session, registration: Registration, *,
                     db.commit()
                 return EnrollmentResult(registration, reason="no_open_class")
             program = db.get(Program, registration.program_id)
-            first_day = first_session_on_or_after(after, default_schedule(db, program, settings)[0]) if after else None
-            class_group = create_class(db, program, settings=settings, auto_created=True, start_date=first_day)
+            first_day = first_week_on_or_after(after, default_schedule(db, program, settings)[0]) if after else None
+            class_group = create_class(db, program, settings=settings, auto_created=True, start_date=first_day, rule_date=True)
             created = True
 
         _attach(db, registration, class_group, now)
@@ -1340,7 +1374,9 @@ def update_class_parameters(db: Session, class_group: ClassGroup, *, name: str |
         raise ValueError("Session end time must be after its start time.")
     if start_mode == START_FIXED_DATE and not fixed_start_date:
         raise ValueError("Choose a start date for the fixed-date rule.")
-    offsets = parse_reminder_days(reminder_days)
+    from app.services.settings_service import parse_reminder_offsets
+
+    offsets = parse_reminder_offsets(reminder_days)
     clean_name = (name or "").strip()
     if clean_name and clean_name != class_group.name:
         if db.query(ClassGroup.id).filter(ClassGroup.name == clean_name, ClassGroup.id != class_group.id).first():
@@ -1393,6 +1429,8 @@ def update_class_parameters(db: Session, class_group: ClassGroup, *, name: str |
                 class_group.start_date = datetime.combine(fixed_start_date, session_clock)
         elif start_mode == START_AFTER_DAYS and not_started:
             class_group.start_date = planned_start_after_days(class_group, now)
+        elif start_mode == START_NEXT_MONTH and not_started and previous_mode != START_NEXT_MONTH:
+            class_group.start_date = planned_start_next_month(class_group, now)
         elif start_mode == START_MIN_ENROLLMENT and not_started and previous_mode != START_MIN_ENROLLMENT:
             # Wait for the minimum again; scheduled right below if it is already met.
             class_group.start_date = None
@@ -1427,6 +1465,66 @@ def update_class_parameters(db: Session, class_group: ClassGroup, *, name: str |
         # Its dates moved: a candidate whose next class would now start before this one ends moves to a later one.
         keep_one_at_a_time(db, {registration.candidate_id for registration in class_members(db, class_group.id)})
     return {"start_changed": start_changed, "schedule_changed": schedule_changed, "emails": emails}
+
+
+def move_to_next_month_rule(db: Session) -> list[str]:
+    """The classes not started yet that follow another automatic rule (days after creation, enough candidates) move to the
+    first week of the coming month; a date the admin chose stays. Their candidates are told. Returns their names."""
+    moved = []
+    for class_group in db.query(ClassGroup).filter(ClassGroup.status == ClassStatus.NOT_STARTED).all():
+        if class_group.start_mode in (START_FIXED_DATE, START_NEXT_MONTH):
+            continue
+        try:
+            _move_one_to_next_month(db, class_group)
+        except ValueError as exc:          # its professor teaches another class then: the admin chooses
+            db.rollback()
+            _notify(db, category="CLASS", title=f"{class_group.name} could not move to the first week of next month",
+                    message=f"{exc} Choose its date or its professor in its parameters.", action_url=class_url(class_group), class_group=class_group)
+            db.commit()
+            continue
+        moved.append(class_group.name)
+    return moved
+
+
+def align_auto_classes(db: Session) -> list[str]:
+    """Every pass: a class the application made (not one whose date the admin chose) that does not start in the first week
+    of a month moves to the first week on or after its date; its candidates are told. Returns their names."""
+    moved = []
+    for class_group in (db.query(ClassGroup).filter(ClassGroup.status == ClassStatus.NOT_STARTED, ClassGroup.auto_created.is_(True),
+                                                     ClassGroup.start_date.isnot(None)).all()):
+        start = class_group.start_date.date()
+        if start.day <= FIRST_WEEK_DAYS:
+            continue
+        target = first_week_on_or_after(start, parse_days(class_group.days_of_week))
+        try:
+            update_class_parameters(
+                db, class_group, name=class_group.name, professor_id=class_group.professor_id, capacity=class_capacity(class_group),
+                total_weeks=class_group.total_weeks or 12, start_mode=START_FIXED_DATE, start_delay_days=class_group.start_delay_days or 0,
+                min_students_to_start=min(class_group.min_students_to_start or 1, class_capacity(class_group)),
+                min_start_notice_days=class_group.min_start_notice_days or 0, fixed_start_date=target, days_of_week=class_group.days_of_week,
+                start_time=class_group.start_time, end_time=class_group.end_time, room=class_group.room, reminder_days=class_group.reminder_days,
+            )
+        except ValueError as exc:
+            db.rollback()
+            _tell_once(db, class_group, title=f"{class_group.name} could not move to the first week of a month",
+                       message=f"{exc} Choose its date or its professor in its parameters.", about="could not move to the first week")
+            db.commit()
+            continue
+        class_group.start_mode = START_NEXT_MONTH      # its date follows the rule
+        db.commit()
+        moved.append(class_group.name)
+    return moved
+
+
+def _move_one_to_next_month(db: Session, class_group: ClassGroup) -> None:
+    """One class, moved to the first week of the coming month (raises ValueError when its professor is not free then)."""
+    update_class_parameters(
+        db, class_group, name=class_group.name, professor_id=class_group.professor_id, capacity=class_capacity(class_group),
+        total_weeks=class_group.total_weeks or 12, start_mode=START_NEXT_MONTH, start_delay_days=class_group.start_delay_days or 0,
+        min_students_to_start=min(class_group.min_students_to_start or 1, class_capacity(class_group)),
+        min_start_notice_days=class_group.min_start_notice_days or 0, fixed_start_date=None, days_of_week=class_group.days_of_week,
+        start_time=class_group.start_time, end_time=class_group.end_time, room=class_group.room, reminder_days=class_group.reminder_days,
+    )
 
 
 def reconcile_all(db: Session) -> None:

@@ -39,12 +39,13 @@ from app.api.teacher import router as teacher_router
 from app.api.website import router as website_router
 from app.api.opinion import router as opinion_router
 from app.api.replace import router as replace_router
+from app.api.month_choice import router as month_choice_router
 from app.api.system import router as system_router
 from app.api.meeting import router as meeting_router
 from app.api.market import router as market_router
 from app.api.program_pdf import router as program_pdf_router
 from app.api.reminders import router as reminders_router
-from app.api.professors import router as professors_router
+from app.api.professors import public as absence_answer_router, router as professors_router
 from app.api.app_shell import router as app_shell_router
 from app.api.i18n import router as i18n_router
 from app.api.workspace import router as workspace_router
@@ -208,6 +209,7 @@ app.include_router(inbox_router)
 app.include_router(course_router)
 app.include_router(website_router)
 app.include_router(opinion_router)
+app.include_router(month_choice_router)     # /month: a candidate says whether they continue with the next month
 app.include_router(replace_router)          # /replace: a professor confirms they replace a colleague that day
 app.include_router(system_router)      # /system, and what a phone needs to keep the application on its home screen
 app.include_router(meeting_router)     # a session's meeting: before teacher_router's /classes/{id}/attendance/{session}
@@ -216,6 +218,7 @@ app.include_router(market_router)      # /programs/market: before program_router
 app.include_router(program_pdf_router) # /programs/{id}/pdf: a program to download or send
 app.include_router(reminders_router)   # /reminders: the admin's own reminders
 app.include_router(professors_router)  # /professors: every professor, and each one's own space
+app.include_router(absence_answer_router)   # /absence: a professor answers a refused absence, without signing in
 app.include_router(app_shell_router)   # /sw.js, phones' notifications, the iPhone's SMS link
 app.include_router(i18n_router)        # /language, /i18n: the interface in French and Arabic
 app.include_router(workspace_router)   # /find, /data, /settings/team: find anything, change any value, the team

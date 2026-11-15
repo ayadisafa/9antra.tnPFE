@@ -57,8 +57,11 @@ def class_of(db: Session, candidate, text: str = ""):
     from app.models.classgroup import ClassStatus
     from app.models.registration import PaymentStatus, RegistrationStatus
 
-    paid = [item for item in candidate.registrations if item.payment_status == PaymentStatus.PAID
-            and item.status not in (RegistrationStatus.CANCELLED,) and item.class_group is not None]
+    from app.services import monthly
+
+    # Paid, or in their class with a month owed but not paused yet (the days of grace, services/monthly.py).
+    paid = [item for item in candidate.registrations if (item.payment_status == PaymentStatus.PAID or not monthly.paused(item))
+            and item.status not in (RegistrationStatus.CANCELLED,) and item.class_group is not None and not monthly.stopped(item)]
     if not paid:
         return None, None
     said = _plain(text)
@@ -131,7 +134,8 @@ def forward(db: Session, *, candidate, message, registration, class_group, profe
     question = (message.body or "").strip()
     text = (f"Question de {candidate.full_name or candidate.email} ({class_group.name}, {registration.program_name}) :\n\n"
             f"{question}\n\nRépondez dans l'application (Messages) : votre réponse lui est envoyée.")
-    kept = team_messages.send(db, key, text, ["app", "email", "whatsapp"], author="The assistant")
+    kept = team_messages.send(db, key, text, ["app", "email", "whatsapp"], author="The assistant",
+                              subject=f"Question de {candidate.full_name or candidate.email}")
     first = kept[0] if kept else None
     if first is not None:
         first.question_message_id = message.id
@@ -236,14 +240,17 @@ def remind_due(db: Session, now: datetime | None = None) -> int:
     done = 0
     rows = (db.query(TeamMessage).filter(TeamMessage.question_message_id.isnot(None), TeamMessage.answered_at.is_(None))
             .order_by(TeamMessage.created_at.asc()).limit(50).all())
+    from app.services import timings
+
+    remind_after, tell_after = timings.get(db, "question_remind").delta, timings.get(db, "question_admin").delta
     for row in rows:
-        if row.reminded_at is None and row.created_at <= now - REMIND_AFTER:
+        if row.reminded_at is None and row.created_at <= now - remind_after:
             row.reminded_at = now
             db.commit()
             team_messages.send(db, row.person, "Rappel : une question d'un candidat attend votre réponse dans l'application (Messages).",
-                               ["app", "email", "whatsapp"], author="The assistant")
+                               ["app", "email", "whatsapp"], author="The assistant", subject="Rappel : une question attend votre réponse")
             done += 1
-        elif row.reminded_at is not None and row.admin_told_at is None and row.created_at <= now - TELL_ADMIN_AFTER:
+        elif row.reminded_at is not None and row.admin_told_at is None and row.created_at <= now - tell_after:
             row.admin_told_at = now
             found = team_messages.person(db, row.person)
             create_notification(db, title=f"{found['name'] if found else 'A professor'} has not answered a candidate for two days",

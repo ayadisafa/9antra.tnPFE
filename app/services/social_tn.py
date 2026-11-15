@@ -9,7 +9,7 @@ WORDS = {"trained": "candidat t9raw m3ana", "training": "y9raw tawa", "programs"
          "you_said": "9oultou", "we_did": "3malna", "program_kicker": "SESSION JDIDA", "starts": "Tebda", "weeks": "jem3a",
          "online": "En ligne", "onsite": "Fil centre", "both": "En ligne w fil centre", "trend_kicker": "EL TREND TAWA", "join_kicker": "IJA M3ANA",
          "join_title": "El compétence el jeya mte3ek tebda lehna", "cta": "Sajjel tawa", "centre": "Centre de formation",
-         "taught": "mawjoud deja fi", "dt": "DT"}
+         "taught": "mawjoud deja fi", "dt": "DT / chhar"}
 
 CAPTIONS = {
     "success": "{brand} 💪 {lines}\n\nY3aychkom 3al thi9a mte3kom. Nja7kom howa akber fakhr lina! 🎓\n\n👉 Ija m3ana: {link}",
