@@ -58,8 +58,6 @@ PAGES = [
      r"reseaux sociaux|social(?: media)?|publications?|posts?|facebook|instagram|tiktok|وسائل التواصل"),
     ("/website", {"en": "Website", "fr": "Site web", "ar": "الموقع", "tn": "Site web"}, r"site(?: web| internet)?|website|9antra tn|الموقع"),
     ("/assistant/agents", {"en": "The agents", "fr": "Les agents", "ar": "الوكلاء", "tn": "Les agents"}, r"agents?|الوكلاء"),
-    ("/whats-new", {"en": "What's new", "fr": "Nouveautés", "ar": "الجديد", "tn": "Chnowa jdid"},
-     r"nouveautes?|what s new|quoi de neuf|chnowa jdid|الجديد"),
     ("/system#automatic", {"en": "What it does by itself", "fr": "Ce qu'elle fait seule", "ar": "ما يفعله وحده", "tn": "Chnowa ya3mel wa7dou"},
      r"(?:ce qu (?:elle|il|l application) fait|what it does) (?:seule?|tout seul|by itself)|automatisations?"),
     ("/system", {"en": "How it is working", "fr": "Comment ça marche", "ar": "كيف يعمل", "tn": "Kifech ye5dem"},

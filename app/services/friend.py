@@ -398,14 +398,6 @@ def talk(db: Session, user, path: str, ui_lang: str | None, guide_lang: str | No
     first_name = ((getattr(user, "name", "") or "").split() or [""])[0].capitalize()
     is_admin = bool(getattr(user, "is_admin", False))
     lines = lines_for_admin(db, words, now_utc, now_local) if is_admin else []
-    if is_admin:
-        from app.services import whats_new
-
-        fresh = whats_new.unread(db)
-        if fresh:
-            lines.append({"text": {"fr": "Du nouveau dans l'application : {0}.", "ar": "جديد في التطبيق: {0}.", "tn": "Fama jdid fel application : {0}.",
-                                   "en": "Something new in the application: {0}."}[lang].format(_in_language(db, written, fresh["title"])),
-                          "url": "/whats-new", "icon": "bi-stars", "tone": "info"})
     if not is_admin and getattr(user, "id", None):
         from app.services import team_messages
 

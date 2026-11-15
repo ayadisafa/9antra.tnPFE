@@ -193,13 +193,6 @@ _PAGES.update({
         ("bi-diagram-3", "Its subject is read", "by words, never guessed", "/assistant/agents#try"),
         ("bi-person-gear", "Its agent acts", "answers, prepares, or asks you", "/assistant/agents#latest"),
     ),
-    "/whats-new": _guide(
-        "whats_new", "look", "What is new in the application",
-        "Each delivery, with what it brings and where to find it.",
-        ("bi-stars", "What came", "newest first", "/whats-new"),
-        ("bi-box-arrow-up-right", "Where it is", "one click to open it", "/whats-new"),
-        ("bi-bell", "You are told", "one notification each time", "/whats-new"),
-    ),
     "/programs/documents": _guide(
         "documents", "programs", "Any information as a PDF",
         "The programs, the classes, the candidates or your own words, as a clean PDF to open, download or send.",
@@ -256,7 +249,7 @@ GROUPS = [
     ("What you teach", ["/programs/all", "/programs/expertise", "/programs/documents", "/programs/videos", "/programs/market"]),
     ("Talking to people", ["/inbox/compose", "/inbox/templates", "/inbox/knowledge", "/inbox/team", "/assistant/agents"]),
     ("Growing", ["/social", "/website", "/journal"]),
-    ("Running it", ["/settings", "/settings/team", "/settings/translations", "/system", "/data", "/whats-new"]),
+    ("Running it", ["/settings", "/settings/team", "/settings/translations", "/system", "/data"]),
 ]
 
 

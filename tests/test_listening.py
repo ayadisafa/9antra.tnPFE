@@ -24,7 +24,7 @@ from app.models.session_join import SessionJoin
 from app.models.team_message import TeamMessage
 from app.models.user import Attendance
 from app.services import (auth, class_dynamics, email_assistant as ea, email_templates as tp, email_threads as et, knowledge_service,
-                          program_agents, whats_new)
+                          program_agents)
 from app.services.schedule_utils import local_now
 
 sent = []
@@ -171,7 +171,6 @@ home = admin.get("/").text
 check("dashboard: marketing is a soft fold, closed", '<details class="db-card db-market" id="dashboard-marketing"' in home
       and '<details class="db-card db-market" id="dashboard-marketing" open' not in home
       and "posts planned" in home)
-check("what's new: this batch is told", any(release["key"] == "2026-11-03c" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

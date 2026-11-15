@@ -11,7 +11,7 @@ import json
 
 SECTIONS = [
     # key, name shown, icon, where it starts, the addresses that belong to it
-    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard", "/whats-new")),
+    ("dashboard", "Dashboard", "bi-grid-1x2-fill", "/", ("/guide", "/payments/reminders", "/dashboard")),
     ("candidates", "Candidates", "bi-people-fill", "/candidate/all", ("/candidate",)),
     ("classes", "Classes", "bi-easel2-fill", "/classes/", ("/classes", "/professors")),
     ("programs", "Programs", "bi-journal-bookmark-fill", "/programs/all", ("/programs",)),

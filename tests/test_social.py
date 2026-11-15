@@ -27,7 +27,7 @@ from app.models.registration import PaymentStatus, RegistrationStatus
 from app.models.social import FeedbackAnswer, SocialAsset
 from app.models.website import WebsiteItem
 from app.services import (access, auth, feedback_hub, program_feedback, social_content, social_images,
-                          social_music, social_video, whats_new)
+                          social_music, social_video)
 
 db = SessionLocal()
 db.query(UserSession).delete()
@@ -225,7 +225,7 @@ from app.services import translations
 check("the Tunisian words are never translated with the page", not ({"Sajjel tawa", "Nja7kom howa fakhrna", "YENJ7OU M3ANA"} & set(translations.sources(refresh=True))))
 
 # ======================================================================
-# H. The page, who may open it, What's new
+# H. The page, who may open it
 # ======================================================================
 page = admin.get("/social")
 check("page: opens with its parts", page.status_code == 200 and all(f'id="{part}"' in page.text for part in ("plan", "trends", "timing", "create", "videos", "listen")))
@@ -242,8 +242,6 @@ sam.permissions = access.dump({"social": "view"})
 db.commit()
 check("access: given to look, opened, nothing changed", staff.get("/social").status_code == 200
       and staff.post("/social/listen", data={"you_said": "Un essai de l'équipe"}).status_code in (303, 403) and db.query(FeedbackAnswer).count() == 0)
-check("what's new: this release is told", any(release["title"].startswith("Social media") for release in whats_new.RELEASES))
-check("what's new: the posts in Tunisian are told", any(release["key"] == "2026-11-02d" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

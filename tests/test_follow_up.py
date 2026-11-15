@@ -27,7 +27,7 @@ from app.models.team_message import TeamMessage
 from app.models.registration import PaymentStatus, RegistrationStatus
 from app.models.user import Attendance
 from app.services import (advisor, auth, email_templates as tp, email_threads as et, enrollment_service as es, letters, meetings,
-                          notification_rules as rules, reach, whats_new)
+                          notification_rules as rules, reach)
 from app.services.email_service import EmailDeliveryError
 from app.services.schedule_utils import local_now
 
@@ -340,11 +340,6 @@ check("switched off in Email templates: nothing is kept", not letters.should_hol
 tp.set_active(db, "weekly_letter", True)
 db.commit()
 check("the letter is one of the automatic emails", "The weekly letter" in admin.get("/inbox/templates").text)
-
-# ======================================================================
-# F. What's new
-# ======================================================================
-check("what's new: this batch is told", any(release["key"] == "2026-11-03b" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

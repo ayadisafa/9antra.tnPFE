@@ -14,7 +14,7 @@ from fastapi.testclient import TestClient
 
 from app.database import SessionLocal
 from app.models import Professor, User, UserSession
-from app.services import auth, email_assistant as ea, email_templates as tp, email_threads as et, friend, orchestrator, small_talk, whats_new
+from app.services import auth, email_assistant as ea, email_templates as tp, email_threads as et, friend, orchestrator, small_talk
 
 et.send_email = lambda **kw: True
 tp.send_email = lambda **kw: True
@@ -98,7 +98,6 @@ said = prof.post("/account/guide", json={"message": "Bonjour, ça va ?"}).json()
 check("a professor gets an answer like a person, never the centre's work", "Mourad" in said["reply"] and "Côté travail" not in said["reply"], said["reply"])
 check("the graph has its conversation step", "talk" in orchestrator.STEPS and any(step["key"] == "talk" for line in orchestrator.drawing() for step in line["steps"]))
 check("trying “ça va ?” on the agents page lights it", admin.post("/assistant/agents/route", json={"message": "ça va ?"}).json()["step"] == "talk")
-check("what's new: told", any(release["key"] == "2026-11-04" for release in whats_new.RELEASES))
 
 db.close()
 check.done()

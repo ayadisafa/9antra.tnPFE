@@ -723,16 +723,14 @@ def knowledge_tick():
         db.rollback()
         logger.exception("Knowledge refresh failed.")
     try:
-        # Every message gets its category (the ones that came before categories), the old agent runs go, and the admin
-        # hears of what is new in the application (once per release).
-        from app.services import message_categories, orchestrator, whats_new
+        # Every message gets its category (the ones that came before categories), and the old agent runs go.
+        from app.services import message_categories, orchestrator
 
         message_categories.backfill(db)
         orchestrator.forget_old(db)
         from app.services import conversation
 
         conversation.forget_old(db)
-        whats_new.announce(db)
         # The inbox reads its own decisions again with what it learnt (the admin's corrections, a better reading of
         # replies to the opinion email) and corrects itself: nothing is sent alone, the admin reads what comes back.
         from app.services import reply_rules

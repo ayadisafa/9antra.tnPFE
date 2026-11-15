@@ -259,10 +259,6 @@ TOURS: dict[str, dict] = {
         _step("#listen", "bi-ear", "We listen", "What people asked to improve, and what you did about it: it becomes posts and video scenes.",
               ["Write what you did"], ["Your answers"]),
     ),
-    "/whats-new": _tour(
-        "whats_new", "What's new", "Everything added to the application, the newest first.",
-        _step(".wn-release", "bi-stars", "The latest release", "Each novelty, and the place to find it.", ["Open it"]),
-    ),
     "/website": _tour(
         "website", "The website", "What 9antra.tn, its Facebook and LinkedIn pages say, read every six hours.",
         _step("#ws-changes", "bi-arrow-repeat", "What changed", "What the website changed in your programs.", ["Keep yours or take the website's"]),

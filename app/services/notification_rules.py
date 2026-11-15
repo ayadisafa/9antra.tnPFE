@@ -180,7 +180,7 @@ def tidy(db: Session, *, now: datetime | None = None, force: bool = False) -> in
                 if settled(db, notification):
                     _close(notification, "settled", now)
                     closed += 1
-            elif notification.category != "WHATS_NEW" and _naive(notification.created_at) < now - timedelta(days=INFO_DAYS):
+            elif _naive(notification.created_at) < now - timedelta(days=INFO_DAYS):
                 _close(notification, "told", now)
                 closed += 1
         if closed:

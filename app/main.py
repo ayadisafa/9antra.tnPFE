@@ -195,7 +195,7 @@ ensure_sqlite_compatibility()
 app.include_router(auth_router)
 app.include_router(page_pdf_router)    # every page as a PDF: before the pages, whose addresses would catch …/pdf
 app.include_router(friend_router)      # /account/friend: what Yasmine, the animated friend, says
-app.include_router(agents_router)      # /assistant/agents: who handles what; /whats-new
+app.include_router(agents_router)      # /assistant/agents: who handles what
 app.include_router(social_router)      # /social: posts, stories, videos, we listen, engagement
 app.include_router(sms_router)         # /sms/webhook: the SMS the Android phone receives
 app.include_router(whatsapp_router)    # /whatsapp/webhook: where Meta delivers the messages candidates send

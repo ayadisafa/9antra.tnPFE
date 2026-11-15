@@ -1,6 +1,6 @@
 """The batch of 31 October: the orchestrator and its agents, the categories of messages, the trends and knowledge agents,
 the professors' assistant, Yasmine as the one assistant (her character), the reminder before each session and the
-Reminders page, the design of emails, the questions page's clock, What's new, and the mailbox that tries again.
+Reminders page, the design of emails, the questions page's clock, and the mailbox that tries again.
 Runs on a COPY; no mail leaves this machine."""
 import json
 from datetime import datetime, timedelta, time as dtime
@@ -28,8 +28,7 @@ from app.models.registration import PaymentStatus, RegistrationStatus
 from app.models.user import Attendance
 from app.services import (access, attention, auth, email_assistant as ea, email_files, email_layout as el, email_templates as tp,
                           email_threads as et, friend, knowledge_service, mailbox_service as mb, message_categories as mc,
-                          orchestrator, professor_assistant, rag, reminder_board, session_reminders as sr, trends_agent, weekly_questions,
-                          whats_new)
+                          orchestrator, professor_assistant, rag, reminder_board, session_reminders as sr, trends_agent, weekly_questions)
 from app.services.schedule_utils import local_now
 from app.services.settings_service import get_settings
 
@@ -357,18 +356,6 @@ admin.post("/settings/friend", data={"reset": "1"})
 check("character: back as at first", friend.look(db) == friend.LOOK_DEFAULTS)
 
 # ======================================================================
-# K. What's new
-# ======================================================================
-db.query(Notification).filter(Notification.category == whats_new.CATEGORY).delete()
-db.commit()
-check("what's new: the admin is told once", whats_new.announce(db) and not whats_new.announce(db))
-talk = admin.get("/account/friend", params={"path": "/"}).json()
-check("what's new: Yasmine says it while it is unread", any(line["url"] == "/whats-new" for line in talk["lines"]))
-page = admin.get("/whats-new")
-check("what's new: the page lists each novelty", page.status_code == 200 and "A team of agents with an orchestrator" in page.text and "/assistant/agents" in page.text)
-check("what's new: opening it marks it read", whats_new.unread(db) is None)
-
-# ======================================================================
 # L. The questions page's clock
 # ======================================================================
 questions = [{"question": "Docker sert à ?", "options": ["Conteneurs", "Tableurs"], "correct_answer": 0, "explanation": ""},
@@ -468,9 +455,6 @@ page = admin.get("/assistant/agents").text
 check("graph: the agents page shows how a question travels", 'id="graph"' in page and "LangGraph" in page and 'data-step="consult"' in page)
 tried = admin.post("/assistant/agents/route", json={"message": "Quand publier cette semaine ?"}).json()
 check("graph: trying a sentence says its first step, nothing answered", tried.get("step") == "marketing")
-from app.services import whats_new
-
-check("what's new: the graph is told", any(release["key"] == "2026-11-03" for release in whats_new.RELEASES))
 
 db.close()
 check.done()
