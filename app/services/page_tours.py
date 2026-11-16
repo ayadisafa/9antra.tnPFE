@@ -270,6 +270,14 @@ TOURS: dict[str, dict] = {
         _step("#linkedin", "bi-linkedin", "LinkedIn", "Its posts, once its access key is given.", ["Connect the page"]),
         _step("#post", "bi-facebook", "Facebook", "Its posts, read and learnt by the assistant."),
     ),
+    "/system/control": _tour(
+        "control", "Control room", "The application as a live map, everything it does tracked, what to enhance, and how to test each part.",
+        _step(".cr-tabs", "bi-ui-radios", "The six views", "The live map, tracking, suggestions, what is new, every test, the problems found.", ["Change view"]),
+        _step("#cr-stage", "bi-diagram-3", "The live map", "Each part with its figures; the light on a line is what really went from one part to the next in 7 days.",
+              ["Open a part", "Watch it light up when something happens"]),
+        _step(".cr-test", "bi-ui-checks", "A test", "What to do, what you should see, and whether it sends something to a person.",
+              ["Mark it “It works”", "Mark a problem, with what"], optional=True),
+    ),
     "/system": _tour(
         "system", "How it is working", "Everything the application does by itself, whether it works, and your data's copies.",
         _step(".sy-state", "bi-heart-pulse", "How it is doing", "Everything fine, or what needs a look."),

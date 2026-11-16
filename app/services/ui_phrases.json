@@ -4402,5 +4402,217 @@
 "it is not written in the language chosen": [
 "il n'est pas écrit dans la langue choisie",
 "ليس مكتوبا باللغة المختارة"
+],
+"Level and weekly checks": [
+"Tests de niveau et de la semaine",
+"اختبارات المستوى والأسبوع"
+],
+"Email assistant": [
+"Assistant des emails",
+"مساعد البريد"
+],
+"Yasmine and her agents": [
+"Yasmine et ses agents",
+"ياسمين ووكلاؤها"
+],
+"What the assistants know": [
+"Ce que savent les assistants",
+"ما يعرفه المساعدون"
+],
+"Reviews and social media": [
+"Avis et réseaux sociaux",
+"الآراء ومواقع التواصل"
+],
+"Notifications": [
+"Notifications",
+"الإشعارات"
+],
+"new this week": [
+"nouveaux cette semaine",
+"جدد هذا الأسبوع"
+],
+"candidates": [
+"candidats",
+"مترشحين"
+],
+"received this week": [
+"reçus cette semaine",
+"وصلت هذا الأسبوع"
+],
+"still owe": [
+"doivent encore",
+"ما زالوا مدينين"
+],
+"running": [
+"en cours",
+"جارية"
+],
+"start within 14 days": [
+"commencent sous 14 jours",
+"تبدأ خلال 14 يوما"
+],
+"professors": [
+"professeurs",
+"أساتذة"
+],
+"absences to decide": [
+"absences à décider",
+"غيابات للبت فيها"
+],
+"sent this week": [
+"envoyés cette semaine",
+"أُرسلت هذا الأسبوع"
+],
+"answered this week": [
+"répondus cette semaine",
+"أُجيب عنها هذا الأسبوع"
+],
+"planned": [
+"prévus",
+"مبرمجة"
+],
+"waiting for you": [
+"vous attendent",
+"تنتظرك"
+],
+"answered alone": [
+"répondus seul",
+"أُجيب عنها وحده"
+],
+"brought to you": [
+"apportés à vous",
+"أُحيلت إليك"
+],
+"questions this week": [
+"questions cette semaine",
+"أسئلة هذا الأسبوع"
+],
+"messages she sent": [
+"messages envoyés par elle",
+"رسائل أرسلتها"
+],
+"things known": [
+"choses sues",
+"معلومات معروفة"
+],
+"website read": [
+"site lu",
+"قراءة الموقع"
+],
+"reviews": [
+"avis",
+"آراء"
+],
+"average": [
+"moyenne",
+"المعدل"
+],
+"ringing now": [
+"en attente maintenant",
+"تنتظر الآن"
+],
+"this week": [
+"cette semaine",
+"هذا الأسبوع"
+],
+"payment messages": [
+"messages de paiement",
+"رسائل الدفع"
+],
+"placed in a class": [
+"placés dans une classe",
+"وُضعوا في قسم"
+],
+"class reminders": [
+"rappels des classes",
+"تذكيرات الأقسام"
+],
+"reminders sent": [
+"rappels envoyés",
+"تذكيرات أُرسلت"
+],
+"questions sent": [
+"questions envoyées",
+"أسئلة أُرسلت"
+],
+"answers back": [
+"réponses reçues",
+"إجابات عادت"
+],
+"professors told": [
+"professeurs prévenus",
+"أساتذة أُعلموا"
+],
+"messages read": [
+"messages lus",
+"رسائل قُرئت"
+],
+"emails read by the agents": [
+"emails lus par les agents",
+"رسائل قرأها الوكلاء"
+],
+"questions to Yasmine": [
+"questions à Yasmine",
+"أسئلة لياسمين"
+],
+"sent by Yasmine": [
+"envoyés par Yasmine",
+"أرسلتها ياسمين"
+],
+"reviews asked": [
+"avis demandés",
+"آراء مطلوبة"
+],
+"reviews in": [
+"avis reçus",
+"آراء وصلت"
+],
+"notifications": [
+"notifications",
+"إشعارات"
+],
+"{0} min ago": [
+"il y a {0} min",
+"منذ {0} دقيقة"
+],
+"{0} h ago": [
+"il y a {0} h",
+"منذ {0} ساعة"
+],
+"“{0}” is off: {1}": [
+"« {0} » est éteint : {1}",
+"«{0}» متوقف: {1}"
+],
+"“{0}” is not set up yet.": [
+"« {0} » n'est pas encore configuré.",
+"«{0}» غير مُعد بعد."
+],
+"“{0}” did nothing this week: is it expected?": [
+"« {0} » n'a rien fait cette semaine : est-ce normal ?",
+"«{0}» لم يفعل شيئا هذا الأسبوع: هل هذا متوقع؟"
+],
+"{0} messages did not reach their person.": [
+"{0} messages ne sont pas arrivés à leur personne.",
+"{0} رسائل لم تصل إلى أصحابها."
+],
+"{0} tests found a problem: see “Test everything”.": [
+"{0} tests ont trouvé un problème : voir « Tout tester ».",
+"{0} اختبارات وجدت مشكلة: انظر «اختبر كل شيء»."
+],
+"The centre's RIB": [
+"Le RIB du centre",
+"الرقم البنكي للمركز"
+],
+"Empty: questions about how to pay by transfer go to you, and receipts cannot be checked against it.": [
+"Vide : les questions sur le paiement par virement vous arrivent, et les reçus ne peuvent pas être vérifiés.",
+"فارغ: تصلك الأسئلة عن الدفع بالتحويل، ولا يمكن التحقق من الوصولات به."
+],
+"The online writer (Gemini keys)": [
+"Le rédacteur en ligne (clés Gemini)",
+"المحرر عبر الإنترنت (مفاتيح Gemini)"
+],
+"Not available: the rewording and Yasmine use the model of this computer, which writes French less well.": [
+"Indisponible : la reformulation et Yasmine utilisent le modèle de cet ordinateur, qui écrit moins bien le français.",
+"غير متاح: إعادة الصياغة وياسمين تستعملان نموذج هذا الحاسوب الذي يكتب الفرنسية بشكل أقل جودة."
 ]
 }

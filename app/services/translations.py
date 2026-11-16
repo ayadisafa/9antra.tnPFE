@@ -42,7 +42,9 @@ _SILENT = ("answer_sync", "background", "brand", "digest", "grand_tour", "summar
            "program_assistant", "program_documents", "program_names", "program_pdf", "realtime", "reply_writer", "report_pdf",
            "translation_seed", "translation_more", "translations", "tunisian_banks", "website_sync", "weekly_questions", "welcome",
            "emotions", "finder", "derja", "howto_tn", "howto_examples", "meaning", "prospects", "course_requests", "dynamic_words", "program_match", "program_reader", "program_files", "password_reset", "social_tn", "small_talk",
-           "navigate", "abilities", "conversation", "cards", "reminder_writer", "professor_space", "page_help", "phone_push", "phone_sms")       # (the last ones: lists of words to recognise, not words to show)
+           "navigate", "abilities", "conversation", "cards", "reminder_writer", "professor_space", "page_help", "phone_push", "phone_sms",
+           # Shown in the page's language by themselves (hand-written French and Arabic, or _t), or written for candidates and models:
+           "test_book", "control_room", "discussion_help", "rewording")       # (the last ones: lists of words to recognise, not words to show)
 # What the routes say back on the page (“Saved.”, “The class is full.”): the words given as these.
 _SAID = {"notice", "error", "detail", "message", "label", "title", "reply"}
 RETRY_TRIES = 4                 # a text the model could not translate is tried again, with an example, up to this

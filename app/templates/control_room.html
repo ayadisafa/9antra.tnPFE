@@ -1,0 +1,487 @@
+{% extends "base.html" %}
+
+{% block title %}Control room · 9antra{% endblock %}
+{% block page_title %}Control room{% endblock %}
+{% block live_topics %}{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* ---------- Tabs ---------- */
+  .cr-tabs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; }
+  .cr-tab { display:inline-flex; align-items:center; gap:7px; border:1px solid var(--border-color); background:#fff; color:#4b4566; border-radius:999px; padding:7px 14px; font-weight:800; font-size:.82rem; transition:all .2s ease; }
+  .cr-tab em { font-style:normal; font-size:.7rem; border-radius:999px; padding:0 7px; background:#eef2ff; color:#3730a3; }
+  .cr-tab.is-on { background:#0b1530; color:#e0f2fe; border-color:#0b1530; box-shadow:0 8px 22px -12px rgba(14,165,233,.9); }
+  .cr-tab.is-on em { background:#0ea5e9; color:#fff; }
+  .cr-tab .is-bad { background:#fee2e2; color:#b91c1c; }
+  .cr-pane { display:none; }
+  .cr-pane.is-on { display:block; animation:crIn .3s ease both; }
+  @keyframes crIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+
+  /* ---------- The live map: a night sky, lit in blue ---------- */
+  .cr-stage { position:relative; min-height:690px; border-radius:28px; overflow:hidden; isolation:isolate;
+              background:radial-gradient(1200px 500px at 15% -10%, rgba(37,99,235,.55), transparent 60%),
+                         radial-gradient(900px 500px at 110% 110%, rgba(14,165,233,.45), transparent 55%),
+                         radial-gradient(600px 400px at 60% 50%, rgba(79,70,229,.25), transparent 70%), #030a1c;
+              box-shadow:0 30px 80px -40px rgba(14,165,233,.8), inset 0 0 0 1px rgba(56,189,248,.25); }
+  html.mode-night .cr-stage, html.mode-night-blue .cr-stage { filter:invert(1) hue-rotate(180deg); }
+  .cr-grid { position:absolute; inset:0; z-index:-1; opacity:.35;
+             background-image:linear-gradient(rgba(56,189,248,.12) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,.12) 1px, transparent 1px);
+             background-size:44px 44px; mask-image:radial-gradient(circle at 50% 50%, #000 40%, transparent 85%); animation:crGrid 18s linear infinite; }
+  @keyframes crGrid { to { background-position:44px 44px, 44px 44px; } }
+  .cr-stage canvas { position:absolute; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  .cr-top { position:relative; z-index:2; display:flex; flex-wrap:wrap; gap:10px 18px; align-items:center; justify-content:space-between; padding:16px 20px 0; color:#bae6fd; font-size:.8rem; }
+  .cr-live { display:inline-flex; align-items:center; gap:8px; font-weight:800; color:#e0f2fe; letter-spacing:.02em; }
+  .cr-live i { width:9px; height:9px; border-radius:50%; background:#22d3ee; box-shadow:0 0 0 0 rgba(34,211,238,.8); animation:crBeat 1.6s ease-out infinite; }
+  @keyframes crBeat { 70% { box-shadow:0 0 0 10px rgba(34,211,238,0); } 100% { box-shadow:0 0 0 0 rgba(34,211,238,0); } }
+  .cr-legend { display:flex; flex-wrap:wrap; gap:12px; }
+  .cr-legend span { display:inline-flex; align-items:center; gap:6px; }
+  .cr-legend b { width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .cr-nodes { position:absolute; inset:58px 0 0 0; z-index:1; }
+  .cr-node { position:absolute; width:178px; transform:translate(-50%, -50%); display:grid; grid-template-columns:auto 1fr; gap:4px 10px; align-items:center;
+             padding:11px 12px; border-radius:18px; text-decoration:none; color:#e0f2fe;
+             background:linear-gradient(160deg, rgba(15,30,70,.85), rgba(8,15,40,.85)); backdrop-filter:blur(6px);
+             border:1px solid rgba(56,189,248,.45); box-shadow:0 0 0 1px rgba(56,189,248,.08), 0 0 26px -6px rgba(56,189,248,.65);
+             transition:transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
+  .cr-node:hover { transform:translate(-50%, -50%) scale(1.05); box-shadow:0 0 0 1px rgba(125,211,252,.5), 0 0 40px -4px rgba(56,189,248,.95); color:#fff; }
+  .cr-node.is-waits { border-color:rgba(251,191,36,.7); box-shadow:0 0 26px -6px rgba(251,191,36,.75); }
+  .cr-node.is-off { border-style:dashed; border-color:rgba(148,163,184,.6); box-shadow:none; opacity:.8; }
+  .cr-node.is-lit { animation:crLit 1.6s ease; }
+  @keyframes crLit { 0% { box-shadow:0 0 0 0 rgba(125,211,252,.9), 0 0 60px 6px rgba(56,189,248,1); } 100% { box-shadow:0 0 0 18px rgba(125,211,252,0), 0 0 26px -6px rgba(56,189,248,.65); } }
+  .cr-orb { grid-row:span 3; position:relative; width:46px; height:46px; border-radius:50%; display:grid; place-items:center; font-size:1.45rem;
+            background:radial-gradient(circle at 35% 30%, rgba(125,211,252,.55), rgba(29,78,216,.35) 60%, rgba(3,10,28,.2)); }
+  .cr-orb::after { content:""; position:absolute; inset:-5px; border-radius:50%; border:1.5px solid transparent; border-top-color:#38bdf8; border-right-color:rgba(129,140,248,.8);
+                   animation:crSpin 3.2s linear infinite; }
+  .cr-node.is-waits .cr-orb::after { border-top-color:#fbbf24; }
+  .cr-node.is-off .cr-orb::after { animation:none; border-color:rgba(148,163,184,.4); }
+  @keyframes crSpin { to { transform:rotate(360deg); } }
+  .cr-title { font-weight:800; font-size:.8rem; line-height:1.2; }
+  .cr-fig { font-size:.7rem; color:#93c5fd; line-height:1.25; }
+  .cr-fig b { color:#fff; font-size:.86rem; margin-inline-end:4px; }
+  /* moving pictures */
+  .mo-float { animation:crFloat 3.4s ease-in-out infinite; } @keyframes crFloat { 50% { transform:translateY(-4px); } }
+  .mo-pulse { animation:crPulse 2s ease-in-out infinite; } @keyframes crPulse { 50% { transform:scale(1.14); } }
+  .mo-spin { animation:crTurn 6s linear infinite; } @keyframes crTurn { to { transform:rotate(360deg); } }
+  .mo-ring { animation:crRing 2.6s ease-in-out infinite; transform-origin:50% 10%; } @keyframes crRing { 10%, 30% { transform:rotate(14deg); } 20%, 40% { transform:rotate(-14deg); } 50% { transform:none; } }
+  .mo-tilt { animation:crTilt 3s ease-in-out infinite; } @keyframes crTilt { 50% { transform:rotate(-10deg); } }
+  .mo-wave { animation:crWave 2.4s ease-in-out infinite; transform-origin:70% 80%; } @keyframes crWave { 15%, 45% { transform:rotate(16deg); } 30% { transform:rotate(-8deg); } 60% { transform:none; } }
+  .mo-bounce { animation:crBounce 1.8s ease-in-out infinite; } @keyframes crBounce { 40% { transform:translateY(-6px); } 60% { transform:translateY(0); } }
+  .mo-twinkle { animation:crTwinkle 2.2s ease-in-out infinite; } @keyframes crTwinkle { 50% { transform:scale(1.2) rotate(12deg); filter:drop-shadow(0 0 6px #fde68a); } }
+  .cr-chip { position:absolute; z-index:1; transform:translate(-50%, -50%); font-size:.66rem; font-weight:700; color:#bae6fd; white-space:nowrap; pointer-events:none;
+             background:rgba(3,10,28,.78); border:1px solid rgba(56,189,248,.35); border-radius:999px; padding:1px 8px; }
+  .cr-chip b { color:#fff; }
+  .cr-foot { position:absolute; left:20px; right:20px; bottom:14px; z-index:2; color:#7dd3fc; font-size:.74rem; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  @media (max-width: 760px) {
+    .cr-stage { min-height:0; padding-bottom:0; }
+    .cr-foot { position:relative; left:auto; right:auto; bottom:auto; padding:6px 16px 16px; }
+    .cr-nodes { position:relative; inset:auto; display:grid; grid-template-columns:1fr 1fr; gap:22px 14px; padding:18px 12px 8px; }
+    .cr-node { position:relative; left:auto !important; top:auto !important; transform:none; width:auto; grid-template-columns:1fr; text-align:center; justify-items:center; }
+    .cr-node:hover { transform:scale(1.03); }
+    .cr-orb { grid-row:auto; }
+    .cr-chip { display:none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .cr-grid, .cr-orb::after, .cr-live i, [class*="mo-"] { animation:none !important; } }
+
+  /* ---------- Light panes ---------- */
+  .cr-card { background:#fff; border:1px solid var(--border-color); border-radius:20px; padding:16px 18px; }
+  .cr-h { font-weight:800; font-size:1rem; margin:0 0 10px; display:flex; gap:8px; align-items:center; }
+  .cr-list { display:grid; gap:10px; }
+  .cr-track { display:grid; grid-template-columns:auto 1fr auto; gap:6px 14px; align-items:center; padding:12px 14px; border-radius:16px; border:1px solid var(--border-color); background:#fff; }
+  .cr-track .cr-emo { font-size:1.4rem; }
+  .cr-track b { font-size:.88rem; }
+  .cr-track small { display:block; color:#6b6584; font-size:.76rem; }
+  .cr-nums { display:flex; gap:14px; font-size:.74rem; color:#6b6584; flex-wrap:wrap; justify-content:flex-end; text-align:end; }
+  .cr-nums strong { display:block; color:var(--ink-text); font-size:.9rem; }
+  .cr-state { display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:2px 9px; font-size:.7rem; font-weight:800; }
+  .cr-state.on { background:#dcfce7; color:#166534; } .cr-state.off { background:#f1f5f9; color:#475569; } .cr-state.setup { background:#fef3c7; color:#92400e; }
+  .cr-sugg { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:14px; text-decoration:none; color:var(--ink-text); background:#f8fafc; font-size:.84rem; }
+  .cr-sugg.bad { background:#fef2f2; } .cr-sugg.warn { background:#fffbeb; } .cr-sugg i { font-size:1.05rem; margin-top:1px; }
+  .cr-sugg.bad i { color:#b91c1c; } .cr-sugg.warn i { color:#b45309; } .cr-sugg.info i { color:#2563eb; }
+  .cr-ideas { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:12px; }
+  .cr-idea { border-radius:18px; padding:14px; background:linear-gradient(160deg, #f0f9ff, #fff); border:1px solid #dbeafe; }
+  .cr-idea .cr-emo { font-size:1.6rem; display:inline-block; }
+  .cr-idea b { display:block; margin:6px 0 4px; }
+  .cr-idea p { font-size:.8rem; color:#4b4566; margin:0 0 8px; }
+  .cr-idea small { display:block; font-size:.74rem; color:#1e40af; background:#eff6ff; border-radius:10px; padding:6px 8px; }
+  .cr-progress { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+  .cr-ring { --p:0; width:74px; height:74px; border-radius:50%; display:grid; place-items:center; font-weight:900;
+             background:conic-gradient(#0ea5e9 calc(var(--p) * 1%), #e0f2fe 0); position:relative; }
+  .cr-ring::before { content:""; position:absolute; inset:7px; border-radius:50%; background:#fff; }
+  .cr-ring span { position:relative; font-size:.9rem; }
+  .cr-safe { display:flex; gap:10px; align-items:flex-start; border-radius:16px; padding:11px 14px; background:#fff7ed; border:1px solid #fed7aa; font-size:.82rem; color:#7c2d12; margin-bottom:14px; }
+  .cr-group { font-weight:800; font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; color:#6b6584; margin:16px 0 8px; }
+  .cr-test { border:1px solid var(--border-color); border-radius:16px; background:#fff; margin-bottom:8px; }
+  .cr-test > summary { list-style:none; cursor:pointer; display:flex; gap:10px; align-items:center; padding:11px 14px; font-weight:700; font-size:.88rem; }
+  .cr-test > summary::-webkit-details-marker { display:none; }
+  .cr-dot { width:12px; height:12px; border-radius:50%; flex:none; border:2px solid #cbd5e1; }
+  .cr-test.is-ok .cr-dot { background:#22c55e; border-color:#22c55e; } .cr-test.is-problem .cr-dot { background:#ef4444; border-color:#ef4444; }
+  .cr-send { margin-inline-start:auto; font-size:.68rem; font-weight:800; color:#b45309; background:#fffbeb; border-radius:999px; padding:1px 8px; white-space:nowrap; }
+  .cr-body { padding:0 14px 14px 36px; font-size:.83rem; color:#3f3a56; }
+  .cr-body ol { margin:0 0 8px; padding-inline-start:18px; }
+  .cr-body li { margin-bottom:3px; }
+  .cr-expect { background:#f0fdf4; border-radius:12px; padding:8px 10px; margin-bottom:10px; }
+  .cr-expect b { color:#166534; }
+  .cr-about { color:#6b6584; font-size:.78rem; margin-bottom:8px; }
+  .cr-marks { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .cr-marks input { flex:1 1 200px; border:1px solid var(--border-color); border-radius:999px; padding:5px 12px; font-size:.8rem; }
+  .cr-btn { border:1px solid var(--border-color); background:#fff; border-radius:999px; padding:5px 12px; font-weight:800; font-size:.78rem; color:#3f3a56; text-decoration:none; display:inline-flex; gap:5px; align-items:center; }
+  .cr-btn.ok { border-color:#86efac; color:#166534; } .cr-btn.bad { border-color:#fca5a5; color:#b91c1c; } .cr-btn.go { background:#0b1530; color:#e0f2fe; border-color:#0b1530; }
+  .cr-last { font-size:.74rem; color:#6b6584; }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set progress = tests.progress %}
+<div class="cr-tabs" role="tablist">
+  <button type="button" class="cr-tab" data-cr-tab="map"><i class="bi bi-diagram-3"></i>Live map</button>
+  <button type="button" class="cr-tab" data-cr-tab="tracking"><i class="bi bi-activity"></i>Tracking</button>
+  <button type="button" class="cr-tab" data-cr-tab="ideas"><i class="bi bi-lightbulb"></i>Suggestions<em>{{ suggestions | length + needs | length }}</em></button>
+  <button type="button" class="cr-tab" data-cr-tab="new"><i class="bi bi-stars"></i>What's new</button>
+  <button type="button" class="cr-tab" data-cr-tab="tests"><i class="bi bi-ui-checks"></i>Test everything<em data-cr-progress>{{ progress.done }}/{{ progress.total }}</em></button>
+  <button type="button" class="cr-tab" data-cr-tab="problems"><i class="bi bi-bug"></i>Problems found<em class="{{ 'is-bad' if progress.problems }}" data-cr-problems>{{ progress.problems }}</em></button>
+</div>
+
+{# ======================= The live map ======================= #}
+<section class="cr-pane" data-cr-pane="map">
+  <div class="cr-stage" id="cr-stage" data-url="/system/control/data">
+    <div class="cr-grid" aria-hidden="true"></div>
+    <canvas id="cr-canvas" aria-hidden="true"></canvas>
+    <div class="cr-top">
+      <span class="cr-live"><i></i><span>Live</span> · <span>what moved between the parts in 7 days:</span> <b id="cr-total" data-no-i18n>{{ map.total }}</b></span>
+      <span class="cr-legend"><span><b style="background:#38bdf8; box-shadow:0 0 8px #38bdf8;"></b>Working</span><span><b style="background:#fbbf24;"></b>Waits for you</span><span><b style="background:#64748b;"></b>Off or to set up</span></span>
+    </div>
+    <div class="cr-nodes" id="cr-nodes">
+      {% for node in map.nodes %}
+      <a class="cr-node is-{{ node.state }}" href="{{ node.url }}" data-node="{{ node.key }}" data-topics="{{ node.topics | join(' ') }}" style="left:{{ node.x }}%; top:{{ node.y }}%;">
+        <span class="cr-orb"><span class="mo-{{ node.motion }}" aria-hidden="true">{{ node.emoji }}</span></span>
+        <span class="cr-title">{{ node.title }}</span>
+        {% for figure in node.figures %}<span class="cr-fig" data-fig="{{ loop.index0 }}"><b data-no-i18n>{{ figure.value }}</b>{{ figure.label }}</span>{% endfor %}
+      </a>
+      {% endfor %}
+    </div>
+    <div class="cr-foot"><span>Each line is what one part gives the next; the light that runs along it is what really went these 7 days. A flash: it just happened.</span><span><span>Updated</span> <span id="cr-at" data-no-i18n>{{ map.at[11:16] }}</span> UTC</span></div>
+  </div>
+  <script type="application/json" id="cr-edges">{{ map.edges | tojson }}</script>
+</section>
+
+{# ======================= Tracking ======================= #}
+<section class="cr-pane" data-cr-pane="tracking">
+  <div class="cr-card">
+    <h2 class="cr-h"><i class="bi bi-activity"></i>Everything it does by itself, tracked</h2>
+    <p class="small text-muted">For each one: is it on, when it last acted, how many times this week. The work running now is on the <a href="/system">System page</a>.</p>
+    <div class="cr-list">
+      {% for row in tracking %}
+      <div class="cr-track">
+        <span class="cr-emo mo-{{ row.motion }}" aria-hidden="true">{{ row.emoji }}</span>
+        <div><b>{{ row.title }}</b> <span class="cr-state {{ row.state }}">{{ row.label }}</span><small>{{ row.what }}</small><small>{{ row.when }}</small></div>
+        <div class="cr-nums">
+          {% if row.last is not none %}<span><strong data-no-i18n>{{ row.last }}</strong><span>last time</span></span>{% endif %}
+          {% if row.week is not none %}<span><strong data-no-i18n>{{ row.week }}</strong><span>this week</span></span>{% endif %}
+          <a class="cr-btn" href="{{ row.change }}"><i class="bi bi-sliders"></i>Change</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ======================= Suggestions ======================= #}
+<section class="cr-pane" data-cr-pane="ideas">
+  <div class="row g-3">
+    <div class="col-lg-6">
+      <div class="cr-card h-100">
+        <h2 class="cr-h"><i class="bi bi-binoculars"></i>To look at now</h2>
+        <div class="cr-list">
+          {% for item in suggestions %}
+          <a class="cr-sugg {{ item.tone }}" href="{{ item.url }}" {% if item.url.startswith('#') %}data-cr-go="problems"{% endif %}><i class="bi {{ item.icon }}"></i><span>{{ item.text }}</span></a>
+          {% else %}
+          <div class="cr-sugg"><i class="bi bi-check2-circle"></i><span>Nothing needs a look right now.</span></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="cr-card h-100">
+        <h2 class="cr-h"><i class="bi bi-person-raised-hand"></i>What I need from you</h2>
+        <p class="small text-muted">Only you can give these: each one unlocks a part that works only halfway today.</p>
+        <div class="cr-list">
+          {% for item in needs %}
+          <a class="cr-sugg {{ 'warn' if item.state == 'off' else 'info' }}" href="{{ item.url }}"><i class="bi {{ item.icon }}"></i><span><b>{{ item.title }}</b> · {{ item.text }}</span></a>
+          {% else %}
+          <div class="cr-sugg"><i class="bi bi-check2-circle"></i><span>Everything is connected.</span></div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="cr-card mt-3">
+    <h2 class="cr-h"><i class="bi bi-rocket-takeoff"></i>What could be enhanced</h2>
+    <p class="small text-muted">My suggestions, each with why and what it needs. Tell Yasmine or me which one you want.</p>
+    <div class="cr-ideas">
+      {% for key, emoji, title, why, needs_it in ideas %}
+      <div class="cr-idea"><span class="cr-emo mo-float" aria-hidden="true">{{ emoji }}</span><b>{{ title }}</b><p>{{ why }}</p><small><b class="d-inline">Needs:</b> {{ needs_it }}</small></div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% macro test_card(test) %}
+<details class="cr-test {{ 'is-' ~ test.mark.status if test.mark }}" data-test="{{ test.key }}">
+  <summary><span class="cr-dot" aria-hidden="true"></span><span>{{ test.title }}</span>{% if test.sends %}<span class="cr-send" title="It sends something to a person: use a test candidate with your own email and phone"><i class="bi bi-send"></i> Sends</span>{% endif %}</summary>
+  <div class="cr-body">
+    {% if test.text %}<div class="cr-about">{{ test.text }}</div>{% endif %}
+    <ol data-no-i18n>{% for step in test.steps %}<li>{{ step }}</li>{% endfor %}</ol>
+    <div class="cr-expect"><b>You should see:</b> <span data-no-i18n>{{ test.expect }}</span></div>
+    <div class="cr-marks">
+      {% if test.url %}<a class="cr-btn go" href="{{ test.url }}"><i class="bi bi-box-arrow-up-right"></i>Open it</a>
+      {% elif test.key.startswith('yasmine:') %}<button type="button" class="cr-btn go" data-ask-yasmine><i class="bi bi-chat-heart"></i>Try it<span hidden data-q data-no-i18n>{{ test.steps[0] }}</span></button>{% endif %}
+      <button type="button" class="cr-btn ok" data-cr-mark="ok"><i class="bi bi-check2"></i>It works</button>
+      <input type="text" maxlength="600" placeholder="What did not work?" aria-label="What did not work" value="{{ test.mark.note if test.mark and test.mark.note else '' }}">
+      <button type="button" class="cr-btn bad" data-cr-mark="problem"><i class="bi bi-bug"></i>Problem</button>
+      {% if test.mark %}<button type="button" class="cr-btn" data-cr-mark="clear" title="Not tested again"><i class="bi bi-arrow-counterclockwise"></i></button>{% endif %}
+    </div>
+    {% if test.mark %}<div class="cr-last mt-1">{{ 'It works' if test.mark.status == 'ok' else 'Problem' }} · <span data-no-i18n>{{ test.mark.by }} · {{ test.mark.at }}</span></div>{% endif %}
+  </div>
+</details>
+{% endmacro %}
+
+{# ======================= What's new ======================= #}
+<section class="cr-pane" data-cr-pane="new">
+  <div class="cr-safe"><i class="bi bi-shield-exclamation"></i><span>A test marked “Sends” reaches a real person: use a test candidate registered with <b>your own</b> email and phone, never a real candidate. In the Inbox, “Try the assistant with a sample email” records the answers without sending them.</span></div>
+  {% for release in tests.news %}
+  <div class="cr-group"><span data-no-i18n>{{ release.date }}</span> · <span data-no-i18n>{{ release.title }}</span></div>
+  {% for test in release.tests %}{{ test_card(test) }}{% endfor %}
+  {% endfor %}
+</section>
+
+{# ======================= Test everything ======================= #}
+<section class="cr-pane" data-cr-pane="tests">
+  <div class="cr-progress">
+    <div class="cr-ring" id="cr-ring" style="--p:{{ progress.percent }};"><span data-no-i18n>{{ progress.percent }}%</span></div>
+    <div><b><span data-cr-done data-no-i18n>{{ progress.done }}</span> <span>of</span> <span data-no-i18n>{{ progress.total }}</span> <span>tested</span></b><br>
+      <span class="small text-muted"><span data-cr-ok data-no-i18n>{{ progress.ok }}</span> <span>work</span> · <span data-cr-problems2 data-no-i18n>{{ progress.problems }}</span> <span>problems</span></span></div>
+  </div>
+  <div class="cr-safe"><i class="bi bi-shield-exclamation"></i><span>A test marked “Sends” reaches a real person: use a test candidate registered with <b>your own</b> email and phone, never a real candidate. In the Inbox, “Try the assistant with a sample email” records the answers without sending them.</span></div>
+  <h2 class="cr-h"><i class="bi bi-window-stack"></i>Every page</h2>
+  {% for group in tests.pages %}
+  <div class="cr-group">{{ group.title }}</div>
+  {% for test in group.tests %}{{ test_card(test) }}{% endfor %}
+  {% endfor %}
+  <h2 class="cr-h mt-4"><i class="bi bi-robot"></i>What it does by itself</h2>
+  {% for test in tests.alone %}{{ test_card(test) }}{% endfor %}
+  <h2 class="cr-h mt-4"><i class="bi bi-chat-heart"></i>Yasmine</h2>
+  {% for test in tests.yasmine %}{{ test_card(test) }}{% endfor %}
+</section>
+
+{# ======================= Problems found ======================= #}
+<section class="cr-pane" data-cr-pane="problems">
+  {% for test in tests.problems %}{{ test_card(test) }}
+  {% else %}
+  <div class="cr-card text-center"><i class="bi bi-emoji-smile fs-3"></i><div class="mt-2 fw-bold">No problem found yet.</div><div class="small text-muted">Mark a test “Problem” with what did not work: it is kept here, for you and for me.</div></div>
+  {% endfor %}
+</section>
+<span hidden id="cr-saved">Saved</span>
+<span hidden id="cr-failed">Not saved: try again.</span>
+
+<script>
+(() => {
+  // ---------- Tabs, remembered in the address (#tests, #ideas…) ----------
+  const tabs = [...document.querySelectorAll("[data-cr-tab]")], panes = [...document.querySelectorAll("[data-cr-pane]")];
+  const show = name => {
+    if (!panes.some(pane => pane.dataset.crPane === name)) name = "map";
+    tabs.forEach(tab => tab.classList.toggle("is-on", tab.dataset.crTab === name));
+    panes.forEach(pane => pane.classList.toggle("is-on", pane.dataset.crPane === name));
+    if (name === "map") window.dispatchEvent(new Event("resize"));
+  };
+  tabs.forEach(tab => tab.addEventListener("click", () => { history.replaceState(null, "", "#" + tab.dataset.crTab); show(tab.dataset.crTab); }));
+  document.querySelectorAll("[data-cr-go]").forEach(link => link.addEventListener("click", event => { event.preventDefault(); history.replaceState(null, "", "#problems"); show("problems"); }));
+  show((location.hash || "#map").slice(1));
+
+  // ---------- Marks: it works, a problem (with what), or not tested again ----------
+  document.addEventListener("click", async event => {
+    const button = event.target.closest("[data-cr-mark]");
+    if (!button) return;
+    const card = button.closest("[data-test]"), note = card.querySelector(".cr-marks input");
+    const status = button.dataset.crMark;
+    if (status === "problem" && !note.value.trim()) { note.focus(); note.placeholder = note.getAttribute("aria-label"); return; }
+    try {
+      const response = await fetch("/system/control/mark", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin",
+        body: JSON.stringify({ key: card.dataset.test, status, note: note.value }) });
+      if (!response.ok) throw new Error();
+      const data = await response.json(), progress = data.progress;
+      document.querySelectorAll(`[data-test="${CSS.escape(card.dataset.test)}"]`).forEach(one => {
+        one.classList.remove("is-ok", "is-problem");
+        if (data.status) one.classList.add("is-" + data.status);
+      });
+      document.querySelector("[data-cr-progress]").textContent = progress.done + "/" + progress.total;
+      document.querySelectorAll("[data-cr-problems], [data-cr-problems2]").forEach(el => { el.textContent = progress.problems; });
+      document.querySelector("[data-cr-problems]").classList.toggle("is-bad", progress.problems > 0);
+      document.querySelector("[data-cr-done]").textContent = progress.done;
+      document.querySelector("[data-cr-ok]").textContent = progress.ok;
+      const ring = document.getElementById("cr-ring");
+      ring.style.setProperty("--p", progress.percent); ring.querySelector("span").textContent = progress.percent + "%";
+      button.innerHTML = '<i class="bi bi-check2-all"></i>' + document.getElementById("cr-saved").textContent;
+      if (status !== "problem") card.open = false;
+    } catch (error) {
+      button.textContent = document.getElementById("cr-failed").textContent;
+    }
+  });
+
+  // ---------- The live map ----------
+  const stage = document.getElementById("cr-stage"), canvas = document.getElementById("cr-canvas");
+  if (!stage || !canvas) return;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const context = canvas.getContext("2d");
+  let edges = JSON.parse(document.getElementById("cr-edges").textContent);
+  let paths = {}, sparks = [], hover = null, chips = {};
+  const nodeOf = key => stage.querySelector(`[data-node="${key}"]`);
+  const most = () => Math.max(1, ...edges.map(edge => edge.count));
+  const strength = edge => edge.count ? Math.min(1, Math.log(1 + edge.count) / Math.log(1 + most())) : 0;
+
+  function layout() {
+    const box = stage.getBoundingClientRect(), ratio = window.devicePixelRatio || 1;
+    canvas.width = box.width * ratio; canvas.height = box.height * ratio;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    paths = {};
+    edges.forEach(edge => {
+      const a = nodeOf(edge.from), b = nodeOf(edge.to);
+      if (!a || !b) return;
+      const ra = a.getBoundingClientRect(), rb = b.getBoundingClientRect();
+      const p0 = { x: ra.left + ra.width / 2 - box.left, y: ra.top + ra.height / 2 - box.top };
+      const p3 = { x: rb.left + rb.width / 2 - box.left, y: rb.top + rb.height / 2 - box.top };
+      const wide = Math.abs(p3.x - p0.x) >= Math.abs(p3.y - p0.y);
+      const p1 = wide ? { x: (p0.x + p3.x) / 2, y: p0.y } : { x: p0.x, y: (p0.y + p3.y) / 2 };
+      const p2 = wide ? { x: (p0.x + p3.x) / 2, y: p3.y } : { x: p3.x, y: (p0.y + p3.y) / 2 };
+      // Both ways between the same two parts (the inbox and its assistant): each line bows to its own side.
+      if (edges.some(other => other.from === edge.to && other.to === edge.from)) {
+        const length = Math.hypot(p3.x - p0.x, p3.y - p0.y) || 1, bow = 22;
+        const nx = -(p3.y - p0.y) / length * bow, ny = (p3.x - p0.x) / length * bow;
+        p1.x += nx; p1.y += ny; p2.x += nx; p2.y += ny;
+      }
+      paths[edge.key] = [p0, p1, p2, p3];
+    });
+    placeChips();
+  }
+  const point = (path, t) => {
+    const [a, b, c, d] = path, u = 1 - t;
+    return { x: u * u * u * a.x + 3 * u * u * t * b.x + 3 * u * t * t * c.x + t * t * t * d.x,
+             y: u * u * u * a.y + 3 * u * u * t * b.y + 3 * u * t * t * c.y + t * t * t * d.y };
+  };
+  function placeChips() {
+    Object.values(chips).forEach(chip => chip.remove());
+    chips = {};
+    if (window.innerWidth <= 760) return;
+    // Each label finds a free place along its line: not on a card, not on another label (else it is left out).
+    const box = stage.getBoundingClientRect();
+    const taken = [...stage.querySelectorAll("[data-node]")].map(node => node.getBoundingClientRect());
+    const free = rect => !taken.some(other => rect.left < other.right + 4 && rect.right > other.left - 4 && rect.top < other.bottom + 3 && rect.bottom > other.top - 3)
+      && rect.left > box.left + 4 && rect.right < box.right - 4;
+    [...edges].sort((a, b) => b.count - a.count).forEach(edge => {
+      const path = paths[edge.key];
+      if (!path || !edge.count) return;
+      const chip = document.createElement("span");
+      chip.className = "cr-chip";
+      chip.innerHTML = "<b></b> "; chip.querySelector("b").textContent = edge.count;
+      chip.append(document.createTextNode(edge.label));
+      stage.appendChild(chip);
+      // On the line first, then just above or below it (a short line between two neighbours has no room on it).
+      const tries = [0, -15, 15].flatMap(shift => [0.5, 0.38, 0.62, 0.28, 0.72].map(t => [t, shift]));
+      const spot = tries.find(([t, shift]) => {
+        const at = point(path, t);
+        chip.style.left = at.x + "px"; chip.style.top = (at.y + shift) + "px";
+        return free(chip.getBoundingClientRect());
+      });
+      if (spot === undefined) { chip.remove(); return; }
+      taken.push(chip.getBoundingClientRect());
+      chips[edge.key] = chip;
+    });
+  }
+  function seed() {
+    sparks = sparks.filter(spark => spark.burst);
+    edges.forEach(edge => {
+      const many = edge.count ? 1 + Math.round(3 * strength(edge)) : 0;
+      for (let i = 0; i < many; i++) sparks.push({ key: edge.key, t: i / many, speed: 0.0022 + 0.004 * strength(edge), burst: false });
+    });
+  }
+  function draw() {
+    const box = stage.getBoundingClientRect();
+    context.clearRect(0, 0, box.width, box.height);
+    edges.forEach(edge => {
+      const path = paths[edge.key];
+      if (!path) return;
+      const near = hover && (edge.from === hover || edge.to === hover), far = hover && !near;
+      const s = strength(edge);
+      const gradient = context.createLinearGradient(path[0].x, path[0].y, path[3].x, path[3].y);
+      const alpha = far ? 0.07 : 0.22 + 0.55 * s + (near ? 0.25 : 0);
+      gradient.addColorStop(0, `rgba(56,189,248,${alpha})`); gradient.addColorStop(1, `rgba(129,140,248,${alpha})`);
+      context.beginPath(); context.moveTo(path[0].x, path[0].y);
+      context.bezierCurveTo(path[1].x, path[1].y, path[2].x, path[2].y, path[3].x, path[3].y);
+      context.strokeStyle = gradient; context.lineWidth = 1.2 + 2.6 * s + (near ? 1.5 : 0);
+      context.shadowColor = "rgba(56,189,248,.9)"; context.shadowBlur = far ? 0 : 10 + 14 * s;
+      context.setLineDash(edge.count ? [] : [4, 8]);
+      context.stroke();
+    });
+    context.setLineDash([]);
+    sparks.forEach(spark => {
+      const path = paths[spark.key];
+      if (!path) return;
+      const at = point(path, spark.t), edge = edges.find(one => one.key === spark.key);
+      if (hover && edge && edge.from !== hover && edge.to !== hover) return;
+      const size = spark.burst ? 4.5 : 2.6;
+      context.beginPath(); context.arc(at.x, at.y, size, 0, Math.PI * 2);
+      context.fillStyle = spark.burst ? "#fef9c3" : "#e0f2fe";
+      context.shadowColor = spark.burst ? "#facc15" : "#38bdf8"; context.shadowBlur = spark.burst ? 26 : 16;
+      context.fill();
+    });
+    context.shadowBlur = 0;
+  }
+  function tick() {
+    sparks.forEach(spark => { spark.t += spark.speed; if (spark.t > 1) { if (spark.burst) spark.done = true; else spark.t -= 1; } });
+    sparks = sparks.filter(spark => !spark.done);
+    draw();
+    if (!still) requestAnimationFrame(tick);
+  }
+  function burst(keys) {
+    edges.filter(edge => keys.includes(edge.from) || keys.includes(edge.to)).forEach(edge => {
+      for (let i = 0; i < 4; i++) sparks.push({ key: edge.key, t: -i * 0.08, speed: 0.012, burst: true });
+    });
+    keys.forEach(key => { const node = nodeOf(key); if (node) { node.classList.remove("is-lit"); void node.offsetWidth; node.classList.add("is-lit"); } });
+    if (still) draw();
+  }
+  stage.addEventListener("mouseover", event => { const node = event.target.closest("[data-node]"); hover = node ? node.dataset.node : null; if (still) draw(); });
+  stage.addEventListener("mouseleave", () => { hover = null; if (still) draw(); });
+  window.addEventListener("resize", () => { layout(); if (still) draw(); });
+  layout(); seed();
+  if (still) draw(); else requestAnimationFrame(tick);
+
+  // ---------- Live: what changes lights its parts at once; the figures follow ----------
+  let waiting = null;
+  async function refresh() {
+    try {
+      const response = await fetch(stage.dataset.url, { credentials: "same-origin" });
+      if (!response.ok) return;
+      const data = await response.json(), before = Object.fromEntries(edges.map(edge => [edge.key, edge.count]));
+      edges = data.edges;
+      const moved = edges.filter(edge => edge.count > (before[edge.key] || 0));
+      data.nodes.forEach(node => {
+        const element = nodeOf(node.key);
+        if (!element) return;
+        element.classList.remove("is-ok", "is-waits", "is-off"); element.classList.add("is-" + node.state);
+        node.figures.forEach((figure, index) => { const value = element.querySelector(`[data-fig="${index}"] b`); if (value && value.textContent != String(figure.value)) value.textContent = figure.value; });
+      });
+      document.getElementById("cr-total").textContent = data.total;
+      document.getElementById("cr-at").textContent = data.at.slice(11, 16);
+      placeChips(); seed();
+      if (moved.length) burst([...new Set(moved.flatMap(edge => [edge.from, edge.to]))]);
+    } catch (error) {}
+  }
+  document.addEventListener("live:change", event => {
+    const topics = (event.detail && event.detail.topics) || [];
+    const lit = [...stage.querySelectorAll("[data-node]")].filter(node => node.dataset.topics.split(" ").some(topic => topics.includes(topic))).map(node => node.dataset.node);
+    if (lit.length) burst(lit);
+    clearTimeout(waiting); waiting = setTimeout(refresh, 1500);
+  });
+  document.addEventListener("friend:news", () => burst(["notify"]));
+  setInterval(() => { if (!document.hidden) refresh(); }, 30000);
+})();
+</script>
+{% endblock %}
