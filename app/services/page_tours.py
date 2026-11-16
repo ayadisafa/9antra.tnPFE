@@ -175,6 +175,9 @@ TOURS: dict[str, dict] = {
               "A message set aside without an answer says why: tell it that it needed one, and the rule changes.",
               ["Read the conversation", "Score the assistant's answer", "Bring back a set-aside message", "Talk about why it was set aside"],
               ["Which messages are set aside"]),
+        _step(".ix-help", "bi-person-vcard", "Before you answer", "About the candidate (programs, payments, class, presence, level, feelings), "
+              "or only a few things to say to them: you choose which, it is remembered.",
+              ["See who they are", "Tap something to say: it goes into your answer"], [], optional=True),
         _step("#live-inbox-reply", "bi-reply", "Your answer", "A draft is ready when the assistant was not sure.",
               ["Send it", "Reword it", "Teach it as the answer for next time"], ["The text of the answer"]),
     ),

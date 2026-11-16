@@ -282,13 +282,14 @@ settings.auto_create_class_on_payment = True; db.commit()
 # ======================================================================
 # E. Notifications that carry their remedy
 # ======================================================================
-lonely = klass("LONELY-PY-1", python, (now_local - timedelta(days=2)).replace(hour=9, minute=0, second=0, microsecond=0))
+lonely = klass("LONELY-PY-1", python, (now_local - timedelta(days=2)).replace(hour=9, minute=0, second=0, microsecond=0),
+               status=ClassStatus.NOT_STARTED)                     # its day came and nobody ever joined it
 db.commit()
 lonely_id = lonely.id
 es.sync_class_lifecycle(db); db.expire_all()
-held = db.query(Notification).filter(Notification.title == "Class on hold", Notification.message.like("LONELY-PY-1%")).first()
-fix = nf.fix_for(db, held)
-check("an empty class on hold can be removed from its notification", held is not None and fix and fix["label"] == "Remove this class" and fix["url"] == f"/classes/{lonely_id}/delete" and fix["method"] == "post" and fix["confirm"])
+gone = db.query(Notification).filter(Notification.title == "Class removed: nobody in it", Notification.message.like("LONELY-PY-1%")).first()
+check("an empty class whose day came is removed by itself, the admin told why (nothing left to do)",
+      gone is not None and db.get(ClassGroup, lonely_id) is None and "nobody joined it since it was created" in gone.message and nf.fix_for(db, gone) is None)
 amira = db.query(Professor).filter(Professor.name == "amira").first()
 iot_class = db.query(ClassGroup).filter(ClassGroup.name == "IOTI-20261017-1").first()
 es.refresh_class_status(db, iot_class, now=iot_class.start_date + timedelta(days=1)); db.commit()
@@ -296,18 +297,16 @@ waits = db.query(Notification).filter(Notification.title == "Class cannot start"
 fix = nf.fix_for(db, waits)
 check("a class waiting for its professor's speciality offers the one click", fix and fix["label"] == "Yes, amira teaches it" and fix["url"] == f"/classes/professors/{amira.id}/specialty" and fix["fields"] == {"program_id": iot_class.program_id}, fix)
 api = admin.get("/admin/api/notifications?unread_only=true").json()
-check("the bell receives the remedy with each notification", any(item.get("fix") and item["fix"]["label"] == "Remove this class" for item in api["notifications"]), [item.get("fix") for item in api["notifications"]][:4])
-check("and can ask for it for one notification", admin.get(f"/admin/api/notifications/{held.id}/fix").json()["fix"]["label"] == "Remove this class")
+check("the bell receives the remedy with each notification", any(item.get("fix") and item["fix"]["label"] == "Yes, amira teaches it" for item in api["notifications"]), [item.get("fix") for item in api["notifications"]][:4])
+check("and can ask for it for one notification", admin.get(f"/admin/api/notifications/{waits.id}/fix").json()["fix"]["label"] == "Yes, amira teaches it")
 home = admin.get("/").text
-check("the button is inside the notification", 'class="notif-fix"' in home and "Remove this class" in home and f'action="/classes/{lonely_id}/delete"' in home and "solves it from here" in home)
+check("the button is inside the notification", 'class="notif-fix"' in home and "Yes, amira teaches it" in home and "solves it from here" in home)
 system = admin.get("/system").text
-check("and on the System page", "Remove this class" in system and 'class="notif-fix"' in system)
+check("and on the System page", "Yes, amira teaches it" in system and 'class="notif-fix"' in system)
 answer = admin.post(fix["url"], data=fix["fields"], headers={"referer": "http://testserver/"})
 db.expire_all()
 check("one click solves it", "now one of amira's specialities" in where(answer) and nf.fix_for(db, db.get(Notification, waits.id)) is None, where(answer))
-answer = admin.post(f"/classes/{lonely_id}/delete")
-db.expire_all()
-check("a problem already solved offers nothing", db.get(ClassGroup, lonely_id) is None and nf.fix_for(db, db.get(Notification, held.id)) is None)
+check("a problem already solved offers nothing", nf.fix_for(db, db.get(Notification, waits.id)) is None)
 ordinary = db.query(Notification).filter(Notification.category == "NEW_REGISTRATION").first()
 check("a notification that needs nothing has no button", ordinary is None or nf.fix_for(db, ordinary) is None)
 for path in ("/", "/classes/", "/quiz/all", "/system", f"/classes/{group.id}/attendance", "/inbox/templates"):

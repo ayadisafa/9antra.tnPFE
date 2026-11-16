@@ -90,7 +90,7 @@
     </div>
     <div class="ui-field">
       <label for="body">Message</label>
-      <textarea class="form-control pr-text" id="body" name="body" required>{{ draft.body }}</textarea>
+      <textarea class="form-control pr-text" id="body" name="body" required data-reword="text">{{ draft.body }}</textarea>
       <div class="ui-hint">Two stars around words make them **bold**. <a href="/inbox/templates?key=payment_reminder" class="ui-link">Change the text for every candidate</a></div>
     </div>
     {% if draft.closing %}<div class="pr-closing"><b>Added under your message:</b> {{ draft.closing }}</div>{% endif %}

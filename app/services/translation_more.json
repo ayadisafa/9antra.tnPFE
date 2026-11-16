@@ -867,6 +867,18 @@
 "Une classe est faite pour les candidats qui ont payé et n'ont pas encore de classe : ils y sont placés tout de suite.",
 "يُنشأ قسم للمترشحين الذين دفعوا وليس لهم قسم بعد: يوضعون فيه فورا."
 ],
+"A class never runs empty: when its last candidate leaves it is removed (or ended, once running) by itself, and its professor is told why.": [
+"Une classe ne tourne jamais vide : quand son dernier candidat part, elle est supprimée (ou terminée, si elle a commencé) d'elle-même, et son professeur est prévenu de la raison.",
+"لا يعمل قسم فارغا أبدا: عندما يغادره آخر مترشح يُحذف (أو يُنهى إن كان قد بدأ) تلقائيا، ويُعلَم أستاذه بالسبب."
+],
+"A class never starts empty. If nobody is in it at its first session": [
+"Une classe ne commence jamais vide. Si personne n'y est à sa première séance",
+"لا يبدأ قسم فارغا أبدا. إن لم يكن فيه أحد في حصته الأولى"
+],
+"A class never starts empty. Move a paid candidate into it, or remove it: an empty class can be removed at any time.": [
+"Une classe ne commence jamais vide. Placez-y un candidat qui a payé, ou supprimez-la : une classe vide peut être supprimée à tout moment.",
+"لا يبدأ قسم فارغا أبدا. انقل إليه مترشحا دفع، أو احذفه: يمكن حذف قسم فارغ في أي وقت."
+],
 "A class opens": [
 "Une classe s'ouvre",
 "يُفتح قسم"
@@ -978,6 +990,14 @@
 "A few words are enough, even in Tunisian: Reformulate writes the email.": [
 "Quelques mots suffisent, même en tunisien : Reformuler écrit l'email.",
 "بضع كلمات تكفي، حتى بالتونسي: «إعادة الصياغة» تكتب البريد."
+],
+"A few words are enough, even in Tunisian: they are reworded, then go by themselves when well reworded.": [
+"Quelques mots suffisent, même en tunisien : ils sont reformulés, puis partent tout seuls s'ils sont bien reformulés.",
+"تكفي بضع كلمات، حتى بالتونسي: تُعاد صياغتها، ثم تُرسل وحدها إذا أُحسنت الصياغة."
+],
+"A few words are enough, even in Tunisian: they come back as a proper message, to read before sending.": [
+"Quelques mots suffisent, même en tunisien : ils reviennent en message bien écrit, à relire avant d'envoyer.",
+"تكفي بضع كلمات، حتى بالتونسي: تعود رسالة مكتوبة جيدا، لتقرأها قبل الإرسال."
 ],
 "A file added to a course is read: whether it belongs to the program, or to which one.": [
 "Un fichier ajouté à un cours est lu : s'il appartient à la formation, ou à laquelle.",
@@ -1615,6 +1635,14 @@
 "AWS IoT, Azure IoT ou ThingsBoard : appareils, règles, tableaux de bord. Pratique : connecter le projet à l'un d'eux.",
 "AWS IoT أو Azure IoT أو ThingsBoard: الأجهزة، القواعد، اللوحات. تطبيق: ربط المشروع بإحداها."
 ],
+"About": [
+"À propos de",
+"حول"
+],
+"About the candidate (programs, payments, class, presence, level, feelings), or only a few things to say to them: you choose which, it is remembered.": [
+"Le candidat (formations, paiements, classe, présence, niveau, ressentis), ou seulement quelques phrases à lui dire : vous choisissez, c'est retenu.",
+"عن المترشح (البرامج، الدفعات، القسم، الحضور، المستوى، المشاعر)، أو فقط بعض الجمل لتقولها له: أنت تختار، ويُحفظ اختيارك."
+],
 "About the centre (every program": [
 "Sur le centre (toutes les formations",
 "عن المركز (كل البرامج"
@@ -2087,6 +2115,10 @@
 "Ajouté par vous",
 "أضفته أنت"
 ],
+"Added to your answer": [
+"Ajouté à votre réponse",
+"أُضيف إلى ردك"
+],
 "Added under your message": [
 "Ajouté sous votre message",
 "يُضاف تحت رسالتك"
@@ -2546,6 +2578,10 @@
 "An opening line that changes with the days left": [
 "Une première phrase qui change selon les jours restants",
 "جملة افتتاحية تتغيّر حسب الأيام المتبقية"
+],
+"An order to write to someone, said any way: who it is for (asked, one tap each, when several people have the name), what to say, reworded, then sent.": [
+"Une demande d'écrire à quelqu'un, dite de n'importe quelle façon : pour qui (demandé, un appui par personne, quand plusieurs ont ce nom), quoi dire, reformulé, puis envoyé.",
+"طلب الكتابة إلى شخص، مهما كانت صيغته: لمن (يُسأل بنقرة لكل شخص عندما يحمل عدة أشخاص الاسم نفسه)، وماذا يُقال، بعد إعادة الصياغة، ثم الإرسال."
 ],
 "Analog and digital sensors, I2C and SPI, calibration, noise. Practice: compare two sensors and filter their values.": [
 "Capteurs analogiques et numériques, I2C et SPI, calibrage, bruit. Pratique : comparer deux capteurs et filtrer leurs valeurs.",
@@ -3534,6 +3570,10 @@
 "Before this class can start": [
 "Avant que cette classe puisse démarrer",
 "قبل أن يتمكن هذا القسم من البدء"
+],
+"Before you answer": [
+"Avant de répondre",
+"قبل أن تجيب"
 ],
 "Beginner": [
 "Débutant",
@@ -4763,6 +4803,10 @@
 "Classe terminée",
 "اكتمل القسم"
 ],
+"Class ended early: nobody left": [
+"Classe terminée plus tôt : plus personne",
+"انتهى القسم مبكرا: لم يبق أحد"
+],
 "Class marked completed.": [
 "Classe marquée comme terminée.",
 "تم تعليم القسم كمكتمل."
@@ -4790,6 +4834,10 @@
 "Class parameters": [
 "Paramètres de la classe",
 "إعدادات القسم"
+],
+"Class removed: nobody in it": [
+"Classe supprimée : personne dedans",
+"حُذف القسم: لا أحد فيه"
 ],
 "Class reopened; its status follows its dates again.": [
 "Classe rouverte ; son état suit de nouveau ses dates.",
@@ -6883,6 +6931,10 @@
 "Avis de fin de formation",
 "آراء نهاية التكوين"
 ],
+"Ended early on": [
+"Terminée plus tôt le",
+"انتهى مبكرا يوم"
+],
 "Ends": [
 "Se termine",
 "ينتهي"
@@ -7911,6 +7963,10 @@
 "Première fois sur cette page ?",
 "أول مرة في هذه الصفحة؟"
 ],
+"First write a few words, even in Tunisian.": [
+"Écrivez d'abord quelques mots, même en tunisien.",
+"اكتب أولا بضع كلمات، حتى بالتونسي."
+],
 "First write what you want to answer, even in a few words.": [
 "Écrivez d'abord ce que vous voulez répondre, même en quelques mots.",
 "اكتب أولا ما تريد الإجابة به، ولو في بضع كلمات."
@@ -8786,6 +8842,10 @@
 "Hide Yasmine (call her back with the small face": [
 "Cacher Yasmine (rappelez-la avec le petit visage",
 "إخفاء ياسمين (أعدها بالوجه الصغير"
+],
+"Hide both: the tabs stay, one tap opens them again": [
+"Masquer les deux : les onglets restent, un appui les rouvre",
+"إخفاء الاثنين: تبقى الألسنة، ونقرة واحدة تفتحها من جديد"
 ],
 "Hide her": [
 "La cacher",
@@ -9743,6 +9803,10 @@
 "Il part dès qu'ils paient",
 "يُرسل بمجرد أن يدفعوا"
 ],
+"It goes by itself only when it is well reworded: every figure, link and name of your words kept, nothing added, written in the language chosen. Otherwise it waits in the box and says why.": [
+"Il part tout seul seulement s'il est bien reformulé : chaque chiffre, lien et nom de vos mots gardé, rien d'ajouté, écrit dans la langue choisie. Sinon il attend dans la case et dit pourquoi.",
+"يُرسل وحده فقط إذا أُحسنت صياغته: كل رقم ورابط واسم من كلماتك محفوظ، لا شيء مضاف، ومكتوب باللغة المختارة. وإلا ينتظر في الخانة ويقول السبب."
+],
 "It goes once, at that time, and stays in each candidate's discussion.": [
 "Il part une fois, à cette heure, et reste dans la discussion de chaque candidat.",
 "يُرسل مرة واحدة، في ذلك الوقت، ويبقى في محادثة كل مترشح."
@@ -9954,6 +10018,10 @@
 "Its hours, its professor, its seats and how it starts: everything about it can be changed here.": [
 "Ses horaires, son professeur, ses places et son démarrage : tout peut être changé ici.",
 "مواعيده، وأستاذه، ومقاعده، وطريقة انطلاقه: يمكن تغيير كل شيء هنا."
+],
+"Its last candidate left. A class never runs empty: it is removed by itself at": [
+"Son dernier candidat est parti. Une classe ne tourne jamais vide : elle est supprimée d'elle-même à",
+"غادره آخر مترشح. لا يعمل قسم فارغا أبدا: يُحذف تلقائيا على الساعة"
 ],
 "Its level check": [
 "Son test de niveau",
@@ -10362,6 +10430,10 @@
 "Language of the reworded message": [
 "Langue du message reformulé",
 "لغة الرسالة المعاد صياغتها"
+],
+"Language of the reworded text": [
+"Langue du texte reformulé",
+"لغة النص المعاد صياغته"
 ],
 "Languages": [
 "Langues",
@@ -11438,6 +11510,10 @@
 "Move a candidate to another class": [
 "Déplacer un candidat dans une autre classe",
 "نقل مترشح إلى قسم آخر"
+],
+"Move a paid candidate into it, or remove it now.": [
+"Placez-y un candidat qui a payé, ou supprimez-la maintenant.",
+"انقل إليه مترشحا دفع، أو احذفه الآن."
 ],
 "Move it": [
 "Le déplacer",
@@ -12599,6 +12675,10 @@
 "Personne ici",
 "لا أحد هنا"
 ],
+"Nobody in this class yet": [
+"Personne dans cette classe pour l'instant",
+"لا أحد في هذا القسم بعد"
+],
 "Nobody is free for some sessions: your request goes to the admin, who answers you.": [
 "Personne n'est libre pour certaines séances : votre demande va à l'administration, qui vous répond.",
 "لا أحد متاح لبعض الحصص: يذهب طلبك إلى الإدارة التي تجيبك."
@@ -12835,6 +12915,10 @@
 "Pas inscrit à une formation",
 "غير مسجّل في برنامج"
 ],
+"Not registered yet: no program, no class.": [
+"Pas encore inscrit(e) : aucune formation, aucune classe.",
+"لم يسجل بعد: لا برنامج ولا قسم."
+],
 "Not saved.": [
 "Non enregistré.",
 "لم يُحفظ."
@@ -12862,6 +12946,10 @@
 "Not sent before.": [
 "Pas envoyé auparavant.",
 "لم يُرسل من قبل."
+],
+"Not sent by itself: read it, then “Send as written”.": [
+"Pas envoyé tout seul : relisez-le, puis « Envoyer tel quel ».",
+"لم يُرسل وحده: اقرأه، ثم «إرسال كما هو»."
 ],
 "Not sent yet. Each of the": [
 "Pas encore envoyé. Chacun des",
@@ -16091,6 +16179,10 @@
 "Lisez-le, changez ce que vous voulez, puis envoyez.",
 "اقرأه، غيّر ما تريد، ثم أرسل."
 ],
+"Read it, change what you want: nothing is sent before you do.": [
+"Relisez, changez ce que vous voulez : rien ne part avant vous.",
+"اقرأه وغيّر ما تريد: لا يُرسل شيء قبلك."
+],
 "Read less than six hours ago": [
 "Lu il y a moins de six heures",
 "قُرئ منذ أقل من ست ساعات"
@@ -16947,6 +17039,10 @@
 "Reformuler",
 "إعادة الصياغة"
 ],
+"Reword and send": [
+"Reformuler et envoyer",
+"إعادة الصياغة والإرسال"
+],
 "Reword and send at once": [
 "Reformuler et envoyer tout de suite",
 "إعادة الصياغة والإرسال فورا"
@@ -17683,6 +17779,10 @@
 "Voir qui",
 "انظر من"
 ],
+"See who they are": [
+"Voir qui c'est",
+"اعرف من هو"
+],
 "See you at the centre for your sessions{where}.": [
 "Rendez-vous au centre pour vos séances{where}.",
 "نلتقي في المركز لحصصك{where}."
@@ -17763,6 +17863,10 @@
 "Envoyer la réponse",
 "إرسال الإجابة"
 ],
+"Send as written": [
+"Envoyer tel quel",
+"إرسال كما هو"
+],
 "Send at once": [
 "Envoyer tout de suite",
 "أرسل فورا"
@@ -17774,6 +17878,10 @@
 "Send by email…": [
 "Envoyer par email…",
 "إرسال بالبريد…"
+],
+"Send by itself when well reworded": [
+"Envoyer tout seul si bien reformulé",
+"يُرسل وحده إذا أُحسنت الصياغة"
 ],
 "Send each candidate their own link": [
 "Envoyer à chaque candidat son propre lien",
@@ -19095,6 +19203,10 @@
 "Toujours pas payé après l'inscription : un rappel pour tout ce qu'il doit, jamais répété tout seul.",
 "لم يدفع بعد التسجيل: تذكير واحد لكل ما عليه، لا يتكرّر تلقائيا أبدا."
 ],
+"Stop": [
+"Arrêter",
+"إيقاف"
+],
 "Stop after their months": [
 "S'arrêtent après leurs mois",
 "يتوقفون بعد أشهرهم"
@@ -19134,6 +19246,10 @@
 "Stopped coming": [
 "Ne viennent plus",
 "توقفوا عن الحضور"
+],
+"Stopped: read it, change what you want, then “Send as written”.": [
+"Arrêté : relisez, changez ce que vous voulez, puis « Envoyer tel quel ».",
+"تم الإيقاف: اقرأه وغيّر ما تريد، ثم «إرسال كما هو»."
 ],
 "Stops after this month": [
 "S'arrête après ce mois",
@@ -19438,6 +19554,14 @@
 "Tamm: walit taba3 « {program} » {way}.": [
 "Tamm: walit taba3 « {program} » {way}.",
 "Tamm: walit taba3 « {program} » {way}."
+],
+"Tap one or more: they go into your answer. Add your own words, then": [
+"Touchez-en une ou plusieurs : elles vont dans votre réponse. Ajoutez vos propres mots, puis",
+"انقر على واحدة أو أكثر: تُضاف إلى ردك. أضف كلماتك، ثم"
+],
+"Tap something to say: it goes into your answer": [
+"Touchez une phrase : elle va dans votre réponse",
+"انقر على جملة: تُضاف إلى ردك"
 ],
 "Target": [
 "Objectif",
@@ -20214,6 +20338,10 @@
 "The candidates, classes and programs": [
 "Les candidats, les classes et les formations",
 "المترشحون والأقسام والبرامج"
+],
+"The candidates, professors and team": [
+"Les candidats, les formateurs et l'équipe",
+"المترشحون والأساتذة والفريق"
 ],
 "The categories of the requests of the period": [
 "Les catégories des demandes de la période",
@@ -21246,6 +21374,10 @@
 "The page tours": [
 "Les visites guidées des pages",
 "جولات الصفحات"
+],
+"The page you are on": [
+"La page où vous êtes",
+"الصفحة التي أنت فيها"
 ],
 "The page's guide": [
 "Le guide de la page",
@@ -22287,6 +22419,10 @@
 "Les ateliers annoncés sur le site. L'assistant des emails les connaît et peut répondre aux candidats qui demandent.",
 "الورشات المعلنة على الموقع. مساعد البريد يعرفها ويستطيع الإجابة عن المترشحين الذين يسألون."
 ],
+"The writer did not answer just now: your words are as they were. Try again in a moment.": [
+"Le rédacteur n'a pas répondu pour l'instant : vos mots sont restés tels quels. Réessayez dans un moment.",
+"لم يجب المحرر الآن: بقيت كلماتك كما هي. حاول بعد قليل."
+],
 "The yellow bar at the top: “Change what they can do”, or “Back to my view”.": [
 "La barre jaune en haut : « Changer ce qu'il peut faire », ou « Retour à ma vue ».",
 "الشريط الأصفر في الأعلى: «تغيير ما يستطيع فعله»، أو «العودة إلى عرضي»."
@@ -22522,6 +22658,10 @@
 "Their weekly answers and where they started from.": [
 "Leurs réponses hebdomadaires et leur niveau de départ.",
 "إجاباتهم الأسبوعية ومستواهم في البداية."
+],
+"Their whole file": [
+"Tout son dossier",
+"ملفه كاملا"
 ],
 "Their words": [
 "Leurs mots",
@@ -24435,6 +24575,10 @@
 "Bravo {name} !",
 "مبروك {name}!"
 ],
+"Well reworded": [
+"Bien reformulé",
+"صياغة جيدة"
+],
 "What": [
 "Quoi",
 "ماذا"
@@ -25167,6 +25311,10 @@
 "Quoi publier, quand vos gens sont le plus là, et quoi faire ensuite. Chaque action se fait en un clic, ou par Yasmine.",
 "ماذا تنشر، ومتى يكون جمهورك حاضرا أكثر، وماذا تفعل بعد ذلك. كل خطوة تتم بنقرة، أو عبر ياسمين."
 ],
+"What to say": [
+"Quoi lui dire",
+"ماذا تقول له"
+],
 "What to show": [
 "Quoi afficher",
 "ماذا تعرض"
@@ -25290,6 +25438,10 @@
 "What you can do on this page": [
 "Ce que vous pouvez faire sur cette page",
 "ما يمكنك فعله في هذه الصفحة"
+],
+"What you just talked about": [
+"Ce dont vous venez de parler",
+"ما تحدثتما عنه للتو"
 ],
 "What you taught": [
 "Ce que vous avez appris",
@@ -26551,9 +26703,17 @@
 "Écrire, ou partir d'une idée",
 "اكتب، أو انطلق من فكرة"
 ],
+"Writes and sends your messages, said any way and in any language (“write to Ahmed winik”): to the right person, reworded, every figure checked.": [
+"Écrit et envoie vos messages, dits de n'importe quelle façon et dans n'importe quelle langue (« écris à Ahmed winik ») : à la bonne personne, reformulés, chaque chiffre vérifié.",
+"يكتب رسائلك ويرسلها، مهما كانت طريقة قولها ولغتها («اكتب لأحمد وينك»): إلى الشخص الصحيح، معاد صياغتها، مع التحقق من كل رقم."
+],
 "Writes with the assistant": [
 "Écrit avec l'assistant",
 "يكتب بالمساعد"
+],
+"Writing agent": [
+"Agent de rédaction",
+"وكيل الكتابة"
 ],
 "Writing now": [
 "En cours d'écriture",
@@ -27078,6 +27238,10 @@
 "Your document": [
 "Votre document",
 "وثيقتك"
+],
+"Your draft goes as it is.": [
+"Votre brouillon part tel quel.",
+"مسودتك تُرسل كما هي."
 ],
 "Your email templates": [
 "Vos modèles d'email",
@@ -27743,6 +27907,10 @@
 "et personne n'est désigné pour l'enseigner. Une classe ne démarre qu'avec un formateur de sa spécialité.",
 "ولم يُعيّن أحد لتدريسه. لا يبدأ القسم إلا بمكوّن من اختصاصه."
 ],
+"and nobody is in it. A class never starts empty: if nobody joins by then, it is removed by itself": [
+"et personne n'y est inscrit. Une classe ne commence jamais vide : si personne ne la rejoint d'ici là, elle est supprimée d'elle-même",
+"ولا أحد فيه. لا يبدأ قسم فارغا أبدا: إن لم ينضم إليه أحد حتى ذلك الحين، يُحذف تلقائيا"
+],
 "and only that way.": [
 "et seulement par ce moyen.",
 "وبهذه الوسيلة فقط."
@@ -28299,6 +28467,10 @@
 "injoignable : ajoutez son email ou son téléphone",
 "لا يمكن الوصول إليه: أضف بريده أو هاتفه"
 ],
+"cannot be reached: tell them yourself": [
+"ne peut pas être joint(e) : prévenez-le vous-même",
+"لا يمكن التواصل معه: أعلمه بنفسك"
+],
 "cannot open a class until someone teaches": [
 "ne peut pas ouvrir de classe tant que personne ne l'enseigne",
 "لا يمكن فتح قسم حتى يدرّسه أحد"
@@ -28358,6 +28530,10 @@
 "chooses its way: email, WhatsApp, or both (Inbox → Email templates, and the Reminders page).": [
 "choisit son moyen : email, WhatsApp, ou les deux (Boîte de réception → Modèles d'email, et la page Rappels).",
 "يختار وسيلته: البريد، WhatsApp، أو الاثنان (البريد الوارد → نماذج البريد، وصفحة التذكيرات)."
+],
+"chose to stop after their months": [
+"a choisi de s'arrêter après ses mois",
+"اختار التوقف بعد أشهره"
 ],
 "class": [
 "classe",
@@ -28466,6 +28642,10 @@
 "could not be reached": [
 "injoignables",
 "لا يمكن الوصول إليهم"
+],
+"could not be told (no email, phone or account): tell them yourself.": [
+"n'a pas pu être prévenu(e) (ni email, ni téléphone, ni compte) : prévenez-le vous-même.",
+"لم يمكن إعلامه (لا بريد ولا هاتف ولا حساب): أعلمه بنفسك."
 ],
 "could not move to the first week": [
 "n'a pas pu passer à la première semaine",
@@ -28758,6 +28938,18 @@
 "en formation": [
 "en formation",
 "في التكوين"
+],
+"ended": [
+"terminée",
+"انتهى"
+],
+"ended by itself today: nobody follows it any more. Why": [
+"s'est terminée d'elle-même aujourd'hui : plus personne ne la suit. Pourquoi",
+"انتهى تلقائيا اليوم: لم يعد أحد يتابعه. السبب"
+],
+"ended early (nobody left": [
+"terminée plus tôt (plus personne",
+"انتهى مبكرا (لم يبق أحد"
 ],
 "enrolled now.": [
 "inscrits actuellement.",
@@ -29447,6 +29639,14 @@
 "est la bonne",
 "هي الصحيحة"
 ],
+"is told why": [
+"est prévenu(e) de la raison",
+"يُعلَم بالسبب"
+],
+"is told why.": [
+"est prévenu(e) de la raison.",
+"يُعلَم بالسبب."
+],
 "is writing…": [
 "écrit…",
 "تكتب…"
@@ -29463,6 +29663,10 @@
 "de le demander",
 "لطرحه"
 ],
+"it goes by itself in": [
+"il part tout seul dans",
+"يُرسل وحده بعد"
+],
 "it goes to the online candidates once given.": [
 "il part vers les candidats en ligne dès qu'il est donné.",
 "يُرسل إلى المترشحين عن بعد فور تقديمه."
@@ -29474,6 +29678,10 @@
 "it is read and understood": [
 "il est lu et compris",
 "يُقرأ ويُفهم"
+],
+"it is removed by itself": [
+"elle est supprimée d'elle-même",
+"يُحذف تلقائيا"
 ],
 "it is what lets anyone with the link answer the form": [
 "c'est ce qui permet à toute personne ayant le lien de répondre au formulaire",
@@ -29566,6 +29774,10 @@
 "learnt by itself, to confirm": [
 "appris tout seul, à confirmer",
 "تعلّمه من تلقاء نفسه، للتأكيد"
+],
+"left": [
+"restants",
+"متبقية"
 ],
 "left the page": [
 "a quitté la page",
@@ -30015,6 +30227,22 @@
 "personne de libre",
 "لا أحد متاح"
 ],
+"nobody is told: it has no professor": [
+"personne n'est prévenu : elle n'a pas de professeur",
+"لا أحد يُعلَم: ليس له أستاذ"
+],
+"nobody joined it since it was created": [
+"personne ne l'a rejointe depuis sa création",
+"لم ينضم إليه أحد منذ إنشائه"
+],
+"nobody joined it since it was created on": [
+"personne ne l'a rejointe depuis sa création le",
+"لم ينضم إليه أحد منذ إنشائه يوم"
+],
+"nobody left to follow it. Why": [
+"plus personne ne la suit. Pourquoi",
+"لم يبق أحد يتابعه. السبب"
+],
 "nobody yet": [
 "personne pour l'instant",
 "لا أحد بعد"
@@ -30199,6 +30427,10 @@
 "maintenant comme sur le site.",
 "الآن كما في الموقع."
 ],
+"now ends": [
+"se termine désormais le",
+"ينتهي الآن يوم"
+],
 "now follows": [
 "suit désormais",
 "يتابع الآن"
@@ -30378,6 +30610,14 @@
 "once, weekly, at each absence": [
 "une fois, chaque semaine, à chaque absence",
 "مرة، كل أسبوع، عند كل غياب"
+],
+"one class at a time, so they now join": [
+"une classe à la fois, il/elle rejoint donc",
+"قسم واحد في كل مرة، لذا ينضم الآن إلى"
+],
+"one class at a time, so they wait for a later one": [
+"une classe à la fois, il/elle attend donc une classe plus tard",
+"قسم واحد في كل مرة، لذا ينتظر قسما لاحقا"
 ],
 "one click to open it": [
 "un clic pour l'ouvrir",
@@ -30911,6 +31151,10 @@
 "inscrit à",
 "سجّل في"
 ],
+"registration cancelled": [
+"inscription annulée",
+"أُلغي التسجيل"
+],
 "registration(s) marked completed.": [
 "inscription(s) marquée(s) terminée(s).",
 "تسجيل(ات) مُعلّمة مكتملة."
@@ -30934,6 +31178,10 @@
 "reminders so far, the last on": [
 "rappels jusqu'ici, le dernier le",
 "تذكيرات حتى الآن، آخرها في"
+],
+"removed (nobody in it": [
+"supprimée (personne dedans",
+"حُذف (لا أحد فيه"
 ],
 "removed from the class.": [
 "retiré de la classe.",
@@ -31247,6 +31495,10 @@
 "étoiles en moyenne",
 "نجوم في المعدل"
 ],
+"starts": [
+"commence le",
+"يبدأ يوم"
+],
 "starts on": [
 "démarre le",
 "يبدأ في"
@@ -31258,6 +31510,14 @@
 "still due": [
 "encore dû",
 "ما زال مستحقا"
+],
+"still follows another class": [
+"suit encore une autre classe",
+"ما زال يتابع قسما آخر"
+],
+"still follows another class, which ends": [
+"suit encore une autre classe, qui se termine le",
+"ما زال يتابع قسما آخر ينتهي يوم"
 ],
 "still free": [
 "encore libres",
@@ -31795,6 +32055,10 @@
 "mécontents, sur",
 "غير راضين، من"
 ],
+"unless a candidate joins before.": [
+"sauf si un candidat la rejoint avant.",
+"إلا إذا انضم إليه مترشح قبل ذلك."
+],
 "unless its program gives its own hours.": [
 "sauf si sa formation donne ses propres heures.",
 "إلا إذا حدّد برنامجه ساعاته الخاصة."
@@ -31883,13 +32147,37 @@
 "devait démarrer",
 "كان من المفترض أن يبدأ"
 ],
+"was moved to": [
+"a été déplacé(e) vers",
+"نُقل إلى"
+],
+"was moved to another class": [
+"a été déplacé(e) vers une autre classe",
+"نُقل إلى قسم آخر"
+],
 "was not found.": [
 "est introuvable.",
 "غير موجود."
 ],
+"was removed by itself: a class never starts empty. Why": [
+"a été supprimée d'elle-même : une classe ne commence jamais vide. Pourquoi",
+"حُذف تلقائيا: لا يبدأ قسم فارغا أبدا. السبب"
+],
 "was removed from": [
 "a été retiré de",
 "أُخرج من"
+],
+"was removed from the candidates": [
+"a été retiré(e) des candidats",
+"حُذف من المترشحين"
+],
+"was taken out of the class": [
+"a été retiré(e) de la classe",
+"أُخرج من القسم"
+],
+"was told.": [
+"a été prévenu(e).",
+"تم إعلامه."
 ],
 "watch a video": [
 "regarder une vidéo",
@@ -32170,6 +32458,10 @@
 "write what you did about a feedback first (We listen).": [
 "écrivez d'abord ce que vous avez fait d'un avis (Nous écoutons).",
 "اكتب أولا ما فعلته برأي (نحن نسمع)."
+],
+"writes it all as one message.": [
+"écrit le tout en un seul message.",
+"يكتب الكل في رسالة واحدة."
 ],
 "writing": [
 "rédaction",

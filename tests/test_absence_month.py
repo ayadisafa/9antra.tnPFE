@@ -73,6 +73,13 @@ def professor(name, teaches=True):
     return row
 
 
+# These classes are made without candidates (what is looked at is their professor's sessions): the empty-class rule has
+# its own suite (test_empty_classes), so it does not end them here.
+from app.services import empty_classes
+
+empty_classes.sweep = lambda *args, **kwargs: {"removed": [], "ended": []}
+
+
 def group(name, who, first_day, hours=(9, 12), mode=None):
     row = ClassGroup(name=name, program_id=program.id, professor_id=who.id if who else None, professor_name=who.name if who else None,
                      status=ClassStatus.ONGOING, start_date=datetime.combine(first_day, dtime(hours[0], 0)), total_weeks=8,

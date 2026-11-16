@@ -259,6 +259,7 @@ def ensure_sqlite_compatibility():
             "delivery_mode": "VARCHAR",
             "meeting_url": "VARCHAR",
             "link_asked_at": "DATETIME",
+            "closed_note": "VARCHAR",
         },
 
         # Professors can be reached, and can be given a login.

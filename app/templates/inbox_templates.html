@@ -163,7 +163,7 @@
       <input class="form-control mb-3" id="template-title" name="title" maxlength="120" value="{{ current.title }}" placeholder="Leave empty to use the subject">
 
       <label class="form-label" for="template-body">Text</label>
-      <textarea class="form-control tp-body" id="template-body" name="body" required>{{ current.body }}</textarea>
+      <textarea class="form-control tp-body" id="template-body" name="body" required data-reword="text">{{ current.body }}</textarea>
       <div class="form-text">An empty line starts a new paragraph, lines starting with “-” become a list, **two stars** make bold. Your signature is added automatically.</div>
 
       {% if spec.details %}

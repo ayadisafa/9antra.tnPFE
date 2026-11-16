@@ -56,6 +56,8 @@ def plain_words(db: Session, request=None, model_ready: bool | None = None) -> l
                       f"{settings.min_start_notice_days} days later, on its first session day.", "ok"))
     else:
         lines.append((f"A new class starts {settings.default_class_start_days} days after it is created, on its first session day.", "ok"))
+    lines.append(("A class never runs empty: when its last candidate leaves it is removed (or ended, once running) by itself, "
+                  "and its professor is told why.", "ok"))
     chosen = parse_days(settings.default_session_days)
     days = ("every " + _days([DAY_LABELS_EN[day] for day in chosen])) if chosen else ""
     hours = _time(settings.default_session_start_time) + (f" to {_time(settings.default_session_end_time)}" if settings.default_session_end_time else "")

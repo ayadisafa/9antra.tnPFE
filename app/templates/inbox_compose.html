@@ -178,7 +178,7 @@
       <input class="form-control mb-3" id="compose-title" name="title" maxlength="120" value="{{ template.title if template and template.title else '' }}" placeholder="Leave empty to use the subject">
 
       <label class="form-label" for="compose-body">Message</label>
-      <textarea class="form-control cm-body" id="compose-body" name="body" required placeholder="Bonjour {first_name},&#10;&#10;…">{{ template.body if template else '' }}</textarea>
+      <textarea class="form-control cm-body" id="compose-body" name="body" required placeholder="Bonjour {first_name},&#10;&#10;…" data-reword="text">{{ template.body if template else '' }}</textarea>
       <div class="d-flex gap-2 flex-wrap mt-2" id="compose-squares">
         <button type="button" class="btn btn-sm btn-outline-secondary" data-square="[box]\n**Titre**\nVotre texte">Add a square</button>
         <button type="button" class="btn btn-sm btn-outline-secondary" data-square="[box gold]\n**À retenir**\nVotre texte">Gold square</button>

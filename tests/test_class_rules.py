@@ -58,27 +58,27 @@ check("the professors of Python are listed, exact speciality first", [p.name for
 check("nobody teaches BI today", es.teachers_of(db, bi) == [], [p.name for p in es.teachers_of(db, bi)])
 
 # ======================================================================
-# B. The classes of the real data: empty ones stop counting as running
+# B. The classes of the real data: an empty running class ends by itself (services/empty_classes.py)
 # ======================================================================
 before = {c.name: c.status for c in db.query(ClassGroup).all()}
 members_before = {c.name: es.enrolled_count(db, c.id) for c in db.query(ClassGroup).all()}
 check("two classes were running with nobody in them", [n for n, s in before.items() if s == ClassStatus.ONGOING and not members_before[n]] == ["P-20261001-2", "AIAC-20260923-1"] or
       sorted(n for n, s in before.items() if s == ClassStatus.ONGOING and not members_before[n]) == ["AIAC-20260923-1", "P-20261001-2"], before)
-held_before = notes("Class on hold")
+held_before = notes("Class ended early: nobody left")
 es.sync_class_lifecycle(db)
 db.expire_all()
 after = {c.name: c.status for c in db.query(ClassGroup).all()}
-check("an empty class is no longer running", after["P-20261001-2"] == ClassStatus.NOT_STARTED and after["AIAC-20260923-1"] == ClassStatus.NOT_STARTED, after)
+check("an empty running class ends by itself", after["P-20261001-2"] == ClassStatus.COMPLETED and after["AIAC-20260923-1"] == ClassStatus.COMPLETED, after)
 check("classes with candidates keep running, whoever teaches them", all(after[n] == ClassStatus.ONGOING for n in ("MD1", "MD-20260924-1", "WFSJNR-20260924-2", "P-20261001-1")), after)
-check("the admin is told once per class", notes("Class on hold") == held_before + 2, notes("Class on hold") - held_before)
+check("the admin is told once per class", notes("Class ended early: nobody left") == held_before + 2, notes("Class ended early: nobody left") - held_before)
 es.sync_class_lifecycle(db); es.sync_class_lifecycle(db)
-check("and not again every minute", notes("Class on hold") == held_before + 2 and notes("Class cannot start") <= 2, (notes("Class on hold"), notes("Class cannot start")))
+check("and not again every minute", notes("Class ended early: nobody left") == held_before + 2 and notes("Class cannot start") <= 2,
+      (notes("Class ended early: nobody left"), notes("Class cannot start")))
 told = notes("Class cannot start")
 es.sync_class_lifecycle(db)
 check("nor does the waiting notice repeat", notes("Class cannot start") == told)
 empty = by_name("P-20261001-2")
-summary = class_summary(empty, local_now())
-check("its card says it is on hold and why", summary["on_hold"] and "no candidate is enrolled" in summary["needs"], summary["needs"])
+check("its page says it ended early, and why", "Ended early on" in client.get(f"/classes/{empty.id}").text and "nobody left to follow it" in (empty.closed_note or ""))
 running = class_summary(by_name("MD-20260924-1"), local_now())
 check("a running class with another speciality's professor says so, without stopping", not running["on_hold"] and any("asma does not have Marketing Digital" in n for n in running["needs"]), running["needs"])
 
@@ -123,7 +123,7 @@ check("its page says nobody has this speciality yet", "No professor yet" in page
 answer = client.post(f"/classes/{empty.id}/start-now")
 check("an empty class cannot be started by hand", answer.status_code == 303 and "cannot start" in where(answer) and "no candidate is enrolled" in where(answer), where(answer))
 db.expire_all()
-check("and stays as it was", by_name("P-20261001-2").status == ClassStatus.NOT_STARTED)
+check("and stays as it was", by_name("P-20261001-2").status == ClassStatus.COMPLETED)
 
 # A class in order: a candidate, a professor of the speciality, a date in the future.
 person = Candidate(full_name="Rim Testeuse", email="rim.rules@example.com", phone="50 111 222"); db.add(person); db.flush()
@@ -139,11 +139,12 @@ answer = client.post(f"/classes/{ready.id}/start-now")
 db.expire_all()
 check("and can be started by hand", "Class started" in where(answer) and by_name("RULES-PY-1").status == ClassStatus.ONGOING, where(answer))
 
-# Its only candidate leaves: it is on hold again.
+# Its only candidate leaves: nobody follows it any more, it ends by itself (services/empty_classes.py).
 ready = by_name("RULES-PY-1")
 es.unassign_registration(db, db.get(Registration, reg.id))
 es.sync_class_lifecycle(db); db.expire_all()
-check("a running class that loses its last candidate goes on hold", by_name("RULES-PY-1").status == ClassStatus.NOT_STARTED)
+check("a running class that loses its last candidate ends by itself, saying why", by_name("RULES-PY-1").status == ClassStatus.COMPLETED
+      and "was taken out of the class" in (by_name("RULES-PY-1").closed_note or ""), by_name("RULES-PY-1").closed_note)
 
 # ======================================================================
 # E. Creating a class
@@ -220,14 +221,15 @@ check("editing replaces them", professor("Nour Formatrice").specialties == "Pyth
 page = client.get("/classes/")
 check("the classes page opens", page.status_code == 200, page.status_code)
 text = page.text
-check("it shows which classes are on hold and why", "On hold" in text and "Waiting: it cannot start" in text and "No candidate is enrolled" in text)
+check("it shows which classes are on hold and why (never for nobody: an empty class is removed or ended)", "On hold" in text
+      and "Waiting: it cannot start" in text and "No candidate is enrolled" not in text)
 check("it counts them", "On hold: cannot start" in text)
 professors_text = client.get("/professors").text
 check("specialities are ticked, not typed (on the professors' page)", 'name="programs" value="Python"' in professors_text and 'id="pf-programs"' in professors_text)
 check("the new class form names who waits", "Marketing Digital" in text and ("Nobody is waiting for a class" in text or "waiting</option>" in text))
 items = advisor.for_dashboard(db)
 titles = " | ".join(item.title for item in items)
-check("the dashboard says which classes have nobody", "no candidate" in titles, titles)
+check("the dashboard asks nothing about empty classes: they are removed or ended by themselves", "no candidate" not in titles, titles)
 check("and no longer says a class runs without candidates", "running without any candidate" not in titles)
 home = client.get("/")
 check("the dashboard opens", home.status_code == 200, home.status_code)

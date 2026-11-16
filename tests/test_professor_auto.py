@@ -162,12 +162,12 @@ check("deleted: its candidates are told who their new professor is", any(item[0]
 
 # ---- F. Nothing waits on the network while holding the database ----
 first = SessionLocal()
-row = first.get(ClassGroup, empty.id)
+row = first.get(ClassGroup, waiting.id)                # (a class with somebody in it: an empty one is removed by itself)
 row.room = "Salle réseau"
 first.flush()                                          # the write lock is taken...
 sms.send("50 000 000", "test")                         # ...and saved before the (unconfigured) phone is reached
 other = SessionLocal()
-check("network: what was changed is saved before waiting", other.get(ClassGroup, empty.id).room == "Salle réseau")
+check("network: what was changed is saved before waiting", other.get(ClassGroup, waiting.id).room == "Salle réseau")
 other.close()
 first.close()
 quiet = SessionLocal()

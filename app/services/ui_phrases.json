@@ -4218,5 +4218,189 @@
 "So nobody comes for nothing.": [
 "Pour que personne ne se déplace pour rien.",
 "حتى لا يأتي أحد بلا فائدة."
+],
+"week {0} of {1}": [
+"semaine {0} sur {1}",
+"الأسبوع {0} من {1}"
+],
+"Program": [
+"Formation",
+"البرنامج"
+],
+"Next session": [
+"Prochaine séance",
+"الحصة القادمة"
+],
+"Level": [
+"Niveau",
+"المستوى"
+],
+"Not answered yet": [
+"Pas encore répondu",
+"لم يجب بعد"
+],
+"Answers best by": [
+"Répond le mieux par",
+"يجيب أفضل عبر"
+],
+"May drop out ({0}/100): {1}": [
+"Risque d'abandon ({0}/100) : {1}",
+"قد ينقطع ({0}/100): {1}"
+],
+"With us since {0}": [
+"Avec nous depuis le {0}",
+"معنا منذ {0}"
+],
+"last message {0}": [
+"dernier message le {0}",
+"آخر رسالة يوم {0}"
+],
+"Say you are sorry": [
+"S'excuser",
+"الاعتذار"
+],
+"Answer their thanks": [
+"Répondre à ses remerciements",
+"الرد على شكره"
+],
+"We missed them": [
+"Il/elle nous a manqué",
+"افتقدناه"
+],
+"When it starts": [
+"Quand elle commence",
+"متى يبدأ"
+],
+"Their next session": [
+"Sa prochaine séance",
+"حصته القادمة"
+],
+"Their questions wait": [
+"Ses questions l'attendent",
+"أسئلته في انتظاره"
+],
+"Offer help with the hard parts": [
+"Proposer de l'aide sur les points difficiles",
+"عرض المساعدة في النقاط الصعبة"
+],
+"Say bravo": [
+"Dire bravo",
+"قول أحسنت"
+],
+"Their payment is received": [
+"Son paiement est bien reçu",
+"تم استلام دفعته"
+],
+"What is left to pay": [
+"Ce qui reste à payer",
+"ما تبقى للدفع"
+],
+"How to register": [
+"Comment s'inscrire",
+"كيفية التسجيل"
+],
+"Offer a call": [
+"Proposer un appel",
+"عرض مكالمة"
+],
+"We come back to you": [
+"Nous revenons vers vous",
+"سنعود إليك"
+],
+"Beginner": [
+"Débutant",
+"مبتدئ"
+],
+"Has the bases": [
+"Bases acquises",
+"يملك الأساسيات"
+],
+"Intermediate": [
+"Intermédiaire",
+"متوسط"
+],
+"Advanced": [
+"Avancé",
+"متقدم"
+],
+"Frustrated, angry": [
+"Frustré(e), en colère",
+"محبط، غاضب"
+],
+"Disappointed": [
+"Déçu(e)",
+"خائب الأمل"
+],
+"Worried": [
+"Inquiet / inquiète",
+"قلق"
+],
+"Confused": [
+"Perdu(e)",
+"حائر"
+],
+"In a hurry": [
+"Pressé(e)",
+"مستعجل"
+],
+"it wrote {0}, which is not in your words": [
+"il a écrit {0}, qui n'est pas dans vos mots",
+"كتب {0}، وهو ليس في كلماتك"
+],
+"it lost {0}": [
+"il a perdu {0}",
+"أضاع {0}"
+],
+"it added {0}": [
+"il a ajouté {0}",
+"أضاف {0}"
+],
+"Check before sending: {0}.": [
+"Vérifiez avant d'envoyer : {0}.",
+"تحقق قبل الإرسال: {0}."
+],
+"The rewording lost a web link, so your own words are kept.": [
+"La reformulation a perdu un lien web : vos propres mots sont gardés.",
+"أضاعت إعادة الصياغة رابطا، لذلك بقيت كلماتك."
+],
+"The writer did not answer just now: your words are as they were. Try again in a moment.": [
+"Le rédacteur n'a pas répondu pour l'instant : vos mots sont restés tels quels. Réessayez dans un moment.",
+"لم يجب المحرر الآن: بقيت كلماتك كما هي. حاول بعد قليل."
+],
+"Writing agent": [
+"Agent de rédaction",
+"وكيل الكتابة"
+],
+"Writes and sends your messages, said any way and in any language (“write to Ahmed winik”): to the right person, reworded, every figure checked.": [
+"Écrit et envoie vos messages, dits de n'importe quelle façon et dans n'importe quelle langue (« écris à Ahmed winik ») : à la bonne personne, reformulés, chaque chiffre vérifié.",
+"يكتب رسائلك ويرسلها، مهما كانت طريقة قولها ولغتها («اكتب لأحمد وينك»): إلى الشخص الصحيح، معاد صياغتها، مع التحقق من كل رقم."
+],
+"The candidates, professors and team": [
+"Les candidats, les formateurs et l'équipe",
+"المترشحون والأساتذة والفريق"
+],
+"The page you are on": [
+"La page où vous êtes",
+"الصفحة التي أنت فيها"
+],
+"What you just talked about": [
+"Ce dont vous venez de parler",
+"ما تحدثتما عنه للتو"
+],
+"An order to write to someone, said any way: who it is for (asked, one tap each, when several people have the name), what to say, reworded, then sent.": [
+"Une demande d'écrire à quelqu'un, dite de n'importe quelle façon : pour qui (demandé, un appui par personne, quand plusieurs ont ce nom), quoi dire, reformulé, puis envoyé.",
+"طلب الكتابة إلى شخص، مهما كانت صيغته: لمن (يُسأل بنقرة لكل شخص عندما يحمل عدة أشخاص الاسم نفسه)، وماذا يُقال، بعد إعادة الصياغة، ثم الإرسال."
+],
+"Waiting for your eye: {0}.": [
+"En attente de votre lecture : {0}.",
+"في انتظار قراءتك: {0}."
+],
+"nothing came back": [
+"rien n'est revenu",
+"لم يعد شيء"
+],
+"it is not written in the language chosen": [
+"il n'est pas écrit dans la langue choisie",
+"ليس مكتوبا باللغة المختارة"
 ]
 }

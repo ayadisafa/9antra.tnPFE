@@ -84,6 +84,9 @@ AGENTS = {
     "reader": {"name": "Questions agent", "icon": "bi-stars", "colour": "#2563eb",
                "does": "Any question, in any wording or language: understood by the cloud model, answered only from the application's records, every figure checked.",
                "reads": ["What the other agents read, through fixed lookups", "Nothing else: it never answers from memory"]},
+    "writer": {"name": "Writing agent", "icon": "bi-pencil-square", "colour": "#c026d3",
+               "does": "Writes and sends your messages, said any way and in any language (“write to Ahmed winik”): to the right person, reworded, every figure checked.",
+               "reads": ["The candidates, professors and team", "The page you are on", "What you just talked about"]},
     "general": {"name": "General agent", "icon": "bi-chat-dots", "colour": "#6b7280",
                 "does": "Everything else.",
                 "reads": ["What you taught the assistants"]},
@@ -192,6 +195,7 @@ STEPS = {
     "guide": ("bi-signpost-split", "Guide agent", "For a team member without the whole assistant: how to do things here, for what they may do."),
     "system": ("bi-sliders2", "System agent", "Changes a setting when you ask, and undoes it."),
     "summary": ("bi-text-paragraph", "Summary agent", "Sums up what you name (a candidate, a class, the day, the page…) in a few lines."),
+    "write": ("bi-pencil-square", "Writing agent", "An order to write to someone, said any way: who it is for (asked, one tap each, when several people have the name), what to say, reworded, then sent."),
     "keep": ("bi-person-heart", "Follow-up agent", "Who may drop out, why, and what to do for each."),
     "cases": ("bi-signpost-split", "What to do when…", "A professor absent, a candidate who has not paid, a missing link…: what the application does by itself, what is left to you."),
     "review": ("bi-question-circle", "Why it answered", "Why the email assistant answered someone that way, and putting it right."),
@@ -225,6 +229,10 @@ def first_step(db: Session, message: str, user, agent: str, *, limited: bool = F
 
         if summarize.wants(message):              # "résume…": a candidate, a class, the day, the page, a text, her last answer
             return "summary"
+        from app.services import chatbot_send
+
+        if chatbot_send.wants(db, message, user):  # "write to ahmed winik", "ekteb l fares …", or which Ahmed she asked about
+            return "write"
         if keep_them.wants(message):              # someone may drop out: who, why, and what to do
             return "keep"
         if cases.wants(message):                  # "a professor is absent, what do I do?": what is done by itself, what is left
@@ -271,7 +279,10 @@ def _read(state: _Request, runtime) -> dict:
     # Only the question goes on (the greeting around it is answered in a word, at the end). Tunisian and Arabic are not
     # "put right": their words are not misspelt French ("khallas" is not "khlas").
     asked = social["question"] if social["kinds"] else state["message"]
-    message, fixes = (asked, []) if social["lang"] in ("tn", "ar") else spelling.correct(asked)
+    from app.services import chatbot_send
+
+    # An order to write keeps its words as said: they are the message ("winik" is not a misspelt word).
+    message, fixes = (asked, []) if social["lang"] in ("tn", "ar") or chatbot_send.looks_like_order(asked) else spelling.correct(asked)
     routed = route(message, asker.user)
     agent = routed["agent"]["key"]
     return {"message": message, "fixes": fixes, "routed": routed, "agent": agent, "limited": asker.limited,
@@ -351,7 +362,8 @@ def _summary(state: _Request, runtime) -> dict:
 
 # Asking the application to do something (send, remind, write, register, export, a PDF, remember…): its own rules do it.
 _ACTION = re.compile(r"^\s*(?:please\s+|svp\s+|stp\s+|yasmine\s*,?\s*)?(?:send|envoie|envoyez|envoyer|renvoie|ab3ath|ab3th|abath|3awed|remind|rappelle|"
-                     r"write|[ée]cris|register|inscris|export|exporte|retiens|remember|mail|email|whatsapp|sms)\b|\bpdf\b|"
+                     r"write|[ée]cris|register|inscris|export|exporte|retiens|remember|mail|email|whatsapp|sms|[ei]?kteb\w*)\b|"
+                     r"^\s*(?:اكتب|أكتب|ابعث|إبعث|أرسل|ارسل)|\bpdf\b|"
                      r"\b(?:nheb|nhib|n7eb|bghit|je veux|i want to)\s+(?:n(?:eb3ath|ab3ath|eb3th)|envoyer|send|[ée]crire|write)\b", re.IGNORECASE)
 
 
@@ -401,6 +413,32 @@ def _cloud(state: _Request, runtime) -> dict:
             "found": {"reply": found["reply"], "links": links, "source": "cloud", "resources": [], "scene": places[0][2] if places else "data",
                       "sources": sources, "facts": found.get("facts") or {}, "language": found.get("language"),
                       "options": found.get("options") or []}}
+
+
+def _write(state: _Request, runtime) -> dict:
+    """An order to write to someone: who (the page, a moment ago, or one tap each), what (reworded), then sent."""
+    from app.services import chatbot, chatbot_send
+
+    asker = runtime.context
+    user = asker.user
+    may_send = getattr(user, "is_admin", False) or (getattr(user, "permissions", None) or {}).get("assistant") == "edit"
+    fr = asker.chosen != "en" if asker.chosen else chatbot._french(state["message"]) or asker.lang in ("fr", "ar", "tn")
+    found = chatbot_send.handle(asker.db, state["message"], fr, author=getattr(user, "name", None) or "Admin", allowed=bool(may_send),
+                                user=user, history=asker.history, path=asker.path)
+    return {"agent": "writer", "found": found, "path": ["write"]}
+
+
+def _after_write(state: _Request) -> str:
+    """Not an order after all: the cloud reader when it may take it, else the program's agent or the tools, as before."""
+    if state.get("found") is not None:
+        return "finish"
+    from app.services import chatbot_send
+
+    if chatbot_send.document_order(state["message"]):
+        return "tools"                  # a program's PDF to send: made by the tools (chatbot_actions.document)
+    if _for_the_reader(state["message"]):
+        return "cloud"
+    return "program" if state["agent"] in _PROGRAM_SUBJECTS else "tools"
 
 
 def _keep(state: _Request, runtime) -> dict:
@@ -586,13 +624,14 @@ def graph():
             from langgraph.graph import END, START, StateGraph
 
             builder = StateGraph(_Request, context_schema=_Asker)
-            for name, step in (("read", _read), ("talk", _talk), ("page", _page), ("go", _go), ("abilities", _abilities), ("recall", _recall), ("summary", _summary), ("keep", _keep), ("cases", _cases), ("cloud", _cloud), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
+            for name, step in (("read", _read), ("talk", _talk), ("page", _page), ("go", _go), ("abilities", _abilities), ("recall", _recall), ("summary", _summary), ("write", _write), ("keep", _keep), ("cases", _cases), ("cloud", _cloud), ("professor", _professor), ("guide", _guide), ("system", _system), ("review", _review),
                                ("set_aside", _set_aside), ("marketing", _marketing), ("trends", _trends),
                                ("program", _program), ("tools", _tools), ("consult", _consult), ("finish", _finish)):
                 builder.add_node(name, step)
             builder.add_edge(START, "read")
             builder.add_conditional_edges("read", lambda state: state["to"],
-                                          ["talk", "page", "go", "abilities", "recall", "summary", "keep", "cases", "cloud", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
+                                          ["talk", "page", "go", "abilities", "recall", "summary", "write", "keep", "cases", "cloud", "professor", "guide", "system", "review", "set_aside", "marketing", "trends", "program", "tools"])
+            builder.add_conditional_edges("write", _after_write, ["cloud", "program", "tools", "finish"])
             for name in ("professor", "system", "review", "set_aside", "cloud", "marketing", "trends"):
                 builder.add_conditional_edges(name, _after, ["program", "tools", "consult", "finish"])
             builder.add_conditional_edges("program", _after, ["tools", "consult", "finish"])

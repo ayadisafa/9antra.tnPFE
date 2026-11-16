@@ -93,8 +93,11 @@ def reword(words: str, first_name: str = "", language: str = "fr") -> dict | Non
         text = str((found or {}).get("message") or "").strip()
         if not text:
             return None
-        lost = [number for number in _numbers(words) if number not in _numbers(text)]
-        added = [number for number in _numbers(text) if number not in _numbers(words)]
+        from app.services.rewording import figures
+
+        # Hours count (“9h”); the digits of Tunisian words (“m3a”) do not.
+        lost = [number for number in set(figures(words)) if number not in figures(text)]
+        added = [number for number in set(figures(text)) if number not in figures(words)]
         links = [link for link in _LINK.findall(text) if link.rstrip(".,)") not in words]
         problem = ("a figure that is not in your words" if added else "a figure of your words missing" if lost
                    else "a link that is not in your words" if links else None)

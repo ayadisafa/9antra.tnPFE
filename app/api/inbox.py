@@ -253,6 +253,19 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
             item for item in selected.candidate.registrations
             if item.status != RegistrationStatus.CANCELLED
         ][:4]
+    help_for = None
+    if selected is not None and selected.candidate is not None:
+        # Before answering: who they are, or what to say (from their last message in this discussion).
+        from app.services import discussion_help
+
+        last_in = pending or next((message for message in reversed(selected.messages) if message.direction == "inbound"), None)
+        try:
+            help_for = discussion_help.for_discussion(db, selected.candidate, last_in)
+        except Exception:
+            import logging
+
+            logging.getLogger(__name__).exception("The help for the discussion with %s could not be worked out", selected.candidate_id)
+            help_for = None
 
     counts = {
         "todo": waiting,
@@ -309,6 +322,7 @@ def inbox_page(request: Request, db: Session = Depends(get_db)):
             "draft_files": [email_files.describe(file) for file in email_files.load(db, pending_sources.get("files"))] if pending and pending.suggested_reply else [],
             "learn_default": bool(pending and pending.intent not in email_assistant.PERSONAL_INTENTS),
             "registrations": registrations,
+            "help": help_for,
             "kpis": email_assistant.inbox_kpis(db),
             "knowledge": knowledge_service.stats(db),
             "mode": email_assistant.mode_of(settings),
@@ -418,15 +432,18 @@ def reply(
         last_inbound = (db.query(CandidateEmail).filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
                         .order_by(CandidateEmail.received_at.desc()).first())
         name = (thread.candidate.full_name or "").split() if thread.candidate else []
-        written = reply_writer.reformulate(body, first_name=name[0].capitalize() if name else "",
-                                           question=(last_inbound.body or "") if last_inbound else "", language=reword_language or None)
+        from app.services import rewording
+
+        written = rewording.for_reply(body, first_name=name[0].capitalize() if name else "",
+                                      question=(last_inbound.body or "") if last_inbound else "", language=reword_language or None, db=db,
+                                      recipient=thread.candidate.full_name if thread.candidate else "")
         if written is None:
             return _redirect("/inbox", thread=thread_id, draft=body[:1500], as_is="1",
                              error="The assistant did not answer, so nothing was sent: your words are back in the box. "
                                    "“Send answer” now sends them as they are.")
-        if written.get("warning"):
+        if not written.get("ready"):
             return _redirect("/inbox", thread=thread_id, draft=written["reply"][:1500], as_is="1",
-                             error="Not sent: read the reworded answer first. " + written["warning"]
+                             error="Not sent: read the reworded answer first. " + (written.get("warning") or "")
                                    + " “Send answer” now sends what is in the box, as it is.")
         body = written["reply"]
     from app.services import derja
@@ -541,8 +558,12 @@ class Phrase(BaseModel):
 
 @router.post("/thread/{thread_id}/reformulate")
 def reformulate(thread_id: str, payload: Phrase, db: Session = Depends(get_db)):
-    """Write the admin's short phrase as a complete reply. Nothing is sent."""
+    """Write the admin's short phrase as a complete reply, and say whether it may go by itself ("ready": well reworded).
+    Nothing is sent here: with “Reword and send at once” on, the page sends it when ready."""
     thread = _thread_or_404(db, thread_id)
+    if _drafted_by_system(db, thread, payload.text):
+        # The system's own draft (perhaps touched up) is already an email: it goes as it is, never reworded.
+        return {"reply": payload.text, "warning": None, "ready": True, "why": [], "kept": True}
     last_inbound = (
         db.query(CandidateEmail)
         .filter(CandidateEmail.thread_id == thread.id, CandidateEmail.direction == "inbound")
@@ -550,11 +571,15 @@ def reformulate(thread_id: str, payload: Phrase, db: Session = Depends(get_db)):
         .first()
     )
     name = (thread.candidate.full_name or "").split() if thread.candidate else []
-    written = reply_writer.reformulate(
+    from app.services import rewording
+
+    written = rewording.for_reply(
         payload.text,
         first_name=name[0].capitalize() if name else "",
         question=(last_inbound.body or "") if last_inbound else "",
         language=payload.language,
+        db=db,
+        recipient=thread.candidate.full_name if thread.candidate else "",
     )
     if written is None:
         return JSONResponse(

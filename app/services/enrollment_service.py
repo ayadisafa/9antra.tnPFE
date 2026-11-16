@@ -25,6 +25,7 @@ from app.models.professor import Professor
 from app.models.program import Program, ProgramLevel
 from app.models.registration import PaymentStatus, Registration, RegistrationStatus
 from app.services import class_emails, email_templates
+from app.services import empty_classes          # writes down who leaves a class, and why
 from app.services.background import run_in_background
 from app.services.schedule_utils import (
     class_end_dt,
@@ -803,6 +804,8 @@ def refresh_class_status(db: Session, class_group: ClassGroup, now: datetime | N
         held = hold_reasons(class_group, len(members))
     if held:
         target, week = ClassStatus.NOT_STARTED, 0
+    if not members:
+        announce = False          # an empty class is removed or ended by empty_classes, which says why
 
     if class_group.current_week != week:
         class_group.current_week = week
@@ -886,6 +889,8 @@ def sync_class_lifecycle(db: Session) -> int:
     newly_scheduled: list[str] = []
     with _lifecycle_lock:
         now = local_now()
+        gone = empty_classes.sweep(db, now)            # nobody in it: removed (not started) or ended (running)
+        changed += len(gone["removed"]) + len(gone["ended"])
         given = assign_waiting_professors(db)          # a class waiting for a professor takes the first one who can
         changed += len(given)
         for class_group in db.query(ClassGroup).populate_existing().all():
@@ -1299,12 +1304,13 @@ def keep_one_at_a_time(db: Session, candidate_ids=None, now: datetime | None = N
                 continue
             # It would start while they still follow the first: out of it, then placed again after the first ends.
             old = group
-            later.class_group_id, later.class_group, later.status = None, None, RegistrationStatus.PENDING
-            later.training_start_date = later.training_end_date = None
-            plan_reminders(db, later, None)
-            db.add(Activity(candidate_id=later.candidate_id, event_type="CLASS_MOVED",
-                            details=f"Moved out of {old.name}: their class before it now ends {format_date_en(ends)}."))
-            db.commit()
+            with empty_classes.because("one_class", ends.date().isoformat()):
+                later.class_group_id, later.class_group, later.status = None, None, RegistrationStatus.PENDING
+                later.training_start_date = later.training_end_date = None
+                plan_reminders(db, later, None)
+                db.add(Activity(candidate_id=later.candidate_id, event_type="CLASS_MOVED",
+                                details=f"Moved out of {old.name}: their class before it now ends {format_date_en(ends)}."))
+                db.commit()
             result = enroll_paid_registration(db, later)
             target = result.class_group
             _notify(db, category="ASSIGNMENT", title="Moved to a later class · one class at a time",

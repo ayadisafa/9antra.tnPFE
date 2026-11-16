@@ -78,7 +78,7 @@
           <option value="">Choose the program</option>
           {% for program in askable %}<option value="{{ program.id }}">{{ program.name }}</option>{% endfor %}
         </select>
-        <textarea name="note" rows="2" maxlength="600" class="form-control form-control-sm" placeholder="Why you can teach it (your experience), if you wish"></textarea>
+        <textarea name="note" rows="2" maxlength="600" class="form-control form-control-sm" placeholder="Why you can teach it (your experience), if you wish" data-reword="text"></textarea>
         <button class="ui-btn sm primary justify-self-start" style="justify-self:start;"><i class="bi bi-send"></i>Ask the admin</button>
       </form>
       {% endif %}

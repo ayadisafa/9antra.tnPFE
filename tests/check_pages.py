@@ -41,6 +41,9 @@ auth.create_user(db, email="admin@test.local", name="Page check", password="page
 client = TestClient(main.app, follow_redirects=False)
 client.post("/login", data={"email": "admin@test.local", "password": "page-check-1"})
 
+from app.services.enrollment_service import sync_class_lifecycle
+
+sync_class_lifecycle(db)            # as the server does every minute (an empty class is removed or ended) before listing them
 programs = db.query(Program).all()
 classes = db.query(ClassGroup).all()
 paths = ["/", "/candidate/all", "/classes/", "/programs/all", "/quiz/all", "/inbox", "/payments", "/website", "/settings", "/system",

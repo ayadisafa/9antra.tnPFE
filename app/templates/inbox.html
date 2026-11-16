@@ -6,6 +6,42 @@
 
 {% block content %}
 <style>
+  /* Before answering: about the candidate, or what to say (one of the two, chosen and remembered) */
+  .ix-help { border:1px solid var(--border-color); border-radius:16px; background:linear-gradient(180deg, #fdfbff, #fff); padding:10px 12px; margin-bottom:12px; }
+  .ix-help-tabs { display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .ix-help-tab { display:inline-flex; align-items:center; gap:6px; border:1px solid var(--border-color); background:#fff; color:#5b5470; border-radius:999px; padding:4px 12px; font-size:.78rem; font-weight:700; transition:background .2s ease, color .2s ease, border-color .2s ease; }
+  .ix-help-tab b { color:inherit; }
+  .ix-help-tab em { font-style:normal; background:var(--berry-subtle, #fdf2f7); color:var(--primary-berry); border-radius:999px; padding:0 7px; font-size:.7rem; }
+  .ix-help-hide { margin-inline-start:auto; border:0; background:none; color:#85809c; padding:2px 6px; border-radius:8px; transition:transform .25s ease; }
+  .ix-help-pane { display:none; margin-top:10px; }
+  body[data-ixhelp="about"] .ix-help-tab[data-ix-help="about"], body[data-ixhelp="say"] .ix-help-tab[data-ix-help="say"] { background:var(--primary-berry); border-color:var(--primary-berry); color:#fff; }
+  body[data-ixhelp="say"] .ix-help-tab[data-ix-help="say"] em { background:#fff; }
+  body[data-ixhelp="about"] .ix-help-pane[data-pane="about"], body[data-ixhelp="say"] .ix-help-pane[data-pane="say"] { display:block; animation:ixHelpIn .28s ease both; }
+  body[data-ixhelp="off"] .ix-help-hide { transform:rotate(180deg); }
+  @keyframes ixHelpIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:none; } }
+  .ix-help-programs { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:8px; }
+  .ix-help-tiles { display:grid; grid-template-columns:repeat(auto-fill, minmax(118px, 1fr)); gap:6px; }
+  .ix-help-tile { display:grid; grid-template-columns:auto 1fr; column-gap:6px; align-items:center; border-radius:12px; padding:6px 9px; background:#f8f6fc; font-size:.74rem; animation:ixHelpIn .3s ease both; animation-delay:calc(var(--i, 0) * 40ms); }
+  .ix-help-tile i { grid-row:span 2; font-size:1rem; color:#7c6f99; }
+  .ix-help-tile .ix-help-label { color:#85809c; line-height:1.2; }
+  .ix-help-tile b { color:var(--ink-text); font-size:.84rem; line-height:1.25; }
+  .ix-help-tile small { grid-column:2; color:#85809c; font-size:.68rem; line-height:1.2; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ix-help-tile.is-ok { background:#effaf3; } .ix-help-tile.is-ok i { color:#15803d; }
+  .ix-help-tile.is-bad { background:#fdf0f0; } .ix-help-tile.is-bad i { color:#b91c1c; }
+  .ix-help-tile.is-warn { background:#fdf8ec; } .ix-help-tile.is-warn i { color:#b45309; }
+  .ix-help-note { display:flex; gap:7px; align-items:flex-start; font-size:.76rem; color:#5b5470; margin-top:7px; }
+  .ix-help-note.is-bad i { color:#b91c1c; } .ix-help-note.is-warn i { color:#b45309; } .ix-help-note.is-muted { color:#85809c; }
+  .ix-help-none { font-size:.8rem; color:#85809c; display:flex; gap:7px; align-items:center; }
+  .ix-help-more { display:inline-flex; gap:5px; align-items:center; margin-top:8px; font-size:.76rem; font-weight:700; color:var(--primary-berry); text-decoration:none; }
+  .ix-help-hint { font-size:.76rem; color:#85809c; margin-bottom:7px; }
+  .ix-help-says { display:grid; gap:6px; }
+  .ix-say { display:grid; gap:2px; text-align:start; border:1px dashed color-mix(in srgb, var(--primary-berry) 40%, transparent); background:#fff; border-radius:12px; padding:7px 10px; transition:transform .15s ease, border-color .15s ease, background .2s ease; animation:ixHelpIn .3s ease both; animation-delay:calc(var(--i, 0) * 45ms); }
+  .ix-say:hover { transform:translateX(3px); border-style:solid; }
+  .ix-say-label { display:flex; gap:6px; align-items:center; font-size:.76rem; font-weight:800; color:var(--primary-berry); }
+  .ix-say-text { font-size:.8rem; color:#5b5470; line-height:1.35; }
+  .ix-say.is-used { background:#effaf3; border-color:#86efac; border-style:solid; }
+  .ix-say.is-used .ix-say-label, .ix-say.is-used .ix-say-label i { color:#15803d; }
+  @media (prefers-reduced-motion: reduce) { .ix-help-pane, .ix-help-tile, .ix-say { animation:none !important; } }
   .ix-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
   .ix-kpi { background: #fff; border: 1px solid var(--border-color); border-radius: 18px; padding: 16px 18px; text-decoration: none; display: block; }
   a.ix-kpi:hover { border-color: var(--primary-berry); }
@@ -48,7 +84,7 @@
   .ix-further-looked { margin-top:8px; font-size:.72rem; color:#8a7a55; }
   .ix-tell { margin-top:8px; } .ix-tell label { font-weight:800; font-size:.76rem; display:block; margin-bottom:4px; }
   .ix-tell-row { display:flex; gap:6px; flex-wrap:wrap; } .ix-tell-row input { flex:1 1 220px; min-width:0; }
-  .ix-context .ix-chip { white-space:normal; max-width:100%; }     /* a long program name wraps inside its chip */
+  .ix-help-programs .ix-chip { display:inline-block; white-space:normal; max-width:100%; text-decoration:none; line-height:1.45; }     /* a long program name wraps inside its chip, as text */
   .ix-card { background: #fff; border: 1px solid var(--border-color); border-radius: 20px; }
 
   .ix-filters { display: flex; flex-wrap: wrap; gap: 6px; padding: 14px 14px 10px; }
@@ -84,8 +120,6 @@
   .ix-head h5 { font-weight: 800; color: var(--ink-text); }
   .ix-head-name { font-weight: 700; color: var(--ink-text); text-decoration: none; }
   .ix-head-name:hover { color: var(--primary-berry); }
-  .ix-context { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .ix-context a { text-decoration: none; }
 
   .ix-messages { padding: 20px 22px; max-height: 58vh; overflow-y: auto; background: #fcfafd; }
   .ix-msg { max-width: 82%; margin-bottom: 16px; }
@@ -454,18 +488,7 @@
            title="Every email exchanged with this candidate: payments, class, reminders, quizzes, questions and answers">Everything with {{ first_name }}<span class="n">{{ history_count }}</span></a>
       </div>
       {% endif %}
-      {% if registrations %}
-      <div class="ix-context">
-        {% for registration in registrations %}
-        {% set paid = registration.payment_status.value if registration.payment_status else "unpaid" %}
-        <a href="/classes/registration/{{ registration.id }}" class="ix-chip {{ 'ok' if paid == 'paid' else 'todo' }}" title="Open this registration">
-          {{ registration.program.name if registration.program else registration.program_name or "Program" }}
-          · {{ "paid" if paid == "paid" else ("%.0f DT left" | format(registration.remaining_amount)) }}
-          {% if registration.class_group %}· {{ registration.class_group.name }}{% endif %}
-        </a>
-        {% endfor %}
-      </div>
-      {% endif %}
+      {# The candidate's programs, payments and class are in "About" above the answer (_discussion_help.html): said once. #}
     </div>
 
     <div class="ix-messages" id="live-inbox-messages" data-live-region>
@@ -584,7 +607,8 @@
         <details class="ix-correct" {{ 'open' if message.admin_score == -1 }}>
           <summary>Correct it: write the right answer, the assistant learns it</summary>
           <form method="post" action="/inbox/message/{{ message.id }}/correct">
-            <textarea class="form-control" name="answer" rows="3" required placeholder="The right answer, as you would write it to the candidate">{{ message.body }}</textarea>
+            <textarea class="form-control" name="answer" rows="3" required placeholder="The right answer, as you would write it to the candidate"
+                      data-reword="message" data-reword-name="{{ (selected.candidate.full_name or '').split(' ')[0] }}">{{ message.body }}</textarea>
             <label class="small mt-1 d-block"><input type="checkbox" name="send" value="true"> Also send it to {{ selected.candidate.full_name or "the candidate" }} now{{ ' on WhatsApp' if selected.channel == 'whatsapp' }}</label>
             <button class="ui-btn sm primary mt-2"><i class="bi bi-mortarboard"></i>Teach it</button>
           </form>
@@ -686,7 +710,8 @@
       </div>
       {% endif %}
 
-      <form method="post" action="/inbox/thread/{{ selected.id }}/reply" id="reply-form">
+      {% if help %}{% include "_discussion_help.html" %}{% endif %}
+      <form method="post" action="/inbox/thread/{{ selected.id }}/reply" id="reply-form" class="{{ 'is-auto' if reword_default }}">
         {% if request.query_params.get('as_is') %}<input type="hidden" name="as_is" value="true">{% endif %}
         <label class="form-label fw-bold small mb-1" for="reply-body">
           {% if pending and pending.suggested_reply %}Draft prepared by the system — edit it or replace it
@@ -696,23 +721,48 @@
         <textarea class="form-control" id="reply-body" name="body" rows="{{ 8 if pending else 4 }}" required
                   placeholder="Bonjour… (or a few words, even in Tunisian)">{{ request.query_params.get('draft') or (pending.suggested_reply if pending and pending.suggested_reply else "") }}</textarea>
         <div class="d-flex flex-wrap align-items-center gap-2 mt-2">
-          <button type="button" class="btn btn-sm btn-light border rounded-pill fw-semibold" id="reformulate-btn" data-url="/inbox/thread/{{ selected.id }}/reformulate"
+          <button type="button" class="btn btn-sm btn-light border rounded-pill fw-semibold ix-reword-btn" id="reformulate-btn" data-url="/inbox/thread/{{ selected.id }}/reformulate"
                   {% if not model_ready %}disabled title="The assistant is not running right now"{% endif %}>
-            <i class="bi bi-stars me-1" style="color:var(--primary-berry);"></i>Reformulate
+            <i class="bi bi-stars me-1" style="color:var(--primary-berry);"></i><span class="ix-when-manual">Reformulate</span><span class="ix-when-auto">Reword and send</span>
           </button>
           {% set reply_lang = 'en' if pending and pending.language == 'en' else 'fr' %}
           <select class="form-select form-select-sm rounded-pill" id="reformulate-lang" name="reword_language" style="width:auto;" aria-label="Language of the reworded answer">
             <option value="fr" {{ 'selected' if reply_lang == 'fr' }}>in French</option>
             <option value="en" {{ 'selected' if reply_lang == 'en' }}>in English</option>
           </select>
+          <label class="ix-auto" title="It goes by itself only when it is well reworded: every figure, link and name of your words kept, nothing added, written in the language chosen. Otherwise it waits in the box and says why.">
+            <input type="checkbox" name="reword" value="true" id="reword-send" {{ 'checked' if reword_default }}>
+            <span class="ix-auto-switch" aria-hidden="true"></span><span>Send by itself when well reworded</span>
+          </label>
           <button type="button" class="btn btn-sm btn-link text-decoration-none p-0 d-none" id="reformulate-undo">Put my words back</button>
-          <span class="small text-muted" id="reformulate-status">A few words are enough, even in Tunisian: Reformulate writes the email.</span>
         </div>
+        <div class="ix-going" id="reword-going" hidden>
+          <span class="ix-going-bar" aria-hidden="true"><i></i></span>
+          <i class="bi bi-check2-circle" aria-hidden="true"></i><span><b>Well reworded</b> · <span>it goes by itself in</span> <b data-going-left>3</b> s</span>
+          <button type="button" id="reword-stop"><i class="bi bi-pause-fill" aria-hidden="true"></i>Stop</button>
+        </div>
+        <div class="small text-muted mt-1" id="reformulate-status"><span class="ix-when-manual">A few words are enough, even in Tunisian: Reformulate writes the email.</span><span class="ix-when-auto">A few words are enough, even in Tunisian: they are reworded, then go by themselves when well reworded.</span></div>
+        <style>
+          #reply-form:not(.is-auto) .ix-when-auto, #reply-form.is-auto .ix-when-manual { display:none; }
+          #reply-form.is-auto .ix-reword-btn { background:var(--primary-berry); border-color:var(--primary-berry) !important; color:#fff; }
+          #reply-form.is-auto .ix-reword-btn i { color:#fff !important; }
+          .ix-auto { display:inline-flex; align-items:center; gap:7px; font-size:.78rem; font-weight:700; color:#5b5470; cursor:pointer; margin:0; }
+          .ix-auto input { position:absolute; opacity:0; width:1px; height:1px; }
+          .ix-auto-switch { width:30px; height:17px; border-radius:999px; background:#d9d3e6; position:relative; flex:none; transition:background .2s ease; }
+          .ix-auto-switch::after { content:""; position:absolute; top:2px; left:2px; width:13px; height:13px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.2); transition:transform .2s ease; }
+          .ix-auto input:checked + .ix-auto-switch { background:var(--primary-berry); }
+          .ix-auto input:checked + .ix-auto-switch::after { transform:translateX(13px); }
+          .ix-auto input:focus-visible + .ix-auto-switch { outline:2px solid var(--primary-berry); outline-offset:2px; }
+          .ix-going { position:relative; overflow:hidden; display:flex; align-items:center; gap:8px; margin-top:8px; padding:7px 10px; border-radius:12px; background:#effaf3; color:#14532d; font-size:.8rem; }
+          .ix-going[hidden] { display:none; }
+          .ix-going > i { color:#15803d; }
+          .ix-going-bar { position:absolute; left:0; bottom:0; height:3px; width:100%; }
+          .ix-going-bar i { display:block; height:100%; width:100%; background:#22c55e; transform-origin:left; animation:ixGoing 3s linear forwards; }
+          @keyframes ixGoing { from { transform:scaleX(1); } to { transform:scaleX(0); } }
+          #reword-stop { margin-inline-start:auto; border:1px solid #86efac; background:#fff; color:#14532d; border-radius:999px; padding:2px 10px; font-weight:700; font-size:.76rem; }
+          @media (prefers-reduced-motion: reduce) { .ix-going-bar i { animation:none; } }
+        </style>
         <details class="ix-fold ix-options"><summary><i class="bi bi-sliders"></i> Options</summary>
-        <label class="ix-reword" title="Your words are reworded and sent at once. When the rewording changes a figure, it waits for you instead.">
-          <input type="checkbox" name="reword" value="true" id="reword-send" {{ 'checked' if reword_default }}>
-          <span><b>Reword and send at once</b> · no waiting: “Send answer” rewords your words in the language chosen, then sends. When the rewording would change a figure, it waits for your eye. Untick to read it first.</span>
-        </label>
         <label class="ix-reword" title="Your words are kept as information every assistant uses (email, WhatsApp, the assistant's window), in any language.">
           <input type="checkbox" name="remember" value="true" id="reply-remember">
           <span><b>Keep this information for the next ones</b> · what you wrote becomes something every assistant knows, for the next candidates who ask (What the assistant knows › What you told the assistants).</span>
@@ -737,7 +787,7 @@
         {% endif %}
 
         <div class="d-flex flex-wrap gap-2 mt-3">
-          <button class="btn btn-berry rounded-pill px-4" data-send-answer><i class="bi bi-send-fill me-1"></i>Send answer</button>
+          <button class="btn btn-berry rounded-pill px-4" data-send-answer><i class="bi bi-send-fill me-1"></i><span class="ix-when-manual">Send answer</span><span class="ix-when-auto">Send as written</span></button>
           {% if pending %}
           <button class="btn btn-light border rounded-pill fw-semibold" formaction="/inbox/thread/{{ selected.id }}/no-reply" formnovalidate>No answer needed</button>
           {% endif %}
@@ -746,9 +796,16 @@
       </form>
       <script>
         // "Send answer" can take a moment (the wording first): the button says so, and a second press waits for it.
+        // With "send by itself when well reworded" on, this button sends the box as written (the rewording is the other one).
         document.getElementById("reply-form")?.addEventListener("submit", event => {
           const button = event.submitter;
           if (!button || !button.matches("[data-send-answer]")) return;
+          const form = event.target;
+          if (form.classList.contains("is-auto") && !form.querySelector('input[name="as_is"]')) {
+            const keep = document.createElement("input");
+            keep.type = "hidden"; keep.name = "as_is"; keep.value = "true";
+            form.appendChild(keep);
+          }
           button.disabled = true;
           button.innerHTML = '<span class="spinner-border spinner-border-sm me-1" aria-hidden="true"></span>' + document.getElementById("reply-sending").textContent;
         });
@@ -809,6 +866,50 @@
     if (event.target.id !== "reword-send") return;
     const form = new FormData(); form.append("on", event.target.checked ? "1" : "0");
     fetch("/inbox/reword-mode", { method: "POST", body: form }).catch(() => {});
+    document.getElementById("reply-form")?.classList.toggle("is-auto", event.target.checked);
+    stopGoing();
+  });
+  // Well reworded, with “send by itself” on: shown 3 seconds (a bar runs out, Stop holds it), then sent as it is.
+  let going = null;
+  const stopGoing = said => {
+    if (going) { clearInterval(going.tick); clearTimeout(going.timer); going = null; }
+    const bar = document.getElementById("reword-going");
+    if (bar) bar.hidden = true;
+    if (said) { const status = document.getElementById("reformulate-status"); if (status) status.textContent = said; }
+  };
+  const goSoon = text => {
+    stopGoing();
+    const bar = document.getElementById("reword-going");
+    if (!bar) return;
+    const left = bar.querySelector("[data-going-left]");
+    const run = bar.querySelector(".ix-going-bar i");
+    if (run) { run.style.animation = "none"; void run.offsetWidth; run.style.animation = ""; }
+    let seconds = 3;
+    left.textContent = seconds;
+    bar.hidden = false;
+    going = {
+      tick: setInterval(() => { seconds -= 1; if (seconds >= 0) left.textContent = seconds; }, 1000),
+      timer: setTimeout(() => {
+        stopGoing();
+        const form = document.getElementById("reply-form"), box = document.getElementById("reply-body");
+        const send = form && form.querySelector("[data-send-answer]");
+        // Sent only as shown: the box redrawn or changed meanwhile, nothing goes.
+        if (!form || !box || !send || box.value.trim() !== text.trim() || !form.classList.contains("is-auto")) return;
+        if (!form.querySelector('input[name="as_is"]')) {
+          const keep = document.createElement("input");
+          keep.type = "hidden"; keep.name = "as_is"; keep.value = "true";
+          form.appendChild(keep);
+        }
+        form.requestSubmit(send);
+      }, 3000),
+    };
+  };
+  document.addEventListener("click", event => {
+    if (event.target.closest("#reword-stop")) stopGoing(document.getElementById("reword-stopped").textContent);
+  });
+  // Changing the text while it waits to go: it waits for you instead.
+  document.addEventListener("input", event => {
+    if (going && event.target.id === "reply-body" && event.isTrusted) stopGoing(document.getElementById("reword-stopped").textContent);
   });
   // "Reformulate": the few words typed become a complete email, to read before sending.
   // The reply form can be redrawn by a live refresh, so clicks are caught on the page.
@@ -855,9 +956,17 @@
       myWords = words;
       const current = parts();    // the form may have been redrawn while waiting
       fill(current.box, data.reply);
-      current.undo.classList.remove("d-none");
-      current.status.textContent = data.warning || "Read it, change what you want, then send.";
-      current.status.classList.toggle("text-danger", Boolean(data.warning));
+      current.undo.classList.toggle("d-none", Boolean(data.kept));
+      const auto = document.getElementById("reply-form")?.classList.contains("is-auto");
+      if (auto && data.ready) {
+        current.status.textContent = data.kept ? document.getElementById("reword-kept").textContent : "";
+        current.status.classList.remove("text-danger");
+        goSoon(data.reply);
+      } else {
+        current.status.textContent = data.warning || (auto ? document.getElementById("reword-wait").textContent : "Read it, change what you want, then send.");
+        current.status.classList.toggle("text-danger", Boolean(data.warning));
+        current.status.classList.toggle("text-muted", !data.warning);         // grey would hide why it waits
+      }
     } catch (error) {
       parts().status.textContent = error.message;
     } finally {
@@ -868,6 +977,9 @@
 })();
 </script>
 <span id="aside-failed" hidden>The answer did not arrive. Try again in a moment.</span>
+<span id="reword-stopped" hidden>Stopped: read it, change what you want, then “Send as written”.</span>
+<span id="reword-wait" hidden>Not sent by itself: read it, then “Send as written”.</span>
+<span id="reword-kept" hidden>Your draft goes as it is.</span>
 <script>
   // A set-aside message: "Talk about it" opens a few words with the assistant, which explains and changes the rule when
   // asked (the answer comes from the rules, never from the local model). The messages part is not refreshed meanwhile.
@@ -946,6 +1058,38 @@
     const flashes = document.querySelectorAll(".page-flash");
     flashes.forEach(flash => section.before(flash));
     requestAnimationFrame(() => (flashes[0] || section).scrollIntoView({ block: "start" }));
+  })();
+</script>
+<script>
+  // Before answering: "About" the candidate or "What to say", the choice remembered in this browser (the panel is redrawn
+  // by live refreshes; the choice sits on the body, so it holds). A suggestion goes into the answer, after what is there.
+  (() => {
+    let chosen = "about";
+    try { chosen = localStorage.getItem("inbox-help") || "about"; } catch (error) {}
+    document.body.dataset.ixhelp = chosen;
+    document.addEventListener("click", event => {
+      const tab = event.target.closest("[data-ix-help]");
+      if (tab) {
+        const wanted = tab.dataset.ixHelp === document.body.dataset.ixhelp && tab.dataset.ixHelp !== "off" ? "off" : tab.dataset.ixHelp;
+        document.body.dataset.ixhelp = wanted === "off" && document.body.dataset.ixhelp === "off" ? "about" : wanted;
+        try { localStorage.setItem("inbox-help", document.body.dataset.ixhelp); } catch (error) {}
+        return;
+      }
+      const say = event.target.closest("[data-say-text]");
+      const box = document.getElementById("reply-body");
+      if (!say || !box) return;
+      const text = say.dataset.sayText.trim();
+      const before = box.value.replace(/\s+$/, "");
+      if (!before.includes(text)) box.value = before + (before ? "\n\n" : "") + text;
+      box.rows = Math.max(box.rows, Math.min(14, box.value.split("\n").length + 2));
+      box.dispatchEvent(new Event("input", { bubbles: true }));
+      box.focus();
+      box.selectionStart = box.selectionEnd = box.value.length;
+      box.classList.remove("rw-done"); void box.offsetWidth; box.classList.add("rw-done");
+      say.classList.add("is-used");
+      const label = say.querySelector(".ix-say-label");
+      if (label) label.innerHTML = '<i class="bi bi-check2-circle" aria-hidden="true"></i>' + document.getElementById("ix-say-added").textContent;
+    });
   })();
 </script>
 <script>

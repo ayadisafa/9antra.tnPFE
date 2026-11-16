@@ -60,6 +60,27 @@ def new_conversation(request: Request, db: Session = Depends(get_db)):
     return {"ok": True}
 
 
+class Rewording(BaseModel):
+    text: str = Field(min_length=2, max_length=2000)
+    kind: str = "message"            # message (to a person) | text (said better, no greeting)
+    language: str | None = None      # fr | en (none: the language of the words)
+    first_name: str = ""
+
+
+@router.post("/account/reword")
+def reword_words(payload: Rewording):
+    """The rewording of every page's boxes (services/rewording.py), for everyone signed in. Nothing is sent."""
+    from fastapi.responses import JSONResponse
+
+    from app.services import rewording
+    from app.services.ui_words import t as _t
+
+    written = rewording.reword(payload.text, kind=payload.kind, first_name=payload.first_name, language=payload.language)
+    if written is None:
+        return JSONResponse(status_code=503, content={"detail": _t("The writer did not answer just now: your words are as they were. Try again in a moment.")})
+    return written
+
+
 @router.get("/account/guide/suggestions")
 def guide_suggestions(request: Request, lang: str = ""):
     """A few questions to start with, for a professor or a team member."""

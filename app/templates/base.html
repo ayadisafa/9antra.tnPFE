@@ -2084,8 +2084,11 @@ document.addEventListener("submit", event => {
             const row = document.createElement("div");
             row.className = "assistant-options";
             extra.options.slice(0, 8).forEach(option => {
-                const b = document.createElement("button"); b.type = "button"; b.textContent = option;
-                b.addEventListener("click", () => ask(option));
+                // A choice is its words, or {label, say}: what the button shows, and what it asks (“Their next session · …”).
+                const label = typeof option === "string" ? option : (option.label || option.say || "");
+                const said = typeof option === "string" ? option : (option.say || option.label || "");
+                const b = document.createElement("button"); b.type = "button"; b.textContent = label;
+                b.addEventListener("click", () => ask(said));
                 row.appendChild(b);
             });
             item.appendChild(row);
@@ -2748,7 +2751,7 @@ document.addEventListener("DOMContentLoaded", function () {
 })();
 </script>
 {% block extra_scripts %}{% endblock %}
-{% if current_user and current_user.id %}{% include "_journal.html" %}{% include "_page_tour.html" %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% endif %}
+{% if current_user and current_user.id %}{% include "_journal.html" %}{% include "_page_tour.html" %}{% include "_schema.html" %}{% include "_friend.html" %}{% include "_video_player.html" %}{% include "_reword.html" %}{% endif %}
 {% include "_motion.html" %}
 
 {% if ui_lang != 'en' %}

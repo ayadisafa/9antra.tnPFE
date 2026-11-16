@@ -281,13 +281,13 @@
     <div class="ab-decide">
       <form method="post" action="/professors/absences/{{ absence.id }}/accept">
         <input type="hidden" name="back" value="/professors#absences">
-        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="A word for them (optional)" aria-label="A word for the professor"></textarea>
+        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="A word for them (optional)" aria-label="A word for the professor" data-reword="message"></textarea>
         <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Accept</button>
         <div class="small text-muted">{% if item.check.nobody %}The sessions with nobody free then follow your rule: {{ 'you choose another professor, another day or a week later, on the class' if (settings.replacement_fallback or 'ask') == 'ask' else 'they go a week later by themselves' }}.{% else %}Each session asks its replacement; they confirm.{% endif %}</div>
       </form>
       <form method="post" action="/professors/absences/{{ absence.id }}/refuse">
         <input type="hidden" name="back" value="/professors#absences">
-        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="Why (they read it), e.g. “Nobody can take your class that week; could you move it?”" aria-label="Why it is refused"></textarea>
+        <textarea name="note" rows="2" class="form-control" maxlength="600" placeholder="Why (they read it), e.g. “Nobody can take your class that week; could you move it?”" aria-label="Why it is refused" data-reword="message"></textarea>
         <button class="ui-btn sm danger"><i class="bi bi-x-lg"></i>Refuse</button>
         <div class="small text-muted">They get a message (application, email, WhatsApp) with one click to answer: “I will be there” or “I still cannot come”.</div>
       </form>
@@ -419,7 +419,7 @@
   <form method="post" action="/classes/professors/resource-reminders" class="rr-form">
     <label class="rr-line"><input type="checkbox" name="on" value="1" {{ 'checked' if resource_plan.on }}> Send them, <input type="number" name="days" min="1" max="14" value="{{ resource_plan.days }}" aria-label="Days before"> day(s) before the week's session</label>
     <label class="form-label small fw-bold mb-1 mt-2" for="rr-text">Their words <span class="text-muted fw-normal">· {professor} {class_name} {program} {week} {topic} {date} {link}</span></label>
-    <textarea id="rr-text" name="text" rows="6" class="form-control">{{ resource_plan.text }}</textarea>
+    <textarea id="rr-text" name="text" rows="6" class="form-control" data-reword="text">{{ resource_plan.text }}</textarea>
     <div class="d-flex gap-2 flex-wrap mt-2">
       <button class="ui-btn primary sm"><i class="bi bi-check2"></i>Save</button>
       <button class="ui-btn sm" name="send_now" value="1"><i class="bi bi-send"></i>Save and send the ones due now ({{ resource_due | selectattr('reachable') | list | length }})</button>

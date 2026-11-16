@@ -172,7 +172,8 @@
     <form class="tm-write" method="post" action="/inbox/team/send" data-tm-write>
       <input type="hidden" name="person" value="{{ chosen.key }}">
       <input type="hidden" name="question" value="{{ last_in.body if last_in else '' }}">
-      <textarea name="body" required placeholder="Write to {{ chosen.name.split(' ')[0] }}…" aria-label="Your message"></textarea>
+      <textarea name="body" required placeholder="Write to {{ chosen.name.split(' ')[0] }}…" aria-label="Your message"
+                data-reword="message" data-reword-name="{{ chosen.name.split(' ')[0] }}"></textarea>
       <div class="tm-write-row">
         {% set default_way = "app" if "app" in chosen.ways else (chosen.ways[0] if chosen.ways else "") %}
         {% for way in ["app", "email", "whatsapp", "sms"] %}
@@ -183,8 +184,6 @@
         </label>
         {% endfor %}
         {% if last_in %}<button type="button" class="ui-btn ghost sm" data-tm-ask><i class="bi bi-stars"></i>Ask the assistant</button>{% endif %}
-        <button type="button" class="ui-btn ghost sm" data-tm-reword title="Write a few words, even in Tunisian: they become a proper message"><i class="bi bi-magic"></i>Reword</button>
-        <select class="form-select form-select-sm rounded-pill" data-tm-lang style="width:auto;" aria-label="Language of the reworded message"><option value="fr">in French</option><option value="en">in English</option></select>
         <button class="ui-btn primary tm-send"><i class="bi bi-send-fill"></i>Send</button>
       </div>
       {% if last_in %}
@@ -236,21 +235,7 @@
     } catch (error) {}
     ask.disabled = false; ask.innerHTML = label;
   });
-  // "Reword": a few words (Tunisian, French or English) become a proper message in the language chosen; you read it first.
-  const reword = document.querySelector("[data-tm-reword]");
-  if (reword && box) reword.addEventListener("click", async () => {
-    if (box.value.trim().length < 2) { box.focus(); return; }
-    reword.disabled = true; const label = reword.innerHTML; reword.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Writing…';
-    try {
-      const response = await fetch("/inbox/reformulate", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: box.value.trim().slice(0, 2000), language: document.querySelector("[data-tm-lang]").value,
-                               first_name: {{ (chosen.name.split(' ')[0] if chosen else '') | tojson }} }) });
-      const answer = await response.json();
-      if (response.ok && answer.reply) { box.value = answer.reply; box.focus(); if (answer.warning) alert(answer.warning); }
-      else alert(answer.detail || "The message could not be reworded.");
-    } catch (error) {}
-    reword.disabled = false; reword.innerHTML = label;
-  });
+  // "Reword" is the bar under the box, the same on every page (_reword.html).
   // The newest message in view, as in any chat.
   const list = document.getElementById("live-team-messages");
   if (list && list.lastElementChild && window.innerWidth > 991) list.lastElementChild.scrollIntoView({ block: "nearest" });

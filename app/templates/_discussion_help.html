@@ -1,0 +1,56 @@
+{# Before answering, in an open discussion: who the candidate is ("About"), or only a few things to say ("What to say"),
+   the one chosen remembered in the browser. A suggestion goes into the answer box in one tap (services/discussion_help.py). #}
+{% set about = help.about %}
+<section class="ix-help" aria-label="Before you answer">
+  <div class="ix-help-tabs" role="tablist">
+    <button type="button" role="tab" class="ix-help-tab" data-ix-help="about"><i class="bi bi-person-vcard"></i><span>About</span> <b data-no-i18n>{{ about.first or (selected.candidate.full_name or '') }}</b></button>
+    <button type="button" role="tab" class="ix-help-tab" data-ix-help="say"><i class="bi bi-chat-quote"></i><span>What to say</span>{% if help.say %}<em>{{ help.say | length }}</em>{% endif %}</button>
+    <button type="button" class="ix-help-hide" data-ix-help="off" title="Hide both: the tabs stay, one tap opens them again"><i class="bi bi-chevron-up"></i></button>
+  </div>
+
+  <div class="ix-help-pane" data-pane="about">
+    {% if about.programs %}
+    <div class="ix-help-programs">
+      {% for item in about.programs %}
+      <a href="{{ item.url }}" class="ix-chip {{ 'ok' if item.paid else 'todo' }}" title="Open this registration" style="--i:{{ loop.index0 }};">
+        <span data-no-i18n>{{ item.name }}</span>
+        · {% if item.paid %}<span>paid</span>{% else %}<span data-no-i18n>{{ item.left }} DT</span> <span>left</span>{% endif %}
+        {% if item.class %}· <span data-no-i18n>{{ item.class }}</span>{% if item.state == 'running' %} · <span>{{ item.when }}</span>{% elif item.state == 'starts' and item.when %} · <span>starts</span> <span data-no-i18n>{{ item.when }}</span>{% elif item.state == 'ended' %} · <span>ended</span>{% endif %}
+        {% else %}· <span>no class yet</span>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="ix-help-none"><i class="bi bi-person-plus"></i>Not registered yet: no program, no class.</div>
+    {% endif %}
+    {% if about.tiles %}
+    <div class="ix-help-tiles">
+      {% for tile in about.tiles %}
+      <div class="ix-help-tile is-{{ tile.tone }}" style="--i:{{ loop.index0 }};"{% if tile.note %} title="{{ tile.note }}"{% endif %}>
+        <i class="bi {{ tile.icon }}" aria-hidden="true"></i>
+        <span class="ix-help-label">{{ tile.label }}</span>
+        <b>{{ tile.value }}</b>
+        {% if tile.note and tile.key == 'next' %}<small data-no-i18n>{{ tile.note }}</small>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+    {% for note in about.notes %}
+    <div class="ix-help-note is-{{ note.tone }}"><i class="bi {{ note.icon }}" aria-hidden="true"></i><span>{{ note.text }}</span></div>
+    {% endfor %}
+    <a class="ix-help-more" href="/candidate/{{ selected.candidate.id }}">Their whole file <i class="bi bi-arrow-right"></i></a>
+  </div>
+
+  <div class="ix-help-pane" data-pane="say">
+    <div class="ix-help-hint">Tap one or more: they go into your answer. Add your own words, then <b>Reformulate</b> writes it all as one message.</div>
+    <div class="ix-help-says">
+      {% for item in help.say %}
+      <button type="button" class="ix-say" data-say-text="{{ item.text }}" style="--i:{{ loop.index0 }};">
+        <span class="ix-say-label"><i class="bi bi-plus-circle" aria-hidden="true"></i>{{ item.label }}</span>
+        <span class="ix-say-text" data-no-i18n>{{ item.text }}</span>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+  <span hidden id="ix-say-added">Added to your answer</span>
+</section>

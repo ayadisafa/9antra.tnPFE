@@ -49,6 +49,7 @@ from app.services.schedule_utils import (
     DAY_KEYS,
     DAY_SHORT_EN,
     class_start_dt,
+    format_date_en,
     local_now,
     parse_days,
     parse_time,
@@ -959,12 +960,22 @@ def class_detail(class_id: str, request: Request, db: Session = Depends(get_db))
     program_name = class_group.program.name if class_group.program else "its program"
     if class_group.status != ClassStatus.COMPLETED:
         if not summary["enrolled"]:
-            needs.append({
-                "icon": "bi-people-fill", "title": "Nobody is in this class",
-                "text": "A class runs only with candidates in it, so this one does not start. Move a paid candidate "
-                        "into it, or remove it: an empty class can be removed at any time.",
-                "remove": True,
-            })
+            from app.services import empty_classes
+
+            empty = empty_classes.state(db, class_group)
+            told = empty_classes.told_how(db, class_group)
+            why = ""
+            if empty and empty["emptied"]:
+                text = (f"Its last candidate left. A class never runs empty: it is removed by itself at {empty['removes_at']:%H:%M} "
+                        f"({told}), unless a candidate joins before.")
+                why = empty["why"]
+            elif empty and empty["start"]:
+                text = (f"A class never starts empty. If nobody is in it at its first session ({format_date_en(empty['start'])}), "
+                        f"it is removed by itself ({told}). Move a paid candidate into it, or remove it now.")
+            else:
+                text = ("A class never starts empty. Move a paid candidate into it, or remove it: an empty class can be "
+                        "removed at any time.")
+            needs.append({"icon": "bi-people-fill", "title": "Nobody is in this class", "text": text, "why": why, "remove": True})
         professor = class_group.professor
         if professor is None and not class_group.professor_name:
             needs.append({

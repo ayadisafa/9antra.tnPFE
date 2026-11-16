@@ -105,17 +105,19 @@ if same is not None:
     check("a program that already matches says so, without any button", "Your program says the same as the website" in card and "Use the website's" not in card)
 
 # ======================================================================
-# C. An empty class does not start, and can be removed
+# C. An empty class does not run: a running one ends by itself, and can then be removed
 # ======================================================================
 es.sync_class_lifecycle(db); db.expire_all()
 empty = db.query(ClassGroup).filter(ClassGroup.name == "P-20261001-2").first()
 full = db.query(ClassGroup).filter(ClassGroup.name == "MD1").first()
 empty_id, full_id = empty.id, full.id
-check("the empty class is not running", empty.status == ClassStatus.NOT_STARTED and es.enrolled_count(db, empty.id) == 0)
+check("the empty running class ended by itself", empty.status == ClassStatus.COMPLETED and es.enrolled_count(db, empty.id) == 0
+      and (empty.closed_note or "").startswith("Ended early on"))
 page = admin.get(f"/classes/{empty.id}").text
-check("its page offers to remove it", "Remove this class" in page and f'action="/classes/{empty.id}/delete"' in page and "Nobody is in this class" in page)
+check("its page says when and why", "Ended early on" in page and "nobody left to follow it" in page)
 listing = admin.get("/classes/").text
-check("so does its card in the list", listing.count('title="Nobody is in this class: it can be removed"') == 2, listing.count('title="Nobody is in this class: it can be removed"'))
+check("no empty class is left waiting in the list", listing.count('title="Nobody is in this class: it can be removed"') == 0,
+      listing.count('title="Nobody is in this class: it can be removed"'))
 page = admin.get(f"/classes/{full.id}").text
 check("a class with candidates has no such button", f'action="/classes/{full_id}/delete" data-confirm="Remove' not in page)
 answer = admin.post(f"/classes/{full.id}/delete")

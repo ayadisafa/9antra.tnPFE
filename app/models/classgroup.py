@@ -112,6 +112,7 @@ class ClassGroup(Base):
     delivery_mode = Column(String, nullable=True)      # online | onsite | mixed (empty: read from its candidates' choices)
     meeting_url = Column(String, nullable=True)        # the private meeting its professor gives before it starts (online, mixed)
     link_asked_at = Column(DateTime, nullable=True)    # when its professor was asked for that link
+    closed_note = Column(String, nullable=True)        # ended early by itself, nobody left: when and why (services/empty_classes)
 
     created_at = Column(
         DateTime, 

@@ -71,7 +71,9 @@ _PATTERNS = {
 }
 _PLAY = ("joke", "bored", "tease", "robot", "love")
 # An order to send or write: its words are the message's, never small talk ("tell me a joke" is still a joke).
-_ORDER = re.compile(r"\b(envoie|envoyer|envoyez|écris|ecris|écrivez|send|write|dis[- ]lui|dis à|dis a|tell|ab3ath|ekteb|rappelle|répond|reponds|reply)\b",
+_ORDER = re.compile(r"\b(envoie|envoyer|envoyez|écris|ecris|écrivez|send|write|dis[- ]lui|dis à|dis a|tell|ab3ath|ekteb|rappelle|répond|reponds|reply)\b|"
+                    r"^\s*(?:yasmine\s*,?\s*)?(?:kteb|ikteb|ekteb\w*|kteb\w*|9oul(?:ou|ha|hom)|9ol(?:lou|ou|ha|hom)|goul(?:ou|ha|hom)|es2el\w*|"
+                    r"message|msg|text|ask|demande|اكتب|أكتب|ابعث|إبعث|أرسل|ارسل|قول|قل|اسأل)\b",
                     re.IGNORECASE)
 # Words that tell the language of a short social message (the general reader needs longer sentences).
 _FRENCH = re.compile(r"\b(salut|bonjour|bonsoir|coucou|merci|bonne|ça|ca|tu|vous|toi|comment|désolée?|desolee?|je|suis|qui|es|revoir|demain|bravo|très|tres|bien|contente?|géniale?)\b", re.IGNORECASE)

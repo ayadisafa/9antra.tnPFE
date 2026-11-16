@@ -1,0 +1,102 @@
+{# Reword, on every page: a box marked data-reword gets a small bar under it. One tap turns the few words typed (even in
+   Tunisian) into a proper message (data-reword="message", data-reword-name="<first name>") or the same text said better
+   (data-reword="text"). Nothing is sent: the text comes back into the box to read; "Put my words back" undoes it.
+   data-reword-at="form-end" puts the bar at the end of the form, for a box that sits in a row with its button. #}
+<style>
+  .rw-bar { display:flex; flex-wrap:wrap; align-items:center; gap:6px 8px; margin:6px 0 2px; font-size:.78rem; }
+  .rw-bar[hidden] { display:none; }
+  .rw-go { display:inline-flex; align-items:center; gap:5px; border:1px solid color-mix(in srgb, var(--primary-berry) 45%, transparent); background:#fff; color:var(--primary-berry);
+           border-radius:999px; padding:3px 11px; font-weight:700; font-size:.76rem; line-height:1.5; cursor:pointer; transition:background .15s ease, color .15s ease, transform .15s ease; }
+  .rw-go:hover:not(:disabled) { background:var(--primary-berry); color:#fff; transform:translateY(-1px); }
+  .rw-go:disabled { opacity:.65; cursor:progress; }
+  .rw-go i { font-size:.85rem; }
+  .rw-lang { border:1px solid var(--border-color, #eee9f5); border-radius:999px; padding:2px 8px; font-size:.74rem; background:#fff; color:#5b5470; width:auto; }
+  .rw-undo { border:0; background:none; padding:0; color:var(--primary-berry); font-size:.76rem; text-decoration:underline; cursor:pointer; }
+  .rw-undo[hidden] { display:none; }
+  .rw-status { color:#85809c; min-height:1em; }
+  .rw-status.is-warn { color:#b45309; font-weight:600; }
+  .rw-status.is-bad { color:#b91c1c; }
+  textarea.rw-done { animation:rwGlow 1.4s ease; }
+  @keyframes rwGlow { 0% { box-shadow:0 0 0 0 color-mix(in srgb, var(--primary-berry) 45%, transparent); } 100% { box-shadow:0 0 0 10px transparent; } }
+  @media (prefers-reduced-motion: reduce) { textarea.rw-done { animation:none; } }
+</style>
+<div id="reword-kit" hidden>
+  <div class="rw-bar">
+    <button type="button" class="rw-go" title="A few words are enough, even in Tunisian: they come back as a proper message, to read before sending."><i class="bi bi-stars" aria-hidden="true"></i><span>Reword</span></button>
+    <select class="rw-lang" aria-label="Language of the reworded text"><option value="fr">in French</option><option value="en">in English</option></select>
+    <button type="button" class="rw-undo" hidden>Put my words back</button>
+    <span class="rw-status" aria-live="polite"></span>
+  </div>
+  <span data-rw-say="writing">Writing…</span>
+  <span data-rw-say="empty">First write a few words, even in Tunisian.</span>
+  <span data-rw-say="done">Read it, change what you want: nothing is sent before you do.</span>
+  <span data-rw-say="back">Your own words are back.</span>
+  <span data-rw-say="failed">The writer did not answer just now: your words are as they were. Try again in a moment.</span>
+</div>
+<script>
+(() => {
+  const kit = document.getElementById("reword-kit");
+  if (!kit) return;
+  const say = key => ((kit.querySelector(`[data-rw-say="${key}"]`) || {}).textContent || "").trim();
+  const mine = new WeakMap();           // the words typed, before the rewording: "Put my words back"
+  function equip(box) {
+    if (box.dataset.rwReady) return;
+    box.dataset.rwReady = "1";
+    const bar = kit.querySelector(".rw-bar").cloneNode(true);
+    const form = box.closest("form");
+    // French, as the centre writes, unless the box says otherwise (an English-speaking candidate).
+    bar.querySelector(".rw-lang").value = box.dataset.rewordLang === "en" ? "en" : "fr";
+    bar.rwBox = box;
+    if (box.dataset.rewordAt === "form-end" && form) form.appendChild(bar);
+    else box.insertAdjacentElement("afterend", bar);
+  }
+  const equipAll = root => (root || document).querySelectorAll("textarea[data-reword]").forEach(equip);
+  equipAll();
+  document.addEventListener("live:refreshed", () => equipAll());
+  document.addEventListener("toggle", event => { if (event.target.tagName === "DETAILS") equipAll(event.target); }, true);
+  function show(bar, text, tone) {
+    const status = bar.querySelector(".rw-status");
+    status.textContent = text || "";
+    status.classList.toggle("is-warn", tone === "warn");
+    status.classList.toggle("is-bad", tone === "bad");
+  }
+  function fill(box, text) {
+    box.value = text;
+    box.rows = Math.max(box.rows || 2, Math.min(14, text.split("\n").length + 2));
+    box.dispatchEvent(new Event("input", { bubbles: true }));      // live pages keep what is being written
+    box.classList.remove("rw-done"); void box.offsetWidth; box.classList.add("rw-done");
+  }
+  document.addEventListener("click", async event => {
+    const bar = event.target.closest(".rw-bar");
+    if (!bar || !bar.rwBox) return;
+    const box = bar.rwBox;
+    if (event.target.closest(".rw-undo")) {
+      if (mine.has(box)) fill(box, mine.get(box));
+      bar.querySelector(".rw-undo").hidden = true;
+      show(bar, say("back"));
+      return;
+    }
+    const button = event.target.closest(".rw-go");
+    if (!button) return;
+    const words = box.value.trim();
+    if (words.length < 2) { show(bar, say("empty"), "warn"); box.focus(); return; }
+    button.disabled = true;
+    show(bar, say("writing"));
+    try {
+      const response = await fetch("/account/reword", { method: "POST", headers: { "Content-Type": "application/json" }, credentials: "same-origin",
+        body: JSON.stringify({ text: words.slice(0, 2000), kind: box.dataset.reword === "text" ? "text" : "message",
+                               language: bar.querySelector(".rw-lang").value, first_name: box.dataset.rewordName || "" }) });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.reply) throw new Error(typeof data.detail === "string" ? data.detail : say("failed"));
+      mine.set(box, box.value);
+      fill(box, data.reply);
+      bar.querySelector(".rw-undo").hidden = false;
+      show(bar, data.warning || say("done"), data.warning ? "warn" : "");
+    } catch (error) {
+      show(bar, error.message || say("failed"), "bad");
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>

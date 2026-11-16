@@ -122,7 +122,7 @@
           <summary class="ui-btn sm"><i class="bi bi-brush"></i>Its words</summary>
           <form method="post" action="/reminders/{{ item.rule.id }}/words" class="d-grid gap-2 mt-2">
             <input class="form-control form-control-sm" name="subject" value="{{ item.rule.subject }}" maxlength="200" aria-label="Subject">
-            <textarea class="form-control form-control-sm" name="body" rows="6" aria-label="Message">{{ item.rule.body }}</textarea>
+            <textarea class="form-control form-control-sm" name="body" rows="6" aria-label="Message" data-reword="text">{{ item.rule.body }}</textarea>
             <button class="ui-btn sm primary"><i class="bi bi-check2"></i>Save the words</button>
           </form>
         </details>
@@ -336,7 +336,7 @@
         <button type="button" class="rm-idea" data-wrap="**"><i class="bi bi-type-bold"></i>Bold</button>
         <button type="button" class="rm-idea" data-insert="{first_name}"><i class="bi bi-person"></i>First name</button>
       </div>
-      <textarea name="body" id="rm-body" required placeholder="Bonjour {first_name},&#10;&#10;…">{{ chosen.body if chosen else '' }}</textarea>
+      <textarea name="body" id="rm-body" required placeholder="Bonjour {first_name},&#10;&#10;…" data-reword="text">{{ chosen.body if chosen else '' }}</textarea>
       <div style="font-size:.74rem; color:var(--muted);" class="mt-1">Replaced for each candidate: {% for name, label, sample in variables[:7] %}<code>{{ '{' ~ name ~ '}' }}</code>{{ ', ' if not loop.last }}{% endfor %}. A paragraph that starts with <code>[box]</code> becomes a coloured square.</div>
 
       <div class="rm-label">Look</div>

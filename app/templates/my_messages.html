@@ -22,13 +22,14 @@
   .mm-empty { text-align:center; color:var(--muted); padding:40px 10px; }
   .mm-answer { margin-top:8px; display:flex; flex-direction:column; gap:6px; background:var(--gold-subtle); border-radius:14px; padding:10px; }
   .mm-answer textarea { border:1px solid var(--border-color); border-radius:12px; padding:8px 11px; font-size:.86rem; min-height:70px; }
-  .mm-answer button { align-self:flex-end; border:0; background:var(--primary-berry); color:#fff; border-radius:999px; padding:6px 14px; font-weight:800; font-size:.8rem; }
+  .mm-answer > button { align-self:flex-end; border:0; background:var(--primary-berry); color:#fff; border-radius:999px; padding:6px 14px; font-weight:800; font-size:.8rem; }
   .mm-empty i { font-size:2rem; color:var(--primary-berry); display:block; margin-bottom:8px; }
-  .mm-write { border-top:1px solid var(--border-color); padding:12px 16px; display:flex; gap:8px; align-items:flex-end; position:sticky; bottom:0; background:#fff; border-radius:0 0 20px 20px; }
+  .mm-write { border-top:1px solid var(--border-color); padding:12px 16px; display:flex; flex-wrap:wrap; gap:8px; align-items:flex-end; position:sticky; bottom:0; background:#fff; border-radius:0 0 20px 20px; }
   @media (max-width: 991px) { .mm-write { bottom:calc(76px + env(safe-area-inset-bottom, 0px)); } }
   .mm-write textarea { flex:1; border:1px solid var(--border-color); border-radius:14px; padding:10px 13px; font-size:.9rem; min-height:48px; max-height:180px; resize:vertical; }
   .mm-write textarea:focus { outline:none; border-color:var(--primary-berry); box-shadow:0 0 0 3px rgba(164,44,103,.12); }
-  .mm-write button { width:46px; height:46px; border-radius:50%; border:0; background:var(--primary-berry); color:#fff; flex:none; display:grid; place-items:center; font-size:1.05rem; }
+  .mm-write .rw-bar { flex-basis:100%; order:3; margin:0; }
+  .mm-write > button { width:46px; height:46px; border-radius:50%; border:0; background:var(--primary-berry); color:#fff; flex:none; display:grid; place-items:center; font-size:1.05rem; }
 </style>
 
 {% include "_flash.html" %}
@@ -45,7 +46,7 @@
       {% set question_id = questions.get(item.batch) or questions.get(item.id) %}
       {% if question_id %}
       <form class="mm-answer" method="post" action="/account/messages/question/{{ question_id }}/answer">
-        <textarea name="body" required placeholder="Your answer to the candidate… (a few words are enough)" aria-label="Your answer to the candidate"></textarea>
+        <textarea name="body" required placeholder="Your answer to the candidate… (a few words are enough)" aria-label="Your answer to the candidate" data-reword="message"></textarea>
         <label class="mm-reword"><input type="checkbox" name="reword" value="1" checked> Turn my words into a full answer (figures and links are kept)</label>
         <button class="ui-btn primary sm"><i class="bi bi-reply-fill"></i>Answer the candidate</button>
         <span class="mm-learnt"><i class="bi bi-mortarboard"></i>Your answer is learnt: the same question will be answered by itself next time.</span>
@@ -57,7 +58,7 @@
     {% endfor %}
   </div>
   <form class="mm-write" method="post" action="/account/messages">
-    <textarea name="body" required placeholder="Write to the centre…" aria-label="Your message"></textarea>
+    <textarea name="body" required placeholder="Write to the centre…" aria-label="Your message" data-reword="message" data-reword-at="form-end"></textarea>
     <button aria-label="Send"><i class="bi bi-send-fill"></i></button>
   </form>
 </div>
