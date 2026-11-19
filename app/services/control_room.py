@@ -68,7 +68,7 @@ def _ago(moment: datetime | None) -> str:
         return _t("{0} min ago", int(seconds // 60))
     if seconds < 86400:
         return _t("{0} h ago", int(seconds // 3600))
-    return _t("{0} days ago", int(seconds // 86400))
+    return _t("yesterday") if seconds < 2 * 86400 else _t("{0} days ago", int(seconds // 86400))
 
 
 def _sent(db: Session, kinds, since: datetime) -> int:
@@ -218,27 +218,16 @@ def tracking(db: Session) -> list[dict]:
 # What to enhance, and what is needed from the admin
 # ------------------------------------------------------------------
 
+# Ideas that come from how the application runs here (what the market says is ranked by services/enhancements.py).
 IDEAS = [
     ("public", "🌍", "A public address for candidates",
      "Today the links in emails (level check, weekly questions, session links, reviews) only open on this computer, so candidates answer by email instead.",
      "Your yes to open the application to the internet (Tailscale Funnel or a Cloudflare tunnel), and a name like app.9antra.tn."),
-    ("pay_online", "💳", "Online payment",
-     "Candidates could pay by card or D17 from a link in the payment reminder; the payment would be recorded and the class placed by itself.",
-     "An account with a Tunisian payment provider (Konnect, Flouci or Paymee) and its keys."),
-    ("certificate", "🎓", "Certificates at the end of a program",
-     "A PDF certificate with a QR code anyone can check, sent with the review request when a class finishes.",
-     "Your model of certificate (logo, signature, wording)."),
-    ("portal", "🪪", "A space for each candidate",
-     "Their sessions, payments, files, questions and certificate in one page, opened from a personal link.",
-     "The public address above."),
     ("teach_missed", "🙋", "Questions Yasmine could not answer, kept for you",
      "A list of what she did not know, with one box to teach each answer: she knows it the next time.",
      "Nothing: it can be built now."),
     ("level_editor", "✏️", "Edit the level-check questions",
      "Today the questions of the level check are written in the application's code; an editor would let you change them per program.",
-     "Nothing: it can be built now."),
-    ("door_qr", "📷", "Presence by QR code at the door",
-     "For sessions on site: candidates scan the class's code when they arrive, presence is marked by itself.",
      "Nothing: it can be built now."),
     ("voice", "🎙️", "Talk to Yasmine",
      "Ask her by voice instead of typing.",

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import test_mark  # noqa: F401  (its table is made at start)
-from app.services import auth, control_room, test_book, weekly_questions
+from app.services import auth, control_room, enhancements, test_book, weekly_questions
 from app.services.settings_service import public_base_url
 from app.template_context import notification_context
 
@@ -23,6 +23,7 @@ def control_page(request: Request, db: Session = Depends(get_db)):
     base_url = public_base_url(db, request)
     tests = test_book.book(db, user)
     needed = control_room.needs(db, base_url, weekly_questions.is_local_address(base_url))
+    market = enhancements.ranking(db)
     return templates.TemplateResponse(
         request=request,
         name="control_room.html",
@@ -33,6 +34,9 @@ def control_page(request: Request, db: Session = Depends(get_db)):
             "suggestions": control_room.suggestions(db, tests["progress"], needed),
             "needs": needed,
             "ideas": control_room.IDEAS,
+            "market": market,
+            "market_read": control_room._ago(market["read_at"]),
+            "reading": request.query_params.get("reading") == "1",
             "tests": tests,
         },
     )
@@ -42,6 +46,26 @@ def control_page(request: Request, db: Session = Depends(get_db)):
 def control_data(db: Session = Depends(get_db)):
     """The map's figures and flows, for the page to refresh itself (and light the lines that moved)."""
     return control_room.snapshot(db)
+
+
+@router.post("/system/control/read-market")
+def read_market():
+    """Every news feed read again now (as every 6 hours): the suggestions follow what it brings."""
+    from fastapi.responses import RedirectResponse
+
+    from app.database import SessionLocal
+    from app.services import journal
+    from app.services.background import run_in_background
+
+    def read():
+        db = SessionLocal()
+        try:
+            journal.read_all(db)
+        finally:
+            db.close()
+
+    run_in_background(read)
+    return RedirectResponse("/system/control?reading=1#ideas", status_code=303)
 
 
 class Mark(BaseModel):

@@ -102,6 +102,35 @@
   .cr-idea b { display:block; margin:6px 0 4px; }
   .cr-idea p { font-size:.8rem; color:#4b4566; margin:0 0 8px; }
   .cr-idea small { display:block; font-size:.74rem; color:#1e40af; background:#eff6ff; border-radius:10px; padding:6px 8px; }
+  .cr-read { font-size:.76rem; color:#475569; display:flex; gap:6px; align-items:center; flex-wrap:wrap; }
+  .cr-reading { color:#0369a1; font-weight:700; }
+  .cr-rank { list-style:none; padding:0; margin:12px 0 0; display:grid; gap:10px; }
+  .cr-rank-item { display:grid; grid-template-columns:auto auto 1fr; gap:10px; align-items:start; padding:12px 14px; border-radius:18px; border:1px solid #dbeafe;
+                  background:linear-gradient(120deg, #f0f9ff, #fff 60%); animation:crIn .35s ease both; animation-delay:calc(var(--i, 0) * 50ms); }
+  .cr-rank-item.is-part { background:linear-gradient(120deg, #fffbeb, #fff 60%); border-color:#fde68a; }
+  .cr-rank-n { width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-weight:900; font-size:.8rem; color:#fff;
+               background:linear-gradient(135deg, #0ea5e9, #4f46e5); box-shadow:0 0 14px -2px rgba(14,165,233,.8); }
+  .cr-rank-item .cr-emo { font-size:1.5rem; display:inline-block; }
+  .cr-rank-head { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; }
+  .cr-rank-head b { font-size:.92rem; }
+  .cr-rank-body p { font-size:.8rem; color:#4b4566; margin:4px 0; }
+  .cr-trend { display:inline-flex; gap:4px; align-items:center; font-size:.7rem; font-weight:800; border-radius:999px; padding:1px 8px; background:#f1f5f9; color:#475569; }
+  .cr-trend.is-up { background:#dcfce7; color:#166534; } .cr-trend.is-down { background:#fee2e2; color:#991b1b; }
+  .cr-effort { font-size:.7rem; color:#6b6584; }
+  .cr-meter { height:5px; border-radius:999px; background:#e0f2fe; overflow:hidden; margin:6px 0 2px; }
+  .cr-meter i { display:block; height:100%; width:var(--w); background:linear-gradient(90deg, #38bdf8, #6366f1); border-radius:inherit; animation:crGrow 1s ease both; }
+  @keyframes crGrow { from { width:0; } }
+  .cr-fact { display:flex; gap:7px; align-items:flex-start; font-size:.78rem; color:#1e3a8a; }
+  .cr-ex { font-size:.74rem; color:#6b6584; margin:4px 0; }
+  .cr-ex a { color:#0369a1; }
+  .cr-needs { display:block; font-size:.74rem; color:#1e40af; background:#eff6ff; border-radius:10px; padding:5px 8px; margin-top:4px; }
+  .cr-have { margin-top:12px; font-size:.8rem; display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .cr-have > b { width:100%; }
+  .cr-have-chip { display:inline-flex; gap:4px; align-items:center; border-radius:999px; background:#f1f5f9; padding:3px 10px; font-size:.76rem; margin:2px; }
+  .cr-quiet { margin-top:10px; font-size:.8rem; }
+  .cr-quiet summary { cursor:pointer; font-weight:700; color:#475569; }
+  @media (max-width: 760px) { .cr-rank-item { grid-template-columns:auto 1fr; } .cr-rank-item .cr-emo { display:none; } }
+  @media (prefers-reduced-motion: reduce) { .cr-rank-item, .cr-meter i { animation:none !important; } }
   .cr-progress { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
   .cr-ring { --p:0; width:74px; height:74px; border-radius:50%; display:grid; place-items:center; font-weight:900;
              background:conic-gradient(#0ea5e9 calc(var(--p) * 1%), #e0f2fe 0); position:relative; }
@@ -213,9 +242,50 @@
       </div>
     </div>
   </div>
+  <div class="cr-card mt-3 cr-market">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+      <div>
+        <h2 class="cr-h"><i class="bi bi-rocket-takeoff"></i>What could be enhanced, as the market moves</h2>
+        <p class="small text-muted mb-1">Ranked by itself from what the market talks about (training, edtech, marketing and tech news: <b data-no-i18n>{{ market.articles }}</b> articles in 60 days) and what your candidates ask for (90 days). It moves each time the news is read, every 6 hours.</p>
+        <div class="cr-read"><i class="bi bi-broadcast"></i><span>News read</span> <b data-no-i18n>{{ market_read }}</b>{% if reading %} · <span class="cr-reading">Reading the market now: the ranking follows in a minute or two.</span>{% endif %}</div>
+      </div>
+      <form method="post" action="/system/control/read-market"><button class="cr-btn go"><i class="bi bi-arrow-repeat"></i>Read the market again now</button></form>
+    </div>
+    {% set top = (market.ideas[0].score if market.ideas else 1) or 1 %}
+    <ol class="cr-rank">
+      {% for item in market.ideas %}
+      <li class="cr-rank-item is-{{ item.state }}" style="--i:{{ loop.index0 }}; --w:{{ (100 * item.score / top) | round | int }}%;">
+        <span class="cr-rank-n" data-no-i18n>{{ loop.index }}</span>
+        <span class="cr-emo mo-{{ item.motion }}" aria-hidden="true">{{ item.emoji }}</span>
+        <div class="cr-rank-body">
+          <div class="cr-rank-head"><b data-no-i18n>{{ item.title }}</b>
+            <span class="cr-state {{ 'setup' if item.state == 'part' else 'off' }}">{{ item.state_label }}</span>
+            <span class="cr-trend is-{{ item.trend }}">{% if item.trend == 'up' %}<i class="bi bi-graph-up-arrow"></i><span>rising</span>{% elif item.trend == 'down' %}<i class="bi bi-graph-down-arrow"></i><span>falling</span>{% else %}<i class="bi bi-arrow-right"></i><span>steady</span>{% endif %}</span>
+            <span class="cr-effort"><span>Effort:</span> {{ item.effort }}</span></div>
+          <div class="cr-meter" aria-hidden="true"><i></i></div>
+          <p data-no-i18n>{{ item.what }}</p>
+          {% for fact in item.facts %}<div class="cr-fact"><i class="bi {{ fact.icon }}"></i><span>{{ fact.text }}</span></div>{% endfor %}
+          {% if item.examples %}<div class="cr-ex"><span>Read:</span> {% for example in item.examples %}<a href="{{ example.url }}" target="_blank" rel="noopener" data-no-i18n>{{ example.title[:90] }}</a> <small data-no-i18n>({{ example.source }})</small>{{ ' · ' if not loop.last }}{% endfor %}</div>{% endif %}
+          <small class="cr-needs"><b>Needs:</b> <span data-no-i18n>{{ item.needs }}</span></small>
+        </div>
+      </li>
+      {% else %}
+      <li class="cr-fact"><i class="bi bi-hourglass"></i><span>The market says nothing about these yet: the news is read every 6 hours.</span></li>
+      {% endfor %}
+    </ol>
+    {% if market.have %}
+    <div class="cr-have"><b>The market talks about what you already have: say it in your posts.</b>
+      {% for item in market.have %}<span class="cr-have-chip" title="{% for fact in item.facts %}{{ fact.text }} {% endfor %}"><span aria-hidden="true">{{ item.emoji }}</span> <span data-no-i18n>{{ item.title }}</span></span>{% endfor %}</div>
+    {% endif %}
+    {% if market.more or market.quiet %}
+    <details class="cr-quiet"><summary>Also watched ({{ (market.more | length) + (market.quiet | length) }})</summary>
+      {% for item in market.more + market.quiet %}<span class="cr-have-chip"><span aria-hidden="true">{{ item.emoji }}</span> <span data-no-i18n>{{ item.title }}</span>{% if item.score == 0 %} · <span>no signal yet</span>{% endif %}</span>{% endfor %}
+    </details>
+    {% endif %}
+  </div>
   <div class="cr-card mt-3">
-    <h2 class="cr-h"><i class="bi bi-rocket-takeoff"></i>What could be enhanced</h2>
-    <p class="small text-muted">My suggestions, each with why and what it needs. Tell Yasmine or me which one you want.</p>
+    <h2 class="cr-h"><i class="bi bi-gear-wide-connected"></i>From how your application runs</h2>
+    <p class="small text-muted">What I see from inside, each with why and what it needs. Tell Yasmine or me which one you want.</p>
     <div class="cr-ideas">
       {% for key, emoji, title, why, needs_it in ideas %}
       <div class="cr-idea"><span class="cr-emo mo-float" aria-hidden="true">{{ emoji }}</span><b>{{ title }}</b><p>{{ why }}</p><small><b class="d-inline">Needs:</b> {{ needs_it }}</small></div>

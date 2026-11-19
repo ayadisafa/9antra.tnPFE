@@ -70,7 +70,7 @@ said = control_room.suggestions(db, None, needed)
 given = {item["url"].split("#")[-1] for item in needed}
 check("said once: nothing to look at points at what only the admin can give", not any(item["url"].split("#")[-1] in given for item in said),
       [item["text"] for item in said])
-check("ideas to enhance, each with why and what it needs", len(control_room.IDEAS) >= 8 and all(len(idea) == 5 and idea[3] and idea[4] for idea in control_room.IDEAS))
+check("ideas from inside the application, each with why and what it needs", len(control_room.IDEAS) >= 5 and all(len(idea) == 5 and idea[3] and idea[4] for idea in control_room.IDEAS))
 
 # ---- D. What is new, every test, and the marks ----
 book = test_book.book(db)
@@ -107,5 +107,52 @@ looker = TestClient(main.app, follow_redirects=False)
 looker.post("/login", data={"email": "viewer.cr@test.local", "password": "viewer-control-1"})
 check("someone without the System page cannot open it", looker.get("/system/control").status_code in (302, 303, 403))
 check("…nor mark a test", looker.post("/system/control/mark", json={"key": "page:/inbox", "status": "ok"}).status_code in (302, 303, 403))
+
+# ---- F. What could be enhanced: ranked by the market by itself ----
+from datetime import timedelta
+
+from app.models.news_item import NewsItem
+from app.services import enhancements, journal
+
+check("the journal reads training and edtech news (five feeds)", "edtech" in journal.DOMAINS and sum(1 for feed in journal.FEEDS if feed[0] == "edtech") == 5)
+db.query(NewsItem).delete()
+db.commit()
+now = datetime.utcnow()
+for days, title in ((2, "Micro-credentials are reshaping bootcamps"), (5, "Digital badges and certificates employers trust"),
+                    (9, "Les certificats numériques s'imposent en formation"), (12, "Why learners want a certificate at the end"),
+                    (45, "Open badges in vocational training")):
+    db.add(NewsItem(domain="edtech", source="EdSurge", title=title, url=f"https://example.org/{days}", summary="", published_at=now - timedelta(days=days)))
+db.add(NewsItem(domain="cyber", source="BleepingComputer", title="Stolen credentials and expired TLS certificates", url="https://example.org/cyber", summary="",
+                published_at=now - timedelta(days=1)))
+db.add(NewsItem(domain="edtech", source="eLearning Industry", title="AI tutors in every course", url="https://example.org/ai", summary="", published_at=now - timedelta(days=3)))
+for text in ("Bonjour, est-ce que j'aurai une attestation à la fin ?", "Est-ce qu'il y a un certificat ?"):
+    db.add(CandidateEmail(candidate_id=person.id, direction="inbound", sender=person.email, recipient="centre@test.local", subject="q", body=text,
+                          status="received", received_at=now))
+db.commit()
+market = enhancements.ranking(db)
+first = market["ideas"][0] if market["ideas"] else {}
+check("what is talked about and asked for, and missing, comes first: certificates", first.get("key") == "certificates", [item["key"] for item in market["ideas"]])
+check("…with its evidence: articles (recent and older) and what candidates asked", first.get("recent") == 4 and first.get("older") == 1 and first.get("asked") == 2
+      and len(first.get("examples", [])) == 3 and first.get("trend") == "up", {key: first.get(key) for key in ("recent", "older", "asked", "trend")})
+check("security news does not count (“credentials”, “TLS certificates”)", all(example["source"] != "BleepingComputer" for item in market["ideas"] for example in item["examples"]))
+check("what the centre already has is said apart: say it in your posts", any(item["key"] == "ai_tutor" for item in market["have"])
+      and not any(item["key"] == "ai_tutor" for item in market["ideas"]))
+check("what nobody talks about yet is watched, not pushed", any(item["key"] == "referral" for item in market["quiet"]))
+html = admin.get("/system/control").text
+check("the page shows the ranking with its evidence and the button to read again", "What could be enhanced, as the market moves" in html
+      and "Micro-credentials are reshaping bootcamps" in html and 'action="/system/control/read-market"' in html and 'class="cr-rank-item' in html)
+FEED = (b'<?xml version="1.0"?><rss><channel><item><title>Online payment links double course enrollments</title>'
+        b'<link>https://example.org/pay</link><description>Payment links in reminders.</description></item></channel></rss>')
+journal.fetch = lambda url: FEED if "edsurge" in url else None
+before = next(item for item in enhancements.ranking(db)["ideas"] + enhancements.ranking(db)["quiet"] if item["key"] == "online_payment")["recent"]
+answer = admin.post("/system/control/read-market")
+db.expire_all()
+after = next(item for item in enhancements.ranking(db)["ideas"] if item["key"] == "online_payment")
+check("“Read the market again now”: the news is read, the ranking follows by itself", answer.status_code == 303 and before == 0 and after["recent"] == 1,
+      (answer.status_code, before, after["recent"]))
+admin.post("/language", data={"lang": "fr"})
+french = admin.get("/system/control").text
+check("in French: what each improvement is, and what it needs", "Un certificat PDF avec un QR code vérifiable" in french and "Articles qui en parlent en 60 jours : 5 (ces 30 derniers jours : 4)." in french)
+admin.post("/language", data={"lang": "en"})
 
 check.done()

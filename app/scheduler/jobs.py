@@ -728,6 +728,10 @@ def knowledge_tick():
 
         message_categories.backfill(db)
         orchestrator.forget_old(db)
+        # The frequent questions: counted again from what candidates asked (90 days), the new ones kept.
+        from app.services import faq
+
+        faq.refresh(db)
         from app.services import conversation
 
         conversation.forget_old(db)

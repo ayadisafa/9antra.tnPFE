@@ -162,7 +162,7 @@ check("the class page shows who takes part and the professor", "Who takes part" 
 # D. Social media: one part at a time, a picture each; marketing is soft
 # ======================================================================
 page = admin.get("/social").text
-check("four tabs, posts first", page.count('data-tab="') == 4 and page.index('data-tab="create"') < page.index('data-tab="ideas"'))
+check("five tabs (with the FAQ posts), posts first", page.count('data-tab="') == 5 and page.index('data-tab="create"') < page.index('data-tab="faq"') < page.index('data-tab="ideas"'))
 check("each part says itself in a picture and three steps", page.count('class="so-flow"') == 3 and page.count('<svg class="art"') >= 4)
 check("trends, best times and the plan live together in one soft tab", page.count('data-panel="ideas"') == 4
       and "A little help for your posts" in page)

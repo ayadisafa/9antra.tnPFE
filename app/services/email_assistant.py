@@ -1098,8 +1098,11 @@ def taught_by_meaning(db: Session, question: str, asked_programs: set[str]) -> d
     language (services/meaning.py), shaped like a search hit; None when none is clearly the closest."""
     from app.services import meaning
 
+    from app.services import faq
+
     entries = {entry.id: entry for entry in db.query(KnowledgeEntry).filter(KnowledgeEntry.is_active.is_(True),
-                                                                            KnowledgeEntry.origin != "system").all()}
+                                                                            KnowledgeEntry.origin != "system").all()
+               if faq.fits(entry, question)}              # an event's answer only when the question names the event
     bank = {key: [item["q"] for item in knowledge_service.wordings_of(entry) if item["q"]] for key, entry in entries.items()}
     found = meaning.closest(question, bank, floor=0.55, margin=0.05)
     if found is None:

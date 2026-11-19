@@ -737,8 +737,11 @@ def search(db: Session, query: str, *, extra_queries: list[str] | None = None,
     suggest a draft.
     """
     queries = [text for text in [query, *(extra_queries or [])] if text and text.strip()]
+    from app.services import faq
+
+    # An answer of an event (the Summer Camp's schedule) only for a question that names the event (services/faq.py).
     entries = [entry for entry in db.query(KnowledgeEntry).filter(KnowledgeEntry.is_active.is_(True)).all()
-               if entry.kind not in skip_kinds]
+               if entry.kind not in skip_kinds and faq.fits(entry, *queries, *(questions or []))]
     if not queries or not entries:
         return []
 

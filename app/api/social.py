@@ -41,9 +41,79 @@ def social_page(request: Request, db: Session = Depends(get_db)):
         "proposals": social_content.listen_proposals(db),
         "plan": marketing.week_plan(db, lang), "tips": marketing.tips(db), "trends": marketing.trends(db), "times": marketing.best_times(db),
         "trending_moods": social_music.TRENDING, "trend_looks": social_images.TREND_LOOKS,
+        **_faq_context(db, params),
         "chosen_kind": params.get("kind") if params.get("kind") in social_video.KINDS else "both", "video_styles": social_video.STYLES,
         "notice": params.get("notice"), "error": params.get("error"),
     })
+
+
+def _faq_context(db: Session, params) -> dict:
+    """The FAQ posts tab: the season (by the date, or chosen), its topic, the questions and the caption. Without a choice,
+    the general questions asked most; an event's questions (the Summer Camp) come with that event's own season."""
+    from app.services import faq, faq_posts
+
+    faq.ensure_seed(db)
+    chosen_ids = [value for value in (params.get("items") or "").split(",") if value]
+    items = _faq_items(db, chosen_ids)
+    themes = {item["theme"] for item in items if item["theme"]}
+    season = params.get("season") if params.get("season") in faq_posts.THEMES else (
+        faq_posts.FOR_EVENT.get(next(iter(themes))) if len(themes) == 1 and all(item["theme"] for item in items) else None) or faq_posts.season_of()
+    topic = params.get("topic") or (faq.THEMES[next(iter(themes))]["name"].upper() if len(themes) == 1 and all(item["theme"] for item in items)
+                                     else faq_posts.THEMES[season]["topic"])
+    return {"faq_season": season, "faq_seasons": {key: value["name"] for key, value in faq_posts.THEMES.items()},
+            "faq_topic": topic, "faq_items": items,
+            "faq_all": [row for row in faq.listing(db) if row["answer"] or row["item"].post_answer],
+            "faq_caption": faq_posts.caption(items, season, faq_posts._phone(db), topic), "faq_handle": params.get("handle") or faq_posts.HANDLE}
+
+
+def _faq_items(db: Session, ids: list[str]) -> list[dict]:
+    """The questions of the carousel: those chosen (in the order given); else the general ones asked most (at least three),
+    else an event's questions in their post's order."""
+    from app.services import faq
+
+    rows = [row for row in faq.listing(db) if row["answer"] or row["item"].post_answer]
+    by_id = {row["item"].id: row for row in rows}
+    chosen = [by_id[item_id] for item_id in ids if item_id in by_id]
+    if not chosen:
+        general = [row for row in rows if not row["item"].theme]
+        if len(general) >= 3:
+            chosen = general[:7]
+        else:
+            events = sorted((row for row in rows if row["item"].theme), key=lambda row: (row["item"].theme, row["item"].position or 99))
+            first = events[0]["item"].theme if events else None
+            chosen = [row for row in events if row["item"].theme == first][:7] or rows[:7]
+    return [{"id": row["item"].id, "question": row["item"].post_question or row["item"].question, "theme": row["item"].theme,
+             "answer": row["item"].post_answer or row["answer"]} for row in chosen]
+
+
+@router.get("/faq/slide.png")
+def faq_slide(item: str, theme: str = "", topic: str = "", db: Session = Depends(get_db)):
+    from app.services import faq_posts
+
+    found = _faq_items(db, [item])
+    if not found or found[0]["id"] != item:
+        raise HTTPException(status_code=404, detail="Unknown question")
+    key = theme if theme in faq_posts.THEMES else faq_posts.season_of()
+    return Response(faq_posts.slide(found[0]["question"], found[0]["answer"], key, topic or None, faq_posts._phone(db)), media_type="image/png")
+
+
+@router.get("/faq/contact.png")
+def faq_contact(theme: str = "", handle: str = "", db: Session = Depends(get_db)):
+    from app.services import faq_posts
+
+    key = theme if theme in faq_posts.THEMES else faq_posts.season_of()
+    return Response(faq_posts.closing(key, faq_posts._phone(db), handle.strip()[:60] or faq_posts.HANDLE), media_type="image/png")
+
+
+@router.get("/faq/carousel.zip")
+def faq_carousel(theme: str = "", topic: str = "", handle: str = "", items: str = "", db: Session = Depends(get_db)):
+    """Every slide, the contact slide and the caption, ready to post as a carousel."""
+    from app.services import faq_posts
+
+    key = theme if theme in faq_posts.THEMES else faq_posts.season_of()
+    chosen = _faq_items(db, [value for value in items.split(",") if value])
+    data = faq_posts.carousel_zip(chosen, key, faq_posts._phone(db), handle.strip()[:60] or faq_posts.HANDLE, topic or None)
+    return Response(data, media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="faq-{key}.zip"'})
 
 
 @router.get("/image")

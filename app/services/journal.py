@@ -38,6 +38,7 @@ DOMAINS = {
     "bi": ("BI and data", "bi-bar-chart"),
     "iot": ("Internet of things", "bi-cpu"),
     "marketing": ("Digital marketing", "bi-megaphone"),
+    "edtech": ("Training and edtech", "bi-mortarboard"),
     "general": ("Tech in general", "bi-newspaper"),
 }
 FEEDS = [
@@ -62,6 +63,12 @@ FEEDS = [
     ("marketing", "HubSpot Marketing", "https://blog.hubspot.com/marketing/rss.xml"),
     ("marketing", "Social Media Today", "https://www.socialmediatoday.com/feeds/news/"),
     ("general", "TechCrunch", "https://techcrunch.com/feed/"),
+    # What training centres and learning platforms do: read by the control room's suggestions (services/enhancements.py).
+    ("edtech", "eLearning Industry", "https://elearningindustry.com/feed"),
+    ("edtech", "EdSurge", "https://www.edsurge.com/articles_rss"),
+    ("edtech", "Class Central", "https://www.classcentral.com/report/feed/"),
+    ("edtech", "Thot Cursus", "https://cursus.edu/fr/rss"),
+    ("edtech", "Training Journal", "https://www.trainingjournal.com/rss.xml"),
 ]
 # What is new in each field, besides the words of its courses.
 NEW_WORDS = {

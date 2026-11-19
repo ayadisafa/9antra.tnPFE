@@ -190,6 +190,7 @@
   <a class="so-tab" role="tab" href="#create" data-tab="create"><i class="bi bi-magic"></i>Posts and stories</a>
   <a class="so-tab" role="tab" href="#videos" data-tab="videos"><i class="bi bi-camera-reels"></i>Videos</a>
   <a class="so-tab" role="tab" href="#listen" data-tab="listen"><i class="bi bi-ear"></i>We listen</a>
+  <a class="so-tab" role="tab" href="#faq" data-tab="faq"><i class="bi bi-patch-question"></i>FAQ posts</a>
   <a class="so-tab is-soft" role="tab" href="#ideas" data-tab="ideas"><i class="bi bi-lightbulb"></i>When and what to post</a>
 </nav>
 
@@ -382,6 +383,64 @@
 </section>
 
 <!-- ============ We listen ============ -->
+<section class="so-section" id="faq" data-panel="faq">
+  <div class="so-faq-head">
+    <div>
+      <h2 class="so-h"><i class="bi bi-patch-question"></i>FAQ posts, in your design</h2>
+      <p class="small text-muted">Your frequent questions as a carousel like your Summer Camp FAQ: the brick wall, the season's sticker, the orange bar, the question card, the answer on pink, your number. The season follows the date; change it if you wish.</p>
+    </div>
+    <a class="ui-btn sm" href="/inbox/knowledge#faq"><i class="bi bi-pencil-square"></i>The questions and their answers</a>
+  </div>
+  <form method="get" action="/social" class="so-faq-form">
+    <label>Season<select name="season" class="form-select form-select-sm">{% for key, name in faq_seasons.items() %}<option value="{{ key }}" {{ 'selected' if key == faq_season }}>{{ name }}</option>{% endfor %}</select></label>
+    <label>On the orange bar<input name="topic" class="form-control form-control-sm" value="{{ faq_topic }}" maxlength="40"></label>
+    <label>Your account<input name="handle" class="form-control form-control-sm" value="{{ faq_handle }}" maxlength="60"></label>
+    <details class="so-faq-pick"><summary>Questions ({{ faq_items | length }})</summary>
+      {% set chosen = faq_items | map(attribute='id') | list %}
+      {% for row in faq_all %}<label class="so-faq-q"><input type="checkbox" value="{{ row.item.id }}" data-faq-item {{ 'checked' if row.item.id in chosen }}> <span data-no-i18n>{{ row.item.post_question or row.item.question }}</span>{% if row.item.asked %} <small>· {{ row.item.asked }}×</small>{% endif %}</label>{% endfor %}
+    </details>
+    <input type="hidden" name="items" value="{{ chosen | join(',') }}" data-faq-items>
+    <button class="ui-btn sm"><i class="bi bi-arrow-repeat"></i>Show</button>
+  </form>
+  <div class="so-faq-slides">
+    {% for item in faq_items %}
+    <a class="so-faq-slide" href="/social/faq/slide.png?item={{ item.id }}&theme={{ faq_season }}&topic={{ faq_topic | urlencode }}" target="_blank" style="--i:{{ loop.index0 }};">
+      <img loading="lazy" alt="{{ item.question }}" src="/social/faq/slide.png?item={{ item.id }}&theme={{ faq_season }}&topic={{ faq_topic | urlencode }}"><span>{{ loop.index }}</span></a>
+    {% endfor %}
+    <a class="so-faq-slide" href="/social/faq/contact.png?theme={{ faq_season }}&handle={{ faq_handle | urlencode }}" target="_blank" style="--i:{{ faq_items | length }};">
+      <img loading="lazy" alt="contact us" src="/social/faq/contact.png?theme={{ faq_season }}&handle={{ faq_handle | urlencode }}"><span>{{ faq_items | length + 1 }}</span></a>
+  </div>
+  <div class="so-faq-foot">
+    <a class="ui-btn primary sm" href="/social/faq/carousel.zip?theme={{ faq_season }}&topic={{ faq_topic | urlencode }}&handle={{ faq_handle | urlencode }}&items={{ chosen | join(',') }}"><i class="bi bi-download"></i>Download the carousel (pictures and caption)</a>
+    <label class="so-faq-caption">Caption<textarea rows="6" class="form-control form-control-sm" readonly data-no-i18n>{{ faq_caption }}</textarea></label>
+  </div>
+  <style>
+    .so-faq-head { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .so-faq-form { display:flex; flex-wrap:wrap; gap:10px; align-items:flex-end; margin:10px 0 14px; font-size:.8rem; }
+    .so-faq-form label { display:grid; gap:3px; font-weight:700; color:#5b5470; }
+    .so-faq-pick { border:1px solid var(--border-color); border-radius:12px; padding:6px 10px; background:#fff; max-width:100%; }
+    .so-faq-pick summary { cursor:pointer; font-weight:800; }
+    .so-faq-q { display:flex !important; gap:6px; align-items:center; font-weight:600 !important; margin:4px 0; grid-template-columns:none !important; }
+    .so-faq-slides { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:12px; }
+    .so-faq-slide { position:relative; display:block; border-radius:16px; overflow:hidden; box-shadow:0 12px 28px -18px rgba(36,26,56,.7); transition:transform .2s ease;
+                    animation:soIn .35s ease both; animation-delay:calc(var(--i, 0) * 60ms); }
+    .so-faq-slide:hover { transform:translateY(-3px) rotate(-.6deg); }
+    .so-faq-slide img { width:100%; aspect-ratio:1; display:block; object-fit:cover; background:#f4f4f4; }
+    .so-faq-slide span { position:absolute; top:8px; left:8px; background:rgba(36,26,56,.75); color:#fff; border-radius:999px; font-size:.7rem; font-weight:800; padding:1px 8px; }
+    @keyframes soIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
+    .so-faq-foot { display:grid; grid-template-columns:auto 1fr; gap:14px; align-items:start; margin-top:14px; }
+    .so-faq-caption { display:grid; gap:4px; font-weight:700; font-size:.8rem; color:#5b5470; }
+    @media (max-width: 760px) { .so-faq-foot { grid-template-columns:1fr; } .so-faq-slides { grid-template-columns:repeat(2, minmax(0, 1fr)); } }
+    @media (prefers-reduced-motion: reduce) { .so-faq-slide { animation:none; } }
+  </style>
+  <script>
+    // The questions ticked are the carousel's, in the order of the list.
+    document.querySelectorAll("[data-faq-item]").forEach(box => box.addEventListener("change", () => {
+      document.querySelector("[data-faq-items]").value = [...document.querySelectorAll("[data-faq-item]:checked")].map(item => item.value).join(",");
+    }));
+  </script>
+</section>
+
 <section class="so-section" id="listen" data-panel="listen">
   <div class="so-h">
     <div class="so-art">{{ art.scene("listen") }}</div>

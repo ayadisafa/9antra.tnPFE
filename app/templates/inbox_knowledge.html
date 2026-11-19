@@ -107,6 +107,90 @@
 <div class="row g-4">
   <div class="col-xl-7">
     <!-- ============ What the admin taught ============ -->
+    <section class="kb-card mb-4 kb-faq" id="faq">
+      <div class="d-flex flex-wrap justify-content-between align-items-start gap-2">
+        <div>
+          <div class="kb-title"><i class="bi bi-patch-question-fill me-1" style="color:var(--primary-berry);"></i>Frequent questions</div>
+          <div class="kb-sub">Kept up to date by themselves: every 30 minutes, the questions your candidates ask most (90 days) are counted here, with the answer that answers them. Every assistant answers with these answers (emails, WhatsApp, SMS, Yasmine). An answer that belongs to an event, like the Summer Camp, is used only when the question names it.</div>
+        </div>
+        <a class="kb-linkbtn" href="/social#faq"><i class="bi bi-images me-1"></i>Make the FAQ posts</a>
+      </div>
+      {% if slides is not none %}
+      <div class="kb-slides mt-3">
+        <div class="kb-title small">Read from the pictures: check, change, then keep</div>
+        {% for slide in slides %}
+        <form method="post" action="/inbox/knowledge/faq/save" class="kb-slide">
+          <input type="hidden" name="position" value="{{ slide.position }}">
+          <label>Question, as the post asks it<input name="post_question" class="form-control form-control-sm" value="{{ slide.question }}" dir="auto"></label>
+          <label>Answer, as the post says it<textarea name="post_answer" class="form-control form-control-sm" rows="2" dir="auto">{{ slide.answer }}</textarea></label>
+          <label>Question for the emails (French)<input name="question" class="form-control form-control-sm" value="{{ slide.question }}" required dir="auto"></label>
+          <label>Answer for the emails (French)<textarea name="answer" class="form-control form-control-sm" rows="2" required dir="auto" data-reword="text">{{ slide.answer }}</textarea></label>
+          <label>It belongs to<select name="theme" class="form-select form-select-sm"><option value="">Any time</option>{% for key, name in faq_themes.items() %}<option value="{{ key }}">{{ name }}</option>{% endfor %}</select></label>
+          <button class="btn btn-sm btn-berry rounded-pill"><i class="bi bi-check2 me-1"></i>Keep it</button>
+        </form>
+        {% else %}
+        <div class="kb-sub">No question card was found in these pictures (the question on the white card, the answer on the pink lines).</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      <div class="kb-faq-list mt-3">
+        {% for row in frequent %}
+        {% set item = row.item %}
+        <div class="kb-entry kb-faq-row" style="--i:{{ loop.index0 if loop.index0 < 12 else 12 }};">
+          <div class="kb-q">{{ item.question }}</div>
+          {% if item.post_question and item.post_question != item.question %}<div class="kb-post" dir="auto"><i class="bi bi-instagram"></i> <span data-no-i18n>{{ item.post_question }}</span></div>{% endif %}
+          {% if row.answer %}<div class="kb-a">{{ row.answer }}</div>{% else %}<div class="kb-a kb-none"><i class="bi bi-exclamation-circle"></i> No answer yet: teach it, and every assistant answers it.</div>{% endif %}
+          <div class="kb-meta">
+            {% if item.asked %}<span class="kb-chip admin"><span>Asked</span> {{ item.asked }} <span>times in 90 days</span></span>{% endif %}
+            {% if row.theme %}<span class="kb-chip system">{{ row.theme }}</span>{% endif %}
+            <span class="kb-chip">{{ 'From a post' if item.source == 'post' else 'Asked by candidates' if item.source == 'messages' else 'Written by you' }}</span>
+            <details class="kb-fact-edit"><summary class="kb-linkbtn">{{ 'Change' if row.answer else 'Teach the answer' }}</summary>
+              <form method="post" action="/inbox/knowledge/faq/save" class="kb-slide mt-2">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <label>Question for the emails<input name="question" class="form-control form-control-sm" value="{{ item.question }}" required dir="auto"></label>
+                <label>Answer for the emails<textarea name="answer" class="form-control form-control-sm" rows="3" required dir="auto" data-reword="text">{{ row.answer or '' }}</textarea></label>
+                <label>Question, as a post asks it<input name="post_question" class="form-control form-control-sm" value="{{ item.post_question or '' }}" dir="auto"></label>
+                <label>Answer, as a post says it<textarea name="post_answer" class="form-control form-control-sm" rows="2" dir="auto">{{ item.post_answer or '' }}</textarea></label>
+                <label>It belongs to<select name="theme" class="form-select form-select-sm"><option value="">Any time</option>{% for key, name in faq_themes.items() %}<option value="{{ key }}" {{ 'selected' if item.theme == key }}>{{ name }}</option>{% endfor %}</select></label>
+                <button class="btn btn-sm btn-berry rounded-pill">Save</button>
+              </form>
+            </details>
+            <form method="post" action="/inbox/knowledge/faq/{{ item.id }}/delete" class="d-inline"><button class="kb-linkbtn danger">Remove</button></form>
+          </div>
+        </div>
+        {% else %}
+        <div class="kb-sub">No frequent question yet.</div>
+        {% endfor %}
+      </div>
+      <div class="d-flex flex-wrap gap-2 mt-3">
+        <details class="kb-faq-add"><summary class="btn btn-sm btn-light border rounded-pill fw-semibold"><i class="bi bi-plus-lg me-1"></i>Add a frequent question</summary>
+          <form method="post" action="/inbox/knowledge/faq/save" class="kb-slide mt-2">
+            <label>Question<input name="question" class="form-control form-control-sm" required dir="auto"></label>
+            <label>Answer<textarea name="answer" class="form-control form-control-sm" rows="3" required dir="auto" data-reword="text"></textarea></label>
+            <label>It belongs to<select name="theme" class="form-select form-select-sm"><option value="">Any time</option>{% for key, name in faq_themes.items() %}<option value="{{ key }}">{{ name }}</option>{% endfor %}</select></label>
+            <button class="btn btn-sm btn-berry rounded-pill">Keep it</button>
+          </form>
+        </details>
+        {% if can_read_pictures %}
+        <form method="post" action="/inbox/knowledge/faq/read" enctype="multipart/form-data" class="kb-read">
+          <label class="btn btn-sm btn-light border rounded-pill fw-semibold mb-0"><i class="bi bi-images me-1"></i>Read a carousel's pictures
+            <input type="file" name="pictures" accept="image/*" multiple hidden onchange="this.form.submit()"></label>
+        </form>
+        {% endif %}
+      </div>
+      <style>
+        .kb-faq-row { animation:kbIn .3s ease both; animation-delay:calc(var(--i, 0) * 35ms); }
+        @keyframes kbIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+        .kb-post { font-size:.78rem; color:#7c6f99; margin:2px 0 4px; }
+        .kb-none { color:#b45309; }
+        .kb-slides { background:#faf5ff; border-radius:16px; padding:12px; }
+        .kb-slide { display:grid; gap:8px; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); align-items:end; background:#fff; border:1px solid var(--border-color);
+                    border-radius:14px; padding:10px; margin-top:8px; font-size:.8rem; }
+        .kb-slide label { display:grid; gap:3px; font-weight:700; color:#5b5470; }
+        @media (prefers-reduced-motion: reduce) { .kb-faq-row { animation:none; } }
+      </style>
+    </section>
+
     <section class="kb-card mb-4" id="live-knowledge-written" data-live-region>
       <div class="kb-title">Answers you taught the system</div>
       <div class="kb-sub mb-3">When a candidate asks one of these, the system answers alone: it writes your answer again as a full, friendly email, and sends it only if nothing was added or lost. When a question only looks like one of these, it prepares the answer and asks you to check it.</div>

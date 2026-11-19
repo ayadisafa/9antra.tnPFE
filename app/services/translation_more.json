@@ -1859,6 +1859,10 @@
 "Ajoutez un fichier de cours ci-dessus, ou quelques lignes de notes, et les questions en sont tirées.",
 "أضف ملف درس أعلاه، أو بضعة أسطر من الملاحظات، وتُكتب الأسئلة منها."
 ],
+"Add a frequent question": [
+"Ajouter une question fréquente",
+"أضف سؤالا متكررا"
+],
 "Add a new professor": [
 "Ajouter un nouveau formateur",
 "إضافة مكوّن جديد"
@@ -2463,6 +2467,10 @@
 "L'enseigne aussi",
 "يدرّسه أيضا"
 ],
+"Also watched": [
+"Aussi surveillé",
+"متابع أيضا"
+],
 "Always answer this person": [
 "Toujours répondre à cette personne",
 "أجب دائما على هذا الشخص"
@@ -2703,6 +2711,14 @@
 "Répondre seul quand il est sûr, me demander sinon",
 "الإجابة وحده عندما يكون واثقا، وسؤالي في غير ذلك"
 ],
+"Answer for the emails": [
+"Réponse pour les emails",
+"الإجابة للرسائل"
+],
+"Answer for the emails (French)": [
+"Réponse pour les emails (français)",
+"الإجابة للرسائل (بالفرنسية)"
+],
 "Answer not found": [
 "Réponse introuvable",
 "الإجابة غير موجودة"
@@ -2746,6 +2762,14 @@
 "Answer with the registration form's link: it is written for you": [
 "Répondez avec le lien du formulaire d'inscription : il est écrit pour vous",
 "أجب برابط استمارة التسجيل: الرسالة مكتوبة لك"
+],
+"Answer, as a post says it": [
+"Réponse, comme un post la dit",
+"الإجابة كما يقولها منشور"
+],
+"Answer, as the post says it": [
+"Réponse, comme le post la dit",
+"الإجابة كما يقولها المنشور"
 ],
 "Answered": [
 "Répondu",
@@ -2878,6 +2902,10 @@
 "Any text as a PDF": [
 "N'importe quel texte en PDF",
 "أي نص في PDF"
+],
+"Any time": [
+"Toute l'année",
+"كل الأوقات"
 ],
 "Any time · They write to you": [
 "À tout moment · Ils vous écrivent",
@@ -3187,6 +3215,10 @@
 "Demandé à nouveau",
 "سُئل من جديد"
 ],
+"Asked by candidates": [
+"Posée par les candidats",
+"طرحه المترشحون"
+],
 "Asked by this offer and taught in the program": [
 "Demandé par cette offre et enseigné dans la formation",
 "يطلبه هذا العرض ويُدرّس في البرنامج"
@@ -3486,6 +3518,10 @@
 "Back to my view": [
 "Retour à ma vue",
 "العودة إلى عرضي"
+],
+"Back to school": [
+"Rentrée",
+"العودة المدرسية"
 ],
 "Back to sign in": [
 "Retour à la connexion",
@@ -4150,6 +4186,10 @@
 "Capacity must be at least 1.": [
 "La capacité doit être d'au moins 1.",
 "يجب أن تكون السعة 1 على الأقل."
+],
+"Caption": [
+"Texte du post",
+"نص المنشور"
 ],
 "Care with questions": [
 "Soin des réponses",
@@ -6291,6 +6331,10 @@
 "Télécharger le fichier calendrier",
 "تنزيل ملف التقويم"
 ],
+"Download the carousel (pictures and caption)": [
+"Télécharger le carrousel (images et texte)",
+"نزّل المنشور (الصور والنص)"
+],
 "Download the list as PDF or Excel": [
 "Télécharger la liste en PDF ou Excel",
 "تنزيل القائمة بصيغة PDF أو Excel"
@@ -6698,6 +6742,10 @@
 "Editorial line, formats, calendar, writing for the web. Practice: a month of content for a real brand.": [
 "Ligne éditoriale, formats, calendrier, écrire pour le web. Pratique : un mois de contenu pour une vraie marque.",
 "الخط التحريري، الصيغ، الرزنامة، الكتابة للويب. تطبيق: شهر من المحتوى لعلامة حقيقية."
+],
+"Effort:": [
+"Effort :",
+"الجهد:"
 ],
 "Electronics and PCB": [
 "Électronique et PCB",
@@ -7727,6 +7775,14 @@
 "Niveaux de formation extraits",
 "مستويات البرنامج المستخرجة"
 ],
+"FAQ posts": [
+"Posts FAQ",
+"منشورات الأسئلة"
+],
+"FAQ posts, in your design": [
+"Posts FAQ, dans votre style",
+"منشورات الأسئلة بتصميمك"
+],
 "Facebook": [
 "Facebook",
 "Facebook"
@@ -8363,6 +8419,10 @@
 "Français ou arabe.",
 "الفرنسية أو العربية."
 ],
+"Frequent questions": [
+"Questions fréquentes",
+"الأسئلة المتكررة"
+],
 "Fri": [
 "Ven",
 "جمع"
@@ -8383,6 +8443,10 @@
 "D'un besoin à une maquette : parcours utilisateur, composants, espacements, couleurs. Pratique : concevoir les écrans du projet dans Figma avant de les coder.",
 "من حاجة إلى نموذج: مسارات المستخدم، المكوّنات، المسافات، الألوان. تطبيق: تصميم شاشات المشروع في Figma قبل برمجتها."
 ],
+"From a post": [
+"D'un post",
+"من منشور"
+],
 "From a question to a figure: clean, explore, chart, conclude. Practice: a short report on a real dataset.": [
 "D'une question à un chiffre : nettoyer, explorer, tracer, conclure. Pratique : un court rapport sur un vrai jeu de données.",
 "من سؤال إلى رقم: تنظيف، استكشاف، رسم، استنتاج. تطبيق: تقرير قصير على مجموعة بيانات حقيقية."
@@ -8390,6 +8454,10 @@
 "From each message they sent (email, WhatsApp, SMS), read with word lists in French, English, Tunisian and Arabic.": [
 "À partir de chaque message qu'il a envoyé (email, WhatsApp, SMS), lu avec des listes de mots en français, anglais, tunisien et arabe.",
 "من كل رسالة أرسلها (بريد، WhatsApp، SMS)، مقروءة بقوائم كلمات بالفرنسية والإنجليزية والتونسية والعربية."
+],
+"From how your application runs": [
+"D'après le fonctionnement de votre application",
+"من طريقة عمل تطبيقك"
 ],
 "From how your candidates behave": [
 "D'après le comportement de vos candidats",
@@ -9827,6 +9895,10 @@
 "Cela devient une publication et une scène",
 "يصبح منشورا ومشهدا"
 ],
+"It belongs to": [
+"Elle concerne",
+"تخص"
+],
 "It came marked as an automatic reply (an out-of-office message or a mailing list), so it was not answered.": [
 "Il est arrivé marqué comme réponse automatique (absence du bureau ou liste de diffusion) : il n'a pas reçu de réponse.",
 "وصل مُعلَّما كرد تلقائي (غياب عن المكتب أو قائمة بريدية)، فلم يُرد عليه."
@@ -10443,6 +10515,10 @@
 "A gardé ses inscriptions",
 "حافظ على تسجيلاته"
 ],
+"Kept up to date by themselves: every 30 minutes, the questions your candidates ask most (90 days) are counted here, with the answer that answers them. Every assistant answers with these answers (emails, WhatsApp, SMS, Yasmine). An answer that belongs to an event, like the Summer Camp, is used only when the question names it.": [
+"Tenues à jour d'elles-mêmes : toutes les 30 minutes, les questions que vos candidats posent le plus (90 jours) sont comptées ici, avec la réponse qui y répond. Chaque assistant répond avec ces réponses (emails, WhatsApp, SMS, Yasmine). Une réponse liée à un événement, comme le Summer Camp, n'est utilisée que si la question le nomme.",
+"تُحدّث وحدها: كل 30 دقيقة تُحسب هنا الأسئلة التي يطرحها مترشحوك أكثر (90 يوما) مع الإجابة عنها. ويجيب كل مساعد بهذه الإجابات (البريد، واتساب، SMS، ياسمين). والإجابة المرتبطة بحدث مثل Summer Camp لا تُستعمل إلا إذا ذكره السؤال."
+],
 "Kept, but nothing could be sent: no email or phone reaches them.": [
 "Gardé, mais rien n'a pu être envoyé : aucun email ni téléphone ne le ou la joint.",
 "حُفظ، لكن لم يُرسل شيء: لا بريد ولا هاتف يصل إليه."
@@ -11058,6 +11134,10 @@
 "Make or bring back a copy of the data": [
 "Faire ou restaurer une copie des données",
 "إنجاز نسخة من البيانات أو استرجاعها"
+],
+"Make the FAQ posts": [
+"Faire les posts FAQ",
+"إنشاء منشورات الأسئلة"
 ],
 "Make the class mixed (online and on site": [
 "Rendre la classe mixte (en ligne et en présentiel",
@@ -11987,6 +12067,10 @@
 "Les nouvelles de la semaine",
 "أخبار الأسبوع"
 ],
+"News read": [
+"Actualités lues",
+"قُرئت الأخبار"
+],
 "Next": [
 "Suivant",
 "التالي"
@@ -12098,6 +12182,10 @@
 "No answer yet": [
 "Pas encore de réponse",
 "لا توجد إجابة بعد"
+],
+"No answer yet: teach it, and every assistant answers it.": [
+"Pas encore de réponse : apprenez-la, et chaque assistant y répond.",
+"لا إجابة بعد: علّمها، وسيجيب عنها كل مساعد."
 ],
 "No arrival yet": [
 "Pas encore d'arrivée",
@@ -12274,6 +12362,10 @@
 "No finished class to ask about.": [
 "Aucune classe terminée sur laquelle demander un avis.",
 "لا يوجد قسم منتهٍ لطلب الرأي حوله."
+],
+"No frequent question yet.": [
+"Pas encore de question fréquente.",
+"لا أسئلة متكررة بعد."
 ],
 "No icon on the web fits “": [
 "Aucune icône du web ne correspond exactement à «",
@@ -12534,6 +12626,10 @@
 "No proposal yet": [
 "Pas encore de proposition",
 "لا يوجد مقترح بعد"
+],
+"No question card was found in these pictures (the question on the white card, the answer on the pink lines).": [
+"Aucune carte de question trouvée sur ces images (la question sur la carte blanche, la réponse sur les lignes roses).",
+"لم تُوجد بطاقة سؤال في هذه الصور (السؤال على البطاقة البيضاء والإجابة على الأسطر الوردية)."
 ],
 "No question could be made: the course has no weekly plan and no course file for this week.": [
 "Aucune question n'a pu être faite : la formation n'a ni plan hebdomadaire ni support de cours pour cette semaine.",
@@ -13686,6 +13782,10 @@
 "On the left": [
 "À gauche",
 "على اليسار"
+],
+"On the orange bar": [
+"Sur la barre orange",
+"على الشريط البرتقالي"
 ],
 "On the page": [
 "Sur la page",
@@ -16099,6 +16199,14 @@
 "Question supprimée.",
 "تم حذف السؤال."
 ],
+"Question for the emails": [
+"Question pour les emails",
+"السؤال للرسائل"
+],
+"Question for the emails (French)": [
+"Question pour les emails (français)",
+"السؤال للرسائل (بالفرنسية)"
+],
 "Question not found": [
 "Question introuvable",
 "السؤال غير موجود"
@@ -16114,6 +16222,14 @@
 "Question, as a candidate would ask it": [
 "Question, telle qu'un candidat la poserait",
 "السؤال كما يطرحه المترشح"
+],
+"Question, as a post asks it": [
+"Question, comme un post la pose",
+"السؤال كما يطرحه منشور"
+],
+"Question, as the post asks it": [
+"Question, comme le post la pose",
+"السؤال كما يطرحه المنشور"
 ],
 "Questions": [
 "Questions",
@@ -16235,6 +16351,14 @@
 "RIB",
 "RIB"
 ],
+"Ramadan": [
+"Ramadan",
+"رمضان"
+],
+"Ranked by itself from what the market talks about (training, edtech, marketing and tech news:": [
+"Classé tout seul selon ce dont parle le marché (actualités de la formation, de l'edtech, du marketing et de la tech :",
+"مرتب وحده حسب ما يتحدث عنه السوق (أخبار التكوين وتقنيات التعليم والتسويق والتكنولوجيا:"
+],
 "Raspberry Pi": [
 "Raspberry Pi",
 "Raspberry Pi"
@@ -16274,6 +16398,10 @@
 "Read a candidate's level check": [
 "Lire le test de niveau d'un candidat",
 "قراءة اختبار مستوى مترشح"
+],
+"Read a carousel's pictures": [
+"Lire les images d'un carrousel",
+"اقرأ صور منشور متعدد الصور"
 ],
 "Read a cheque": [
 "Lire un chèque",
@@ -16339,6 +16467,10 @@
 "Lu toutes les six heures",
 "تُقرأ كل ست ساعات"
 ],
+"Read from the pictures: check, change, then keep": [
+"Lu sur les images : vérifiez, changez, puis gardez",
+"مقروء من الصور: تحقق، غيّر، ثم احفظ"
+],
 "Read in": [
 "Lu dans",
 "مقروء في"
@@ -16378,6 +16510,10 @@
 "Read the latest articles": [
 "Lire les derniers articles",
 "اقرأ آخر المقالات"
+],
+"Read the market again now": [
+"Relire le marché maintenant",
+"أعد قراءة السوق الآن"
 ],
 "Read the message": [
 "Lire le message",
@@ -16435,6 +16571,10 @@
 "Lecture seule : rien n'est marqué comme lu ni supprimé",
 "قراءة فقط: لا يُعلّم شيء كمقروء ولا يُحذف"
 ],
+"Read:": [
+"À lire :",
+"اقرأ:"
+],
 "Read: about": [
 "Lu : environ",
 "مقروء: نحو"
@@ -16474,6 +16614,10 @@
 "Reading the mailbox": [
 "Lecture de la boîte mail",
 "قراءة صندوق البريد"
+],
+"Reading the market now: the ranking follows in a minute or two.": [
+"Lecture du marché en cours : le classement suit dans une ou deux minutes.",
+"قراءة السوق جارية: يتبعها الترتيب بعد دقيقة أو اثنتين."
 ],
 "Reads 9antra.tn again: programs, prices, events, videos and published feedback.": [
 "Relit 9antra.tn : formations, prix, événements, vidéos et avis publiés.",
@@ -17794,6 +17938,10 @@
 "Searching…": [
 "Recherche…",
 "جارٍ البحث…"
+],
+"Season": [
+"Saison",
+"الموسم"
 ],
 "Seats in a new class": [
 "Les places d'une nouvelle classe",
@@ -19135,6 +19283,10 @@
 "Spécifique",
 "محدد"
 ],
+"Spring": [
+"Printemps",
+"الربيع"
+],
 "Spring Boot": [
 "Spring Boot",
 "Spring Boot"
@@ -19515,6 +19667,10 @@
 "Agent des résumés",
 "وكيل التلخيص"
 ],
+"Summer camp": [
+"Summer camp",
+"المخيم الصيفي"
+],
 "Sums up a candidate, their discussion, a class, a program, the day, the week, the page, a text you paste, or her last answer.": [
 "Résume un candidat, sa discussion, une classe, une formation, la journée, la semaine, la page, un texte que vous collez, ou sa dernière réponse.",
 "يلخّص مترشحا، أو محادثته، أو قسما، أو برنامجا، أو اليوم، أو الأسبوع، أو الصفحة، أو نصا تلصقه، أو ردّها الأخير."
@@ -19786,6 +19942,10 @@
 "Teach less": [
 "Enseigner moins",
 "تدريس أقل"
+],
+"Teach the answer": [
+"Apprendre la réponse",
+"علّم الإجابة"
 ],
 "Teach the assistant an answer, a page or a text": [
 "Apprendre à l'assistant une réponse, une page ou un texte",
@@ -21359,6 +21519,14 @@
 "La couleur principale, la place du menu, jour ou nuit.",
 "اللون الرئيسي، ومكان القائمة، نهارا أو ليلا."
 ],
+"The market says nothing about these yet: the news is read every 6 hours.": [
+"Le marché n'en parle pas encore : les actualités sont lues toutes les 6 heures.",
+"لا يتحدث السوق عنها بعد: تُقرأ الأخبار كل 6 ساعات."
+],
+"The market talks about what you already have: say it in your posts.": [
+"Le marché parle de ce que vous avez déjà : dites-le dans vos posts.",
+"يتحدث السوق عما لديك بالفعل: قل ذلك في منشوراتك."
+],
 "The meeting": [
 "La réunion",
 "الاجتماع"
@@ -21926,6 +22094,10 @@
 "The questions after this session": [
 "Les questions après cette séance",
 "الأسئلة بعد هذه الحصة"
+],
+"The questions and their answers": [
+"Les questions et leurs réponses",
+"الأسئلة وإجاباتها"
 ],
 "The questions of the last session went to": [
 "Les questions de la dernière séance sont parties à",
@@ -23863,6 +24035,10 @@
 "Base de données de gestion des formations",
 "قاعدة بيانات تسيير التكوين"
 ],
+"Training and edtech": [
+"Formation et edtech",
+"التكوين وتقنيات التعليم"
+],
 "Training for companies' teams: the bridge the other way": [
 "Des formations pour les équipes des entreprises : le pont dans l'autre sens",
 "تكوين لفرق المؤسسات: الجسر في الاتجاه الآخر"
@@ -24851,6 +25027,10 @@
 "Ce dont j'ai besoin de vous",
 "ما أحتاجه منك"
 ],
+"What I see from inside, each with why and what it needs. Tell Yasmine or me which one you want.": [
+"Ce que je vois de l'intérieur, chacun avec pourquoi et ce qu'il faut. Dites à Yasmine ou à moi lequel vous voulez.",
+"ما أراه من الداخل، كل واحد مع السبب وما يحتاجه. قل لياسمين أو لي أيها تريد."
+],
 "What I teach": [
 "Ce que j'enseigne",
 "ما أدرّسه"
@@ -24938,6 +25118,10 @@
 "What could be enhanced": [
 "Ce qui pourrait être amélioré",
 "ما يمكن تحسينه"
+],
+"What could be enhanced, as the market moves": [
+"Ce qui pourrait être amélioré, au rythme du marché",
+"ما يمكن تحسينه، حسب حركة السوق"
 ],
 "What did not work": [
 "Ce qui n'a pas marché",
@@ -26563,6 +26747,10 @@
 "Sera envoyé par le système une fois la séance de la semaine terminée",
 "سيرسله النظام بعد انتهاء حصة الأسبوع"
 ],
+"Winter": [
+"Hiver",
+"الشتاء"
+],
 "Wireframes": [
 "Maquettes filaires",
 "المخططات الهيكلية"
@@ -27355,6 +27543,10 @@
 "Votre lien d'avis Google, où les candidats satisfaits sont envoyés après leur avis",
 "رابط تقييماتك على Google، حيث يُوجَّه المترشحون الراضون بعد رأيهم"
 ],
+"Your account": [
+"Votre compte",
+"حسابك"
+],
 "Your account (Password) › write the old one, then the new one twice.": [
 "Votre compte (Mot de passe) › écrivez l'ancien, puis le nouveau deux fois.",
 "حسابك (كلمة المرور) › اكتب القديمة، ثم الجديدة مرتين."
@@ -27546,6 +27738,10 @@
 "Your figures: who paid, who is absent, lists, money, what to do today.": [
 "Vos chiffres : qui a payé, qui est absent, les listes, l'argent, quoi faire aujourd'hui.",
 "أرقامك: من دفع، من غاب، القوائم، المال، ما تفعله اليوم."
+],
+"Your frequent questions as a carousel like your Summer Camp FAQ: the brick wall, the season's sticker, the orange bar, the question card, the answer on pink, your number. The season follows the date; change it if you wish.": [
+"Vos questions fréquentes en carrousel comme votre FAQ du Summer Camp : le mur de briques, l'autocollant de la saison, la barre orange, la carte de la question, la réponse sur fond rose, votre numéro. La saison suit la date ; changez-la si vous voulez.",
+"أسئلتك المتكررة في منشور متعدد الصور مثل أسئلة Summer Camp: جدار الطوب، ملصق الموسم، الشريط البرتقالي، بطاقة السؤال، الإجابة على الوردي، ورقمك. الموسم يتبع التاريخ؛ غيّره إن شئت."
 ],
 "Your guide: what waits, how the page works, in your language.": [
 "Votre guide : ce qui attend, comment marche la page, dans votre langue.",
@@ -28346,6 +28542,10 @@
 "articles": [
 "articles",
 "مقالات"
+],
+"articles in 60 days) and what your candidates ask for (90 days). It moves each time the news is read, every 6 hours.": [
+"articles en 60 jours) et ce que vos candidats demandent (90 jours). Il bouge à chaque lecture des actualités, toutes les 6 heures.",
+"مقالا في 60 يوما) وما يطلبه مترشحوك (90 يوما). ويتغير مع كل قراءة للأخبار، كل 6 ساعات."
 ],
 "as a CSV file": [
 "en fichier CSV",
@@ -29334,6 +29534,10 @@
 "facts learnt in 30 days, shared by every agent (from you, the professors and your corrections": [
 "faits appris en 30 jours, partagés par tous les agents (de vous, des professeurs et de vos corrections",
 "حقائق تُعلّمت في 30 يوما، يتقاسمها كل الوكلاء (منك ومن الأساتذة ومن تصحيحاتك"
+],
+"falling": [
+"en baisse",
+"في انخفاض"
 ],
 "feedback": [
 "avis",
@@ -30503,6 +30707,10 @@
 "pas encore de rappel",
 "لا تذكير بعد"
 ],
+"no signal yet": [
+"pas encore de signal",
+"لا إشارة بعد"
+],
 "no solid basis found": [
 "aucune base solide trouvée",
 "لم يُعثر على أساس متين"
@@ -31559,6 +31767,10 @@
 "justes sur",
 "صحيحة من"
 ],
+"rising": [
+"en hausse",
+"في ارتفاع"
+],
 "s own parts (the candidate": [
 "s propres parties (le candidat",
 "أجزاؤه الخاصة (المترشح"
@@ -31810,6 +32022,10 @@
 "starts when someone chooses it": [
 "démarre quand quelqu'un la choisit",
 "يبدأ عندما يختاره أحد"
+],
+"steady": [
+"stable",
+"مستقر"
 ],
 "still due": [
 "encore dû",
@@ -32198,6 +32414,10 @@
 "times during the level check.": [
 "fois pendant le test de niveau.",
 "مرات أثناء اختبار المستوى."
+],
+"times in 90 days": [
+"fois en 90 jours",
+"مرة خلال 90 يوما"
 ],
 "times in a row": [
 "fois de suite",

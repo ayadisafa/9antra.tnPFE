@@ -4614,5 +4614,57 @@
 "Not available: the rewording and Yasmine use the model of this computer, which writes French less well.": [
 "Indisponible : la reformulation et Yasmine utilisent le modèle de cet ordinateur, qui écrit moins bien le français.",
 "غير متاح: إعادة الصياغة وياسمين تستعملان نموذج هذا الحاسوب الذي يكتب الفرنسية بشكل أقل جودة."
+],
+"Named in {0} articles in 60 days, {1} of them in the last 30.": [
+"Cité dans {0} articles en 60 jours, dont {1} ces 30 derniers jours.",
+"ذُكر في {0} مقالا خلال 60 يوما، منها {1} في الثلاثين يوما الأخيرة."
+],
+"Your candidates asked for it {0} times in 90 days.": [
+"Vos candidats l'ont demandé {0} fois en 90 jours.",
+"طلبه مترشحوك {0} مرات خلال 90 يوما."
+],
+"Missing": [
+"Manque",
+"غير موجود"
+],
+"Partly there": [
+"En partie là",
+"موجود جزئيا"
+],
+"You have it": [
+"Vous l'avez",
+"لديك"
+],
+"Small": [
+"Petit",
+"صغير"
+],
+"Medium": [
+"Moyen",
+"متوسط"
+],
+"Large": [
+"Grand",
+"كبير"
+],
+"Training and edtech": [
+"Formation et edtech",
+"التكوين وتقنيات التعليم"
+],
+"Articles that name it in 60 days: {0} (in the last 30: {1}).": [
+"Articles qui en parlent en 60 jours : {0} (ces 30 derniers jours : {1}).",
+"مقالات تذكره خلال 60 يوما: {0} (في الثلاثين الأخيرة: {1})."
+],
+"Messages of your candidates asking for it in 90 days: {0}.": [
+"Messages de vos candidats qui le demandent en 90 jours : {0}.",
+"رسائل مترشحيك التي تطلبه خلال 90 يوما: {0}."
+],
+"Kept: every assistant answers with it now.": [
+"Gardé : chaque assistant y répond désormais.",
+"حُفظ: يجيب به كل مساعد الآن."
+],
+"Removed from the frequent questions.": [
+"Retirée des questions fréquentes.",
+"حُذف من الأسئلة المتكررة."
 ]
 }

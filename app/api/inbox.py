@@ -22,6 +22,7 @@ from app.models.classgroup import ClassGroup
 from app.models.email_file import EmailFile
 from app.models.email_template import EmailTemplate
 from app.models.email_thread import EmailThread
+from app.models.faq_item import FaqItem  # noqa: F401  (its table is made at start)
 from app.models.knowledge import KnowledgeEntry
 from app.models.program import Program
 from app.models.registration import Registration, RegistrationStatus
@@ -1388,13 +1389,26 @@ class KnowledgeTest(BaseModel):
 
 @router.get("/knowledge", response_class=HTMLResponse)
 def knowledge_page(request: Request, db: Session = Depends(get_db)):
+    return _knowledge(request, db)
+
+
+def _knowledge(request: Request, db: Session, slides: list[dict] | None = None):
+    """The knowledge page (with what was read from a carousel's pictures, to check before it is kept)."""
+    from app.models import faq_item  # noqa: F401
+    from app.services import faq
+
     knowledge_service.ensure_fresh(db)
-    written = (
-        db.query(KnowledgeEntry)
+    faq.ensure_seed(db)
+    frequent = faq.listing(db)
+    in_faq = {row["item"].entry_id for row in frequent if row["item"].entry_id}
+    # A frequent question's answer is shown with it (Frequent questions), not a second time among the taught answers.
+    written = [
+        entry for entry in db.query(KnowledgeEntry)
         .filter(KnowledgeEntry.origin.in_(["admin", "learned"]))
         .order_by(KnowledgeEntry.updated_at.desc())
         .all()
-    )
+        if entry.id not in in_faq
+    ]
     system = (
         db.query(KnowledgeEntry)
         .filter(KnowledgeEntry.origin == "system", KnowledgeEntry.is_active.is_(True), KnowledgeEntry.kind != "fact")
@@ -1416,12 +1430,51 @@ def knowledge_page(request: Request, db: Session = Depends(get_db)):
             "imported": __import__("app.services.knowledge_import", fromlist=["sources"]).sources(db),
             "editing": db.get(KnowledgeEntry, edit_id) if edit_id else None,
             "facts": knowledge_service.facts(db, everything=True),
+            "frequent": frequent,
+            "faq_themes": {key: value["name"] for key, value in faq.THEMES.items()},
+            "slides": slides,
+            "can_read_pictures": __import__("app.services.proof_reader", fromlist=["ocr_available"]).ocr_available(),
             "programs": programs,
             "prefill_question": request.query_params.get("question", ""),
             "notice": request.query_params.get("notice"),
             "error": request.query_params.get("error"),
         },
     )
+
+
+@router.post("/knowledge/faq/save")
+def save_faq(question: str = Form(""), answer: str = Form(""), post_question: str = Form(""), post_answer: str = Form(""),
+             theme: str = Form(""), item_id: str = Form(""), position: str = Form(""), db: Session = Depends(get_db)):
+    """A frequent question, written or changed by the admin (or kept from a carousel's pictures): every assistant answers with it."""
+    from app.services import faq
+
+    try:
+        faq.save(db, question=question, answer=answer, post_question=post_question, post_answer=post_answer, theme=theme or None,
+                 source="post" if post_question.strip() else "admin", item_id=item_id or None,
+                 position=int(position) if position.isdigit() else None)
+    except ValueError as err:
+        db.rollback()
+        return RedirectResponse("/inbox/knowledge?" + urlencode({"error": str(err)}) + "#faq", status_code=303)
+    db.commit()
+    return RedirectResponse("/inbox/knowledge?" + urlencode({"notice": _t("Kept: every assistant answers with it now.")}) + "#faq", status_code=303)
+
+
+@router.post("/knowledge/faq/{item_id}/delete")
+def delete_faq(item_id: str, db: Session = Depends(get_db)):
+    from app.services import faq
+
+    faq.remove(db, item_id)
+    return RedirectResponse("/inbox/knowledge?" + urlencode({"notice": _t("Removed from the frequent questions.")}) + "#faq", status_code=303)
+
+
+@router.post("/knowledge/faq/read", response_class=HTMLResponse)
+async def read_faq_pictures(request: Request, pictures: list[UploadFile] = File(default=[]), db: Session = Depends(get_db)):
+    """A carousel's pictures: each slide's question and answer read on this computer, shown to check before keeping them."""
+    from app.services import faq
+
+    data = [await picture.read() for picture in pictures[:20] if picture.filename]
+    slides = faq.read_slides([item for item in data if item and len(item) <= 15_000_000])
+    return _knowledge(request, db, slides=slides or [])
 
 
 @router.post("/knowledge/save")
